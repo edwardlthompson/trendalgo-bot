@@ -1,0 +1,15 @@
+{
+  "stack": "multi",
+  "pruned": false,
+  "active_modules": [
+    "android",
+    "web",
+    "python",
+    "node",
+    "lightroom",
+    "rust",
+    "go"
+  ],
+  "parallel_scope_note": "Sprint 1 Parallel: one agent per active stack; no overlapping paths",
+  "selected_at": "2026-06-25T23:15:14+00:00"
+}

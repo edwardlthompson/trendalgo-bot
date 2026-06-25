@@ -1,0 +1,36 @@
+---
+description: Core agent directives — plan-first, read-before-write, 3-strike rule
+alwaysApply: true
+---
+
+# Core Directives
+
+On session start, read docs/START_HERE.md, pick Cursor mode via docs/CURSOR_MODES.md, then edit.
+
+## Plan First, Code Second
+
+- Cursor mode routing: see cursor-modes.mdc and docs/CURSOR_MODES.md
+- Plan Mode for non-trivial tasks; Ask for read-only exploration
+- Include mandatory ### Critique subsection in every plan
+
+## Read-Before-Write
+
+- Inspect types/interfaces via @filename before altering code
+
+## BUILD_PLAN Protocol
+
+- Sequential lane before Parallel lane
+- Respect AGENT, HUMAN, ADB, AUTO labels
+- Status markers: 🔲 open · ✅ done · ❌ blocked (emoji, not `- [ ]` checkboxes — repo-wide; see `BUILD_PLAN.md` legend)
+
+## 3-Strike Rule
+
+Halt after 3 consecutive failed fix attempts; escalate to human.
+
+## Memory Files
+
+Update only at session start, milestone boundary, or architectural pivot.
+
+## Token Economy
+
+Max 250 lines views, 150 lines logic. Read active module/example only.

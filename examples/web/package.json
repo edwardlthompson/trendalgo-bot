@@ -1,0 +1,32 @@
+{
+  "name": "golden-path-web",
+  "private": true,
+  "license": "MIT",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "lighthouse": "lhci autorun"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.49.1",
+    "jsdom": "^29.1.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.8"
+  },
+  "overrides": {
+    "tmp": ">=0.2.6",
+    "uuid": ">=11.1.1",
+    "js-yaml": ">=4.2.0",
+    "undici": ">=7.28.0 <8.0.0"
+  }
+}

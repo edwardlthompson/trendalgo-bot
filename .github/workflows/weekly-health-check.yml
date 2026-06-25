@@ -1,0 +1,91 @@
+name: Weekly Health Check
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  health:
+    name: Weekly Workflow Health
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify CI + Security Scan + CodeQL green on HEAD
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/check-github-ci.sh "$(git rev-parse HEAD)" --wait 600
+
+      - name: Simulate template upgrade path
+        run: bash scripts/simulate-template-upgrade.sh
+
+      - name: Setup Node for npm audit
+        if: hashFiles('examples/web/package-lock.json') != ''
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: examples/web/package-lock.json
+
+      - name: npm audit (examples/web)
+        if: hashFiles('examples/web/package-lock.json') != ''
+        run: |
+          cd examples/web
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Setup uv for Python audit
+        if: hashFiles('examples/python/uv.lock') != ''
+        uses: astral-sh/setup-uv@v7
+
+      - name: uv pip audit (examples/python)
+        if: hashFiles('examples/python/uv.lock') != ''
+        run: |
+          cd examples/python
+          uv sync --locked --all-extras
+          uv pip audit
+
+      - name: Setup Node for examples/node audit
+        if: hashFiles('examples/node/package-lock.json') != ''
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: examples/node/package-lock.json
+
+      - name: npm audit (examples/node)
+        if: hashFiles('examples/node/package-lock.json') != ''
+        run: |
+          cd examples/node
+          npm ci
+          npm audit --audit-level=high
+
+  android-instrumented:
+    name: Weekly Android Instrumented Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: hashFiles('examples/android/gradlew') != ''
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Enable KVM for emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run instrumented smoke test
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        with:
+          api-level: 34
+          arch: x86_64
+          target: default
+          disable-animations: true
+          script: cd examples/android && chmod +x gradlew && ./gradlew connectedDebugAndroidTest --no-daemon
