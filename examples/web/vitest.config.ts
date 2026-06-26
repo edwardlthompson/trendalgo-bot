@@ -13,7 +13,6 @@ export default defineConfig({
         "src/about/aboutSession.ts",
         "src/about/donations.ts",
         "src/settings/preferences.ts",
-        "src/appBootstrap.ts",
         "src/greet.ts",
       ],
       thresholds: {
