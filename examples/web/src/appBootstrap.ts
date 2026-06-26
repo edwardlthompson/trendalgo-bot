@@ -61,6 +61,7 @@ import {
   fetchStrategyParams,
   type BacktestPayload,
   type DashboardData,
+  type ScannerSettingsPayload,
 } from "./api/client";
 import { createAppShell, type AppShellState } from "./AppShell";
 import type { PortfolioOverviewData } from "./portfolio/PortfolioSections";
@@ -88,7 +89,7 @@ async function loadPortfolioBundle(): Promise<Partial<AppShellState>> {
       daily_pnl_pct: overview.daily_pnl_pct,
       health_score: overview.health_score,
       max_drawdown_pct: overview.max_drawdown_pct,
-      holdings: overview.holdings,
+      holdings: overview.holdings as PortfolioOverviewData["holdings"],
       allocation: overview.allocation,
       pl_breakdown: overview.pl_breakdown,
       periods: overview.periods,
@@ -323,7 +324,7 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         });
       },
       onSaveScannerSettings: (settings) => {
-        void saveScannerSettings(settings).then((saved) => {
+        void saveScannerSettings(settings as ScannerSettingsPayload).then((saved) => {
           state = { ...state, scannerSettings: saved };
           render();
         });
@@ -383,7 +384,7 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         });
       },
       onImportStrategy: (json) => {
-        void importStrategyTemplate(json).then((r) => refreshDashboard());
+        void importStrategyTemplate(json).then(() => refreshDashboard());
       },
       onComposeStrategy: (code) => {
         state = { ...state, composerCode: code };

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CM-6 portfolio sync load test — 6+ exchanges in < 30s (dry-run, zero stagger).
+# CM-6 N-exchange ops validation — 9+ venues sync + trading status (< 30s dry-run).
 # Usage: scripts/load-test-portfolio-sync.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

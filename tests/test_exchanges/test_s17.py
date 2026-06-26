@@ -13,14 +13,14 @@ from trendalgo.portfolio.db import PortfolioStore
 
 def test_registry_s17_tier_b_venues() -> None:
     registry = load_registry()
-    assert registry.version == 5
+    assert registry.version == 6
     portfolio_ids = {e.id for e in list_portfolio_exchanges()}
     assert "bitstamp" in portfolio_ids
     assert "cryptocom" in portfolio_ids
     assert len(portfolio_ids) == 9
     bitstamp = get_entry("bitstamp")
     assert bitstamp.ccxt_id == "bitstamp"
-    assert bitstamp.trading_enabled is False
+    assert bitstamp.trading_enabled is True
     cryptocom = get_entry("cryptocom")
     assert cryptocom.ccxt_id == "cryptocom"
 
@@ -38,7 +38,7 @@ def test_bitstamp_cryptocom_dry_run(tmp_path: Path) -> None:
 def test_sync_all_nine_exchanges(tmp_path: Path) -> None:
     store = PortfolioStore(tmp_path / "portfolio.db")
     result = sync_all_exchanges(store, dry_run=True)
-    assert result["registry_version"] == 5
+    assert result["registry_version"] == 6
     assert result["exchange_count"] == 9
     assert result["bitstamp"]["mode"] == "dry-run"
     assert result["cryptocom"]["mode"] == "dry-run"
@@ -48,4 +48,4 @@ def test_sync_all_nine_exchanges(tmp_path: Path) -> None:
 def test_portfolio_load_test() -> None:
     report = run_load_test()
     assert report["ok"] is True
-    assert int(report["exchange_count"]) >= 6
+    assert int(report["exchange_count"]) >= 9

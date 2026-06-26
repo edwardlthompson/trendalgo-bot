@@ -3,5 +3,9 @@ export function cloneParamsFromRun(
   params: Record<string, number>,
   tweak: Partial<Record<string, number>> = {},
 ): Record<string, number> {
-  return { ...params, ...tweak };
+  const out = { ...params };
+  for (const [key, value] of Object.entries(tweak)) {
+    if (value !== undefined) out[key] = value;
+  }
+  return out;
 }

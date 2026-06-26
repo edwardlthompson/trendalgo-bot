@@ -22,6 +22,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.1.0...v0.2.0) (2026-06-26)
+
+Exchange program S19–S20 and DEX program S21–S24 — native multi-venue ops plus venue plugin engine.
+
+### Added
+
+- **DEX program (S21–S24):** ADR-0011 venue plugin engine, `config/venues.registry.json`, EVM + Solana wallet read
+- Uniswap V3 LP positions, 0x quote preview, multi-chain wallet orchestrator
+- DEX dry-run swaps (Uniswap V3 + Jupiter) with `DEX_TRADING_ACK` gate
+- Live swap path on Base Phase 1: signer (`DEX_SIGNER_KEY`), RPC failover, nonce store, per-venue control
+- API routes: `/platform/dex/preview`, `/dry-run`, `/live`, `/status/full`, `/ops-validation`, `/venues/{id}/go-live`
+- **Exchange S19–S20:** Phase 2 trading, multi-venue arbitrage signals, N-exchange ops runbook and load tests
+- Founder gate preflights for H-035 (DEX scope) and H-036 (DEX live)
+- `scripts/archive-build-plan-sprint.py` for BUILD_PLAN sprint archival
+
+### Changed
+
+- Portfolio and platform routes extended for DEX positions and venue sync
+- Billing venue attribution for on-chain activity
+- **170 tests**, ~85% coverage; Risk Register Zero holds
+
+### Documentation
+
+- DEX_ROADMAP, RUNBOOK DEX section, HUMAN_BACKLOG H-035/H-036 tier table
+- R-Audit-4 doc sync (README, POST_DELIVERY, ROADMAP_PUBLIC Phase 8, KB-011)
+- TEMPLATE_INDEX synced for TrendAlgo ops scripts and version 0.2.0
+
 
 
 ## [0.1.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.0.0...v0.1.0) (2026-06-25)

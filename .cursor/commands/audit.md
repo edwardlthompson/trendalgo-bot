@@ -29,6 +29,6 @@ bash scripts/watch-agent-gates.sh --once --autofix --step none
 
 ## Step 4 — Cleanup
 
-Archive completed sprint to @COMPLETED_TASKS.md; slim active board; update Archived Sprints row.
+Run @.cursor/commands/cleanup.md — archive completed sprint to @COMPLETED_TASKS.md; slim active board; update Archived Sprints row.
 
 Begin now.

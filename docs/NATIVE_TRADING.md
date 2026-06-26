@@ -39,6 +39,7 @@ Templates in `src/trendalgo/templates/registry.py` point to native modules under
 - **Portfolio:** CCXT read-only via registry (see [`EXCHANGE_ROADMAP.md`](EXCHANGE_ROADMAP.md)).
 - **Trading:** One runner instance per bot; exchange from registry + bot config.
 - **Go-live:** H-010/H-028 per exchange.
+- **Ops (9 venues, ack workflow, incidents):** [`docs/RUNBOOK.md`](RUNBOOK.md) § Multi-venue trading ops (Phase 2, S20).
 
 ## Backtest & optimize
 

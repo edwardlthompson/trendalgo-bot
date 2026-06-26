@@ -12,6 +12,7 @@ from trendalgo.notifications.discord import send_discord_message
 from trendalgo.notifications.email import send_smtp_email
 from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
 from trendalgo.portfolio.basket import apply_basket_to_bots, normalize_weights
+from trendalgo.portfolio.dex_positions import list_dex_positions_from_store, preview_dex_positions
 from trendalgo.portfolio.goals import goal_progress
 from trendalgo.portfolio.multi_exchange import aggregate_holdings, sync_all_exchanges
 from trendalgo.portfolio.overview import build_portfolio_overview
@@ -64,6 +65,23 @@ class NotifyTestBody(BaseModel):
 def portfolio_accounts(request: Request) -> dict[str, Any]:
     store = request.app.state.trendalgo.portfolio_store
     return {"accounts": aggregate_holdings(store)["accounts"]}
+
+
+@router.get("/portfolio/dex/positions")
+def portfolio_dex_positions(
+    request: Request,
+    address: str | None = None,
+    chain: str | None = None,
+) -> dict[str, Any]:
+    store = request.app.state.trendalgo.portfolio_store
+    if address:
+        try:
+            return preview_dex_positions(address, chain=chain)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return list_dex_positions_from_store(store)
 
 
 @router.post("/portfolio/sync-all")

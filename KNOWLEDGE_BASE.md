@@ -62,6 +62,12 @@
 
 **Fix:** Pushed `chore(release): prepare v0.1.0` to `main`. Follow-up CI commits fix ruff + workflow (web/python only). Re-run `bash scripts/check-github-ci.sh --wait 600` after CI green. Enable Dependabot alerts; merge Release Please PR for tag.
 
+## KB-011 — Post–DEX program audit (2026-06-26)
+
+**Symptom:** `/audit` (R-Audit-4) on Windows; README/POST_DELIVERY/ROADMAP_PUBLIC stale after S21–S24; bash gates need WSL.
+
+**Fix:** R-Audit-4 synced README (DEX capabilities + roadmap), POST_DELIVERY snapshot (170 tests, DEX row), ROADMAP_PUBLIC Phase 8, HUMAN_BACKLOG H-035/H-036. Use `python scripts/run-trendalgo-tests.py`, `python scripts/founder_gate.py preflight H-035|H-036`. Clear **H-032, H-035, H-036** via [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) before live trading.
+
 ## Template KB entries
 
 Legacy template entries (KB-007+) remain in git history; TrendAlgo-specific entries start at KB-001 above.

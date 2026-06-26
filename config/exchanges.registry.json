@@ -1,6 +1,6 @@
 {
-  "version": 5,
-  "worldwide_trading_phase": 1,
+  "version": 6,
+  "worldwide_trading_phase": 2,
   "default_sync_interval_sec": 15,
   "exchanges": [
     {
@@ -61,7 +61,7 @@
       "brand": "Bitstamp",
       "tier": "B",
       "portfolio_enabled": true,
-      "trading_enabled": false,
+      "trading_enabled": true,
       "ccxt_id": "bitstamp",
       "env_key": "BITSTAMP_API_KEY",
       "env_secret": "BITSTAMP_API_SECRET",
@@ -74,7 +74,7 @@
       "brand": "Crypto.com",
       "tier": "B",
       "portfolio_enabled": true,
-      "trading_enabled": false,
+      "trading_enabled": true,
       "ccxt_id": "cryptocom",
       "env_key": "CRYPTOCOM_API_KEY",
       "env_secret": "CRYPTOCOM_API_SECRET",

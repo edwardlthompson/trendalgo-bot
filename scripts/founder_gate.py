@@ -254,6 +254,35 @@ def preflight_h034() -> tuple[int, str]:
     return 2, "HUMAN — run L1 preview (dev-local) and approve with --note"
 
 
+def preflight_h035() -> tuple[int, str]:
+    roadmap = ROOT / "docs" / "DEX_ROADMAP.md"
+    adr = ROOT / "docs" / "adr" / "0011-dex-venue-plugin-engine.md"
+    dex_pkg = ROOT / "src" / "trendalgo" / "dex"
+    missing = [p.name for p in (roadmap, adr) if not p.exists()]
+    if missing:
+        return 1, f"missing: {', '.join(missing)}"
+    if not dex_pkg.is_dir():
+        return 1, "src/trendalgo/dex/ missing"
+    return 2, "HUMAN — approve DEX program scope (S21–S24 incl. dry-run swaps)"
+
+
+def preflight_h036() -> tuple[int, str]:
+    registry = ROOT / "config" / "venues.registry.json"
+    runbook = ROOT / "docs" / "RUNBOOK.md"
+    if not registry.exists():
+        return 1, "config/venues.registry.json missing"
+    import json
+
+    data = json.loads(registry.read_text(encoding="utf-8"))
+    phase = int(data.get("dex_live_phase", 0))
+    live = [e["id"] for e in data.get("venues", []) if e.get("trading_enabled")]
+    if phase < 1 or not live:
+        return 1, f"dex_live_phase={phase} live_venues={live}"
+    if "DEX live swaps" not in runbook.read_text(encoding="utf-8", errors="replace"):
+        return 1, "RUNBOOK missing DEX live swaps section"
+    return 2, "HUMAN — approve DEX live swap trading (hard gate)"
+
+
 PREFLIGHT_HANDLERS: dict[str, callable] = {
     "H-001": preflight_h001,
     "H-002": lambda: preflight_stub("H-002", "docs/CURSOR_MODES.md"),
@@ -294,6 +323,8 @@ PREFLIGHT_HANDLERS: dict[str, callable] = {
     "H-031": preflight_h031,
     "H-032": preflight_h032,
     "H-034": preflight_h034,
+    "H-035": preflight_h035,
+    "H-036": preflight_h036,
 }
 
 

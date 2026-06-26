@@ -28,7 +28,11 @@ PostgreSQL path; on-chain read-only; Risk Register Zero.
 
 ## Phase 7 — Exchange program (S13–S20)
 
-Multi-exchange registry; native CCXT US trading (S15–S17); worldwide Phase 1 trading (S18); Phase 2 + arbitrage + N-exchange ops (S19–S20). Detail: [`docs/EXCHANGE_ROADMAP.md`](EXCHANGE_ROADMAP.md).
+Multi-exchange registry; native CCXT US trading (S15–S17); worldwide Phase 1 (S18); Phase 2 + arbitrage (S19); N-exchange ops (S20). **AGENT complete** — live worldwide still requires H-032. Detail: [`docs/EXCHANGE_ROADMAP.md`](EXCHANGE_ROADMAP.md).
+
+## Phase 8 — DEX plugin program (S21–S24)
+
+Multi-chain wallet read (EVM + Solana); Uniswap V3 LP + 0x quotes; dry-run swaps; live ops (Base Phase 1). **AGENT complete** — live DEX requires H-035/H-036. Detail: [`docs/DEX_ROADMAP.md`](DEX_ROADMAP.md).
 
 ## Rejected (permanent)
 

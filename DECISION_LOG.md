@@ -16,6 +16,12 @@
 
 ## Entries
 
+### 2026-06-26 — Release v0.2.0 — DEX program + exchange S19–S20
+- **Status:** Accepted
+- **Context:** `/ship` after DEX S21–S24 and exchange S19–S20 AGENT completion; R-Audit-4 doc sync; CI on v0.1.0 main red (TEMPLATE_INDEX drift, ruff, web TS).
+- **Decision:** Release `0.2.0` with venue plugin engine, DEX dry-run/live (Base Phase 1), exchange Phase 2 + ops hardening; fix CI blockers (TEMPLATE_INDEX, ruff, web lint) in same commit.
+- **Verification:** `python scripts/run-trendalgo-tests.py` (170 pass, 85.08%); `npm run lint` (web); `validate-template-index.sh`; `check-template-version-sync.sh` (0.2.0).
+
 ### 2026-06-25 — Release v0.1.0 — TrendAlgo platform (S0–S18)
 - **Status:** Accepted
 - **Context:** First `/ship` after exchange program S13–S18; pre-release gate run on Windows (npm/WSL gaps; CI pending post-push).

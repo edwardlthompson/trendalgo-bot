@@ -11,6 +11,7 @@
 | Web | Vite + TypeScript PWA | `examples/web/` |
 | DB MVP | SQLite on VPS | Postgres path Sprint 12 |
 | Exchange | 9 portfolio / 7 trading venues | Registry v5; worldwide Phase 1 (S18) |
+| DEX | Venue plugin engine (ADR-0011) | S21–S24; Base Phase 1 live path; H-036 open |
 | Scanner | linear-trend-spotter → `scanner/` | ADR-0006 absorption S4.5 |
 | License | Performance software license | Calculation-only; user pays externally (ADR-0008) |
 
@@ -40,9 +41,9 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Exchange Program S19 (BUILD_PLAN); post-delivery gates parallel in HUMAN_BACKLOG.
+**Current sprint:** Post-Delivery / maintenance (BUILD_PLAN); human gates H-032, H-035, H-036 open.
 
-**Tests:** 130 pass · ~86% coverage (2026-06-25 release prep).
+**Tests:** 170 pass · ~85% coverage (2026-06-26 v0.2.0 release).
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 

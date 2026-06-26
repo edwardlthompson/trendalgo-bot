@@ -26,4 +26,6 @@ Founder preflight in agent gate loop: `bash scripts/watch-agent-gates.sh --once 
 
 Report pass/fail per script. Fix failures in scope before marking BUILD_PLAN items complete.
 
+When the sprint is fully ✅, run @.cursor/commands/cleanup.md before ending the session.
+
 Begin now.

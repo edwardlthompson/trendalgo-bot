@@ -1,0 +1,58 @@
+{
+  "version": 4,
+  "dex_live_phase": 1,
+  "default_sync_interval_sec": 2,
+  "venues": [
+    {
+      "id": "ethereum",
+      "brand": "Ethereum",
+      "chain_type": "evm",
+      "chain_id": 1,
+      "native_symbol": "ETH",
+      "wallet_read_enabled": true,
+      "trading_enabled": false,
+      "rpc_env": "ETH_RPC_URL",
+      "portfolio_plugins": ["uniswap_v3"],
+      "swap_plugins": ["uniswap_v3"],
+      "sync_interval_sec": 2
+    },
+    {
+      "id": "base",
+      "brand": "Base",
+      "chain_type": "evm",
+      "chain_id": 8453,
+      "native_symbol": "ETH",
+      "wallet_read_enabled": true,
+      "trading_enabled": true,
+      "rpc_env": "BASE_RPC_URL",
+      "portfolio_plugins": ["uniswap_v3"],
+      "swap_plugins": ["uniswap_v3"],
+      "sync_interval_sec": 2
+    },
+    {
+      "id": "arbitrum",
+      "brand": "Arbitrum One",
+      "chain_type": "evm",
+      "chain_id": 42161,
+      "native_symbol": "ETH",
+      "wallet_read_enabled": true,
+      "trading_enabled": false,
+      "rpc_env": "ARB_RPC_URL",
+      "portfolio_plugins": ["uniswap_v3"],
+      "swap_plugins": ["uniswap_v3"],
+      "sync_interval_sec": 2
+    },
+    {
+      "id": "solana",
+      "brand": "Solana",
+      "chain_type": "solana",
+      "native_symbol": "SOL",
+      "wallet_read_enabled": true,
+      "trading_enabled": false,
+      "rpc_env": "SOLANA_RPC_URL",
+      "portfolio_plugins": [],
+      "swap_plugins": ["jupiter"],
+      "sync_interval_sec": 2
+    }
+  ]
+}

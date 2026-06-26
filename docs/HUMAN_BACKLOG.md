@@ -15,7 +15,20 @@
 | Pre-Sprint-1 bundle | `python scripts/founder_gate.py approve-bundle pre-sprint-1` |
 | Sprint gates | `python scripts/founder_gate.py preflight-sprint --sprint N` |
 
-**Hard gates (never AUTO-approve):** H-006, H-008, H-010, H-011, H-023, H-028, **H-031**, **H-032**
+**Hard gates (never AUTO-approve):** H-006, H-008, H-010, H-011, H-023, H-028, **H-031**, **H-032**, **H-036**
+
+---
+
+## Master tier table — DEX Plugin Program (S21+)
+
+| ID | Item | Tier | AUTO preflight | Blocks |
+|----|------|------|----------------|--------|
+| H-035 | DEX program scope (S21–S24 incl. dry-run swaps) | soft | ✅ | S21+ AGENT work |
+| H-036 | DEX live swap trading | **hard** | ⚠️ registry v4 + RUNBOOK | S24 live |
+
+**H-035 preflight:** `docs/DEX_ROADMAP.md` + `src/trendalgo/dex/` present.
+
+**H-036 preflight:** `config/venues.registry.json` `dex_live_phase` + RUNBOOK DEX section.
 
 ---
 

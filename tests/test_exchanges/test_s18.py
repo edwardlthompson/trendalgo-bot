@@ -13,8 +13,8 @@ from trendalgo.trading.multi_exchange import route_order
 
 def test_registry_s18_worldwide_phase1() -> None:
     registry = load_registry()
-    assert registry.version == 5
-    assert registry.worldwide_trading_phase == 1
+    assert registry.version == 6
+    assert registry.worldwide_trading_phase == 2
     trading_ids = {e.id for e in list_trading_exchanges()}
     assert {"binance", "bybit", "okx"}.issubset(trading_ids)
     worldwide = {e.id for e in list_worldwide_trading_exchanges()}
@@ -52,6 +52,6 @@ def test_runner_status_worldwide_api() -> None:
     client = TestClient(create_app())
     resp = client.get("/api/v1/trading/runner/status")
     body = resp.json()
-    assert body["worldwide_trading_phase"] == 1
+    assert body["worldwide_trading_phase"] == 2
     assert "binance" in body["worldwide_exchanges"]
-    assert len(body["exchanges"]) == 7
+    assert len(body["exchanges"]) == 9

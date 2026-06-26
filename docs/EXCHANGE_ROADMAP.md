@@ -1,6 +1,6 @@
 # Exchange Integration Roadmap
 
-> **Status:** Active (S13–S20) · **Engine:** Native CCXT runner (ADR-0010) · **Human gates:** H-030, H-031, H-032
+> **Status:** Exchange program complete (S13–S20 AGENT) · **Engine:** Native CCXT runner (ADR-0010) · **Human gates:** H-030, H-031, H-032
 > **Related:** [`docs/NATIVE_TRADING.md`](NATIVE_TRADING.md) · [`docs/LOCAL_DEV.md`](LOCAL_DEV.md) · [`BUILD_PLAN.md`](../BUILD_PLAN.md)
 
 ## Goal
@@ -35,9 +35,9 @@ flowchart LR
 | Lane | Technology | Scope |
 |------|------------|--------|
 | **Portfolio** | CCXT `fetch_balance` + tickers | All registry venues (worldwide CCXT CEXs) |
-| **Trading** | Native runner + strategy runtime | Phased: US MVP → all US CEX → worldwide majors |
+| **Trading** | Native runner + strategy runtime | **Complete:** 9 US + worldwide venues (S13–S20) |
 
-Current code hardcodes `kraken` + global `binance`. **S13** fixes US correctness (`binanceus`) and introduces the registry.
+Registry v6 drives portfolio and trading for all nine venues. See [`docs/RUNBOOK.md`](RUNBOOK.md) § Multi-venue trading ops.
 
 ---
 
@@ -48,7 +48,7 @@ Current code hardcodes `kraken` + global `binance`. **S13** fixes US correctness
 | CCXT ID | Brand | Portfolio | Bot trading | Notes |
 |---------|-------|-----------|-------------|-------|
 | `kraken` | Kraken | ✅ | ✅ MVP | USD pairs; rate limits R-001 |
-| `binanceus` | Binance.US | ✅ S13 | 🔲 S15 trading | **Not** `binance.com` for US |
+| `binanceus` | Binance.US | ✅ | ✅ S15 | **Not** `binance.com` for US |
 
 ### Tier B — US portfolio (S13–S14)
 
@@ -56,8 +56,8 @@ Current code hardcodes `kraken` + global `binance`. **S13** fixes US correctness
 |---------|-------|-----------|-------------|
 | `coinbaseadvanced` | Coinbase Advanced | ✅ S14 | ✅ S16 |
 | `gemini` | Gemini | ✅ S14 | ✅ S16 |
-| `bitstamp` | Bitstamp | ✅ S17 | 🔲 S18+ |
-| `cryptocom` | Crypto.com | ✅ S17 | 🔲 S18+ |
+| `bitstamp` | Bitstamp | ✅ S17 | ✅ S19 |
+| `cryptocom` | Crypto.com | ✅ S17 | ✅ S19 |
 
 ### Tier C — Worldwide portfolio + Phase 1 trading (S14 / S18)
 
@@ -67,11 +67,20 @@ Current code hardcodes `kraken` + global `binance`. **S13** fixes US correctness
 | `bybit` | Bybit | ✅ S14 | ✅ S18 P1 |
 | `okx` | OKX | ✅ S14 | ✅ S18 P1 |
 
-Registry v5 sets `worldwide_trading_phase: 1`. Venues flag `us_restricted: true` — live trading requires `WORLDWIDE_TRADING_ACK=1` plus per-exchange go-live.
+Registry v6 sets `worldwide_trading_phase: 2`. Venues flag `us_restricted: true` — live trading requires `WORLDWIDE_TRADING_ACK=1` plus per-exchange go-live.
 
-### Tier D — Worldwide bot trading phases 2–3 (S19–S20, H-032)
+### Tier D — Complete (S19–S20) ✅
 
-Phase 2+: multi-venue arbitrage (informational), additional venues, N-exchange ops hardening.
+Exchange program Tier D deliverables (H-032 still required for **live** worldwide trading):
+
+| Deliverable | Sprint | Status |
+|-------------|--------|--------|
+| Phase 2 US trading (`bitstamp`, `cryptocom`) | S19 | ✅ |
+| Multi-venue arbitrage detector (informational) | S19 | ✅ |
+| N-exchange ops runbook + worldwide ack workflow | S20 | ✅ |
+| CM-6 scale gate (9+ venues sync + trading status) | S20 | ✅ |
+
+Additional worldwide CEX venues beyond the current nine remain **H-032** gated and out of scope until founder approval.
 
 ### Out of scope
 
@@ -121,9 +130,11 @@ BINANCEUS_API_KEY=...
 | **S15** | Native runner US MVP + **CM-1/2/4/7** + FT removal | H-031 |
 | **S16** | All US CEX native trading | H-010 per venue |
 | **S17** | US hardening + CM-3/6 | — |
-| **S18** | **Exchange** | **Worldwide Phase 1 trading (binance/bybit/okx)** | H-032 |
+| **S18** | Worldwide Phase 1 trading (binance/bybit/okx) | H-032 |
+| **S19** | Phase 2 US trading + multi-venue arbitrage | — |
+| **S20** | N-exchange ops hardening (runbook, CM-6 @ 9 venues) | — |
 
-Detailed tasks: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active S19–S20; completed S13–S18).
+Detail: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active DEX S21–S24; exchange S13–S20 complete in [`COMPLETED_TASKS.md`](../COMPLETED_TASKS.md)).
 
 ---
 
@@ -136,7 +147,7 @@ Detailed tasks: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active S19–S20; completed
 | CM-3 | Walk-forward on native backtest | S17 |
 | CM-4 | Remove Freqtrade; port keepers only | S15 |
 | CM-5 | Scope cap S13–S20; H-030 | ongoing |
-| CM-6 | Staggered sync + load test | S14, S17 |
+| CM-6 | Staggered sync + N-exchange load test | S14, S17, S20 |
 | CM-7 | No `withdraw` in `trading/` | S15 |
 
 ---
@@ -158,8 +169,10 @@ Detailed tasks: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active S19–S20; completed
 - [x] `binanceus` replaces global `binance` for US docs and env
 - [x] Native runner dry-run E2E on Kraken + Binance.US (S15+)
 - [x] Freqtrade fully removed (S15 CM-4)
-- [x] Worldwide portfolio sync for ≥9 CCXT venues (S14–S17)
-- [ ] H-030, H-031, H-032 approved (human gates)
+- [x] Worldwide portfolio sync for ≥9 CCXT venues (S14–S20)
+- [x] Phase 2 trading + informational arbitrage (S19)
+- [x] N-exchange ops runbook + CM-6 validation at 9 venues (S20)
+- [ ] H-030, H-031, H-032 approved (human gates — blocks **live** worldwide)
 
 ---
 
@@ -172,4 +185,4 @@ Detailed tasks: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active S19–S20; completed
 | VPS sync load | CM-6 stagger; H-027 monthly |
 | Wrong CCXT ID | Registry + CI grep |
 
-**Recommendation:** Clear human gates (H-030–H-034) per [`docs/HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md); active AGENT lane is **S19** (Phase 2 + arbitrage).
+**Recommendation:** Exchange program AGENT lane complete (S13–S20). Clear H-030–H-034 per [`docs/HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md); next AGENT lane is **S21** DEX foundation (blocked on H-035).

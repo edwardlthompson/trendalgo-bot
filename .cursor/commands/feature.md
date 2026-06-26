@@ -10,4 +10,6 @@ bash scripts/watch-agent-gates.sh --once --autofix --step scaffold
 
 Use `--step tests` or `--step wire` when appropriate. On exit 2, use `/debug` or escalate.
 
+When **every numbered task** in the current sprint is ✅, run @.cursor/commands/cleanup.md (do not leave checked-off sprint blocks on the active board).
+
 Begin now.

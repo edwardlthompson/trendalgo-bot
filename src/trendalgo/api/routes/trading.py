@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from trendalgo.exchanges.pair_normalizer import normalize_pair
 from trendalgo.exchanges.registry import get_entry, list_trading_exchanges, load_registry
+from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
 from trendalgo.strategies.runtime.contract import Candle
 from trendalgo.strategies.runtime.loader import load_strategy
 from trendalgo.trading.multi_exchange import list_supported_exchanges, route_order
@@ -135,3 +136,10 @@ def dry_run_tick(body: DryRunTickBody, request: Request) -> dict[str, Any]:
 @router.get("/trading/adapters")
 def list_adapters() -> dict[str, list[str]]:
     return {"adapters": list_trading_adapter_ids()}
+
+
+@router.get("/trading/arbitrage/signals")
+def trading_arbitrage_signals(request: Request) -> dict[str, Any]:
+    state = request.app.state.trendalgo
+    result = detect_arbitrage_opportunities(dry_run=state.bot.dry_run)
+    return {**result, "trading_lane": True}

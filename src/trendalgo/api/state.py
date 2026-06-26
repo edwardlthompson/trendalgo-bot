@@ -13,6 +13,8 @@ from trendalgo.backtest.library import BacktestLibrary
 from trendalgo.backtest.sharing import BacktestShareStore
 from trendalgo.billing.store import BillingStore
 from trendalgo.bots.orchestrator import BotOrchestrator
+from trendalgo.dex.control import DexVenueControlStore
+from trendalgo.dex.nonce import NonceStore
 from trendalgo.growth.store import GrowthStore
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.risk.config import RiskLimits
@@ -56,6 +58,8 @@ class AppState:
     growth_store: GrowthStore
     exit_rules: ExitRules
     exchange_control: ExchangeControlStore
+    dex_control: DexVenueControlStore
+    dex_nonce_store: NonceStore
     debug_logs: deque[str] = field(default_factory=lambda: deque(maxlen=500))
     last_backtest: dict[str, Any] | None = None
     scanner_scheduler: Any = None
@@ -95,4 +99,6 @@ def default_state() -> AppState:
         growth_store=GrowthStore(_data_dir() / "growth.db"),
         exit_rules=ExitRules(),
         exchange_control=ExchangeControlStore(_data_dir() / "exchange_control.db"),
+        dex_control=DexVenueControlStore(_data_dir() / "dex_control.db"),
+        dex_nonce_store=NonceStore(_data_dir() / "dex_nonces.json"),
     )

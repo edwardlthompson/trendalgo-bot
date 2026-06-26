@@ -19,7 +19,7 @@ You own the stack, the keys, and the data. Dry-run is the default; live trading 
 | **Web dashboard** | Offline-capable PWA for portfolio, bots, billing, scanner, and ops |
 | **Billing** | Performance-based software license with user-initiated settlement only (no Stripe, no custodial fees) |
 | **Alerts** | Telegram notifications for trades, risk events, and daily P/L |
-| **Platform extensions** | On-chain read-only balances, funding-rate display, Postgres dual-write path |
+| **Platform extensions** | On-chain multi-chain wallet read, Uniswap V3 LP, DEX dry-run/live swaps (Base Phase 1) — [DEX roadmap](docs/DEX_ROADMAP.md) |
 
 ## How it is built
 
@@ -27,10 +27,12 @@ You own the stack, the keys, and the data. Dry-run is the default; live trading 
 flowchart LR
   PWA[PWA dashboard] --> API[FastAPI]
   API --> Portfolio[portfolio/*]
+  API --> Venues[venues/* + dex/*]
   API --> Runner[trading/runner]
   API --> Scanner[scanner/*]
   API --> Billing[billing/*]
   Portfolio --> CCXT[CCXT adapters]
+  Venues --> Registry[venues.registry.json]
   Runner --> CCXT
   Runner --> Strategies[strategies/runtime]
 ```
@@ -42,7 +44,7 @@ flowchart LR
 | API | FastAPI + WebSocket |
 | Web UI | Vite + TypeScript PWA — `examples/web/` |
 | Data | SQLite on VPS; optional Postgres dual-write |
-| Exchanges | CCXT — Kraken MVP; US + worldwide rollout per [exchange roadmap](docs/EXCHANGE_ROADMAP.md) |
+| Exchanges | CCXT — 9 CEX venues; DEX via ADR-0011 venue plugins ([DEX roadmap](docs/DEX_ROADMAP.md)) |
 
 Architecture detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · ADRs: [`docs/adr/`](docs/adr/) · Decision log: [`DECISION_LOG.md`](DECISION_LOG.md)
 
@@ -113,10 +115,10 @@ Founder gates: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · Human backlog
 |-------|--------|-------|
 | S0–S12 | Complete | MVP engine, PWA, portfolio, billing, platform extensions |
 | Post-delivery | Active | Founder gates, VPS deploy, go-live |
-| S13–S18 | Complete | Registry, native US + worldwide Phase 1 trading |
-| S19–S20 | Active | Worldwide Phase 2, arbitrage detector, N-exchange ops |
+| S13–S20 | Complete | Registry, native US + worldwide trading, Phase 2, N-exchange ops |
+| S21–S24 | Complete | DEX plugin engine — wallet read, LP, dry-run swaps, live ops (Base Phase 1) |
 
-Active board: [`BUILD_PLAN.md`](BUILD_PLAN.md) · Exchange program: [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md)
+Active board: [`BUILD_PLAN.md`](BUILD_PLAN.md) · Exchange: [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · DEX: [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
 ## License
 

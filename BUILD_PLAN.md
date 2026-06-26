@@ -1,11 +1,11 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 > **Canonical detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
-> **Completed work:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchanges:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md)
+> **Completed work:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchanges:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-## Current sprint: **Exchange Program S19**
+## Current sprint: **Post-Delivery / maintenance**
 
-S0–S12, R-Audit, R-Audit-2, R-Audit-3, and exchange sprints **S13–S18** (AGENT) are complete. **130 tests** · **~86%** coverage.
+S0–S12, R-Audit, R-Audit-2, R-Audit-3, R-Audit-4, exchange sprints **S13–S20**, and DEX **S21–S24** are complete. **170 tests** · **~86%** coverage.
 
 | Marker | State |
 |--------|-------|
@@ -15,51 +15,33 @@ S0–S12, R-Audit, R-Audit-2, R-Audit-3, and exchange sprints **S13–S18** (AGE
 
 **Agent rule:** `[AGENT]` Sequential first · after each step → `bash scripts/watch-agent-gates.sh --once --autofix`
 
-**Human gates** (H-030, H-031, H-032, H-034, go-live, legal): [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) — not duplicated here.
+**Human gates** (H-030–H-036, go-live, legal): [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) — not duplicated here.
 
 ---
 
-## Active — Exchange Program (S19–S20)
+## Completed — DEX Plugin Program (S21–S24)
 
-> **Vision:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **Engine:** ADR-0010 native CCXT · **Trading doc:** [`docs/NATIVE_TRADING.md`](docs/NATIVE_TRADING.md)
+Detail in [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · Roadmap: [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-**Rule:** Max one exchange-program sprint active (CM-5). Each sprint exit requires **LP L1 minimum**; **L2** at close.
+| Sprint | Exit | Status |
+|--------|------|--------|
+| **S21** | Venue plugin engine; EVM + Solana wallet read | ✅ |
+| **S22** | Uniswap V3 LP, 0x quotes, multi-chain sync | ✅ |
+| **S23** | Dry-run swaps (Uniswap V3 + Jupiter) | ✅ |
+| **S24** | Live swaps + ops (Base Phase 1) | ✅ AGENT · H-036 open |
 
-### Sprint 19 — Worldwide Phase 2 + arbitrage (informational)
-
-**Exit:** Phase 2 worldwide venues on native runner; multi-venue arbitrage detector (informational only).
-
-**Blocks:** H-032 (worldwide phase plan — see HUMAN_BACKLOG)
-
-1. 🔲 [AGENT] Phase 2 worldwide venues — registry `worldwide_trading_phase: 2` + `trading_enabled`
-2. 🔲 [AGENT] Multi-venue arbitrage detector (informational; no auto-execution)
-3. 🔲 [AGENT] Tests + API surface for arbitrage signals
-4. 🔲 [AGENT] LP L2 at sprint close
-
-### Sprint 20 — N-exchange ops hardening
-
-**Exit:** Production runbook for N-exchange ops; load/parity gates at scale.
-
-1. 🔲 [AGENT] Runbook: multi-venue trading ops, worldwide ack workflow
-2. 🔲 [AGENT] CM-6 scale validation (9+ venues sync + trading status)
-3. 🔲 [AGENT] Docs sync — EXCHANGE_ROADMAP Tier D closed, BUILD_PLAN archived
-4. 🔲 [AGENT] LP L2 at sprint close
-
-### Critique mitigations (exchange program)
+### DEX program critique mitigations (CM-8–CM-11)
 
 | ID | Sprint | Task summary | Status |
 |----|--------|--------------|--------|
-| CM-1 | S15 | Native backtest adapter + dry-run runner | ✅ |
-| CM-2 | S15–S16 | Strategy runtime contract + template ports | ✅ |
-| CM-3 | S17 | Walk-forward on native backtest | ✅ |
-| CM-4 | S15 | Remove Freqtrade — port keepers, delete rest | ✅ |
-| CM-5 | ongoing | H-030 scope cap; sprint-preflight | 🔲 |
-| CM-6 | S14, S17 | Staggered sync + load test | ✅ |
-| CM-7 | S15 | No `withdraw` in `trading/runner/` | ✅ |
+| CM-8 | S21 | Plugin registry; no hardcoded chain logic in API | ✅ |
+| CM-9 | S23–S24 | No raw key in code/logs; signer env-only on VPS | ✅ |
+| CM-10 | S23 | Dry-run default; live requires H-036 + per-venue ack | ✅ |
+| CM-11 | S24 | No `transfer`/withdraw helpers in `dex/runner/` | ✅ |
 
 ---
 
-## Completed — Exchange Program (S13–S18)
+## Completed — Exchange Program (S13–S20)
 
 Detail in [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 
@@ -71,9 +53,22 @@ Detail in [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 | **S16** | All US CEX native trading; billing attribution by exchange | ✅ |
 | **S17** | Bitstamp + Crypto.com portfolio; walk-forward; load test | ✅ |
 | **S18** | Worldwide Phase 1 trading (binance, bybit, okx); `worldwide_trading_phase: 1` | ✅ AGENT · H-032 open |
+| **S19** | Phase 2 (bitstamp/cryptocom trading); multi-venue arbitrage; `worldwide_trading_phase: 2` | ✅ AGENT · H-032 open |
+| **S20** | N-exchange ops runbook; CM-6 @ 9 venues; Tier D closed | ✅ AGENT · H-032 open |
 
-**Trading venues (7):** kraken, binanceus, coinbaseadvanced, gemini, binance, bybit, okx  
-**Portfolio-only (2):** bitstamp, cryptocom
+**Trading venues (9):** kraken, binanceus, coinbaseadvanced, gemini, bitstamp, cryptocom, binance, bybit, okx
+
+### Exchange program critique mitigations (CM-1–CM-7)
+
+| ID | Sprint | Task summary | Status |
+|----|--------|--------------|--------|
+| CM-1 | S15 | Native backtest adapter + dry-run runner | ✅ |
+| CM-2 | S15–S16 | Strategy runtime contract + template ports | ✅ |
+| CM-3 | S17 | Walk-forward on native backtest | ✅ |
+| CM-4 | S15 | Remove Freqtrade — port keepers, delete rest | ✅ |
+| CM-5 | ongoing | H-030 scope cap; sprint-preflight | 🔲 |
+| CM-6 | S14, S17, S20 | Staggered sync + N-exchange load test | ✅ |
+| CM-7 | S15 | No `withdraw` in `trading/runner/` | ✅ |
 
 ---
 
@@ -89,6 +84,7 @@ Founder gates, VPS deploy, and recurring controls — full checklist: [`docs/POS
 | VPS + secrets (H-004, H-008, H-011) | HUMAN | 🔲 |
 | Go-live (H-010, H-028) | HUMAN | 🔲 per exchange |
 | Exchange gates (H-030, H-031, H-032, H-034) | HUMAN | 🔲 see HUMAN_BACKLOG |
+| DEX gates (H-035, H-036) | HUMAN | 🔲 see HUMAN_BACKLOG |
 | Risk Register Zero | AUTO | ✅ |
 | Scope-gate preflights H-013–H-025 | AGENT | ✅ |
 
@@ -107,7 +103,7 @@ Run before S13+ commits touching `examples/web/` or `src/trendalgo/api/`.
 1. ✅ [AGENT] `docs/LOCAL_DEV.md` + `dev-local` / `preview-local` scripts
 2. ✅ [AGENT] Docker dev API port aligned to **8000** (Vite proxy)
 3. ✅ [AUTO] LP checklist in PR template (S13+ UI/API)
-4. 🔲 [AGENT] End-of-sprint L2 (S19 close)
+4. ✅ [AGENT] End-of-sprint L2 (S20 close)
 
 ---
 
@@ -119,6 +115,8 @@ Run before S13+ commits touching `examples/web/` or `src/trendalgo/api/`.
 | `python scripts/founder_gate.py preflight H-031` | ADR-0010 present |
 | `python scripts/founder_gate.py preflight H-032` | Worldwide phase registry |
 | `python scripts/founder_gate.py preflight H-034` | LOCAL_DEV + dev scripts |
+| `python scripts/founder_gate.py preflight H-035` | DEX program scope (S21–S24 incl. S23 dry-run) |
+| `python scripts/founder_gate.py preflight H-036` | DEX live trading (hard) |
 | `python scripts/founder_gate.py approve-all-soft` | Batch soft gates |
 | `bash scripts/sprint-preflight.sh --sprint N` | Sprint N scope (13+) |
 | `scripts/dev-local.ps1` | L1 preview |
@@ -147,6 +145,7 @@ Commands: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python scripts/fo
 | Cost | Production **< $10/mo** (Oracle free → Hetzner ~$5–8) |
 | Hosting | **Never** live/production on local PR hardware (ADR-0002) |
 | Engine | **Native CCXT runner** (ADR-0010) — Freqtrade removed S15 CM-4 |
+| DEX | **Venue plugin engine** (ADR-0011) — S21+; signer env on VPS |
 | Monetization | Calculation-only license; user-initiated settlement (ADR-0008) |
 | Rejected | Community marketplace, hosted SaaS, Stripe, auto-withdraw, Freqtrade legacy mode |
 
@@ -158,6 +157,7 @@ Commands: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python scripts/fo
 |-----|-------|
 | 0001 | Freqtrade engine (superseded by 0010) |
 | **0010** | **Native CCXT engine** |
+| **0011** | **DEX venue plugin engine** (S21) |
 | 0002 | External VPS hosting |
 | 0004 | CoinStats replacement portfolio |
 | 0005–0008 | Performance license, legal-safe monetization |
@@ -186,6 +186,7 @@ Detailed task lists for S0–S12 and R-Audit: [`COMPLETED_TASKS.md`](COMPLETED_T
 | 11 | Growth | AI recommender + anonymous referral | ✅ |
 | 12 | Platform | On-chain, forager, Postgres path, **Risk Register Zero** | ✅ |
 | R-Audit-3 | Review | Doc sync post S18 (README, THREAT_MODEL, KB-009) | ✅ |
+| R-Audit-4 | Review | Doc sync post DEX S21–S24 (README, POST_DELIVERY, KB-011) | ✅ |
 | R-Audit-2 | Review | Doc sync post exchange program | ✅ |
 | R-Audit | Review | README, CORS, KB, archived table | ✅ |
 | **S13** | Exchange | Registry, Kraken + Binance.US portfolio | ✅ |
@@ -194,7 +195,12 @@ Detailed task lists for S0–S12 and R-Audit: [`COMPLETED_TASKS.md`](COMPLETED_T
 | **S16** | Exchange | All US CEX native trading | ✅ |
 | **S17** | Exchange | US hardening (Bitstamp, Crypto.com, CM-3/6) | ✅ |
 | **S18** | Exchange | Worldwide Phase 1 (binance, bybit, okx) | ✅ |
-| **S19–S20** | Exchange | Phase 2 + arbitrage + N-exchange ops | 🔲 |
+| **S19** | Exchange | Phase 2 + arbitrage (bitstamp/cryptocom, multi-venue signals) | ✅ |
+| **S20** | Exchange | N-exchange ops hardening | ✅ |
+| **S21** | DEX | Venue plugin engine; EVM + Solana wallet read | ✅ |
+| **S22** | DEX | Uniswap V3 LP, 0x quotes, multi-chain sync | ✅ |
+| **S23** | DEX | Dry-run swaps (Uniswap V3 + Jupiter) | ✅ |
+| **S24** | DEX | Live swaps + ops | ✅ AGENT · H-036 open |
 
 ---
 
@@ -214,6 +220,9 @@ Full matrix: [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md) · [`docs/POST_DEL
 | Local preview | S13+ commits | H-034 |
 | Legal review | Public beta | H-006, H-023 |
 | Go-live | Every live enable | H-010, H-028 |
+| DEX program scope (incl. S23 dry-run swaps) | Before S21 | H-035 |
+| DEX live swap trading | Before S24 live | H-036 |
+| RPC endpoints | Before S21 | H-025 |
 
 ---
 
@@ -244,9 +253,15 @@ Full matrix: [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md) · [`docs/POST_DEL
 
 | Sprint | Closed | Archive |
 |--------|--------|---------|
+| R-Audit-4 | 2026-06-26 | post DEX program doc sync |
+| DEX S24 | 2026-06-26 | Live swaps + ops (Base Phase 1) |
+| DEX S23 | 2026-06-26 | Dry-run swaps |
+| DEX S22 | 2026-06-26 | Portfolio plugins |
+| DEX S21 | 2026-06-26 | Foundation (EVM + Solana wallet read) |
 | Post-Delivery | 🔲 open | [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) |
-| Exchange S19–S20 | 🔲 planned | this section (active above) |
-| Exchange S18 | 2026-06-25 | Worldwide Phase 1 trading |
+| Exchange S20 | 2026-06-26 | N-exchange ops runbook, CM-6 @ 9 venues, Tier D closed |
+| Exchange S19 | 2026-06-26 | Phase 2 trading, multi-venue arbitrage |
+| Exchange S18 | 2026-06-26 | Worldwide Phase 1 trading |
 | Exchange S17 | 2026-06-25 | Bitstamp/Crypto.com, walk-forward, load test |
 | Exchange S16 | 2026-06-25 | US CEX native trading |
 | Exchange S15 | 2026-06-25 | Native runner, FT removal |

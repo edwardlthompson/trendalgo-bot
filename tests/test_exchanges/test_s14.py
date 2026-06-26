@@ -18,7 +18,7 @@ from trendalgo.portfolio.db import PortfolioStore
 
 def test_registry_s14_portfolio_venues() -> None:
     registry = load_registry()
-    assert registry.version == 5
+    assert registry.version == 6
     portfolio_ids = {e.id for e in list_portfolio_exchanges()}
     assert portfolio_ids == {
         "kraken",
@@ -62,7 +62,7 @@ def test_generic_coinbase_gemini_dry_run(tmp_path: Path) -> None:
 def test_sync_all_nine_exchanges(tmp_path: Path) -> None:
     store = PortfolioStore(tmp_path / "portfolio.db")
     result = sync_all_exchanges(store, dry_run=True)
-    assert result["registry_version"] == 5
+    assert result["registry_version"] == 6
     assert result["staggered"] is True
     assert result["exchange_count"] == 9
     assert result["coinbaseadvanced"]["mode"] == "dry-run"

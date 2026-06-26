@@ -16,7 +16,13 @@ def test_worldwide_phase1_trading_enabled() -> None:
     supported = list_supported_exchanges()
     for ex in ("binance", "bybit", "okx"):
         assert ex in supported
-    assert len(supported) == 7
+    assert len(supported) == 9
+
+
+def test_phase2_tier_b_trading_enabled() -> None:
+    supported = list_supported_exchanges()
+    for ex in ("bitstamp", "cryptocom"):
+        assert ex in supported
 
 
 def test_coinbase_adapter_simulates_order() -> None:

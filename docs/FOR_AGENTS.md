@@ -33,7 +33,7 @@ Every task row in `BUILD_PLAN.md` and checklist in module docs, PR template, and
 | Marker | State |
 |--------|-------|
 | 🔲 | Open — default for new tasks |
-| ✅ | Done — swap 🔲 when complete; archive sprint to `COMPLETED_TASKS.md` |
+| ✅ | Done — swap 🔲 when complete; run `/cleanup` or `python scripts/archive-build-plan-sprint.py` |
 | ❌ | Blocked — swap 🔲 and append reason |
 
 **Format:** `🔲 Description` (or `🔲 [OWNER] Description` on BUILD_PLAN) · do not use `- [ ]` GitHub checkboxes.

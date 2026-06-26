@@ -1,5 +1,5 @@
 {
-  "template_version": "0.11.1",
+  "template_version": "0.2.0",
   "entry_points": {
     "bootstrap": "docs/START_HERE.md",
     "reference": "docs/FOR_AGENTS.md",
@@ -277,7 +277,7 @@
     },
     {
       "path": ".github/workflows/dependency-review.yml",
-      "purpose": "PR dependency review \u2014 fail on new High/Critical vulnerabilities",
+      "purpose": "PR dependency review — fail on new High/Critical vulnerabilities",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
@@ -669,7 +669,7 @@
     },
     {
       "path": "scripts/founder-gate.sh",
-      "purpose": "TrendAlgo founder gate CLI wrapper (H-001\u2013H-029)",
+      "purpose": "TrendAlgo founder gate CLI wrapper (H-001–H-029)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -704,7 +704,7 @@
     },
     {
       "path": "scripts/founder_gate.py",
-      "purpose": "Founder gate CLI (H-001\u2013H-029 preflight, approve, backlog)",
+      "purpose": "Founder gate CLI (H-001–H-029 preflight, approve, backlog)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -760,7 +760,7 @@
     },
     {
       "path": "scripts/check-api-key-policy.sh",
-      "purpose": "API key policy \u2014 no Withdraw permission (R-009)",
+      "purpose": "API key policy — no Withdraw permission (R-009)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -1074,6 +1074,139 @@
       "owner": "maintainer"
     },
     {
+      "path": "scripts/backup-restore.sh",
+      "purpose": "TrendAlgo ops: backup restore",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/check-copy-compliance.sh",
+      "purpose": "TrendAlgo ops: check copy compliance",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/check-hosting-eligibility.sh",
+      "purpose": "TrendAlgo ops: check hosting eligibility",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/check-production-cost.sh",
+      "purpose": "TrendAlgo ops: check production cost",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/check_scanner_imports.sh",
+      "purpose": "TrendAlgo ops: check scanner imports",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/close-risk.sh",
+      "purpose": "TrendAlgo ops: close risk",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/compare-portfolio-parity.sh",
+      "purpose": "TrendAlgo ops: compare portfolio parity",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/deploy-vps.sh",
+      "purpose": "TrendAlgo ops: deploy vps",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/dev-local.sh",
+      "purpose": "TrendAlgo ops: dev local",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/generate-legal-review-packet.sh",
+      "purpose": "TrendAlgo ops: generate legal review packet",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/go-live-gate.sh",
+      "purpose": "TrendAlgo ops: go live gate",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/health-check-cron.sh",
+      "purpose": "TrendAlgo ops: health check cron",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/load-test-portfolio-sync.sh",
+      "purpose": "TrendAlgo ops: load test portfolio sync",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/lts-parity-check.sh",
+      "purpose": "TrendAlgo ops: lts parity check",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/postgres-migrate-dry-run.sh",
+      "purpose": "TrendAlgo ops: postgres migrate dry run",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/preview-local.sh",
+      "purpose": "TrendAlgo ops: preview local",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/setup-trendalgo-repo.sh",
+      "purpose": "TrendAlgo ops: setup trendalgo repo",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/sprint-preflight.sh",
+      "purpose": "TrendAlgo ops: sprint preflight",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
+      "path": "scripts/archive-build-plan-sprint.py",
+      "purpose": "TrendAlgo ops: archive build plan sprint",
+      "read_when": "contributing",
+      "update_when": "milestone_boundary",
+      "owner": "human+agent"
+    },
+    {
       "path": ".github/workflows/ci.yml",
       "purpose": "Primary CI matrix: lint, test, build, hygiene, feature gate",
       "read_when": "release",
@@ -1108,7 +1241,7 @@
     }
   },
   "roadmap": {
-    "active": "BUILD_PLAN.md \u2014 maintenance + human open items",
+    "active": "BUILD_PLAN.md — maintenance + human open items",
     "completed_archive": "COMPLETED_TASKS.md",
     "batch_commands": [
       ".cursor/commands/audit.md",

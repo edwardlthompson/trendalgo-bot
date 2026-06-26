@@ -2,6 +2,89 @@
 
 > Archive of finished BUILD_PLAN items.
 
+
+
+
+
+
+
+
+
+
+
+## Sprint R-Audit-4 — post DEX program doc sync (2026-06-26)
+
+
+- **Exit:** Secondary docs reflect S21–S24 completion; KB-011 for Windows gate fallbacks.
+
+
+- 1. ✅ [AGENT] README — DEX capabilities + roadmap S21–S24 (F-041, F-044, F-045)
+- 2. ✅ [AGENT] POST_DELIVERY + ROADMAP_PUBLIC Phase 8 (F-042, F-043)
+- 3. ✅ [AGENT] BUILD_PLAN post-delivery + HUMAN_BACKLOG H-035/H-036 (F-046, F-047)
+- 4. ✅ [AGENT] KB-011 audit notes + test count sync (F-048)
+
+
+## Sprint 24 — Live swaps + ops (2026-06-26)
+
+
+- **Exit:** Per-venue go-live with hard gate.
+
+- **Blocks:** H-036 (DEX live trading hard gate) · H-010 / H-028 per venue
+
+- 1. ✅ [AGENT] Live swap execution behind per-venue `trading_enabled` in venues registry
+- 2. ✅ [AGENT] Signer from **`DEX_SIGNER_KEY`** on VPS only (CM-9)
+- 3. ✅ [AGENT] Runbook: RPC failover, nonce management, slippage controls
+- 4. ✅ [AGENT] CM-6-style multi-chain sync load test + docs sync + LP L2
+
+## Sprint 23 — Dry-run swaps (2026-06-26)
+
+
+- **Exit:** Swap simulation only — no mainnet broadcast. Covered by **H-035** program approval.
+
+- 1. ✅ [AGENT] `dex/runner/dry_run.py`
+- 2. ✅ [AGENT] Uniswap V3 swap plugin (EVM) + Jupiter quote/dry-run (Solana)
+- 3. ✅ [AGENT] `DEX_TRADING_ACK` env gate (mirrors `WORLDWIDE_TRADING_ACK`)
+- 4. ✅ [AGENT] API `/platform/dex/preview` + `/platform/dex/dry-run` + tests + LP L2
+
+## Sprint 22 — Portfolio plugins (2026-06-26)
+
+
+- **Exit:** DEX positions surfaced in portfolio API.
+
+- 1. ✅ [AGENT] Uniswap V3 LP positions (EVM chains)
+- 2. ✅ [AGENT] 0x quote preview (read-only)
+- 3. ✅ [AGENT] Multi-chain sync orchestration + billing attribution by venue
+- 4. ✅ [AGENT] Tests + LP L2
+
+## Sprint 21 — Foundation (EVM + Solana wallet read) (2026-06-26)
+
+
+- **Exit:** Multi-chain wallet balances via plugin registry; refactor S12 `onchain.py` stub.
+
+- **Blocks:** H-035 (DEX program scope) · H-025 (RPC endpoints)
+
+- 1. ✅ [AGENT] `config/venues.registry.json` + `src/trendalgo/venues/` (base, registry loader, plugin ABC)
+- 2. ✅ [AGENT] ADR-0011 + refactor `portfolio/onchain.py` → EVM plugins (**ethereum, base, arbitrum**) + **Solana** wallet read
+- 3. ✅ [AGENT] RPC config via env (`ETH_RPC_URL`, `BASE_RPC_URL`, `ARB_RPC_URL`, `SOLANA_RPC_URL`)
+- 4. ✅ [AGENT] Tests + LP L1
+
+## Sprint 20 — N-Exchange Ops Hardening (2026-06-26)
+
+- ✅ RUNBOOK § Multi-venue trading ops (Phase 2, 9 venues, worldwide ack workflow)
+- ✅ CM-6: `run_n_exchange_ops_validation()` — 9+ portfolio sync + trading status gate
+- ✅ `scripts/load-test-portfolio-sync.sh` runs combined N-exchange ops check
+- ✅ EXCHANGE_ROADMAP Tier D closed; exchange program docs synced
+- ✅ 141 tests pass; L2 sign-off (tests + encoding + load script)
+- 🔲 Human: H-032 worldwide phase approval for live trading; L2 web preview on founder machine
+
+## Sprint 19 — Phase 2 + Multi-Venue Arbitrage (2026-06-26)
+
+- ✅ Registry v6 — `worldwide_trading_phase: 2`; `trading_enabled` for Bitstamp + Crypto.com
+- ✅ Multi-venue arbitrage detector (registry-driven, informational only)
+- ✅ `GET /api/v1/trading/arbitrage/signals` trading-lane API
+- ✅ 136 tests pass; L2 sign-off (tests + encoding)
+- 🔲 Human: H-032 worldwide phase plan approval; L2 web build (`preview-local.ps1`) on founder machine
+
 ## Review R-Audit-3 — Post–S18 doc sync (2026-06-25)
 
 - ✅ `CODE_REVIEW.md` written (local, gitignored) — F-021–F-032

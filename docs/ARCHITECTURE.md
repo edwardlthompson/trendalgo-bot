@@ -56,7 +56,8 @@ flowchart TB
 
 ## Platform extensions (Sprint 12)
 
-- **On-chain sync** (`portfolio/onchain.py`) — read-only EVM wallet balances via public RPC or dry-run; no paid indexers.
+- **On-chain sync** (`portfolio/onchain.py` → `venues/` plugins, ADR-0011) — multi-chain wallet read + Uniswap V3 LP; 0x quote preview; staggered sync with venue billing attribution.
+- **DEX swaps** (`dex/runner/`, ADR-0011) — dry-run + live (Base Phase 1); `DEX_SIGNER_KEY` on VPS; `DEX_LIVE_TRADING_ACK` gate (H-036).
 - **Pair forager** (`scanner/forager.py`) — ranks Kraken-listed pairs by volume + momentum heuristics.
 - **Funding rates** (`trading/funding.py`) — perpetual funding display and profit estimate hooks (informational).
 - **Unified trading** (`trading/multi_exchange.py`) — routes orders to exchange adapters; dry-run unless `GO_LIVE_APPROVED=1`.
