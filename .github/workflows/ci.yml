@@ -120,17 +120,10 @@ jobs:
       - name: Install web dependencies
         working-directory: examples/web
         run: npm ci
-      - name: Install node example dependencies
-        if: ${{ hashFiles('examples/node/package.json') != '' }}
-        working-directory: examples/node
-        run: npm ci
       - name: Sync python example
         if: ${{ hashFiles('examples/python/pyproject.toml') != '' }}
         working-directory: examples/python
         run: uv sync --locked --extra dev
-      - name: Prepare Android wrapper
-        if: ${{ hashFiles('examples/android/gradlew') != '' }}
-        run: chmod +x examples/android/gradlew
       - name: Run feature gate (strict multi-stack)
         run: bash scripts/feature-gate.sh --stack multi --strict --json
 
@@ -248,109 +241,11 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: bash scripts/check-license-compliance.sh python
 
-  node:
-    name: Node - Lint, Test
-    runs-on: ubuntu-latest
-    if: ${{ hashFiles('examples/node/package.json') != '' }}
-    defaults:
-      run:
-        working-directory: examples/node
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: examples/node/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - name: Upload node coverage
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-node
-          path: examples/node/coverage/coverage-summary.json
-          if-no-files-found: ignore
-      - name: License compliance (node)
-        working-directory: ${{ github.workspace }}
-        run: bash scripts/check-license-compliance.sh node
-
-  android-structure:
-    name: Android - Structure Validation
-    runs-on: ubuntu-latest
-    if: ${{ hashFiles('examples/android/settings.gradle.kts') != '' }}
-    steps:
-      - uses: actions/checkout@v6
-      - name: Validate FOSS compliance markers
-        run: |
-          if grep -rE "com\.google\.android\.gms|firebase" \
-              examples/android \
-              --include="*.gradle" --include="*.gradle.kts" --include="*.toml" \
-              --include="*.kt" --include="*.kts" --include="*.xml" \
-              | grep -vE '//|/\*|<!--'; then
-            echo "ERROR: Proprietary SDK references found"
-            exit 1
-          fi
-          echo "FOSS compliance check passed"
-      - name: Validate Gradle structure
-        run: |
-          test -f examples/android/settings.gradle.kts
-          test -f examples/android/app/build.gradle.kts
-          test -f examples/android/gradle/wrapper/gradle-wrapper.properties
-          test -f examples/android/gradlew
-          test -f examples/android/gradle/wrapper/gradle-wrapper.jar
-          test -f examples/android/gradle.properties
-          grep -q "SOURCE_DATE_EPOCH" examples/android/README.md
-
-  android-build:
-    name: Android - assembleDebug
-    runs-on: ubuntu-latest
-    if: ${{ hashFiles('examples/android/settings.gradle.kts') != '' }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-      - uses: android-actions/setup-android@v4
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses
-      - name: assembleDebug
-        working-directory: examples/android
-        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
-
-  android-instrumented:
-    name: Android - connectedDebugAndroidTest
-    runs-on: ubuntu-latest
-    needs: path-changes
-    if: needs.path-changes.outputs.android == 'true'
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-      - name: Enable KVM for emulator
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: Run instrumented smoke test
-        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
-        with:
-          api-level: 34
-          arch: x86_64
-          target: default
-          disable-animations: true
-          script: cd examples/android && chmod +x gradlew && ./gradlew connectedDebugAndroidTest --no-daemon
-
   coverage-comment:
     name: PR Coverage Summary
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    needs: [web, python, node]
+    needs: [web, python]
     permissions:
       pull-requests: write
     steps:
@@ -441,53 +336,6 @@ jobs:
       - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v5.5.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  android-release:
-    name: Android - assembleRelease
-    runs-on: ubuntu-latest
-    if: ${{ hashFiles('examples/android/settings.gradle.kts') != '' }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-      - uses: android-actions/setup-android@v4
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses
-      - name: FOSS compliance grep
-        run: |
-          if grep -rE "com\.google\.android\.gms|firebase" \
-              examples/android \
-              --include="*.gradle" --include="*.gradle.kts" --include="*.toml" \
-              --include="*.kt" --include="*.kts" --include="*.xml" \
-              | grep -vE '//|/\*|<!--'; then
-            echo "ERROR: Proprietary SDK references found"
-            exit 1
-          fi
-      - name: assembleRelease with SOURCE_DATE_EPOCH
-        working-directory: examples/android
-        env:
-          SOURCE_DATE_EPOCH: "1700000000"
-        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
-      - name: Compare APK hashes (flake tolerance)
-        working-directory: examples/android
-        env:
-          SOURCE_DATE_EPOCH: "1700000000"
-        run: |
-          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
-          HASH1=$(sha256sum "$APK" | awk '{print $1}')
-          ./gradlew clean assembleRelease --no-daemon -q
-          APK2=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
-          HASH2=$(sha256sum "$APK2" | awk '{print $1}')
-          if [ "$HASH1" != "$HASH2" ]; then
-            echo "FAIL: APK hashes differ between builds (reproducibility regression)"
-            echo "  Run 1: $HASH1"
-            echo "  Run 2: $HASH2"
-            exit 1
-          else
-            echo "OK   Reproducible APK hash: $HASH1"
-          fi
 
   lightroom:
     name: Lightroom - SDK Namespace Check

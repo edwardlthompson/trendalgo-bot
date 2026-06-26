@@ -56,6 +56,12 @@
 
 **Fix:** R-Audit-3 synced README, POST_DELIVERY_PLAN, EXCHANGE_ROADMAP success criteria, THREAT_MODEL, LOCAL_DEV, ROADMAP_PUBLIC. Use `python scripts/run-trendalgo-tests.py`, `python scripts/founder_gate.py status`. Clear **H-030–H-034** via [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) before live worldwide trading. Enable Dependabot in GitHub settings.
 
+## KB-010 — v0.1.0 ship (2026-06-25)
+
+**Symptom:** `/ship` on Windows; pre-release gate needs bash + optional npm; CI must pass post-push.
+
+**Fix:** Pushed `chore(release): prepare v0.1.0` to `main`. Follow-up CI commits fix ruff + workflow (web/python only). Re-run `bash scripts/check-github-ci.sh --wait 600` after CI green. Enable Dependabot alerts; merge Release Please PR for tag.
+
 ## Template KB entries
 
 Legacy template entries (KB-007+) remain in git history; TrendAlgo-specific entries start at KB-001 above.
