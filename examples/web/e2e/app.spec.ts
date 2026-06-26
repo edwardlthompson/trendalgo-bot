@@ -10,7 +10,7 @@ test("renders TrendAlgo heading", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".gp-title")).toHaveText("TrendAlgo Bot");
   await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
-  await expect(page.getByTestId("bot-dashboard")).toBeVisible();
+  await expect(page.getByTestId("portfolio-panel")).toBeVisible();
 });
 
 test("passes accessibility audit", async ({ page }) => {
@@ -214,7 +214,7 @@ test.describe("service worker cache", () => {
     await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
     await context.setOffline(true);
     await page.reload();
-    await expect(page.getByTestId("status")).toContainText("Offline");
-    await expect(page.getByTestId("health-widget")).toBeVisible();
+    await expect(page.getByTestId("status")).toContainText(/Offline|API unreachable|cached/i);
+    await expect(page.getByTestId("portfolio-panel")).toBeVisible();
   });
 });

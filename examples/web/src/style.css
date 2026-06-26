@@ -232,12 +232,18 @@ main {
 }
 
 .gp-btn-primary,
+.gp-btn-secondary,
 .gp-btn-danger {
   padding: var(--gp-space-sm) var(--gp-space-md);
   border-radius: var(--gp-radius-md);
   border: 1px solid var(--gp-color-outline);
   cursor: pointer;
   font: inherit;
+}
+
+.gp-btn-secondary {
+  background: var(--gp-color-surface-variant);
+  color: var(--gp-color-on-surface-variant);
 }
 
 .gp-btn-primary {
@@ -361,8 +367,12 @@ main {
 .gp-heatmap-cell {
   padding: var(--gp-space-sm);
   border-radius: var(--gp-radius-sm);
-  color: var(--gp-color-on-primary);
+  color: var(--gp-color-on-primary-container);
   font-size: var(--gp-text-body-small-size);
+}
+
+.gp-heatmap-cell.gp-heatmap-negative {
+  color: var(--gp-color-on-surface-variant);
 }
 
 .gp-timeline-range {

@@ -13,11 +13,11 @@ export function createHeatmap(rows: HeatmapRow[]): HTMLElement {
     const cell = document.createElement("div");
     const intensity = Math.min(Math.abs(row.return_pct) / 10, 1);
     const positive = row.return_pct >= 0;
-    cell.className = "gp-heatmap-cell";
-    cell.style.opacity = String(0.4 + intensity * 0.6);
+    cell.className = positive ? "gp-heatmap-cell" : "gp-heatmap-cell gp-heatmap-negative";
+    cell.style.opacity = String(0.85 + intensity * 0.15);
     cell.style.background = positive
-      ? "var(--gp-color-primary)"
-      : "var(--gp-color-error)";
+      ? "var(--gp-color-primary-container)"
+      : "var(--gp-color-surface-variant)";
     cell.innerHTML = `<strong>${row.asset}</strong><br>${row.return_pct.toFixed(1)}%`;
     grid.appendChild(cell);
   }
