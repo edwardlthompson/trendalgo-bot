@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,7 @@ from trendalgo.billing.schema import BILLING_SCHEMA, CURRENT_TERMS_VERSION, DEFA
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 class BillingStore:
@@ -29,7 +29,9 @@ class BillingStore:
     def _migrate(self, conn: sqlite3.Connection) -> None:
         cols = {row[1] for row in conn.execute("PRAGMA table_info(fee_ledger_entries)").fetchall()}
         if cols and "exchange" not in cols:
-            conn.execute("ALTER TABLE fee_ledger_entries ADD COLUMN exchange TEXT NOT NULL DEFAULT ''")
+            conn.execute(
+                "ALTER TABLE fee_ledger_entries ADD COLUMN exchange TEXT NOT NULL DEFAULT ''"
+            )
         if cols and "bot_id" not in cols:
             conn.execute("ALTER TABLE fee_ledger_entries ADD COLUMN bot_id INTEGER")
 
@@ -183,7 +185,9 @@ class BillingStore:
 
     def get_statement(self, period: str) -> dict[str, Any] | None:
         with self._connect() as conn:
-            row = conn.execute("SELECT * FROM license_statements WHERE period = ?", (period,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM license_statements WHERE period = ?", (period,)
+            ).fetchone()
             if row is None:
                 return None
             items = conn.execute(
@@ -228,7 +232,9 @@ class BillingStore:
 
     def get_carry_forward_credit(self) -> float:
         with self._connect() as conn:
-            row = conn.execute("SELECT credit_usd FROM carry_forward_credits WHERE id = 1").fetchone()
+            row = conn.execute(
+                "SELECT credit_usd FROM carry_forward_credits WHERE id = 1"
+            ).fetchone()
             return float(row["credit_usd"]) if row else 0.0
 
     def set_carry_forward_credit(self, credit_usd: float) -> None:

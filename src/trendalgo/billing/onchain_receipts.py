@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -27,7 +27,7 @@ def issue_fee_receipt(
         "chain": chain,
         "verification_hash": digest,
         "settlement_path": "manual_onchain_optional",
-        "issued_at": datetime.now(timezone.utc).isoformat(),
+        "issued_at": datetime.now(UTC).isoformat(),
         "verifiable": True,
     }
 

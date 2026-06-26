@@ -1,8 +1,8 @@
 from pathlib import Path
 
+from trendalgo.api.backtest_runner import run_sample_backtest
 from trendalgo.backtest.library import BacktestLibrary
 from trendalgo.backtest.slippage import apply_slippage
-from trendalgo.api.backtest_runner import run_sample_backtest
 from trendalgo.bots.orchestrator import BotOrchestrator
 from trendalgo.risk.sizing import atr_stake_size
 from trendalgo.signals.generic import GenericSignalWebhook
@@ -69,7 +69,9 @@ def test_market_event_and_attribution() -> None:
     assert evt and evt["type"] == "price_move"
     attr = attribute_signals({"profit_total": 100})
     assert attr["lts_contribution_usd"] > 0
-    cmp = compare_runs([{"id": 1, "metrics": {"sharpe_ratio": 1}}, {"id": 2, "metrics": {"sharpe_ratio": 2}}])
+    cmp = compare_runs(
+        [{"id": 1, "metrics": {"sharpe_ratio": 1}}, {"id": 2, "metrics": {"sharpe_ratio": 2}}]
+    )
     assert cmp["winner"] == 2
     job = trigger_hyperopt("smart-dca", "BTC/USD")
     assert job["status"] == "queued"

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Normalize markdown whitespace: strip trailing space, max one blank line between blocks."""
+
 from __future__ import annotations
 
 import sys

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run trendalgo unit tests (Windows-friendly)."""
+
 from __future__ import annotations
 
 import subprocess
@@ -14,7 +15,17 @@ def main() -> int:
         import pytest  # noqa: F401
     except ImportError:
         subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-q", "pytest", "pytest-cov", "pydantic", "pandas"]
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-q",
+                "pytest",
+                "pytest-cov",
+                "pydantic",
+                "pandas",
+            ]
         )
     return subprocess.call([sys.executable, "-m", "pytest", "-q", "tests"], cwd=ROOT)
 

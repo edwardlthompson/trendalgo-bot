@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Sync AGENT_MEMORY module markers, emit stack-selection.json, prune TEMPLATE_INDEX."""
+
 from __future__ import annotations
 
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 MODULE_LINES = {
@@ -96,7 +97,7 @@ def write_stack_selection(root: Path, stack: str, pruned: bool) -> None:
         "pruned": pruned,
         "active_modules": modules,
         "parallel_scope_note": PARALLEL_NOTES.get(stack, PARALLEL_NOTES["none"]),
-        "selected_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "selected_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
     }
     (cursor_dir / "stack-selection.json").write_text(
         json.dumps(payload, indent=2) + "\n", encoding="utf-8"

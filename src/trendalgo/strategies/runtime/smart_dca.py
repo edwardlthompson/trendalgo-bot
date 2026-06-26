@@ -34,8 +34,15 @@ class SmartDCAStrategy(BaseNativeStrategy, RiskGuardMixin):
         capped = min(
             self.dca_amount_usd,
             self.risk_custom_stake_amount(
-                ctx.pair, None, float(row["close"]), self.dca_amount_usd,
-                None, None, 1, None, "long",
+                ctx.pair,
+                None,
+                float(row["close"]),
+                self.dca_amount_usd,
+                None,
+                None,
+                1,
+                None,
+                "long",
             ),
         )
         if capped <= 0:

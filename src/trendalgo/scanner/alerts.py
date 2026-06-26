@@ -22,5 +22,5 @@ def emit_alerts_for_snapshot(store: ScannerStore, snapshot: QualifiedSnapshot) -
         store.log_alert(
             tier,
             opp.pair,
-            f"{opp.pair} uniformity={opp.uniformity:.2f} gain={opp.gain_pct*100:.1f}%",
+            f"{opp.pair} uniformity={opp.uniformity:.2f} gain={opp.gain_pct * 100:.1f}%",
         )

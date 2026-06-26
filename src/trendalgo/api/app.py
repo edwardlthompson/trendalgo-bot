@@ -2,31 +2,31 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 import os
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from trendalgo.api.routes import (
+    ai_growth,
     backtest,
     backtest_library,
-    ai_growth,
     billing,
     bots,
     dashboard,
     debug,
+    exchanges,
+    export,
     health,
     hyperopt,
     notifications,
     ops,
     pairs,
+    platform,
     portfolio,
     portfolio_advanced,
-    platform,
-    export,
-    exchanges,
     research,
     risk,
     scanner,

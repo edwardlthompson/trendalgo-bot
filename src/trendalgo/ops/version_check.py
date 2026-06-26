@@ -16,6 +16,10 @@ def check_github_release(repo: str | None = None) -> dict[str, str | bool]:
     try:
         with urllib.request.urlopen(url, timeout=15) as resp:
             data = json.loads(resp.read().decode())
-            return {"ok": True, "tag": str(data.get("tag_name", "")), "url": str(data.get("html_url", ""))}
+            return {
+                "ok": True,
+                "tag": str(data.get("tag_name", "")),
+                "url": str(data.get("html_url", "")),
+            }
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
         return {"ok": False, "reason": "fetch failed"}

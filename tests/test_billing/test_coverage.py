@@ -9,10 +9,10 @@ from trendalgo.billing.settlement import settlement_info
 from trendalgo.billing.statements import export_statement_json
 from trendalgo.billing.store import BillingStore
 from trendalgo.ops.retention import purge_old_terms_logs
+from trendalgo.portfolio.db import PortfolioStore
+from trendalgo.risk.config import RiskLimits
 from trendalgo.risk.journal import TradeJournal
 from trendalgo.risk.manager import RiskManager
-from trendalgo.risk.config import RiskLimits
-from trendalgo.portfolio.db import PortfolioStore
 
 
 def test_settlement_and_lightning() -> None:

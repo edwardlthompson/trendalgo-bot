@@ -3,9 +3,9 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from trendalgo.risk.exit_rules import ExitRules
 from trendalgo.templates.import_export import export_json, import_json, list_param_specs
 from trendalgo.templates.registry import get, list_templates
-from trendalgo.risk.exit_rules import ExitRules
 
 router = APIRouter()
 

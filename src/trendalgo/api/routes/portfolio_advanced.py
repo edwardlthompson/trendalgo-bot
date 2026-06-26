@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from trendalgo.api.public_dashboard import PublicDashboardStore, public_overview_payload
+from trendalgo.api.public_dashboard import public_overview_payload
 from trendalgo.notifications.discord import send_discord_message
 from trendalgo.notifications.email import send_smtp_email
 from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
@@ -82,7 +82,9 @@ def portfolio_tags(request: Request) -> dict[str, Any]:
     tagged = []
     for h in overview["holdings"]:
         asset = str(h["asset"])
-        tagged.append({"asset": asset, "tag": h.get("tag") or tags.get(asset) or default_tag(asset)})
+        tagged.append(
+            {"asset": asset, "tag": h.get("tag") or tags.get(asset) or default_tag(asset)}
+        )
     return {"tags": tags, "holdings": tagged}
 
 
@@ -160,7 +162,9 @@ def portfolio_arbitrage(request: Request) -> dict[str, Any]:
 def portfolio_goals(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
     overview = build_portfolio_overview(state)
-    goal = goal_progress(float(overview["net_worth_usd"]), state.portfolio_store.get_performance_goal())
+    goal = goal_progress(
+        float(overview["net_worth_usd"]), state.portfolio_store.get_performance_goal()
+    )
     return {"goal": goal}
 
 

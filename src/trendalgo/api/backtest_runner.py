@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from trendalgo.schemas.backtest_result import BacktestResult, BacktestTradeSummary
 
@@ -15,7 +15,7 @@ def run_sample_backtest(
     timerange: str,
 ) -> BacktestResult:
     """Deterministic sample backtest for dashboard / API tests."""
-    now = datetime.now(timezone.utc).replace(microsecond=0)
+    now = datetime.now(UTC).replace(microsecond=0)
     trades = [
         BacktestTradeSummary(
             pair=pair,

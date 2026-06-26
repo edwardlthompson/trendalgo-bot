@@ -3,9 +3,7 @@ from trendalgo.lts.uniformity import uniformity_score
 
 
 def _bars(closes: list[float]) -> list[OhlcvBar]:
-    return [
-        OhlcvBar(i * 1000, c, c, c, c, 1.0) for i, c in enumerate(closes)
-    ]
+    return [OhlcvBar(i * 1000, c, c, c, c, 1.0) for i, c in enumerate(closes)]
 
 
 def test_uniformity_insufficient_data() -> None:

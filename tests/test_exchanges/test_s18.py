@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from trendalgo.exchanges.pair_normalizer import normalize_pair
-from trendalgo.exchanges.registry import list_trading_exchanges, list_worldwide_trading_exchanges, load_registry
-from trendalgo.trading.multi_exchange import list_supported_exchanges, route_order
+from trendalgo.exchanges.registry import (
+    list_trading_exchanges,
+    list_worldwide_trading_exchanges,
+    load_registry,
+)
+from trendalgo.trading.multi_exchange import route_order
 
 
 def test_registry_s18_worldwide_phase1() -> None:

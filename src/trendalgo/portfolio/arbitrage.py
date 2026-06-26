@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-DISCLAIMER = (
-    "Informational only. Not a trade signal. TrendAlgo does not execute arbitrage trades."
-)
+DISCLAIMER = "Informational only. Not a trade signal. TrendAlgo does not execute arbitrage trades."
 
 
 def detect_arbitrage_opportunities(

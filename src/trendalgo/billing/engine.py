@@ -2,21 +2,25 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
-from trendalgo.billing.license_gate import advance_grace, check_license_gate, clear_grace, start_grace_period
+from trendalgo.billing.license_gate import (
+    check_license_gate,
+    clear_grace,
+    start_grace_period,
+)
 from trendalgo.billing.milestones import detect_milestones
 from trendalgo.billing.profit import rollup_period
 from trendalgo.billing.rules import apply_fee_rules
-from trendalgo.billing.statements import build_statement, export_statement_json
+from trendalgo.billing.statements import build_statement
 from trendalgo.billing.store import BillingStore
 from trendalgo.risk.journal import TradeJournal, TradeRecord
 from trendalgo.risk.manager import RiskManager
 
 
 def _period_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m")
+    return datetime.now(UTC).strftime("%Y-%m")
 
 
 def seed_sample_trades(journal: TradeJournal) -> None:
@@ -55,7 +59,9 @@ def process_journal_trades(
     credit = billing.get_carry_forward_credit()
     drawdown_paused = risk_manager.state.circuit_breaker_active
     trades = journal.list_trades()
-    billable = [t for t in trades if float(t.get("pnl_usd", 0)) != 0 or t.get("signal_source") == "bot"]
+    billable = [
+        t for t in trades if float(t.get("pnl_usd", 0)) != 0 or t.get("signal_source") == "bot"
+    ]
     items, remaining_credit = apply_fee_rules(
         [
             {
@@ -111,7 +117,11 @@ def build_dashboard(
     totals = billing.lifetime_totals()
     period = _period_now()
     items = billing.list_ledger(period)
-    rollup = rollup_period(items) if items else {"gross_profit_usd": 0, "license_fee_usd": 0, "net_benefit_usd": 0}
+    rollup = (
+        rollup_period(items)
+        if items
+        else {"gross_profit_usd": 0, "license_fee_usd": 0, "net_benefit_usd": 0}
+    )
     can_trade, gate_reason = check_license_gate(enrollment, status, dry_run=dry_run)
     milestones = detect_milestones(totals["lifetime_gross_profit_usd"], billing.list_milestones())
     preview_rate = float(enrollment.get("license_rate_pct", 0.12))

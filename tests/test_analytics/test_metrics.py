@@ -1,10 +1,11 @@
+from datetime import UTC, datetime
+
 from trendalgo.analytics.metrics import compute_metrics, equity_curve
 from trendalgo.schemas.backtest_result import BacktestTradeSummary
-from datetime import datetime, timezone
 
 
 def _trade(profit: float, day: int) -> BacktestTradeSummary:
-    ts = datetime(2024, 1, day, tzinfo=timezone.utc)
+    ts = datetime(2024, 1, day, tzinfo=UTC)
     return BacktestTradeSummary(
         pair="BTC/USD",
         profit_ratio=profit / 1000,

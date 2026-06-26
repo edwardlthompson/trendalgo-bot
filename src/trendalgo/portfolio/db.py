@@ -6,7 +6,7 @@ import csv
 import io
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +14,7 @@ from trendalgo.portfolio.schema import PORTFOLIO_SCHEMA
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 @dataclass(frozen=True)
@@ -115,7 +115,9 @@ class PortfolioStore:
                 )
             return snapshot_id
 
-    def _holdings_for_snapshot(self, conn: sqlite3.Connection, snapshot_id: int) -> list[dict[str, float | str]]:
+    def _holdings_for_snapshot(
+        self, conn: sqlite3.Connection, snapshot_id: int
+    ) -> list[dict[str, float | str]]:
         rows = conn.execute(
             """
             SELECT asset, quantity, price_usd, value_usd, cost_basis_usd
@@ -231,7 +233,9 @@ class PortfolioStore:
                 (account_id, date, total_usd, daily_pnl_usd, realized_pnl_usd, unrealized_pnl_usd),
             )
 
-    def list_daily_aggregates(self, account_id: int, limit: int = 365) -> list[dict[str, float | str]]:
+    def list_daily_aggregates(
+        self, account_id: int, limit: int = 365
+    ) -> list[dict[str, float | str]]:
         with self._connect() as conn:
             rows = conn.execute(
                 """

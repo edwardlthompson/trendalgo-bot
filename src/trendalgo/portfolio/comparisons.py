@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any
 
 
@@ -38,7 +38,9 @@ def yoy_mom_comparison(
             "label": "mom",
             "title": "Month over month",
             "pnl_usd": round(last_total - mom_baseline, 2),
-            "pnl_pct": round((last_total - mom_baseline) / mom_baseline, 4) if mom_baseline else 0.0,
+            "pnl_pct": round((last_total - mom_baseline) / mom_baseline, 4)
+            if mom_baseline
+            else 0.0,
             "baseline_usd": round(mom_baseline, 2),
             "current_usd": round(last_total, 2),
         },
@@ -46,7 +48,9 @@ def yoy_mom_comparison(
             "label": "yoy",
             "title": "Year over year",
             "pnl_usd": round(last_total - yoy_baseline, 2),
-            "pnl_pct": round((last_total - yoy_baseline) / yoy_baseline, 4) if yoy_baseline else 0.0,
+            "pnl_pct": round((last_total - yoy_baseline) / yoy_baseline, 4)
+            if yoy_baseline
+            else 0.0,
             "baseline_usd": round(yoy_baseline, 2),
             "current_usd": round(last_total, 2),
         },
@@ -54,7 +58,11 @@ def yoy_mom_comparison(
 
     if daily_aggregates:
         month_start = (now - timedelta(days=30)).strftime("%Y-%m-%d")
-        month_pnl = sum(float(d.get("daily_pnl_usd", 0)) for d in daily_aggregates if str(d["date"]) >= month_start)
+        month_pnl = sum(
+            float(d.get("daily_pnl_usd", 0))
+            for d in daily_aggregates
+            if str(d["date"]) >= month_start
+        )
         comparisons.append(
             {
                 "label": "mtd",

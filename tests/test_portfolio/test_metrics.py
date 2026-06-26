@@ -1,11 +1,9 @@
-from pathlib import Path
-
 from trendalgo.portfolio.metrics import (
     allocation_rows,
     daily_pnl_from_curve,
     enrich_holdings,
-    pl_breakdown,
     period_comparison,
+    pl_breakdown,
 )
 
 

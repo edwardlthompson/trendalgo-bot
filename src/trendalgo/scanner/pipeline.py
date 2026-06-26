@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from trendalgo.lts.adapter import LtsAdapter, OhlcvBar
 from trendalgo.scanner.config import ScannerSettings
@@ -16,11 +16,18 @@ def _synthetic_bars(gain_pct: float, base: float = 100.0) -> list[OhlcvBar]:
     bars: list[OhlcvBar] = []
     step = gain_pct / 20 if gain_pct else 0.001
     price = base
-    ts = int(datetime.now(timezone.utc).timestamp() * 1000)
+    ts = int(datetime.now(UTC).timestamp() * 1000)
     for i in range(25):
         price *= 1 + step
         bars.append(
-            OhlcvBar(timestamp_ms=ts + i * 300000, open=price, high=price * 1.01, low=price * 0.99, close=price, volume=1000)
+            OhlcvBar(
+                timestamp_ms=ts + i * 300000,
+                open=price,
+                high=price * 1.01,
+                low=price * 0.99,
+                close=price,
+                volume=1000,
+            )
         )
     return bars
 
@@ -49,7 +56,10 @@ def run_pipeline(settings: ScannerSettings) -> QualifiedSnapshot:
         if volume_usd < settings.min_volume_usd or gain < settings.min_gain_pct:
             continue
         bars = adapter.normalize_bars(
-            [[b.timestamp_ms, b.open, b.high, b.low, b.close, b.volume] for b in _synthetic_bars(gain, float(row["base"]))]
+            [
+                [b.timestamp_ms, b.open, b.high, b.low, b.close, b.volume]
+                for b in _synthetic_bars(gain, float(row["base"]))
+            ]
         )
         uni = uniformity_score(bars)
         if uni < settings.min_uniformity:
@@ -69,10 +79,13 @@ def run_pipeline(settings: ScannerSettings) -> QualifiedSnapshot:
         )
 
     candidates.sort(key=lambda o: (o.uniformity, o.gain_pct), reverse=True)
-    ranked = [OpportunityRow(rank=i + 1, **{k: v for k, v in o.model_dump().items() if k != "rank"}) for i, o in enumerate(candidates)]
+    ranked = [
+        OpportunityRow(rank=i + 1, **{k: v for k, v in o.model_dump().items() if k != "rank"})
+        for i, o in enumerate(candidates)
+    ]
 
     return QualifiedSnapshot(
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         scan_id=0,
         opportunities=ranked,
     )

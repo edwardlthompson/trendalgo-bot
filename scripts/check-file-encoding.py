@@ -1,13 +1,28 @@
 #!/usr/bin/env python3
 """Cross-platform UTF-8 / UTF-16 BOM check for tracked text files."""
+
 from __future__ import annotations
 
 import os
 import sys
 
 EXTS = {
-    ".md", ".json", ".yml", ".yaml", ".sh", ".ps1", ".mdc", ".toml",
-    ".ts", ".tsx", ".html", ".css", ".properties", ".kts", ".kt", ".xml",
+    ".md",
+    ".json",
+    ".yml",
+    ".yaml",
+    ".sh",
+    ".ps1",
+    ".mdc",
+    ".toml",
+    ".ts",
+    ".tsx",
+    ".html",
+    ".css",
+    ".properties",
+    ".kts",
+    ".kt",
+    ".xml",
     ".webmanifest",
 }
 ROOT_TEXT_FILES = {"LICENSE", ".template-version", "CODEOWNERS"}

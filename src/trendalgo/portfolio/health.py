@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from trendalgo.portfolio.drawdown import max_drawdown
-
 
 def health_score(
     allocation: list[dict[str, Any]],

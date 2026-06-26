@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pandas as pd
-
 from trendalgo.lts.mixins import TrendSpotterMixin
 from trendalgo.risk.strategy_mixins import RiskGuardMixin, ScalePositionMixin
 from trendalgo.strategies.runtime.base import BaseNativeStrategy
@@ -34,9 +32,7 @@ class MultiTFExampleStrategy(
             df["rsi_1h"] = inf["rsi_1h"].iloc[-1]
         else:
             df["rsi_1h"] = df["rsi"]
-        df["lts_uniform"] = self.lts_uniform_score(
-            df.rename(columns={"timestamp_ms": "date"})
-        )
+        df["lts_uniform"] = self.lts_uniform_score(df.rename(columns={"timestamp_ms": "date"}))
         ctx.dataframe = df
         self._rows = df.to_dict("records")
 
@@ -53,8 +49,15 @@ class MultiTFExampleStrategy(
             and row.get("lts_uniform", 0) >= self.lts_uniform_min
         ):
             stake = self.risk_custom_stake_amount(
-                ctx.pair, None, float(row["close"]), self.default_stake_usd,
-                None, None, 1, None, "long",
+                ctx.pair,
+                None,
+                float(row["close"]),
+                self.default_stake_usd,
+                None,
+                None,
+                1,
+                None,
+                "long",
             )
             if stake <= 0:
                 return None

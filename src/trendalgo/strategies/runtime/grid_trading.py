@@ -34,8 +34,15 @@ class GridTradingStrategy(BaseNativeStrategy, RiskGuardMixin):
         capped = min(
             self.grid_size_usd,
             self.risk_custom_stake_amount(
-                ctx.pair, None, float(row["close"]), self.grid_size_usd,
-                None, None, 1, None, "long",
+                ctx.pair,
+                None,
+                float(row["close"]),
+                self.grid_size_usd,
+                None,
+                None,
+                1,
+                None,
+                "long",
             ),
         )
         if capped <= 0:

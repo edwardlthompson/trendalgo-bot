@@ -1,7 +1,7 @@
 """Sprint 11 AI & growth tests."""
 
 from trendalgo.ai.curated_library import list_curated
-from trendalgo.ai.nl_draft import draft_from_nl, rule_based_draft
+from trendalgo.ai.nl_draft import rule_based_draft
 from trendalgo.ai.recommender import recommend_strategies
 from trendalgo.ai.scanner_pipeline import pipeline_suggestions
 from trendalgo.billing.boost import enable_boost_mode

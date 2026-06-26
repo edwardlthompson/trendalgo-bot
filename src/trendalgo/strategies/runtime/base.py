@@ -20,9 +20,7 @@ class BaseNativeStrategy:
     @property
     def dataframe(self) -> pd.DataFrame:
         if not self._rows:
-            return pd.DataFrame(
-                columns=["timestamp_ms", "open", "high", "low", "close", "volume"]
-            )
+            return pd.DataFrame(columns=["timestamp_ms", "open", "high", "low", "close", "volume"])
         return pd.DataFrame(self._rows)
 
     def on_candle(self, candle: Candle, ctx: StrategyContext) -> None:

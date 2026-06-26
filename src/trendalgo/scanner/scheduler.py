@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from trendalgo.scanner.alerts import emit_alerts_for_snapshot
-from trendalgo.scanner.config import ScannerSettings
 from trendalgo.scanner.pipeline import run_pipeline
 from trendalgo.scanner.store import ScannerStore
 
@@ -20,7 +19,9 @@ def run_scheduled_scan(store: ScannerStore, on_log: Callable[[str], None] | None
     return scan_id
 
 
-def start_scheduler(store: ScannerStore, on_log: Callable[[str], None] | None = None) -> object | None:
+def start_scheduler(
+    store: ScannerStore, on_log: Callable[[str], None] | None = None
+) -> object | None:
     try:
         from apscheduler.schedulers.background import BackgroundScheduler
     except ImportError:

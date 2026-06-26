@@ -5,7 +5,9 @@ from __future__ import annotations
 from trendalgo.risk.manager import RiskManager
 
 
-def metrics_summary(manager: RiskManager, open_exposure_usd: float = 0.0) -> dict[str, float | bool | str]:
+def metrics_summary(
+    manager: RiskManager, open_exposure_usd: float = 0.0
+) -> dict[str, float | bool | str]:
     equity = manager.wallet_usd + manager.state.daily_pnl_usd
     peak = manager.state.peak_equity_usd or equity
     drawdown_pct = round((peak - equity) / peak, 4) if peak > 0 else 0.0
@@ -23,5 +25,7 @@ def metrics_summary(manager: RiskManager, open_exposure_usd: float = 0.0) -> dic
     }
 
 
-def risk_metrics(manager: RiskManager, open_exposure_usd: float = 0.0) -> dict[str, float | bool | str]:
+def risk_metrics(
+    manager: RiskManager, open_exposure_usd: float = 0.0
+) -> dict[str, float | bool | str]:
     return metrics_summary(manager, open_exposure_usd)

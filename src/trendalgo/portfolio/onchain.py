@@ -65,7 +65,7 @@ def sync_onchain_wallet(
         source = "onchain_dry_run"
 
     total = sum(h.value_usd for h in holdings)
-    snap_id = store.insert_snapshot(account_id, total, holdings, source=source)
+    store.insert_snapshot(account_id, total, holdings, source=source)
 
     return {
         "account_id": account_id,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-from typing import Any
 from urllib import error, parse, request
 
 from trendalgo.risk.manager import RiskManager
@@ -29,7 +28,7 @@ class TelegramCommands:
             return (
                 f"TrendAlgo status\n"
                 f"equity=${m['equity_usd']} daily_pnl=${m['daily_pnl_usd']}\n"
-                f"drawdown={m['drawdown_pct']*100:.1f}% can_trade={m['can_trade']}"
+                f"drawdown={m['drawdown_pct'] * 100:.1f}% can_trade={m['can_trade']}"
             )
         if cmd in ("/pause", "pause"):
             manager.pause()

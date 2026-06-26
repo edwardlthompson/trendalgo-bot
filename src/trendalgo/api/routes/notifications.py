@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Request
 
-from trendalgo.notifications.preferences import load_preferences, save_preferences, NotificationPreferences
+from trendalgo.notifications.preferences import (
+    NotificationPreferences,
+    load_preferences,
+    save_preferences,
+)
 
 router = APIRouter()
 

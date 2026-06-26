@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Founder gate CLI — H-001–H-034 preflight, approve, backlog."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,7 +8,7 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,7 +88,7 @@ def load_gates() -> dict:
 
 def save_gates(data: dict) -> None:
     data["version"] = 1
-    data["updated_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    data["updated_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
     GATES_PATH.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
@@ -353,7 +354,7 @@ def cmd_approve(args: argparse.Namespace) -> int:
     data = load_gates()
     rec = gate_record(data, hid)
     rec["status"] = "approved"
-    rec["approved_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    rec["approved_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
     rec["preflight_exit"] = 0
     if args.note:
         rec["note"] = args.note
@@ -401,9 +402,7 @@ def cmd_preflight_sprint(args: argparse.Namespace) -> int:
 def cmd_approve_all_soft(args: argparse.Namespace) -> int:
     """Approve every gate with PASS preflight that is not a hard gate."""
     candidates = sorted(
-        hid
-        for hid in PREFLIGHT_HANDLERS
-        if hid not in HARD_GATES and hid != "H-002"
+        hid for hid in PREFLIGHT_HANDLERS if hid not in HARD_GATES and hid != "H-002"
     )
     approved = 0
     skipped = 0

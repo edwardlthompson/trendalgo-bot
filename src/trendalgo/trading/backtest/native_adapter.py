@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import tempfile
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from trendalgo.risk.journal import TradeJournal
@@ -14,7 +14,7 @@ from trendalgo.trading.runner.dry_run import DryRunRunner
 
 
 def _ms_to_dt(ms: int) -> datetime:
-    return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).replace(microsecond=0)
+    return datetime.fromtimestamp(ms / 1000, tz=UTC).replace(microsecond=0)
 
 
 def run_native_backtest(
@@ -51,7 +51,9 @@ def run_native_backtest(
         for candle in candles:
             info_slice = None
             if informative_candles:
-                info_slice = [c for c in informative_candles if c.timestamp_ms <= candle.timestamp_ms]
+                info_slice = [
+                    c for c in informative_candles if c.timestamp_ms <= candle.timestamp_ms
+                ]
             runner.tick(candle, informative_candles=info_slice)
             if runner._position is not None and open_at is None:
                 open_at = _ms_to_dt(candle.timestamp_ms)

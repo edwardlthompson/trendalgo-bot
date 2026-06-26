@@ -16,9 +16,9 @@ from trendalgo.billing.engine import (
     seed_sample_trades,
 )
 from trendalgo.billing.lightning import create_lightning_invoice
+from trendalgo.billing.schema import DEFAULT_LICENSE_RATE
 from trendalgo.billing.settlement import settlement_info
 from trendalgo.billing.statements import export_statement_json
-from trendalgo.billing.schema import DEFAULT_LICENSE_RATE
 
 router = APIRouter()
 
@@ -105,7 +105,11 @@ def billing_statement_export(period: str, request: Request) -> PlainTextResponse
 @router.get("/billing/settlement")
 def billing_settlement(request: Request, period: str | None = None) -> dict[str, Any]:
     state = request.app.state.trendalgo
-    period = period or state.billing_store.list_statements()[0]["period"] if state.billing_store.list_statements() else "current"
+    period = (
+        period or state.billing_store.list_statements()[0]["period"]
+        if state.billing_store.list_statements()
+        else "current"
+    )
     stmt = state.billing_store.get_statement(period)
     amount = float(stmt["license_fee_usd"]) if stmt else 0.0
     return settlement_info(amount, period)

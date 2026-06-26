@@ -9,7 +9,6 @@ STANDARD_LICENSE_RATE = 0.12
 
 
 def enable_boost_mode(billing_store: Any) -> dict[str, Any]:
-    enrollment = billing_store.get_enrollment()
     with billing_store._connect() as conn:
         conn.execute(
             """
@@ -36,4 +35,8 @@ def disable_boost_mode(billing_store: Any) -> dict[str, Any]:
             """,
             (STANDARD_LICENSE_RATE,),
         )
-    return {"boost_mode": False, "license_rate_pct": STANDARD_LICENSE_RATE, "enrollment": billing_store.get_enrollment()}
+    return {
+        "boost_mode": False,
+        "license_rate_pct": STANDARD_LICENSE_RATE,
+        "enrollment": billing_store.get_enrollment(),
+    }

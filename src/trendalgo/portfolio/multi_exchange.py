@@ -42,7 +42,12 @@ def aggregate_holdings(store: PortfolioStore) -> dict[str, Any]:
             value = float(h["value_usd"])
             price = float(h["price_usd"])
             if asset not in merged:
-                merged[asset] = {"quantity": 0.0, "value_usd": 0.0, "cost_basis_usd": 0.0, "price_usd": price}
+                merged[asset] = {
+                    "quantity": 0.0,
+                    "value_usd": 0.0,
+                    "cost_basis_usd": 0.0,
+                    "price_usd": price,
+                }
             merged[asset]["quantity"] += qty
             merged[asset]["value_usd"] += value
             merged[asset]["cost_basis_usd"] += cost

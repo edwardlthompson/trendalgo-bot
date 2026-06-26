@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate platform design outputs from design-tokens/design-tokens.json."""
+
 from __future__ import annotations
 
 import hashlib
@@ -44,7 +45,6 @@ def generate_css(tokens: dict, digest: str) -> str:
     spacing = tokens["spacing"]
     radius = tokens["radius"]
     typo = tokens["typography"]
-    meta = tokens["meta"]
 
     def vars_block(mode: str) -> list[str]:
         lines = []
@@ -109,8 +109,16 @@ def generate_color_kt(tokens: dict, digest: str) -> str:
     dark_entries = []
     for key in colors:
         role = color_role_name(key)
-        light_entries.append(hex_to_compose(f"Light{role.capitalize() if role[0].islower() else role}", colors[key]["light"]))
-        dark_entries.append(hex_to_compose(f"Dark{role[0].upper()}{role[1:]}" if role else role, colors[key]["dark"]))
+        light_entries.append(
+            hex_to_compose(
+                f"Light{role.capitalize() if role[0].islower() else role}", colors[key]["light"]
+            )
+        )
+        dark_entries.append(
+            hex_to_compose(
+                f"Dark{role[0].upper()}{role[1:]}" if role else role, colors[key]["dark"]
+            )
+        )
 
     # Fix naming: primary -> LightPrimary, DarkPrimary
     light_vals = []
@@ -119,9 +127,9 @@ def generate_color_kt(tokens: dict, digest: str) -> str:
     scheme_dark = []
     for key in colors:
         role = color_role_name(key)
-        light_name = f"Gp{role[0].upper()}{role[1:]}"
-        dark_name = light_name
-        light_vals.append(hex_to_compose(f"GpLight{role[0].upper()}{role[1:]}", colors[key]["light"]))
+        light_vals.append(
+            hex_to_compose(f"GpLight{role[0].upper()}{role[1:]}", colors[key]["light"])
+        )
         dark_vals.append(hex_to_compose(f"GpDark{role[0].upper()}{role[1:]}", colors[key]["dark"]))
         scheme_light.append(f"        {role} = GpLight{role[0].upper()}{role[1:]},")
         scheme_dark.append(f"        {role} = GpDark{role[0].upper()}{role[1:]},")
@@ -142,17 +150,25 @@ def generate_color_kt(tokens: dict, digest: str) -> str:
         cap = role[0].upper() + role[1:]
         lines.append(hex_to_compose(f"GpLight{cap}", colors[key]["light"], private=True))
         lines.append(hex_to_compose(f"GpDark{cap}", colors[key]["dark"], private=True))
-    lines.extend([
-        "",
-        "val LightGoldenPathColors = lightColorScheme(",
-        *[f"    {color_role_name(k)} = GpLight{color_role_name(k)[0].upper()}{color_role_name(k)[1:]}," for k in colors],
-        ")",
-        "",
-        "val DarkGoldenPathColors = darkColorScheme(",
-        *[f"    {color_role_name(k)} = GpDark{color_role_name(k)[0].upper()}{color_role_name(k)[1:]}," for k in colors],
-        ")",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "val LightGoldenPathColors = lightColorScheme(",
+            *[
+                f"    {color_role_name(k)} = GpLight{color_role_name(k)[0].upper()}{color_role_name(k)[1:]},"
+                for k in colors
+            ],
+            ")",
+            "",
+            "val DarkGoldenPathColors = darkColorScheme(",
+            *[
+                f"    {color_role_name(k)} = GpDark{color_role_name(k)[0].upper()}{color_role_name(k)[1:]},"
+                for k in colors
+            ],
+            ")",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -167,21 +183,23 @@ def generate_type_kt(tokens: dict, digest: str) -> str:
             f"        fontWeight = FontWeight({val['weight']}),\n"
             f"    ),"
         )
-    return "\n".join([
-        f"// {HEADER}",
-        f"// source-hash: {digest}",
-        "package dev.foss.goldenpath.ui.theme",
-        "",
-        "import androidx.compose.material3.Typography",
-        "import androidx.compose.ui.text.TextStyle",
-        "import androidx.compose.ui.text.font.FontWeight",
-        "import androidx.compose.ui.unit.sp",
-        "",
-        "val GoldenPathTypography = Typography(",
-        *entries,
-        ")",
-        "",
-    ])
+    return "\n".join(
+        [
+            f"// {HEADER}",
+            f"// source-hash: {digest}",
+            "package dev.foss.goldenpath.ui.theme",
+            "",
+            "import androidx.compose.material3.Typography",
+            "import androidx.compose.ui.text.TextStyle",
+            "import androidx.compose.ui.text.font.FontWeight",
+            "import androidx.compose.ui.unit.sp",
+            "",
+            "val GoldenPathTypography = Typography(",
+            *entries,
+            ")",
+            "",
+        ]
+    )
 
 
 def generate_dimens_kt(tokens: dict, digest: str) -> str:
@@ -252,7 +270,9 @@ def write_outputs(root: Path) -> None:
         android_theme.mkdir(parents=True, exist_ok=True)
         (android_theme / "Color.kt").write_text(generate_color_kt(tokens, digest), encoding="utf-8")
         (android_theme / "Type.kt").write_text(generate_type_kt(tokens, digest), encoding="utf-8")
-        (android_theme / "Dimens.kt").write_text(generate_dimens_kt(tokens, digest), encoding="utf-8")
+        (android_theme / "Dimens.kt").write_text(
+            generate_dimens_kt(tokens, digest), encoding="utf-8"
+        )
         synced.append("android")
 
     if not synced:

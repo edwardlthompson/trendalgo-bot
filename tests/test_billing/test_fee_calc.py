@@ -6,9 +6,9 @@ from trendalgo.billing.profit import license_fee_for_trade, rollup_period
 from trendalgo.billing.rules import apply_fee_rules
 from trendalgo.billing.statements import build_statement, sign_payload
 from trendalgo.billing.store import BillingStore
+from trendalgo.risk.config import RiskLimits
 from trendalgo.risk.journal import TradeJournal
 from trendalgo.risk.manager import RiskManager
-from trendalgo.risk.config import RiskLimits
 
 
 def test_net_loss_zero_fee() -> None:
@@ -33,7 +33,9 @@ def test_carry_forward_and_grace(tmp_path) -> None:
     assert enrollment["enrolled"] == 1
     status = start_grace_period(billing.get_license_status(), result["period"])
     billing.update_license_status(status)
-    ok, _ = check_license_gate(billing.get_enrollment(), billing.get_license_status(), dry_run=False)
+    ok, _ = check_license_gate(
+        billing.get_enrollment(), billing.get_license_status(), dry_run=False
+    )
     assert ok
     billing.update_license_status(clear_grace(billing.get_license_status()))
     recon = reconcile_fees(billing, journal)

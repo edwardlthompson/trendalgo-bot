@@ -7,14 +7,15 @@ from typing import Any
 from trendalgo.ai.backtest_summary import analyze_backtest, rule_based_summary
 from trendalgo.schemas.backtest_result import BacktestResult
 
-
 DISCLAIMER = (
     "Insights are rule-based on VPS by default. Not financial advice. "
     "Ollama summaries are dev-only unless OLLAMA_HOST is set."
 )
 
 
-def expanded_insights(result: BacktestResult, attribution: dict[str, Any] | None = None) -> dict[str, str]:
+def expanded_insights(
+    result: BacktestResult, attribution: dict[str, Any] | None = None
+) -> dict[str, str]:
     base = analyze_backtest(result)
     summary = rule_based_summary(result)
     attr_note = ""

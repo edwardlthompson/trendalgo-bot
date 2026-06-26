@@ -21,7 +21,9 @@ def send_discord_message(content: str, *, extra: dict[str, Any] | None = None) -
     if extra:
         payload.update(extra)
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    req = urllib.request.Request(
+        url, data=data, headers={"Content-Type": "application/json"}, method="POST"
+    )
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             return {"sent": True, "status": resp.status}

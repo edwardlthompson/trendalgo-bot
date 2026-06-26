@@ -4,10 +4,16 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from trendalgo.exchanges.adapters.generic import GenericCcxtPortfolioAdapter
-from trendalgo.exchanges.registry import ExchangeEntry, get_entry, list_portfolio_exchanges, load_registry
+from trendalgo.exchanges.registry import (
+    ExchangeEntry,
+    get_entry,
+    list_portfolio_exchanges,
+    load_registry,
+)
 from trendalgo.portfolio.db import PortfolioStore
 
 SyncFn = Callable[[PortfolioStore, ExchangeEntry, bool], dict[str, Any]]

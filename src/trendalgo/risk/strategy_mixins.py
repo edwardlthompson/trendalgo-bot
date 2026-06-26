@@ -70,9 +70,13 @@ class ScalePositionMixin:
 
         floor = min_stake or 10.0
         if current_profit > 0 and self.exit_scale_out_enabled:
-            return -scale_position_amount(trade.stake_amount, self.exit_scale_out_pct, min_stake=floor)
+            return -scale_position_amount(
+                trade.stake_amount, self.exit_scale_out_pct, min_stake=floor
+            )
         if current_profit < 0 and self.exit_scale_in_enabled:
-            return scale_position_amount(trade.stake_amount, self.exit_scale_out_pct, min_stake=floor)
+            return scale_position_amount(
+                trade.stake_amount, self.exit_scale_out_pct, min_stake=floor
+            )
         return None
 
     def custom_stoploss(

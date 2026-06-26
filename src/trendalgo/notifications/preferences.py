@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from trendalgo.portfolio.db import PortfolioStore
 
@@ -34,6 +34,8 @@ def load_preferences(store: PortfolioStore) -> NotificationPreferences:
     )
 
 
-def save_preferences(store: PortfolioStore, prefs: NotificationPreferences) -> NotificationPreferences:
+def save_preferences(
+    store: PortfolioStore, prefs: NotificationPreferences
+) -> NotificationPreferences:
     store.update_notification_preferences(prefs.model_dump())
     return prefs

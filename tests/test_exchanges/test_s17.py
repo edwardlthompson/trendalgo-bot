@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from trendalgo.exchanges.adapters.generic import GenericCcxtPortfolioAdapter
+from trendalgo.exchanges.load_test import run_load_test
 from trendalgo.exchanges.registry import get_entry, list_portfolio_exchanges, load_registry
 from trendalgo.exchanges.sync import sync_all_exchanges
 from trendalgo.portfolio.db import PortfolioStore
-from trendalgo.exchanges.load_test import run_load_test
 
 
 def test_registry_s17_tier_b_venues() -> None:

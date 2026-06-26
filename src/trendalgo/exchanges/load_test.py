@@ -14,7 +14,9 @@ MIN_EXCHANGES = 6
 MAX_ELAPSED_SEC = 30.0
 
 
-def run_load_test(*, min_exchanges: int = MIN_EXCHANGES, max_sec: float = MAX_ELAPSED_SEC) -> dict[str, object]:
+def run_load_test(
+    *, min_exchanges: int = MIN_EXCHANGES, max_sec: float = MAX_ELAPSED_SEC
+) -> dict[str, object]:
     os.environ.setdefault("TRENDALGO_SYNC_STAGGER_SEC", "0")
     tmp = Path(tempfile.gettempdir()) / f"trendalgo-load-{uuid.uuid4().hex}"
     tmp.mkdir(parents=True, exist_ok=True)

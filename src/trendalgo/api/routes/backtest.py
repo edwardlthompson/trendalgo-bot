@@ -3,9 +3,8 @@ from typing import Any
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
-from trendalgo.analytics.metrics import compute_metrics, equity_curve
-from trendalgo.ai.backtest_summary import analyze_backtest
 from trendalgo.ai.insights import expanded_insights
+from trendalgo.analytics.metrics import compute_metrics, equity_curve
 from trendalgo.api.backtest_runner import run_sample_backtest
 from trendalgo.backtest.attribution import attribute_signals
 from trendalgo.backtest.slippage import apply_slippage

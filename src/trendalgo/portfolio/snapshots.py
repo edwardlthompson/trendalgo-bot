@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Any
 
 from trendalgo.notifications.daily_summary import format_daily_summary, send_daily_notification
 from trendalgo.portfolio.alerts import check_portfolio_alerts
@@ -24,7 +25,7 @@ def capture_portfolio_snapshot(
     daily_pnl, _ = daily_pnl_from_curve(curve)
     snap = store.latest_snapshot(account_id)
     pl = pl_breakdown(snap["holdings"] if snap else [])
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     store.upsert_daily_aggregate(
         account_id,
         today,
@@ -76,9 +77,7 @@ def start_portfolio_scheduler(
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(
-        lambda: scheduled_portfolio_job(
-            store, overview_builder, dry_run=dry_run, on_log=on_log
-        ),
+        lambda: scheduled_portfolio_job(store, overview_builder, dry_run=dry_run, on_log=on_log),
         "cron",
         hour=8,
         minute=0,

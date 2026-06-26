@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Fee reconciliation CLI (Sprint 10)."""
+
 from __future__ import annotations
 
 import json
@@ -11,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from trendalgo.api.state import default_state
-from trendalgo.billing.engine import reconcile_fees, seed_sample_trades, process_journal_trades
+from trendalgo.billing.engine import process_journal_trades, reconcile_fees, seed_sample_trades
 
 
 def main() -> int:

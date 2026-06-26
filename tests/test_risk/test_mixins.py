@@ -26,9 +26,15 @@ def test_risk_custom_stake_when_paused() -> None:
     strat._ensure_risk_manager(wallet_usd=1000)
     assert strat.risk_manager is not None
     strat.risk_manager.pause()
-    assert strat.risk_custom_stake_amount("BTC/USD", None, 50000, 100, None, None, 1, None, "long") == 0.0
+    assert (
+        strat.risk_custom_stake_amount("BTC/USD", None, 50000, 100, None, None, 1, None, "long")
+        == 0.0
+    )
 
 
 def test_risk_custom_stake_capped() -> None:
     strat = _StubStrategy()
-    assert strat.risk_custom_stake_amount("BTC/USD", None, 50000, 500, None, None, 1, None, "long") == 20.0
+    assert (
+        strat.risk_custom_stake_amount("BTC/USD", None, 50000, 500, None, None, 1, None, "long")
+        == 20.0
+    )

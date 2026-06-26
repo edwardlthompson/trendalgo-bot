@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from trendalgo.scanner.config import ScannerSettings
 from trendalgo.scanner.listings import verify_kraken_listings
@@ -41,7 +41,7 @@ def forage_pairs(settings: ScannerSettings | None = None, *, top_n: int = 8) -> 
     scored.sort(key=lambda r: float(r["forager_score"]), reverse=True)
     picks = scored[:top_n]
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "pair_count": len(picks),
         "pairs": picks,
         "prototype": True,

@@ -1,7 +1,7 @@
 from trendalgo.api.risk import get_risk_status
+from trendalgo.notifications.telegram import TelegramCommands
 from trendalgo.risk.config import RiskLimits
 from trendalgo.risk.manager import RiskManager
-from trendalgo.notifications.telegram import TelegramCommands
 
 
 def test_get_risk_status() -> None:

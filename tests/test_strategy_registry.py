@@ -1,5 +1,10 @@
-from trendalgo.templates.registry import clear_registry, get, list_templates, register
-from trendalgo.templates.registry import StrategyTemplate
+from trendalgo.templates.registry import (
+    StrategyTemplate,
+    clear_registry,
+    get,
+    list_templates,
+    register,
+)
 
 
 def test_builtin_template() -> None:

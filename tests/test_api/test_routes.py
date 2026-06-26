@@ -77,7 +77,13 @@ def test_notification_preferences() -> None:
     assert prefs["trades"] is True
     updated = c.put(
         "/api/v1/notifications/preferences",
-        json={"trades": False, "pnl_swings": True, "fees": True, "scanner": True, "push_enabled": True},
+        json={
+            "trades": False,
+            "pnl_swings": True,
+            "fees": True,
+            "scanner": True,
+            "push_enabled": True,
+        },
     )
     assert updated.json()["scanner"] is True
 
@@ -123,7 +129,9 @@ def test_sprint6_bots_library_watchlist() -> None:
     assert bt.get("library_id")
     lib = c.get("/api/v1/backtest/library").json()
     assert lib["runs"]
-    c.post("/api/v1/watchlist", json={"pair": "SOL/USD", "alert_price_pct": 0.05, "alert_pl_usd": 50})
+    c.post(
+        "/api/v1/watchlist", json={"pair": "SOL/USD", "alert_price_pct": 0.05, "alert_pl_usd": 50}
+    )
     wl = c.get("/api/v1/watchlist").json()
     assert any(i["pair"] == "SOL/USD" for i in wl["items"])
     hyper = c.post("/api/v1/hyperopt", json={"strategy": "smart-dca", "pair": "BTC/USD"}).json()
@@ -167,7 +175,9 @@ def test_scanner_run_and_settings() -> None:
 
 def test_sprint7_research_export() -> None:
     c = client()
-    wf = c.post("/api/v1/research/walk-forward", json={"strategy": "multi-tf-example", "pair": "BTC/USD"}).json()
+    wf = c.post(
+        "/api/v1/research/walk-forward", json={"strategy": "multi-tf-example", "pair": "BTC/USD"}
+    ).json()
     assert wf["status"] == "complete"
     assert wf.get("engine") == "native"
     mc = c.post("/api/v1/research/monte-carlo").json()
@@ -180,10 +190,18 @@ def test_sprint7_research_export() -> None:
     assert corr["suggestions"]
     rules = c.put(
         "/api/v1/strategies/exit-rules",
-        json={"trailing_stop_pct": 0.04, "scale_out_pct": 0.5, "scale_in_enabled": False, "scale_out_enabled": True},
+        json={
+            "trailing_stop_pct": 0.04,
+            "scale_out_pct": 0.5,
+            "scale_in_enabled": False,
+            "scale_out_enabled": True,
+        },
     ).json()
     assert rules["trailing_stop_pct"] == 0.04
-    c.post("/api/v1/backtest", json={"strategy": "multi-tf-example", "pair": "BTC/USD", "save_to_library": True})
+    c.post(
+        "/api/v1/backtest",
+        json={"strategy": "multi-tf-example", "pair": "BTC/USD", "save_to_library": True},
+    )
     lib = c.get("/api/v1/backtest/library").json()
     if lib["runs"]:
         share = c.post(f"/api/v1/backtest/library/{lib['runs'][0]['id']}/share").json()
@@ -204,7 +222,9 @@ def test_sprint8_portfolio_advanced() -> None:
     assert rebalance["manual_only"]
     arb = c.get("/api/v1/portfolio/arbitrage").json()
     assert arb["auto_trade"] is False
-    goals = c.put("/api/v1/portfolio/goals", json={"target_net_worth_usd": 2500, "label": "Target"}).json()
+    goals = c.put(
+        "/api/v1/portfolio/goals", json={"target_net_worth_usd": 2500, "label": "Target"}
+    ).json()
     assert goals["goal"]["target_net_worth_usd"] == 2500
     basket = c.put("/api/v1/portfolio/basket", json={"weights": {"1": 0.7, "2": 0.3}}).json()
     assert basket["weights"]["1"] == 0.7
@@ -235,7 +255,9 @@ def test_sprint10_billing() -> None:
     recon = c.get("/api/v1/billing/reconcile").json()
     assert "ok" in recon
     c.post("/api/v1/billing/mark-paid")
-    lightning = c.post("/api/v1/billing/lightning-invoice", json={"period": "2026-06", "amount_usd": 10}).json()
+    lightning = c.post(
+        "/api/v1/billing/lightning-invoice", json={"period": "2026-06", "amount_usd": 10}
+    ).json()
     assert lightning["invoice"].startswith("lnbc")
 
 

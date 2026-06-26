@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +11,7 @@ from trendalgo.exchanges.registry import list_trading_exchanges
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 CONTROL_SCHEMA = """
@@ -78,7 +78,9 @@ class ExchangeControlStore:
     def list_status(self) -> list[dict[str, Any]]:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            rows = conn.execute("SELECT * FROM exchange_trading_state ORDER BY exchange_id").fetchall()
+            rows = conn.execute(
+                "SELECT * FROM exchange_trading_state ORDER BY exchange_id"
+            ).fetchall()
             return [
                 {
                     "exchange_id": r["exchange_id"],

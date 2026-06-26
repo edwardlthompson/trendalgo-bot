@@ -10,7 +10,7 @@ import ccxt
 from trendalgo.exchanges.adapters.fixtures import DRY_RUN_HOLDINGS
 from trendalgo.exchanges.asset_mapper import normalize_asset
 from trendalgo.exchanges.base import holdings_from_ccxt_balance
-from trendalgo.exchanges.registry import ExchangeEntry, get_entry
+from trendalgo.exchanges.registry import ExchangeEntry
 from trendalgo.portfolio.db import HoldingRow, PortfolioStore
 
 

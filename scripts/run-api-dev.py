@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Start TrendAlgo FastAPI dev server (editable src + optional uv venv)."""
+
 from __future__ import annotations
 
 import sys

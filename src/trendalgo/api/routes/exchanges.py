@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 
-from trendalgo.exchanges.registry import load_registry, list_exchanges
+from trendalgo.exchanges.registry import list_exchanges, load_registry
 
 router = APIRouter()
 

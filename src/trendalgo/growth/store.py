@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 GROWTH_SCHEMA = """
@@ -95,6 +95,10 @@ class GrowthStore:
                 (limit,),
             ).fetchall()
             return [
-                {"pseudonym": r["pseudonym"], "score_usd": float(r["score_usd"]), "updated_at": r["updated_at"]}
+                {
+                    "pseudonym": r["pseudonym"],
+                    "score_usd": float(r["score_usd"]),
+                    "updated_at": r["updated_at"],
+                }
                 for r in rows
             ]

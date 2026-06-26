@@ -9,7 +9,9 @@ from trendalgo.strategies.runtime.smart_dca import SmartDCAStrategy
 
 
 def _candle(ts: int, close: float) -> Candle:
-    return Candle(timestamp_ms=ts, open=close, high=close * 1.01, low=close * 0.99, close=close, volume=100)
+    return Candle(
+        timestamp_ms=ts, open=close, high=close * 1.01, low=close * 0.99, close=close, volume=100
+    )
 
 
 def test_loader_supports_templates() -> None:

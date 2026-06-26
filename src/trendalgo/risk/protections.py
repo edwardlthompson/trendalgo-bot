@@ -55,6 +55,8 @@ def merge_risk_into_config(
         raise ValueError("; ".join(errors))
     merged = dict(config)
     merged["max_open_trades"] = limits.max_open_trades
-    merged["stake_amount"] = min(float(merged.get("stake_amount", limits.max_stake_usd)), limits.max_stake_usd)
+    merged["stake_amount"] = min(
+        float(merged.get("stake_amount", limits.max_stake_usd)), limits.max_stake_usd
+    )
     merged["protections"] = build_protections(limits)
     return merged

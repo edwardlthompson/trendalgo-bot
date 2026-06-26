@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 BOT_SCHEMA = """
@@ -52,7 +52,16 @@ class BotOrchestrator:
                 conn.execute(
                     "INSERT INTO bots (label, strategy_id, pair, enabled, equity_usd, engine, exchange, created_at) "
                     "VALUES (?,?,?,?,?,?,?,?)",
-                    ("Bot-1", "multi-tf-example", "BTC/USD", 1, 1000, "native", "kraken", _utc_now()),
+                    (
+                        "Bot-1",
+                        "multi-tf-example",
+                        "BTC/USD",
+                        1,
+                        1000,
+                        "native",
+                        "kraken",
+                        _utc_now(),
+                    ),
                 )
 
     def _migrate(self, conn: sqlite3.Connection) -> None:

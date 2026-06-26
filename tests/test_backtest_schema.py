@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from trendalgo.schemas.backtest_result import BacktestResult, BacktestTradeSummary
 
@@ -17,8 +17,8 @@ def test_backtest_result_schema() -> None:
                 pair="BTC/USD",
                 profit_ratio=0.01,
                 profit_abs=10.5,
-                open_date=datetime(2024, 1, 2, tzinfo=timezone.utc),
-                close_date=datetime(2024, 1, 3, tzinfo=timezone.utc),
+                open_date=datetime(2024, 1, 2, tzinfo=UTC),
+                close_date=datetime(2024, 1, 3, tzinfo=UTC),
             )
         ],
     )

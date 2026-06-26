@@ -52,7 +52,9 @@ class PostgresDualWrite:
         if not POSTGRES_SCHEMA.exists():
             return {"ok": False, "error": "missing schema.sql"}
         sql = POSTGRES_SCHEMA.read_text(encoding="utf-8")
-        statements = [s.strip() for s in sql.split(";") if s.strip() and not s.strip().startswith("--")]
+        statements = [
+            s.strip() for s in sql.split(";") if s.strip() and not s.strip().startswith("--")
+        ]
         return {
             "ok": True,
             "statement_count": len(statements),

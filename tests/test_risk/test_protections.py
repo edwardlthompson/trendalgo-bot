@@ -13,6 +13,8 @@ def test_validate_pre_live_blocks_without_approval() -> None:
 
 
 def test_merge_risk_dry_run() -> None:
-    cfg = merge_risk_into_config({"dry_run": True, "stake_amount": 200}, RiskLimits(max_stake_usd=100))
+    cfg = merge_risk_into_config(
+        {"dry_run": True, "stake_amount": 200}, RiskLimits(max_stake_usd=100)
+    )
     assert cfg["stake_amount"] == 100
     assert "protections" in cfg

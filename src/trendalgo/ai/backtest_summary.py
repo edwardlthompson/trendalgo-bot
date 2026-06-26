@@ -18,8 +18,8 @@ def rule_based_summary(result: BacktestResult) -> str:
     tone = "favorable" if result.profit_total > 0 and dd < 0.1 else "cautious"
     return (
         f"{result.strategy} on {result.pair}: {result.total_trades} trades, "
-        f"net ${result.profit_total:.2f} ({result.profit_total_pct*100:.1f}%). "
-        f"Win/loss {wins}/{losses}, max drawdown {dd*100:.1f}%. "
+        f"net ${result.profit_total:.2f} ({result.profit_total_pct * 100:.1f}%). "
+        f"Win/loss {wins}/{losses}, max drawdown {dd * 100:.1f}%. "
         f"Assessment: {tone} — verify on longer timerange before live."
     )
 

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 WATCHLIST_SCHEMA = """
@@ -50,7 +50,9 @@ class WatchlistStore:
     def list_items(self) -> list[dict[str, Any]]:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            rows = conn.execute("SELECT pair, alert_price_pct, alert_pl_usd FROM watchlist_items").fetchall()
+            rows = conn.execute(
+                "SELECT pair, alert_price_pct, alert_pl_usd FROM watchlist_items"
+            ).fetchall()
             return [dict(r) for r in rows]
 
     def log_alert(self, pair: str, message: str) -> None:
@@ -63,7 +65,9 @@ class WatchlistStore:
     def check_price_move(self, pair: str, move_pct: float) -> str | None:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            row = conn.execute("SELECT alert_price_pct FROM watchlist_items WHERE pair = ?", (pair,)).fetchone()
+            row = conn.execute(
+                "SELECT alert_price_pct FROM watchlist_items WHERE pair = ?", (pair,)
+            ).fetchone()
             if row is None:
                 return None
             threshold = float(row["alert_price_pct"])

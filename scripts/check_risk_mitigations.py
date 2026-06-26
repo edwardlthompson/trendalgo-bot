@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Risk Register Zero — verify and close risks from docs/risk-catalog.json."""
+
 from __future__ import annotations
 
 import argparse
@@ -7,7 +8,7 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,13 +112,19 @@ def cmd_check(args: argparse.Namespace) -> int:
     for critique in critiques:
         state, msg = verify_risk(critique)
         if args.strict and state in ("SCHEDULED", "FAIL") and critique.get("status") == "pending":
-            if args.all or (args.sprint is not None and critique.get("close_sprint", 99) <= args.sprint):
+            if args.all or (
+                args.sprint is not None and critique.get("close_sprint", 99) <= args.sprint
+            ):
                 state = "FAIL" if state != "PASS" else state
         if state == "FAIL":
             worst = 1
         print(f"{critique['id']}: {state} — {msg}")
 
-    if args.all and args.strict and len([r for r in catalog['risks'] if r.get('status') == 'active']) > 0:
+    if (
+        args.all
+        and args.strict
+        and len([r for r in catalog["risks"] if r.get("status") == "active"]) > 0
+    ):
         worst = 1
 
     return worst
@@ -136,7 +143,7 @@ def cmd_close(args: argparse.Namespace) -> int:
         return 1
 
     match["status"] = args.closure_type or match.get("closure_type", "closed")
-    match["closed_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    match["closed_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
     match["closed_sprint"] = args.sprint
     if args.note:
         match["close_note"] = args.note

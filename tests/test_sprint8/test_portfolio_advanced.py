@@ -1,5 +1,6 @@
 """Sprint 8 portfolio advanced tests."""
 
+from trendalgo.api.public_dashboard import PublicDashboardStore, public_overview_payload
 from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
 from trendalgo.portfolio.basket import apply_basket_to_bots, normalize_weights
 from trendalgo.portfolio.comparisons import yoy_mom_comparison
@@ -7,7 +8,6 @@ from trendalgo.portfolio.goals import goal_progress
 from trendalgo.portfolio.multi_exchange import aggregate_holdings, sync_all_exchanges
 from trendalgo.portfolio.rebalance import rebalance_suggestions
 from trendalgo.portfolio.tags import default_tag, tag_holdings
-from trendalgo.api.public_dashboard import PublicDashboardStore, public_overview_payload
 
 
 def test_multi_exchange_and_tags(tmp_path) -> None:

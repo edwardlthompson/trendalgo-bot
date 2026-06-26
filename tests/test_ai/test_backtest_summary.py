@@ -1,11 +1,11 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from trendalgo.ai.backtest_summary import analyze_backtest, rule_based_summary
 from trendalgo.schemas.backtest_result import BacktestResult, BacktestTradeSummary
 
 
 def _result() -> BacktestResult:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     trades = [
         BacktestTradeSummary(
             pair="BTC/USD",

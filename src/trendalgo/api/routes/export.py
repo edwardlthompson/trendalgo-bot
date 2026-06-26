@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
 
 from trendalgo.export.hub import export_bundle, export_hub_manifest, export_settings_json

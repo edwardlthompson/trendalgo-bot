@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Propagate root app-update / donations config into stack exemplar paths."""
+
 from __future__ import annotations
 
 import json

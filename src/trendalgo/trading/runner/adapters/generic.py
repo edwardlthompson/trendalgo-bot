@@ -8,7 +8,7 @@ from typing import Any
 
 import ccxt
 
-from trendalgo.exchanges.registry import ExchangeEntry, get_entry
+from trendalgo.exchanges.registry import ExchangeEntry
 
 
 class GenericCcxtTradingAdapter:

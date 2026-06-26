@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from trendalgo.billing.engine import process_journal_trades
 from trendalgo.billing.license_gate import advance_grace
@@ -20,7 +21,9 @@ def run_monthly_statement_job(
 ) -> dict[str, Any]:
     result = process_journal_trades(billing, journal, risk_manager)
     if on_log:
-        on_log(f"monthly statement: period={result['period']} fee=${result['rollup']['license_fee_usd']}")
+        on_log(
+            f"monthly statement: period={result['period']} fee=${result['rollup']['license_fee_usd']}"
+        )
     enrollment = billing.get_enrollment()
     if enrollment.get("enrolled") and result["rollup"]["license_fee_usd"] > 0:
         portfolio_store.insert_notification(

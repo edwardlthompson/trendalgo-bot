@@ -1,7 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from trendalgo.optimize.heatmap import hyperopt_heatmap_grid
 from trendalgo.optimize.monte_carlo import monte_carlo_trade_shuffle
@@ -27,8 +27,12 @@ class WalkForwardBody(BaseModel):
 def research_walk_forward(body: WalkForwardBody, request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
     if body.use_native:
-        result = run_native_walk_forward(body.strategy, [], pair=body.pair, exchange_id=body.exchange_id)
-        state.log(f"native walk-forward: {result['fold_count']} folds avg_test={result['avg_test_pnl']}")
+        result = run_native_walk_forward(
+            body.strategy, [], pair=body.pair, exchange_id=body.exchange_id
+        )
+        state.log(
+            f"native walk-forward: {result['fold_count']} folds avg_test={result['avg_test_pnl']}"
+        )
         return result
     trades: list[dict[str, Any]] = []
     if state.last_backtest and state.last_backtest.get("result"):
@@ -44,7 +48,9 @@ def research_monte_carlo(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
     profits: list[float] = []
     if state.last_backtest and state.last_backtest.get("result"):
-        profits = [float(t.get("profit_abs", 0)) for t in state.last_backtest["result"].get("trades", [])]
+        profits = [
+            float(t.get("profit_abs", 0)) for t in state.last_backtest["result"].get("trades", [])
+        ]
     return monte_carlo_trade_shuffle(profits)
 
 

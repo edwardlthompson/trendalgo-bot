@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from trendalgo.scanner.config import ScannerSettings
@@ -13,7 +13,7 @@ from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 class ScannerStore:
@@ -146,7 +146,9 @@ class ScannerStore:
 
     def watchlist(self) -> list[str]:
         with self._connect() as conn:
-            rows = conn.execute("SELECT pair FROM scanner_watchlist ORDER BY pinned_at DESC").fetchall()
+            rows = conn.execute(
+                "SELECT pair FROM scanner_watchlist ORDER BY pinned_at DESC"
+            ).fetchall()
             return [str(r["pair"]) for r in rows]
 
     def log_alert(self, tier: str, pair: str, message: str) -> None:
