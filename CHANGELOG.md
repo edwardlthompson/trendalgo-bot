@@ -165,7 +165,7 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * **build-plan:** record v0.9.0 human release approval ([40e6eee](https://github.com/edwardlthompson/agent-project-bootstrap/commit/40e6eee079a9e8469993cb68f14d60d5329ca14c))
 * log M27 batch commands decision at ship milestone ([17318ea](https://github.com/edwardlthompson/agent-project-bootstrap/commit/17318ea250d191b5eb9b477c2239d992a809a04a))
 
-## [Unreleased]
+## Template bootstrap (archived unreleased notes)
 
 ### Documentation
 
