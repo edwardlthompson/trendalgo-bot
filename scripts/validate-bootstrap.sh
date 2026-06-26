@@ -117,7 +117,11 @@ run_check bash scripts/validate-template-index.sh
 if [ -f docs/risk-catalog.json ]; then
   run_check python3 scripts/check_risk_mitigations.py --sprint 0
   if [ -f scripts/check-sprint0-founder-gates.sh ]; then
-    run_check bash scripts/check-sprint0-founder-gates.sh
+    if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+      echo "SKIP: check-sprint0-founder-gates (CI — human gates deferred to founder_gate.py)"
+    else
+      run_check bash scripts/check-sprint0-founder-gates.sh
+    fi
   fi
 fi
 
