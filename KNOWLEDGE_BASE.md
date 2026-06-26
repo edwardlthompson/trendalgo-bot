@@ -68,6 +68,12 @@
 
 **Fix:** R-Audit-4 synced README (DEX capabilities + roadmap), POST_DELIVERY snapshot (170 tests, DEX row), ROADMAP_PUBLIC Phase 8, HUMAN_BACKLOG H-035/H-036. Use `python scripts/run-trendalgo-tests.py`, `python scripts/founder_gate.py preflight H-035|H-036`. Clear **H-032, H-035, H-036** via [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) before live trading.
 
+## KB-012 — v0.2.0 ship CI follow-ups (2026-06-26)
+
+**Symptom:** `/ship` pushed DEX S21–S24 + exchange S19–S20 to `main`; CI green blocked on mypy (~80 legacy errors), Playwright axe (color-contrast on portfolio heatmap/tags), offline SW e2e flaky with route mocks.
+
+**Fix:** Commits `99557b1`–`37fdecb` on `main` (release + uv.lock + e2e mocks + heatmap contrast). Re-run `bash scripts/check-github-ci.sh --wait 600`. Remaining: mypy strict debt (pre-existing), axe audit on default portfolio view, service-worker offline test. Trigger Release Please / tag `v0.2.0` after CI green. Human gates H-032/H-035/H-036 still open.
+
 ## Template KB entries
 
 Legacy template entries (KB-007+) remain in git history; TrendAlgo-specific entries start at KB-001 above.
