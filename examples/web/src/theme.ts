@@ -3,6 +3,9 @@ import themeMeta from "./theme-meta.json";
 export type ThemeMode = "system" | "light" | "dark";
 
 const STORAGE_KEY = "gp-theme";
+const ACCENT_KEY = "gp-accent";
+
+export const ACCENT_PRESETS = (themeMeta as { accentPresets?: string[] }).accentPresets ?? [];
 
 let currentMode: ThemeMode = "system";
 let mediaQuery: MediaQueryList | null = null;
@@ -47,9 +50,19 @@ function updateThemeColorMeta(): void {
   );
 }
 
+function applyAccentColor(): void {
+  const accent = localStorage.getItem(ACCENT_KEY);
+  if (accent) {
+    document.documentElement.style.setProperty("--gp-color-primary", accent);
+  } else {
+    document.documentElement.style.removeProperty("--gp-color-primary");
+  }
+}
+
 function applyDomTheme(): void {
   document.documentElement.dataset.theme = currentMode;
   updateThemeColorMeta();
+  applyAccentColor();
 }
 
 function detachMediaListener(): void {
@@ -87,6 +100,20 @@ export function cycleThemeMode(): ThemeMode {
     currentMode === "system" ? "light" : currentMode === "light" ? "dark" : "system";
   setThemeMode(next);
   return next;
+}
+
+export function getAccentColor(): string {
+  return localStorage.getItem(ACCENT_KEY) ?? "";
+}
+
+export function setAccentColor(color: string): void {
+  if (color) {
+    localStorage.setItem(ACCENT_KEY, color);
+  } else {
+    localStorage.removeItem(ACCENT_KEY);
+  }
+  applyAccentColor();
+  notifyThemeListeners();
 }
 
 export function initTheme(): ThemeMode {

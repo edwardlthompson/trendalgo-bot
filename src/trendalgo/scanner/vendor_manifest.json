@@ -1,0 +1,16 @@
+{
+  "strategy": "native_port",
+  "source_repo": "linear-trend-spotter",
+  "note": "No git submodule — native implementation per ADR-0006 and destructive-ops policy",
+  "modules": {
+    "scanner.pipeline": "volume, gain, uniformity, entry/exit stages",
+    "scanner.uniformity": "re-exports trendalgo.lts.uniformity",
+    "scanner.snapshot": "qualified_snapshot.json contract (O5)",
+    "scanner.store": "scanner.db namespaced SQLite (O3)",
+    "scanner.scheduler": "APScheduler interval jobs (O4)",
+    "scanner.alerts": "LTS alerting tiers A/B/C (O9)",
+    "scanner.backtest": "BacktestDataLoader (O14)",
+    "scanner.mixins": "OpportunityScannerMixin + TrendSpotter Boost (O8, O13)",
+    "scanner.watchlist_bridge": "Freqtrade pair whitelist feed (O8)"
+  }
+}

@@ -1,0 +1,6 @@
+# Sprint 1+ — dev image stub
+FROM python:3.11-slim
+WORKDIR /app
+COPY pyproject.toml* ./
+RUN pip install --no-cache-dir uv 2>/dev/null || true
+CMD ["python", "-c", "print('TrendAlgo dev container — wire in Sprint 1')"]

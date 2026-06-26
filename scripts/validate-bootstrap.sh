@@ -84,6 +84,11 @@ if [ -f examples/node/package.json ] && [ ! -f examples/node/package-lock.json ]
   ERRORS=$((ERRORS + 1))
 fi
 
+if [ -f pyproject.toml ] && grep -q 'name = "trendalgo-bot"' pyproject.toml && [ ! -f uv.lock ]; then
+  echo "MISSING: uv.lock (required for trendalgo-bot root Python project)"
+  ERRORS=$((ERRORS + 1))
+fi
+
 if [ -f examples/python/pyproject.toml ] && [ ! -f examples/python/uv.lock ]; then
   echo "MISSING: examples/python/uv.lock (required when python example present)"
   ERRORS=$((ERRORS + 1))
@@ -108,6 +113,13 @@ if [ "$QUICK" = false ]; then
 fi
 
 run_check bash scripts/validate-template-index.sh
+
+if [ -f docs/risk-catalog.json ]; then
+  run_check python3 scripts/check_risk_mitigations.py --sprint 0
+  if [ -f scripts/check-sprint0-founder-gates.sh ]; then
+    run_check bash scripts/check-sprint0-founder-gates.sh
+  fi
+fi
 
 if [ "$ERRORS" -gt 0 ]; then
   echo "$ERRORS bootstrap check(s) failed"

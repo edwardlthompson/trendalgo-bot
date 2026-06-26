@@ -1,0 +1,7 @@
+{
+  "max_stake_usd": 100,
+  "max_stake_pct": 0.02,
+  "daily_loss_cap_usd": 50,
+  "circuit_breaker_drawdown_pct": 0.10,
+  "max_open_trades": 1
+}

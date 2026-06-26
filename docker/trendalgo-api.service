@@ -1,0 +1,15 @@
+[Unit]
+Description=TrendAlgo API (dry-run)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/trendalgo/.env
+WorkingDirectory=/opt/trendalgo-bot
+ExecStart=/usr/local/bin/uv run trendalgo-api
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

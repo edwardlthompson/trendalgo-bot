@@ -1,6 +1,11 @@
 import { t } from "../i18n";
 import type { ThemeMode } from "../theme";
 import {
+  ACCENT_PRESETS,
+  getAccentColor,
+  setAccentColor,
+} from "../theme";
+import {
   applySettingsThemeMode,
   getSettingsThemeMode,
   isUpdateCheckEnabled,
@@ -38,6 +43,10 @@ export function createSettingsPanel(callbacks: SettingsPanelCallbacks): HTMLElem
       <input type="checkbox" data-settings-update ${updateEnabled ? "checked" : ""} />
       <span>${t("settings.update_check.label")}</span>
     </label>
+    <div class="gp-settings-field">
+      <span>${t("settings.accent.label")}</span>
+      <div class="gp-accent-row" data-accent-row></div>
+    </div>
   `;
 
   const themeSelect = panel.querySelector<HTMLSelectElement>("[data-settings-theme]");
@@ -53,6 +62,21 @@ export function createSettingsPanel(callbacks: SettingsPanelCallbacks): HTMLElem
     setUpdateCheckEnabled(checked);
     callbacks.onUpdateCheckChange?.(checked);
   });
+
+  const accentRow = panel.querySelector("[data-accent-row]");
+  const currentAccent = getAccentColor();
+  if (accentRow) {
+    for (const color of ACCENT_PRESETS) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "gp-accent-swatch";
+      btn.style.background = color;
+      btn.title = color;
+      if (color === currentAccent) btn.setAttribute("aria-pressed", "true");
+      btn.addEventListener("click", () => setAccentColor(color));
+      accentRow.appendChild(btn);
+    }
+  }
 
   panel.querySelector(".gp-settings-close")?.addEventListener("click", callbacks.onClose);
   return panel;

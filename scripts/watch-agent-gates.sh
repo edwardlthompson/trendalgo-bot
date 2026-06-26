@@ -16,6 +16,7 @@ INTERVAL=0
 MAX_ATTEMPTS=10
 WAIT_CI=0
 STEP=""
+FOUNDER=false
 while [ $# -gt 0 ]; do
   case "$1" in
     --once) ONCE=true; shift ;;
@@ -26,10 +27,12 @@ while [ $# -gt 0 ]; do
     --wait-ci) WAIT_CI="${2:-300}"; shift 2 ;;
     --step) STEP="${2:-}"; shift 2 ;;
     --step=*) STEP="${1#*=}"; shift ;;
+    --founder) FOUNDER=true; shift ;;
     *) shift ;;
   esac
 done
 STEP="${STEP:-gate}"
+FOUNDER="${FOUNDER:-false}"
 
 if [ "$ONCE" = true ]; then
   MAX_ATTEMPTS=1
@@ -89,6 +92,12 @@ attempt=0
 while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
   attempt=$((attempt + 1))
   echo "watch-agent-gates attempt $attempt/$MAX_ATTEMPTS step=${STEP:-none}"
+
+  if [ "$FOUNDER" = true ] && [ -f docs/risk-catalog.json ]; then
+    echo "Founder gate preflight (non-strict)..."
+    python3 scripts/founder_gate.py preflight-sprint --sprint 0 || true
+    python3 scripts/check_risk_mitigations.py --sprint 0 || true
+  fi
 
   run_gate
 

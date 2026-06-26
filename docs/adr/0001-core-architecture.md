@@ -1,53 +1,32 @@
-# ADR-0001: Core Application Architecture (Child Repo)
+# ADR-0001: Freqtrade-as-Engine, Kraken Spot MVP
 
-- **Status:** Proposed (fill during Sprint 1)
-- **Date:** YYYY-MM-DD
+- **Status:** Superseded by [ADR-0010](0010-ccxt-native-engine.md) (2026-06-25)
+- **Date:** 2026-06-25
 - **Deciders:** Project team
-
-> Template for child repositories. Template-repo baseline ADR is `docs/adr/0000-template-baseline.md`.
 
 ## Context
 
-Choose a primary architecture pattern for the application layer. Document the choice before Golden Path implementation.
+TrendAlgo Bot needs a proven trading engine without maintaining a full exchange integration fork. MVP targets Kraken spot only; extension layer adds risk, scanner, portfolio, and billing.
 
 ## Decision
 
-**Selected pattern:** 🔲 MVVM  🔲 Clean Architecture  🔲 Hexagonal (Ports & Adapters)
-
-### MVVM
-
-- **View:** UI components (web components, Android Jetpack Compose, CLI output)
-- **ViewModel:** Presentation state, user actions, no platform SDK calls
-- **Model:** Domain + data services
-
-**When:** UI-heavy apps with clear screen-level state.
-
-### Clean Architecture
-
-- **Entities:** Enterprise business rules
-- **Use cases:** Application-specific rules
-- **Interface adapters:** Controllers, presenters, gateways
-- **Frameworks:** DB, web framework, device APIs
-
-**When:** Long-lived products with multiple delivery surfaces.
-
-### Hexagonal
-
-- **Ports:** Interfaces the app exposes or requires
-- **Adapters:** HTTP, DB, CLI, Android Activities wired to ports
-- **Domain core:** No inward dependencies
-
-**When:** Strong testability and swappable infrastructure matter most.
+1. **Engine:** Freqtrade installed via pip pin in root `pyproject.toml`; configs/strategies in `user_data/`.
+2. **Architecture:** **Hexagonal (ports & adapters)** — domain in `src/trendalgo/`, Freqtrade/CCXT as adapters.
+3. **Exchange MVP:** Kraken spot; pair naming `BTC/USD` (not USDT on Kraken).
+4. **Database MVP:** SQLite co-located on VPS; Postgres documented for S12.
+5. **Default mode:** Dry-run until go-live gate passes.
+6. **Upgrade path:** Bump Freqtrade pin + regression tests — never fork upstream.
 
 ## Consequences
 
-- Golden Path feature must respect layer boundaries chosen above
-- CI coverage and lint gates apply per `examples/{stack}/` conventions
-- Changing this ADR later requires a new ADR and BUILD_PLAN `[HUMAN]` approval
+- Sprint 1 wires Freqtrade dry-run + RPC
+- `src/trendalgo/risk/` enforces limits before live config load
+- CI runs without live API keys (mock/dry-run)
 
 ## Alternatives Considered
 
-| Pattern | Rejected because |
-|---------|------------------|
-| Monolith MVC | TBD |
-| No structure | TBD |
+| Option | Rejected because |
+|--------|------------------|
+| Fork Freqtrade | Maintenance burden; lose upstream fixes |
+| Custom CCXT bot only | Reinvent order lifecycle, backtest, strategy interface |
+| Multi-exchange MVP | Scope; Kraken first per BUILD_PLAN |

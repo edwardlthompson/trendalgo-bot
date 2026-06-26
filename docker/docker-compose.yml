@@ -1,0 +1,21 @@
+# TrendAlgo Bot — local development (dry-run / backtest only)
+# Production: external VPS via docker-compose.prod.yml (ADR-0002)
+# Never run live trading on local Puerto Rico hardware.
+
+services:
+  trendalgo-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    profiles: ["full"]
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/app/data
+      - ../config:/app/config
+    environment:
+      - TRENDALGO_MODE=dry-run
+      - TRENDALGO_API_PORT=8000
+      - LOG_LEVEL=info

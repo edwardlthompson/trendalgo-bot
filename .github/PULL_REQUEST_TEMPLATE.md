@@ -21,3 +21,4 @@
 - 🔲 Tests added/updated
 - 🔲 File line limits respected
 - 🔲 No secrets committed
+- 🔲 **S13+ UI/API:** L1 local preview run ([`docs/LOCAL_DEV.md`](../docs/LOCAL_DEV.md)) — portfolio loads, API online

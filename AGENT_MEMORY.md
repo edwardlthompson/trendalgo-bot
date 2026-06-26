@@ -1,56 +1,55 @@
-# Agent Memory
+# Agent Memory — TrendAlgo Bot
 
-> Centralized index of tech stack, threat models, persistent context, and retrospectives.
-> Update only at session startups, milestone boundaries, or major architectural pivots.
+> Update at session start, milestone boundaries, or architectural pivots only.
 
 ## Tech Stack
 
-| Layer | Technology | Version | Notes |
-|-------|-----------|---------|-------|
-| Platform | Multi-stack template (Web, Python, Android, Node, optional Lightroom/Rust/Go) | 0.11.1 | Template maintainer repo |
-| License | MIT | - | Pure FOSS |
-| Distribution | GitHub Releases + GitHub Pages demo | - | F-Droid/Winget stubs for child repos |
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Trading | Native CCXT runner (ADR-0010) | `strategies/runtime/` + `trading/runner/` |
+| Backend | Python 3.11+ (uv) | `src/trendalgo/` hexagonal modules |
+| Web | Vite + TypeScript PWA | `examples/web/` |
+| DB MVP | SQLite on VPS | Postgres path Sprint 12 |
+| Exchange | 9 portfolio / 7 trading venues | Registry v5; worldwide Phase 1 (S18) |
+| Scanner | linear-trend-spotter → `scanner/` | ADR-0006 absorption S4.5 |
+| License | Performance software license | Calculation-only; user pays externally (ADR-0008) |
 
 ## Active Modules
 
-- ✅ Web / PWA (`modules/web/MODULE.md`)
 - ✅ Python (`modules/python/MODULE.md`)
-- ✅ Android / F-Droid (`modules/android/MODULE.md`)
-- ✅ Node API (`modules/node/MODULE.md`)
-- ✅ Lightroom Classic (`modules/lightroom/MODULE.md`)
-- ✅ Rust (`modules/rust/MODULE.md`)
-- ✅ Go (`modules/go/MODULE.md`)
+- ✅ Web / PWA (`modules/web/MODULE.md`)
 
-## Threat Model Checklist
+## Project Constraints
 
-- ✅ `docs/THREAT_MODEL.md` drafted (STRIDE, trust boundaries, top abuse cases)
-- ✅ No proprietary closed-source SDKs in production path
-- ✅ Opt-in only telemetry (GDPR/CCPA compliant); see `docs/PRIVACY.md`
-- ✅ Secrets excluded from VCS (Gitleaks pre-commit)
-- ✅ Dependency vulnerability scanning enabled (CodeQL + Trivy + Dependabot)
-- ✅ Input validation at all data boundaries
-- ✅ `SECURITY.md` and private vulnerability reporting enabled
+| Constraint | Rule |
+|------------|------|
+| Legal (#0) | No KYC · No custodial funds · No MSB · User-initiated license payment |
+| Cost | Production **< $10/mo**; Oracle Always Free → Hetzner fallback |
+| Puerto Rico | **Never** live/production on local PR hardware |
+| Dry-run | Default until go-live gate (H-010/H-028) |
+| Secrets | Never in VCS; Gitleaks pre-commit |
+| Telemetry | Opt-in only |
+
+## Threat Model
+
+- ✅ `docs/THREAT_MODEL.md` — TrendAlgo trust boundaries (Sprint 0 draft)
+- ✅ ADR-0007 data minimization; install UUID only for consent
+- ✅ Trade API keys: no Withdraw permission (R-009)
 
 ## Persistent Context
 
-### Project Purpose
+**Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-FOSS Cursor agent bootstrap template: labeled BUILD_PLAN sprints, Golden Path examples, CI guardrails, workspace memory, and design-system cohesion across Web and Android.
+**Current sprint:** Exchange Program S19 (BUILD_PLAN); post-delivery gates parallel in HUMAN_BACKLOG.
 
-### Key Constraints
+**Tests:** 130 pass · ~86% coverage (2026-06-25 release prep).
 
-- Max 250 lines per view file, 150 lines per logic file
-- Trunk-based development with Conventional Commits
-- Strict type safety and test coverage budgets
+**Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
-## Session Retrospectives
+## Retrospectives
 
-| Date | Milestone | What worked | What to improve |
-|------|-----------|-------------|-----------------|
-| 2026-06-13 | v0.6.0 design system | Cross-stack tokens + i18n scaffold | Restore optional-stack CI jobs after large merge |
+### R-Audit (2026-06-25)
 
-## Template Provenance
-
-- **Source template:** `edwardlthompson/agent-project-bootstrap` (self-maintained)
-- **Template version:** `0.11.1` (see `.template-version`)
-- **Last update check:** See `.template-update.json`
+- 89 tests, ~86% coverage; Risk Register Zero verified
+- AGENT fixes: README test path, ARCHITECTURE link, CORS env, Archived Sprints table, KB-007
+- Blockers for go-live/public beta: H-001–H-025 founder gates, H-023 TERMS, Dependabot alerts

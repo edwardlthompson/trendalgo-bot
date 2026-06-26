@@ -61,6 +61,53 @@ Static PWAs and CLIs may skip HTTP endpoints; document stack-specific checks ins
 2. Review `docs/SECURITY_TRIAGE.md` for security issues
 3. Contact maintainers in `.github/CODEOWNERS`
 
+## Go-live (H-010 / H-028)
+
+1. `[AUTO]` `bash scripts/go-live-gate.sh --check-only`
+2. `[HUMAN]` Exchange IP whitelist + position caps in each venue UI
+3. `[HUMAN]` `bash scripts/go-live-gate.sh --approve --exchange kraken` (per venue; logs to `data/audit/go-live.jsonl`)
+4. `[HUMAN]` Enable live only via `config/bot/live.example.json` template after step 3
+
+Dry-run is always default. Never enable live trading without founder gate approval per exchange.
+
+## Multi-exchange portfolio (native engine)
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| Registry venues | `GET /api/v1/exchanges/registry` | 9+ portfolio venues (v4+) |
+| Staggered sync | `TRENDALGO_SYNC_STAGGER_SEC=15` (prod) | Rate-limit friendly |
+| Load test (CM-6) | `bash scripts/load-test-portfolio-sync.sh` | 6+ exchanges, &lt; 30s dry-run |
+| Parity slice | `bash scripts/compare-portfolio-parity.sh` | Multi-exchange PASS |
+| Cost gate | `bash scripts/check-production-cost.sh` | Load test + budget |
+
+**Production sync:** Portfolio scheduler uses `exchanges/scheduler.py` with stagger. On VPS, keep default 15s stagger between venues. For local dev / CI, set `TRENDALGO_SYNC_STAGGER_SEC=0`.
+
+**Incidents:** If sync exceeds 30s with zero stagger, check CCXT rate limits and reduce `sync_interval_sec` in `config/exchanges.registry.json`.
+
+## Native research (CM-3)
+
+Walk-forward on the native backtest path:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/research/walk-forward \
+  -H 'Content-Type: application/json' \
+  -d '{"strategy":"grid-trading","pair":"BTC/USD","use_native":true}'
+```
+
+Response includes `"engine": "native"` and fold-level train/test PnL.
+
+## Worldwide trading (Phase 1, S18)
+
+Tier C venues (`binance`, `bybit`, `okx`) are enabled for native dry-run/live after H-032 approval.
+
+| Guard | Env / API |
+|-------|-----------|
+| US-restricted ack | `WORLDWIDE_TRADING_ACK=1` before **live** on worldwide venues |
+| Per-venue go-live | `POST /api/v1/trading/exchanges/{id}/go-live` |
+| Pair quotes | Auto-normalized (`BTC/USD` → `BTC/USDT` on Binance/Bybit/OKX) |
+
+Check status: `GET /api/v1/trading/runner/status` → `worldwide_trading_phase`, `worldwide_exchanges`.
+
 ## Secret Rotation
 
 When credentials leak or a team member with access leaves:

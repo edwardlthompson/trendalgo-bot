@@ -19,6 +19,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [Unreleased]
+
+
+
+## [0.1.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.0.0...v0.1.0) (2026-06-25)
+
+First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
+
+### Added
+
+- Native CCXT trading runner (ADR-0010) with strategy runtime, dry-run, and multi-bot orchestration
+- Exchange registry and adapters for 9 portfolio venues (7 trading-enabled)
+- CoinStats-class portfolio tracker, LTS opportunity scanner, research (backtest, walk-forward, Monte Carlo)
+- FastAPI API + offline-capable PWA dashboard
+- Performance license billing with user-initiated settlement
+- Platform extensions: on-chain read-only sync, Postgres dual-write path, pair forager
+- Founder gate automation and exchange program docs (S13–S20)
+
+### Changed
+
+- Removed Freqtrade dependency and legacy user_data (S15 CM-4)
+- Pruned inactive template stacks — web + Python focus
+
+### Documentation
+
+- EXCHANGE_ROADMAP, NATIVE_TRADING, ARCHITECTURE, post-delivery and human gate backlogs
+- R-Audit-3 doc sync (README, THREAT_MODEL, KB-009)
+
 ## [0.11.1](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.11.0...v0.11.1) (2026-06-21)
 
 

@@ -2,6 +2,232 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Review R-Audit-3 — Post–S18 doc sync (2026-06-25)
+
+- ✅ `CODE_REVIEW.md` written (local, gitignored) — F-021–F-032
+- ✅ README portfolio venues + roadmap table (S13–S18 complete, S19–S20 active) — F-021
+- ✅ `docs/POST_DELIVERY_PLAN.md` snapshot (130 tests, exchange program) — F-022
+- ✅ `docs/EXCHANGE_ROADMAP.md` success criteria + recommendation — F-023
+- ✅ `docs/THREAT_MODEL.md`, `docs/LOCAL_DEV.md`, `docs/ROADMAP_PUBLIC.md` — F-024, F-025, F-028
+- ✅ `src/trendalgo/__init__.py` docstring; R-039 label in RISK_REGISTER + risk-catalog — F-026, F-029
+- ✅ `KNOWLEDGE_BASE.md` KB-009 — F-027, F-030
+- 🔲 Human: Dependabot alerts (F-031); founder gates H-030–H-034 (F-032)
+
+## Sprint 18 — Worldwide Phase 1 Trading (2026-06-25)
+
+- ✅ Registry v5 — `trading_enabled` for Binance, Bybit, OKX; `worldwide_trading_phase: 1`
+- ✅ `list_worldwide_trading_exchanges()` + dynamic `list_supported_exchanges()`
+- ✅ Pair normalization on route/dry-run (`BTC/USD` → `BTC/USDT`)
+- ✅ `WORLDWIDE_TRADING_ACK` guard for live on `us_restricted` venues
+- ✅ Runner status API: `worldwide_trading_phase`, `worldwide_exchanges`
+- ✅ 130 tests pass, ~86% coverage; `.env.example` documents `WORLDWIDE_TRADING_ACK`
+- 🔲 Human: H-032 worldwide phase plan approval
+
+## Sprint 17 — US Hardening (2026-06-25)
+
+- ✅ Registry v4 — Bitstamp + Crypto.com portfolio (9 venues total)
+- ✅ Dry-run fixtures for bitstamp/cryptocom
+- ✅ CM-3: `trading/backtest/walk_forward.py` + native `/research/walk-forward`
+- ✅ CM-6: `exchanges/load_test.py`, `load-test-portfolio-sync.sh` (9 exchanges &lt; 30s)
+- ✅ `compare-portfolio-parity.sh` multi-exchange mode
+- ✅ `check-production-cost.sh` runs load test first
+- ✅ Production runbook: multi-exchange sync, CM-3/6 ops (`docs/RUNBOOK.md`)
+
+## Sprint 16 — All US CEX Native Trading (2026-06-25)
+
+- ✅ Registry v3 — `trading_enabled` for Coinbase Advanced + Gemini (Tier B US)
+- ✅ `trading/runner/adapters/` — generic CCXT trading adapter + registry
+- ✅ `trading/control.py` — per-exchange pause + go-live state
+- ✅ API: `/trading/exchanges/control`, pause, go-live, per-exchange route
+- ✅ Journal + fee ledger tags: `exchange`, `bot_id`; billing attribution by exchange
+- ✅ `go-live-gate.sh --exchange` wires audit + control store
+- ✅ CM-2 fixture signal tests for grid + smart-dca
+- 🔲 Human: H-010/H-028 per exchange for live enable
+
+## Sprint 15 — Native Runner + FT Removal (2026-06-25)
+
+- ✅ Native strategy runtime (`strategies/runtime/`) — MultiTFExample, SmartDCA, GridTrading ported
+- ✅ `risk/strategy_mixins.py` — RiskGuard + ScalePosition mixins
+- ✅ `trading/runner/dry_run.py` + `trading/backtest/native_adapter.py` (CM-1)
+- ✅ `GET /api/v1/trading/runner/status`, `POST /api/v1/trading/dry-run/tick`
+- ✅ Bot orchestrator `engine` + `exchange` columns; PWA `native` badge
+- ✅ CM-4: deleted `user_data/`, FREQTRADE_INTEGRATION.md, FT docker services, FT pyproject refs
+- ✅ `check-legal-compliance.sh` — no freqtrade in src/web; no withdraw in runner
+- ✅ `config/bot/*.example.json` replaces user_data configs; backup uses `config/`
+- ✅ 106 tests pass, ~85% coverage
+- 🔲 Human: H-031 ADR-0010 + FT removal approval; LP L2 sign-off
+
+## Sprint 14 — Worldwide Portfolio (2026-06-25)
+
+- ✅ Registry v2 — 7 portfolio venues (Tier A/B/C): Kraken, Binance.US, Coinbase Advanced, Gemini, Binance, Bybit, OKX
+- ✅ `GenericCcxtPortfolioAdapter` — registry-driven CCXT sync for all venues
+- ✅ `asset_mapper.py` — ZUSD/XXBT → USD/BTC normalization
+- ✅ `pair_normalizer.py` — USD vs USDT quote per exchange
+- ✅ `scheduler.py` — staggered sync (CM-6 stub; `TRENDALGO_SYNC_STAGGER_SEC`)
+- ✅ Kraken/Binance.US refactored to generic-backed adapters
+- ✅ `tests/conftest.py` — zero stagger in tests; 103 tests pass
+- 🔲 Human: read-only API keys on venues used; LP L2 sign-off
+
+## Sprint 13 — US Exchange Foundation (2026-06-25)
+
+- ✅ `config/exchanges.registry.json` — Tier A/B catalog (Kraken, Binance.US active)
+- ✅ `src/trendalgo/exchanges/` — registry, base protocol, sync orchestration
+- ✅ `exchanges/adapters/kraken.py` — refactored from `portfolio/sync.py`
+- ✅ `exchanges/adapters/binanceus.py` — replaces global `binance` stub
+- ✅ `GET /api/v1/exchanges/registry` + PWA accounts panel with brand names
+- ✅ `sync_all_exchanges` registry-driven; trading router `binanceus`
+- ✅ Arbitrage detector uses `binanceus` (informational)
+- ✅ `tests/test_exchanges/` — 8 new tests; 97 total pass, ~86% coverage
+- ✅ `.env.example` + `check-api-key-policy.sh` — BINANCEUS keys
+- 🔲 Human: H-030, H-034 before S14 AGENT work
+
+## Review R-Audit-2 — Post–exchange-doc audit (2026-06-25)
+
+- ✅ `CODE_REVIEW.md` written (local, gitignored) — F-011–F-020
+- ✅ `docs/START_HERE.md` aligned with native CCXT / README — F-011
+- ✅ `docs/ARCHITECTURE.md` updated — native runner, ADR-0010 — F-012
+- ✅ `docs/GITHUB_ABOUT.md`, `docs/FEATURE_ROADMAP.md`, `pyproject.toml` description — F-013, F-014, F-016
+- ✅ `KNOWLEDGE_BASE.md` KB-008 audit notes — F-017
+- ✅ PR template Local Preview checklist — LP protocol item 4
+- 🔲 Human: Dependabot alerts (F-018), H-034 L1 preview, H-030 exchange scope (F-020)
+- 🔲 Deferred: `binance` → `binanceus` code stub (F-015 → S13); FT removal (F-019 → S15 CM-4)
+
+## Review R-Audit — Full repo audit (2026-06-25)
+
+- ✅ `CODE_REVIEW.md` written (local, gitignored) — F-001–F-010 findings
+- ✅ README: root Python test path + `docs/ARCHITECTURE.md` link
+- ✅ CORS env gate `TRENDALGO_CORS_ORIGINS` in API + `.env.example`
+- ✅ `KNOWLEDGE_BASE.md` KB-007 post-S12 audit notes
+- ✅ BUILD_PLAN Archived Sprints table populated (S0–S12 + R-Audit)
+- 🔲 Human: founder gates H-001–H-025, Dependabot alerts, H-023/H-025 (see HUMAN_BACKLOG)
+
+## Sprint 12 — Platform Extensions & Risk Register Zero (2026-06-25)
+
+- ✅ On-chain read-only wallet sync (`portfolio/onchain.py`); pair forager prototype (`scanner/forager.py`)
+- ✅ Funding rate display + profit hooks; unified multi-exchange trading router (dry-run default)
+- ✅ On-chain verifiable fee receipt stubs; on-chain/sentiment data module stub
+- ✅ PostgreSQL dual-write adapter, `docker/postgres/schema.sql`, migrate dry-run script
+- ✅ `docs/ARCHITECTURE.md` (horizontal scaling); Platform API `/api/v1/platform/*`
+- ✅ PWA platform panel (forager, funding, postgres status) on portfolio view
+- ✅ Risk Register Zero: `check-risk-mitigations.sh --strict --all` → 0 active risks
+- ✅ `tests/test_sprint12/` — 89 tests, ~86% coverage
+
+## Sprint 11 — AI Strategy Curation & Anonymous Growth (2026-06-25)
+
+- ✅ AI recommender, scanner-to-strategy pipeline, curated library, NL draft (rule-based + optional Ollama)
+- ✅ Anonymous referral codes + opt-in pseudonymous leaderboard
+- ✅ Boost Mode (15% license rate) API
+- ✅ Strategies PWA — recommender, curated presets, growth panel
+- ✅ `docs/AI_STRATEGIES.md`; `check-legal-compliance.sh` community import scan
+- ✅ `tests/test_sprint11/` + API coverage
+
+## Sprint 10 — Performance License & Settlement (2026-06-25)
+
+- ✅ Profit engine, fee ledger, rules (net-loss=$0, carry-forward, drawdown pause)
+- ✅ License statements with signed export; enrollment + terms log (install UUID only)
+- ✅ Billing API + PWA dashboard, settlement copy/QR, Lightning stub
+- ✅ License gate on live trading; grace period + reminders scheduler
+- ✅ `TERMS.md` draft; `reconcile-fees.sh`, `check-copy-compliance.sh`
+- ✅ `tests/test_billing/` + API coverage
+
+## Sprint 8 — Portfolio Advanced & Multi-Exchange (2026-06-25)
+
+- ✅ Multi-exchange sync (Kraken + Binance sample), spot/futures accounts, aggregated overview
+- ✅ Asset tags, manual cost basis, allocation targets, rebalance suggestions (manual apply)
+- ✅ YoY/MoM comparisons, performance goals, basket bot weights
+- ✅ Cross-exchange arbitrage detector (informational only)
+- ✅ Public read-only dashboard tokens; Discord + SMTP test notifiers (env-gated)
+- ✅ PWA: accounts, tags filter, goals progress, comparisons, rebalance, arbitrage panels; accent colors
+- ✅ `tests/test_sprint8/`, API route coverage
+
+## Sprint 7 — Research, Tax & Export Hub (2026-06-25)
+
+- ✅ Walk-forward, Monte Carlo, portfolio stress MC, hyperopt heatmap grid
+- ✅ Correlation matrix + diversification suggestions API + PWA panels
+- ✅ Backtest visualizer, research tools panel, backtest share tokens
+- ✅ Tax FIFO CSV export, export hub (portfolio, settings, bundle)
+- ✅ Exit rules API + config UI; `ScalePositionMixin` for Freqtrade scale-in/out
+- ✅ Expanded rule-based AI insights with disclaimer
+- ✅ `tests/test_sprint7/`, `tests/test_export/`, API route coverage
+
+## Sprint 6 — Strategy Templates, Multi-Bot & Watchlists (2026-06-25)
+
+- ✅ Template registry + JSON import/export; Smart DCA + Grid Freqtrade strategies
+- ✅ Backtest library, slippage/fees, compare, attribution, hyperopt stub
+- ✅ Multi-bot orchestrator + dashboard fleet list
+- ✅ Custom watchlist alerts, generic signal webhook, market event evaluator
+- ✅ Strategies PWA tab — composer, deploy DCA/grid, library clone/compare
+- ✅ ATR position sizing module
+
+## Sprint 5 — Portfolio Tracker Core (2026-06-25)
+
+- ✅ Portfolio overview API + default PWA landing (net worth, daily P/L, health score)
+- ✅ Holdings, allocation, P/L breakdown, period comparison, equity curve, heatmap, timeline scrubber
+- ✅ `portfolio/metrics`, `benchmarks`, `health`, `drawdown`, `snapshots` scheduler + daily Telegram summary
+- ✅ Notification inbox, portfolio event alerts, CSV export
+- ✅ `scripts/smoke-notifications.sh`, `compare-portfolio-parity.sh`, `check-portfolio-integrity.sh`
+- ✅ PWA widget manifest at `examples/web/public/widgets/`
+
+## Sprint 4.5 — Opportunity Scanner (LTS Full Absorption) (2026-06-25)
+
+- ✅ Native LTS port in `src/trendalgo/scanner/` + `vendor_manifest.json` (no submodule)
+- ✅ Pipeline, SQLite `scanner.db`, APScheduler, qualified snapshot API (O5)
+- ✅ Scanner PWA tab — ranked table, sparklines, settings, watchlist pins
+- ✅ BacktestDataLoader, watchlist bridge, OpportunityScannerMixin, alert tiers
+- ✅ `strong-uptrend-scanner` template preset; `docs/LTS_ABSORPTION.md`
+- ✅ `scripts/lts-parity-check.sh`, `scripts/check_scanner_imports.sh`
+- ✅ Scanner unit + API tests
+
+## Sprint 4 — Notifications, Deploy & Portfolio Foundation (2026-06-25)
+
+- ✅ Portfolio SQLite schema + Kraken CCXT sync (dry-run sample + live path)
+- ✅ Notification preferences API + PWA push handlers in service worker
+- ✅ TradingView webhook (HMAC, rate limit, IP allowlist, audit)
+- ✅ AI backtest summary (rule-based + optional Ollama)
+- ✅ Backup/restore scripts, health cron, `docker-compose.prod.yml`, systemd unit
+- ✅ `scripts/deploy-vps.sh` — external VPS only (ADR-0002)
+- ✅ 40+ unit/API tests
+
+## Sprint 3 — Web UI + Unified Bot Dashboard (2026-06-25)
+
+- ✅ FastAPI `/api/v1` — pairs, strategies, backtest, dashboard, risk, debug, WebSocket
+- ✅ `src/trendalgo/analytics/metrics.py` — Sharpe, Sortino, Calmar, profit factor, equity curve
+- ✅ TrendAlgo PWA — health widget, bot dashboard, backtest charts, risk pause, config form, debug logs
+- ✅ Playwright UX smoke (`e2e/dashboard.spec.ts`) + API mocks for CI
+- ✅ 30+ Python tests, web vitest + e2e green
+
+## Sprint 2 — Risk, Execution & Paper Trading (2026-06-25)
+
+- ✅ `RiskManager` — stake caps, daily loss, circuit breaker, pause/resume
+- ✅ Freqtrade protections + `validate_pre_live` + `RiskGuardMixin` on `MultiTFExample`
+- ✅ `TradeJournal` SQLite + fee hook idempotency (R-014 seed)
+- ✅ Risk metrics + `get_risk_status` API stub
+- ✅ Telegram commands (status/pause/resume; H-008 tokens in human backlog)
+- ✅ 22 unit tests, ≥85% coverage on active modules
+
+## Sprint 1 — Core Engine Foundation (2026-06-25)
+
+- ✅ Root `pyproject.toml` + `uv.lock` + CI wired to trendalgo-bot
+- ✅ Kraken dry-run config + `MultiTFExample` strategy (5m/1h + LTS mixin)
+- ✅ LTS adapter, uniformity, `TrendSpotterMixin`, strategy registry
+- ✅ `src/trendalgo/data/download.py`, `schemas/backtest_result.py`
+- ✅ 11 unit tests, 93% coverage on active modules
+- ✅ `scripts/verify-freqtrade-backtest.sh` (requires separate `freqtrade==2024.12.1` install)
+
+## Sprint 0 — TrendAlgo Initialization (2026-06-25)
+
+- ✅ [AGENT] `init-project.ps1` — TrendAlgo Bot; pruned to python + web stacks
+- ✅ [AGENT] Customized README, AGENT_MEMORY, .env.example, KNOWLEDGE_BASE, PROMPT_LIBRARY
+- ✅ [AGENT] ADR-0001–0009 in `docs/adr/`; DECISION_LOG entry
+- ✅ [AGENT] LEGAL, LEGAL_SAFETY, MONETIZATION, DATA_MINIMIZATION, ROADMAP_PUBLIC, CONTRIBUTING
+- ✅ [AGENT] FREQTRADE_INTEGRATION, LTS_INTEGRATION, FEATURE_ROADMAP, PORTFOLIO_TRACKER, LICENSE_MODEL draft
+- ✅ [AGENT] Domain scaffold `src/trendalgo/*`, `user_data/`, `docker/` compose templates
+- ✅ [AGENT] Feature spec stubs (opportunity-scanner, fee-*, security-onboarding, ai-strategy-recommender, …)
+- ✅ [AGENT] THREAT_MODEL, DEPLOYMENT § Oracle, parallel docs
+- ✅ [AGENT] Founder gate infra (tasks 20–26, prior session)
+- 🔲 [HUMAN] H-004 Oracle provisioning, H-006 attorney, H-001 approve after review
+- 🔲 [AUTO] Sprint 0 strict sign-off (task 27) — pending HUMAN gates
+
 ## v0.11.0 release (2026-06-18)
 
 - ✅ [HUMAN] Merge Release Please PR #14 — [v0.11.0](https://github.com/edwardlthompson/agent-project-bootstrap/releases/tag/v0.11.0) published

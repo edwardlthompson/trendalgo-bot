@@ -16,6 +16,31 @@
 
 ## Entries
 
+### 2026-06-25 — Release v0.1.0 — TrendAlgo platform (S0–S18)
+- **Status:** Accepted
+- **Context:** First `/ship` after exchange program S13–S18; pre-release gate run on Windows (npm/WSL gaps; CI pending post-push).
+- **Decision:** Release `0.1.0` with native CCXT engine, 9 portfolio / 7 trading venues, Freqtrade removed; gate script tweaks for multi-stack local runs.
+- **Verification:** `python scripts/run-trendalgo-tests.py` (130 pass, 85.85%); `feature-gate.sh --stack multi --strict` (local); Risk Register Zero.
+
+### 2026-06-25 — Review R-Audit — repo health sign-off (AGENT scope)
+- **Status:** Accepted
+- **Context:** `/audit` command after Sprint 12 completion; bash gates unavailable on Windows dev host.
+- **Decision:** AGENT remediated F-003–F-006 (README, ARCHITECTURE link, Archived Sprints table, `TRENDALGO_CORS_ORIGINS`, KB-007). Human gates F-001/F-002/F-008/F-009 remain open in HUMAN_BACKLOG.
+- **Verification:** `python scripts/run-trendalgo-tests.py` (89 pass, 85.76%); `check_risk_mitigations.py --strict --all` (0 active).
+
+### 2026-06-25 — Sprint 12 — Risk Register Zero sign-off
+- **Status:** Accepted
+- **Context:** Sprint 12 delivered platform extensions (on-chain read-only sync, pair forager, funding/perps hooks, unified trading router, Postgres migration path) and closed the scheduled risk register.
+- **Decision:** Terminal statuses applied in `docs/risk-catalog.json`; `python scripts/check_risk_mitigations.py --strict --all` reports 0 active risks and 0 pending critiques; critiques archived in `docs/RISK_REGISTER_CLOSED.md`.
+- **Verification:** 89 tests passing; 85.74% `trendalgo` coverage; `bash scripts/postgres-migrate-dry-run.sh` validates schema without live DB.
+- **Consequences:** BUILD_PLAN sequential lane complete; ongoing risks (R-003, R-005, etc.) remain **ongoing** terminal status with verification artifacts — not active backlog items.
+
+### 2026-06-25 — TrendAlgo Sprint 0 — ADR-0001–0009 accepted
+- **Status:** Accepted
+- **Context:** Scaffold from agent-project-bootstrap; canonical plan in `docs/CANONICAL_PLAN.md`
+- **Decision:** Freqtrade-as-engine (0001), external VPS only (0002), CoinStats portfolio (0004), calculation-only license (0005/0008), LTS absorption (0006), AI-not-community (0009)
+- **Consequences:** `src/trendalgo/` layout, founder gates, Risk Register Zero schedule
+
 _Seed template ADR: `docs/adr/0000-template-baseline.md`. Child repos use `docs/adr/0001-core-architecture.md`._
 
 ### 2026-06-20 — Repo-wide checklist status markers

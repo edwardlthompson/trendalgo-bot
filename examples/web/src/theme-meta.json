@@ -1,5 +1,6 @@
 {
   "themeColorLight": "#F5F5FA",
   "themeColorDark": "#1a1a2e",
-  "name": "GoldenPath"
+  "name": "GoldenPath",
+  "accentPresets": ["#2563eb", "#059669", "#d97706", "#dc2626", "#7c3aed"]
 }

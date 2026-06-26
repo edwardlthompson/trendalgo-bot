@@ -1,4 +1,4 @@
-const CACHE_NAME = "golden-path-v__APP_VERSION__";
+const CACHE_NAME = "trendalgo-v__APP_VERSION__";
 const PRECACHE = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -40,4 +40,22 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
+});
+
+self.addEventListener("push", (event) => {
+  const data = event.data ? event.data.json() : { title: "TrendAlgo", body: "Portfolio update" };
+  event.waitUntil(
+    self.registration.showNotification(data.title || "TrendAlgo", {
+      body: data.body || "",
+      icon: "/icon.svg",
+      badge: "/icon.svg",
+      data: data.url || "/",
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = event.notification.data || "/";
+  event.waitUntil(clients.openWindow(target));
 });

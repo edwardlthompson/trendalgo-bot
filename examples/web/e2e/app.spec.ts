@@ -1,11 +1,16 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { mockTrendAlgoApi } from "./apiMock";
 
-test("renders golden path heading", async ({ page }) => {
+test.beforeEach(async ({ page }) => {
+  await mockTrendAlgoApi(page);
+});
+
+test("renders TrendAlgo heading", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Golden Path PWA" })).toBeVisible();
-  await expect(page.getByText("Hello, FOSS!")).toBeVisible();
-  await expect(page.getByTestId("status")).toContainText("Golden Path PWA");
+  await expect(page.locator(".gp-title")).toHaveText("TrendAlgo Bot");
+  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
+  await expect(page.getByTestId("bot-dashboard")).toBeVisible();
 });
 
 test("passes accessibility audit", async ({ page }) => {
@@ -200,20 +205,16 @@ test.describe("home update banner", () => {
   });
 });
 
-test("serves cached shell offline via service worker", async ({ page, context }) => {
-  await page.goto("/");
-  await page.waitForLoadState("networkidle");
-  await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, {
-    timeout: 15_000,
-  });
-  await page.reload();
-  await page.waitForLoadState("networkidle");
-  await expect(page.getByRole("heading", { name: "Golden Path PWA" })).toBeVisible();
-  await expect(page.getByText("Hello, FOSS!")).toBeVisible();
+test.describe("service worker cache", () => {
+  test.use({ serviceWorkers: "allow" });
 
-  await context.setOffline(true);
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "Golden Path PWA" })).toBeVisible();
-  await expect(page.getByText("Hello, FOSS!")).toBeVisible();
-  await expect(page.getByTestId("status")).toBeVisible();
+  test("shows offline shell when network unavailable", async ({ page, context }) => {
+    await mockTrendAlgoApi(page);
+    await page.goto("/");
+    await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.getByTestId("status")).toContainText("Offline");
+    await expect(page.getByTestId("health-widget")).toBeVisible();
+  });
 });

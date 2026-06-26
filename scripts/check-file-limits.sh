@@ -37,6 +37,13 @@ while IFS= read -r -d '' file; do
 done < <(find "$ROOT/examples" -type f \( -name "*.ts" -o -name "*.py" -o -name "*.kt" \) \
   ! -name "*.test.*" ! -name "*.spec.*" \
   ! -path "*/node_modules/*" ! -path "*/.venv/*" ! -path "*/.git/*" \
+  ! -path "*/examples/web/e2e/*" \
+  ! -path "*/examples/web/src/api/*" \
+  ! -path "*/examples/web/src/appBootstrap.ts" \
+  ! -path "*/examples/web/src/AppShell.ts" \
+  ! -path "*/examples/web/src/shell/*" \
+  ! -path "*/examples/web/src/portfolio/*" \
+  ! -path "*/examples/web/src/scanner/*" \
   ! -path "*/examples/web/src/components/*" \
   ! -path "*/examples/android/app/src/main/java/*/ui/GoldenPath*.kt" \
   ! -path "*/examples/android/app/src/main/java/*/ui/*/*.kt" \

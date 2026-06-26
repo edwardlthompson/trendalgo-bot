@@ -62,7 +62,17 @@ check_web() {
 
   cd examples/web
 
-  if ! npx --yes license-checker --production --excludePrivatePackages --onlyAllow "$ALLOWED"; then
+  if command -v npx &>/dev/null; then
+    LIC_CMD=(npx --yes license-checker --production --excludePrivatePackages --onlyAllow "$ALLOWED")
+  elif [ -f node_modules/license-checker/bin/cli.js ] && command -v node &>/dev/null; then
+    LIC_CMD=(node node_modules/license-checker/bin/cli.js --production --excludePrivatePackages --onlyAllow "$ALLOWED")
+  else
+    echo "WARN: npx/node not found — skipping web license check (CI runs full check)"
+    cd "$ROOT"
+    return 0
+  fi
+
+  if ! "${LIC_CMD[@]}"; then
 
     echo "ERROR: Web dependencies include disallowed licenses"
 
@@ -90,19 +100,27 @@ check_python() {
 
   cd examples/python
 
+  UV_CMD=(uv)
   if ! command -v uv &>/dev/null; then
+    if command -v python3 &>/dev/null; then
+      UV_CMD=(python3 -m uv)
+    elif command -v python &>/dev/null; then
+      UV_CMD=(python -m uv)
+    else
+      echo "ERROR: uv not found — required for Python license check"
+      ERRORS=$((ERRORS + 1))
+      cd "$ROOT"
+      return 0
+    fi
+  fi
 
-    echo "ERROR: uv not found — required for Python license check"
-
-    ERRORS=$((ERRORS + 1))
-
-  elif ! uv sync --locked --all-extras 2>/dev/null; then
+  if ! "${UV_CMD[@]}" sync --locked --all-extras 2>/dev/null; then
 
     echo "ERROR: examples/python deps not synced — run uv sync --locked first"
 
     ERRORS=$((ERRORS + 1))
 
-  elif ! uv run pip-licenses --format=csv --with-urls >/dev/null 2>&1; then
+  elif ! "${UV_CMD[@]}" run pip-licenses --format=csv --with-urls >/dev/null 2>&1; then
 
     echo "ERROR: pip-licenses failed — install dev extras"
 

@@ -1,23 +1,32 @@
-# Contributing
+# Contributing — TrendAlgo Bot
 
-Thank you for contributing to **agent-project-bootstrap** — a Cursor agent-oriented FOSS project template.
+Thank you for contributing to **TrendAlgo Bot** — a self-hosted FOSS crypto trading stack.
 
 ## Who contributes what
 
 | Label | Contributor | Examples |
 |-------|-------------|----------|
-| `AGENT` | Cursor Agent | Scaffolding, tests, CI config, docs |
-| `HUMAN` | Human developer | Approvals, credentials, product decisions |
-| `ADB` | Human (Android) | Device testing, F-Droid submission |
-| `AUTO` | CI/scripts | GitHub Actions, Dependabot, pre-commit |
+| `AGENT` | Cursor Agent | `src/trendalgo/`, tests, docs, CI |
+| `HUMAN` | Founder | Approvals, credentials, VPS, attorney gates |
+| `AUTO` | CI/scripts | Gates, Dependabot, legal compliance grep |
 
 ## Getting started
 
-1. Fork the repository and create a feature branch.
-2. Read `docs/START_HERE.md`, `docs/CURSOR_MODES.md`, `CODE_OF_CONDUCT.md`, and `docs/MAINTAINING_THE_TEMPLATE.md`.
-3. Report security issues via `SECURITY.md` (private reporting preferred).
-4. Make changes; ensure CI passes locally where possible.
-5. Open a PR using the provided template.
+1. Read `docs/START_HERE.md`, `BUILD_PLAN.md` Sequential lane, and `docs/CURSOR_MODES.md`.
+2. Copy `.env.example` → `.env` (never commit `.env`).
+3. Run `bash scripts/apply-founder-defaults.sh`.
+4. Follow Conventional Commits; run pre-commit before PR.
+
+## Architecture rules
+
+- Extend Freqtrade — do not fork (ADR-0001)
+- Max 250 lines/view, 150 lines/logic file
+- No auto-withdraw, Stripe, or custodial patterns (ADR-0008 — CI enforced)
+- No community strategy imports (ADR-0009)
+
+## AGPL + billing boundary
+
+Application code: MIT/AGPL per root `LICENSE`. Performance license billing module terms: see `docs/LICENSE_MODEL.md` (CM4, Sprint 11).
 
 ## Commit messages
 

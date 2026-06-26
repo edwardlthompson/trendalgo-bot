@@ -1,0 +1,10 @@
+{
+  "dry_run": false,
+  "engine": "native",
+  "exchange": "kraken",
+  "pair": "BTC/USD",
+  "strategy_id": "multi-tf-example",
+  "stake_amount": 20,
+  "max_open_trades": 3,
+  "_comment": "Enable only after scripts/go-live-gate.sh --approve and H-010/H-028"
+}

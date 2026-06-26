@@ -1,0 +1,631 @@
+{
+  "version": 1,
+  "risks": [
+    {
+      "id": "R-001",
+      "title": "Kraken rate limits / pair quirks",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 1,
+      "verification": "file:docs/FREQTRADE_INTEGRATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 1
+    },
+    {
+      "id": "R-002",
+      "title": "LTS OHLCV mismatch",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 4,
+      "verification": "file:docs/LTS_INTEGRATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-003",
+      "title": "Accidental live trading",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 4,
+      "verification": "script:scripts/go-live-gate.sh",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-004",
+      "title": "PR power/internet outage",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 4,
+      "verification": "file:docs/DEPLOYMENT.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-005",
+      "title": "Incorrect license fee calculation",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 10,
+      "verification": "file:docs/MONETIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-006",
+      "title": "Auto-withdraw / MSB",
+      "status": "eliminated",
+      "closure_type": "eliminated",
+      "close_sprint": 0,
+      "verification": "script:scripts/check-legal-compliance.sh",
+      "closed_at": "2026-06-25T23:39:29+00:00",
+      "closed_sprint": 0,
+      "close_note": "ADR-0008 CI grep"
+    },
+    {
+      "id": "R-007",
+      "title": "User non-payment / evasion",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 10,
+      "verification": "file:docs/LICENSE_MODEL.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-008",
+      "title": "Regulatory exposure PR/US",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 10,
+      "verification": "file:docs/legal-review-packet.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-009",
+      "title": "Key compromise",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 10,
+      "verification": "file:docs/SECURITY.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-010",
+      "title": "Fee evasion / gaming",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/MONETIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-011",
+      "title": "Drawdown + license unfair",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/MONETIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-012",
+      "title": "AGPL fork without billing",
+      "status": "accepted",
+      "closure_type": "accepted",
+      "close_sprint": 11,
+      "verification": "file:docs/AI_STRATEGIES.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 11
+    },
+    {
+      "id": "R-013",
+      "title": "LTS merge regression",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 4,
+      "verification": "script:scripts/lts-parity-check.sh",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-014",
+      "title": "Duplicate fees / job queue",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 2,
+      "verification": "file:docs/features/fee-settlement.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 2
+    },
+    {
+      "id": "R-015",
+      "title": "SQLite insufficient at scale",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 12,
+      "verification": "file:docker/postgres/README.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 12
+    },
+    {
+      "id": "R-016",
+      "title": "Oracle ineligible / ARM",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 4,
+      "verification": "script:scripts/check-hosting-eligibility.sh",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-017",
+      "title": "CoinStats parity / cost basis",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 5,
+      "verification": "script:scripts/compare-portfolio-parity.sh",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 5
+    },
+    {
+      "id": "R-018",
+      "title": "Scope creep / burnout",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 0,
+      "verification": "file:docs/FOUNDER_GATES.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 0
+    },
+    {
+      "id": "R-019",
+      "title": "Consent not captured",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/DATA_MINIMIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-020",
+      "title": "Backup failure / data loss",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 4,
+      "verification": "script:scripts/backup-restore.sh",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-021",
+      "title": "AI commentary hallucination",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 7,
+      "verification": "file:docs/AI_STRATEGIES.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 7
+    },
+    {
+      "id": "R-022",
+      "title": "CoinStats UI bar not met",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 5,
+      "verification": "file:docs/PORTFOLIO_TRACKER.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 5
+    },
+    {
+      "id": "R-023",
+      "title": "AI bad recommendations",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 11,
+      "verification": "file:docs/features/ai-strategy-recommender.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 11
+    },
+    {
+      "id": "R-024",
+      "title": "Arb detector auto-trade perception",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 8,
+      "verification": "file:docs/TERMS.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 8
+    },
+    {
+      "id": "R-025",
+      "title": "M21 legal copy",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "script:scripts/check-copy-compliance.sh",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-026",
+      "title": "Timeline scrubber perf P19",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 5,
+      "verification": "file:docs/PORTFOLIO_TRACKER.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 5
+    },
+    {
+      "id": "R-027",
+      "title": "Pseudonymous enforcement limits",
+      "status": "accepted",
+      "closure_type": "accepted",
+      "close_sprint": 10,
+      "verification": "file:docs/DATA_MINIMIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-028",
+      "title": "Notification fatigue",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 5,
+      "verification": "file:docs/features/notification-center.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 5
+    },
+    {
+      "id": "R-029",
+      "title": "Partial fill fee double-count",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/MONETIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-030",
+      "title": "User withdraws before paying",
+      "status": "accepted",
+      "closure_type": "accepted",
+      "close_sprint": 10,
+      "verification": "file:docs/LICENSE_MODEL.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-031",
+      "title": "User disputes fee",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/MONETIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-032",
+      "title": "Net-loss month winning trades",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/MONETIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-033",
+      "title": "Manual trades outside bot",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/LICENSE_MODEL.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    },
+    {
+      "id": "R-034",
+      "title": "Public/backtest link identity leak",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 7,
+      "verification": "file:docs/DATA_MINIMIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 7
+    },
+    {
+      "id": "R-035",
+      "title": "Leaderboard PII",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 11,
+      "verification": "file:docs/DATA_MINIMIZATION.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 11
+    },
+    {
+      "id": "R-036",
+      "title": "Design system scope creep",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 3,
+      "verification": "script:scripts/check-file-limits.sh",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 3
+    },
+    {
+      "id": "R-037",
+      "title": "Webhook / TradingView abuse",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 4,
+      "verification": "file:docs/features/tradingview-webhook.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-038",
+      "title": "VPS single point of failure",
+      "status": "accepted",
+      "closure_type": "accepted",
+      "close_sprint": 4,
+      "verification": "file:docs/RUNBOOK.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-039",
+      "title": "CCXT / dependency upstream break",
+      "status": "ongoing",
+      "closure_type": "ongoing",
+      "close_sprint": 1,
+      "verification": "file:pyproject.toml",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 1
+    },
+    {
+      "id": "R-040",
+      "title": "Mock mode drift",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 4,
+      "verification": "file:.env.example",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 4
+    },
+    {
+      "id": "R-041",
+      "title": "Key encryption UX failure",
+      "status": "closed",
+      "closure_type": "closed",
+      "close_sprint": 10,
+      "verification": "file:docs/features/security-onboarding.md",
+      "closed_at": "2026-06-26T00:59:35+00:00",
+      "closed_sprint": 10
+    }
+  ],
+  "critiques": [
+    {
+      "id": "C-001",
+      "title": "Cannot auto-collect from Kraken",
+      "status": "closed",
+      "close_sprint": 0,
+      "r_ids": [
+        "R-006"
+      ],
+      "verification": "script:scripts/check-legal-compliance.sh"
+    },
+    {
+      "id": "C-002",
+      "title": "Users will not pay",
+      "status": "closed",
+      "close_sprint": 10,
+      "r_ids": [
+        "R-007"
+      ],
+      "verification": "file:docs/LICENSE_MODEL.md"
+    },
+    {
+      "id": "C-003",
+      "title": "Open source no revenue",
+      "status": "closed",
+      "close_sprint": 11,
+      "r_ids": [
+        "R-012"
+      ],
+      "verification": "file:docs/AI_STRATEGIES.md"
+    },
+    {
+      "id": "C-004",
+      "title": "API keys nightmare",
+      "status": "closed",
+      "close_sprint": 10,
+      "r_ids": [
+        "R-009"
+      ],
+      "verification": "script:scripts/check-api-key-policy.sh"
+    },
+    {
+      "id": "C-005",
+      "title": "Legally gray license",
+      "status": "closed",
+      "close_sprint": 10,
+      "r_ids": [
+        "R-008"
+      ],
+      "verification": "file:docs/legal-review-packet.md"
+    },
+    {
+      "id": "C-006",
+      "title": "Fee calculation wrong",
+      "status": "closed",
+      "close_sprint": 10,
+      "r_ids": [
+        "R-005",
+        "R-031"
+      ],
+      "verification": "file:docs/MONETIZATION.md"
+    },
+    {
+      "id": "C-007",
+      "title": "Too complex for solo dev",
+      "status": "closed",
+      "close_sprint": 0,
+      "r_ids": [
+        "R-018"
+      ],
+      "verification": "file:docs/FOUNDER_GATES.md"
+    },
+    {
+      "id": "C-008",
+      "title": "Scanner merge breaks LTS",
+      "status": "closed",
+      "close_sprint": 4,
+      "r_ids": [
+        "R-013"
+      ],
+      "verification": "script:scripts/lts-parity-check.sh"
+    },
+    {
+      "id": "C-009",
+      "title": "Fork removes billing",
+      "status": "closed",
+      "close_sprint": 11,
+      "r_ids": [
+        "R-012"
+      ],
+      "verification": "file:docs/AI_STRATEGIES.md"
+    },
+    {
+      "id": "C-010",
+      "title": "Community strategies dangerous",
+      "status": "closed",
+      "close_sprint": 0,
+      "r_ids": [
+        "R-006"
+      ],
+      "verification": "file:docs/adr/0009-ai-recommended-strategies.md"
+    },
+    {
+      "id": "C-011",
+      "title": "AI equals financial advice",
+      "status": "closed",
+      "close_sprint": 11,
+      "r_ids": [
+        "R-023"
+      ],
+      "verification": "file:docs/features/ai-strategy-recommender.md"
+    },
+    {
+      "id": "C-012",
+      "title": "Drawdown fees unfair",
+      "status": "closed",
+      "close_sprint": 10,
+      "r_ids": [
+        "R-011"
+      ],
+      "verification": "file:docs/MONETIZATION.md"
+    },
+    {
+      "id": "C-013",
+      "title": "Auto-collect only monetization",
+      "status": "closed",
+      "close_sprint": 0,
+      "r_ids": [
+        "R-006"
+      ],
+      "verification": "script:scripts/check-legal-compliance.sh"
+    },
+    {
+      "id": "C-014",
+      "title": "SQLite will not scale",
+      "status": "closed",
+      "close_sprint": 12,
+      "r_ids": [
+        "R-015"
+      ],
+      "verification": "file:docker/postgres/README.md"
+    },
+    {
+      "id": "C-015",
+      "title": "No light mode or mobile UX",
+      "status": "closed",
+      "close_sprint": 5,
+      "r_ids": [
+        "R-022"
+      ],
+      "verification": "file:docs/PORTFOLIO_TRACKER.md"
+    },
+    {
+      "id": "C-016",
+      "title": "No legal protection",
+      "status": "closed",
+      "close_sprint": 10,
+      "r_ids": [
+        "R-019",
+        "R-008"
+      ],
+      "verification": "file:docs/DATA_MINIMIZATION.md"
+    },
+    {
+      "id": "C-017",
+      "title": "CoinStats looks better",
+      "status": "closed",
+      "close_sprint": 5,
+      "r_ids": [
+        "R-017",
+        "R-022"
+      ],
+      "verification": "script:scripts/compare-portfolio-parity.sh"
+    },
+    {
+      "id": "C-018",
+      "title": "Performance license equals adviser",
+      "status": "closed",
+      "close_sprint": 10,
+      "r_ids": [
+        "R-008"
+      ],
+      "verification": "file:docs/LEGAL_SAFETY.md"
+    },
+    {
+      "id": "C-019",
+      "title": "38 features never shipping",
+      "status": "closed",
+      "close_sprint": 0,
+      "r_ids": [
+        "R-018"
+      ],
+      "verification": "script:scripts/sprint-preflight.sh"
+    },
+    {
+      "id": "C-020",
+      "title": "Webhook signals hijack bot",
+      "status": "closed",
+      "close_sprint": 4,
+      "r_ids": [
+        "R-037"
+      ],
+      "verification": "file:docs/features/tradingview-webhook.md"
+    },
+    {
+      "id": "C-021",
+      "title": "Single VPS single point of failure",
+      "status": "closed",
+      "close_sprint": 4,
+      "r_ids": [
+        "R-038"
+      ],
+      "verification": "file:docs/RUNBOOK.md"
+    }
+  ]
+}

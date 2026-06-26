@@ -44,6 +44,21 @@ Recommended cadence: **Monday** (aligned with scheduled security scans and `heal
 | 5 | HUMAN | Merge PR or escalate deferred items |
 | 6 | AUTO | Review `weekly-health-check.yml` weekly run (Monday 07:00 UTC); confirm CI + Security Scan + CodeQL green on main |
 | 7 | AUTO | Run `bash scripts/check-security-triage.sh --wait-ci 300` (Dependabot + workflows + OpenSSF Scorecard) |
+| 8 | AUTO | Run `bash scripts/check-risk-mitigations.sh --ongoing` (Risk Register Zero ongoing controls) |
+
+## Risk Register gate
+
+TrendAlgo founder automation ties weekly maintenance to [`docs/risk-catalog.json`](risk-catalog.json):
+
+```bash
+bash scripts/check-risk-mitigations.sh --ongoing
+bash scripts/check-human-backlog.sh --sprint current
+python3 scripts/founder_gate.py status
+```
+
+Sprint sign-off uses strict mode: `bash scripts/check-risk-mitigations.sh --strict --sprint N`. Register Zero target (S12): `bash scripts/check-risk-mitigations.sh --strict --all`.
+
+See [`docs/FOUNDER_GATES.md`](FOUNDER_GATES.md) and [`docs/RISK_REGISTER.md`](RISK_REGISTER.md).
 
 ## OpenSSF Scorecard
 

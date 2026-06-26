@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TrendAlgo founder defaults",
+  "type": "object",
+  "required": [
+    "project_name",
+    "database",
+    "ai_mode",
+    "timezone",
+    "license_fee_percent",
+    "production_hosting"
+  ],
+  "properties": {
+    "project_name": { "type": "string", "minLength": 1 },
+    "database": { "enum": ["sqlite"] },
+    "ai_mode": { "enum": ["ollama-first", "rule-based-vps"] },
+    "timezone": { "type": "string" },
+    "license_fee_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+    "license_fee_percent_min": { "type": "number" },
+    "license_fee_percent_max": { "type": "number" },
+    "second_exchange": { "type": ["string", "null"] },
+    "vps_monthly_budget_usd": { "type": "number", "maximum": 10 },
+    "production_hosting": { "enum": ["external_vps_only"] },
+    "notification_quiet_hours_default": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

@@ -125,7 +125,7 @@ jobs:
         run: npm ci
       - name: Sync python example
         working-directory: examples/python
-        run: uv sync --locked --all-extras
+        run: uv sync --locked --extra dev
       - name: Prepare Android wrapper
         run: chmod +x examples/android/gradlew
       - name: Run feature gate (strict multi-stack)
@@ -172,6 +172,10 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: examples/web/package-lock.json
+      - uses: astral-sh/setup-uv@v7
+      - name: Sync Python API dependencies
+        working-directory: .
+        run: uv sync --locked
       - run: npm ci
       - run: npm run lint
       - run: npm test
@@ -198,24 +202,44 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: examples/python
+        working-directory: .
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv sync --locked --all-extras
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run mypy src
-      - run: uv run pyright
-      - run: uv run pytest --cov-report=json:coverage/coverage-summary.json
+      - name: Select Python project root
+        id: pyroot
+        run: |
+          if [ -f pyproject.toml ] && grep -q 'name = "trendalgo-bot"' pyproject.toml; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          else
+            echo "dir=examples/python" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Sync dependencies
+        working-directory: ${{ steps.pyroot.outputs.dir }}
+        run: uv sync --locked --extra dev
+      - name: Ruff check
+        working-directory: ${{ steps.pyroot.outputs.dir }}
+        run: uv run ruff check .
+      - name: Ruff format
+        working-directory: ${{ steps.pyroot.outputs.dir }}
+        run: uv run ruff format --check .
+      - name: Mypy
+        working-directory: ${{ steps.pyroot.outputs.dir }}
+        run: uv run mypy src
+      - name: Pyright
+        working-directory: ${{ steps.pyroot.outputs.dir }}
+        run: uv run pyright
+      - name: Pytest
+        working-directory: ${{ steps.pyroot.outputs.dir }}
+        run: uv run pytest --cov-report=json:coverage/coverage-summary.json
       - name: Upload python coverage
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: coverage-python
-          path: examples/python/coverage/coverage-summary.json
+          path: ${{ steps.pyroot.outputs.dir }}/coverage/coverage-summary.json
           if-no-files-found: ignore
       - name: License compliance (python)
         working-directory: ${{ github.workspace }}

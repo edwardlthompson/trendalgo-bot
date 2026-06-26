@@ -25,6 +25,12 @@ Thumbs.db
 *.swp
 .cursor-session-state
 .cursor/agent-progress.json
+.cursor/founder-gates.json
+config/founder.defaults.json
+data/audit/
+user_data/data/
+user_data/logs/
+user_data/notebooks/.ipynb_checkpoints/
 
 # Test artifacts
 test-results/
@@ -70,6 +76,10 @@ examples/android/captures/
 
 # Logs
 *.log
+
+# Local dev databases (never commit)
+data/
+!data/.gitkeep
 
 # Ephemeral agent outputs (examples tracked)
 CODE_REVIEW.md

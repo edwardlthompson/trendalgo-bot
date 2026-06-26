@@ -1,0 +1,28 @@
+# TrendAlgo Bot — production VPS (Oracle ARM / Hetzner). External cloud only (ADR-0002).
+
+services:
+  trendalgo-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.prod
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - /etc/trendalgo/.env
+    environment:
+      - PORT=8080
+      - TRENDALGO_DATA_DIR=/app/data
+      - TRENDALGO_CONFIG_DIR=/app/config
+    volumes:
+      - trendalgo-data:/app/data
+      - trendalgo-config:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  trendalgo-data:
+  trendalgo-config:

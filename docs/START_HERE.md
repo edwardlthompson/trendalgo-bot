@@ -4,7 +4,9 @@
 
 ## What is this?
 
-`agent-project-bootstrap` is a **GitHub Template Repository** for bootstrapping FOSS projects with Cursor agents.
+**TrendAlgo Bot** — self-hosted crypto trading platform: native CCXT engine, LTS opportunity scanner, CoinStats-class portfolio, AI-recommended strategies, and performance-based licensing. See [`README.md`](../README.md) and [`docs/EXCHANGE_ROADMAP.md`](EXCHANGE_ROADMAP.md). Bootstrapped from `agent-project-bootstrap`.
+
+For template-only usage, see upstream [agent-project-bootstrap](https://github.com/edwardlthompson/agent-project-bootstrap).
 
 ## Which repo mode are you in?
 

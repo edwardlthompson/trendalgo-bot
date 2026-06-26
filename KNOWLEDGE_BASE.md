@@ -1,93 +1,61 @@
-# Knowledge Base
+# Knowledge Base — TrendAlgo Bot
 
-> Repository of stack-specific edge cases, resolved complex bugs, anti-patterns, and reusable project solutions.
-> **Do not populate with generic framework definitions.**
+> Debug playbooks. Append KB-### entries as issues are resolved.
 
-## How to use
+## KB-001 — Windows without WSL/bash
 
-1. Add entries only after resolving a non-obvious issue specific to this project.
-2. Include: symptom, root cause, fix, and prevention.
-3. Link to relevant ADRs or PRs when available.
+**Symptom:** Gate scripts fail with WSL "no installed distributions".
 
-## Entries
+**Fix:** Use `python3 scripts/founder_gate.py` and `python3 scripts/check_risk_mitigations.py` directly. Script stubs return SCHEDULED (exit 2) when bash unavailable but file exists.
 
-### KB-001 — UTF-16 file corruption on Windows
+## KB-002 — Dry-run vs live
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | `check-json` / `npm` / `json.load` fails; git ignore rules stop working; `.gitignore` shows as untracked patterns not applied |
-| **Cause** | Cursor `StrReplace` or Windows editor saves text as UTF-16 LE (NUL bytes between ASCII chars) |
-| **Fix** | Rewrite affected files with Python `Path.write_text(..., encoding='utf-8')`; re-run `scripts/check-file-encoding.sh` |
-| **Prevention** | Bulk edits on Windows via Python/PowerShell UTF-8 write; include root `.gitignore` in encoding scan |
+**Symptom:** Unclear if bot can place real orders.
 
-### KB-002 — Invalid `trivy-action@0.28.0` ref
+**Fix:** `TRENDALGO_MODE=dry-run` and Freqtrade `--dry-run` until `go-live-gate.sh --approve` (H-010). See `docs/RUNBOOK.md`.
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | Security Scan workflow fails at setup: action version not found |
-| **Cause** | Bare semver `@0.28.0` is not a valid GitHub Action ref tag |
-| **Fix** | Pin to full SHA: `aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0` |
-| **Prevention** | Run `validate-workflow-actions.sh` pre-push; use `check-workflow-action-ref-format.sh` locally |
+## KB-003 — Kraken pair naming
 
-### KB-003 — `gh api --silent` false CI failures
+**Symptom:** Backtest fails on pair symbol.
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | `validate-workflow-actions.sh` fails in CI with unknown `gh` flag error |
-| **Cause** | `gh api` has no `--silent` flag; stderr not suppressed correctly |
-| **Fix** | Redirect to `/dev/null` instead: `gh api ... >/dev/null 2>&1` |
-| **Prevention** | Test validation scripts in CI job with `GH_TOKEN`; avoid undocumented `gh` flags |
+**Fix:** Use `BTC/USD` not `BTC/USDT` on Kraken spot. See `docs/FREQTRADE_INTEGRATION.md`.
 
-### KB-004 — Lighthouse performance flake on shared runners
+## KB-004 — Production on PR hardware
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | CI fails with performance 0.88 vs required 0.90 on a single Lighthouse run |
-| **Cause** | GitHub-hosted runner CPU variance; single-run assertion is noisy |
-| **Fix** | Set `numberOfRuns: 3` in `.lighthouserc.json`; LHCI uses median; keep `minScore: 0.9` |
-| **Prevention** | Do not lower performance budget for CI flake; use multi-run median in `modules/web/MODULE.md` |
+**Symptom:** Considering running live bot at home in Puerto Rico.
 
-### KB-005 — Playwright webServer duplicate build
+**Fix:** **Rejected** (ADR-0002). Use Oracle Always Free or Hetzner VPS only.
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | E2E hangs or serves stale assets; double `vite build` in CI |
-| **Cause** | `webServer` runs build while CI already built; wrong host binding |
-| **Fix** | Use `vite preview` on `127.0.0.1`; CI runs `npm run build` once before Playwright |
-| **Prevention** | Golden Path `examples/web/playwright.config.ts` documents preview-only webServer |
+## KB-005 — License / MSB concerns
 
-### KB-006 — TypeScript strict null in render handlers
+**Symptom:** Want auto-deduct fees from exchange.
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | `tsc` / ESLint error: Object is possibly null inside `render()` callback |
-| **Cause** | `strictNullChecks` + `document.getElementById` return type includes null |
-| **Fix** | Assign narrowed ref at module scope: `const root = document.getElementById('root')!` or guard once |
-| **Prevention** | Module-level `const root = app` pattern in `examples/web/src/main.ts` |
+**Fix:** **Rejected** (ADR-0008, R-006 eliminated). User-initiated settlement only. Run `check-legal-compliance.sh`.
 
-### KB-007 — npm/pip overrides policy for transitive CVEs
+## KB-006 — Community strategy imports
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | Dependabot or `npm audit` / `uv pip audit` reports CVE in a transitive dependency with no direct upgrade path |
-| **Cause** | Parent package pins or bundles a vulnerable sub-dependency; fix not yet published upstream |
-| **Fix** | **npm:** add `overrides` in `package.json` to force patched semver (see `examples/web` `@lhci/cli` overrides). **Python:** prefer `uv`/`pip` constraint or bump direct dep; document in DECISION_LOG if override is temporary |
-| **Prevention** | Prefer overrides over `--force` installs; remove overrides when upstream ships fix; weekly triage per `docs/SECURITY_TRIAGE.md`; see KB-007 before dismissing Dependabot alerts |
+**Symptom:** Request for marketplace uploads.
 
-### KB-009 — Release Please `pr` output is JSON, not a PR number
+**Fix:** **Rejected** (ADR-0009). AI-recommended curated strategies only (S11).
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | `release-please.yml` sync step fails: `syntax error near unexpected token '('` on `gh pr checkout` |
-| **Cause** | `steps.release.outputs.pr` is a JSON PullRequest object string, not the numeric PR id |
-| **Fix** | Guard with `prs_created == 'true'`; use `fromJSON(steps.release.outputs.pr).number` for `gh pr checkout` |
-| **Prevention** | See release-please-action outputs table; never pass `outputs.pr` directly to shell commands |
+## KB-007 — Post-S12 audit (2026-06-25)
 
-### KB-008 — `android-release` APK hash compare policy
+**Symptom:** `/audit` on Windows; bash gates fail; BUILD_PLAN shows complete but founder gates backlog.
 
-| Field | Detail |
-|-------|--------|
-| **Symptom** | `Android - assembleRelease` fails: APK hashes differ between two clean `assembleRelease` runs on CI |
-| **Cause** | Usually a reproducibility regression (non-hermetic timestamp, path, or dependency drift). Rare runner flakes are possible but treated as failures to catch real regressions early |
-| **Fix** | Rebuild locally with `SOURCE_DATE_EPOCH=1700000000 ./gradlew clean assembleRelease` twice; compare `sha256sum` of release APK. Align `build.gradle.kts`, `gradle.properties`, and dependency lockfiles with `modules/android/MODULE.md` |
-| **Prevention** | Keep `SOURCE_DATE_EPOCH` pinned in CI; use `scripts/verify-reproducible-apk.sh --strict` before release tags. Do not downgrade the job to WARN — strict compare is intentional (M17 P2) |
+**Fix:** Use `python scripts/run-trendalgo-tests.py`, `python scripts/check_risk_mitigations.py --strict --all`, and `python scripts/founder_gate.py status`. Clear human gates via [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) before go-live. CORS: set `TRENDALGO_CORS_ORIGINS` in production `.env`.
+
+## KB-008 — Post–exchange-doc audit (2026-06-25)
+
+**Symptom:** README/BUILD_PLAN describe native CCXT pivot but secondary docs still mention Freqtrade.
+
+**Fix:** R-Audit-2 synced START_HERE, ARCHITECTURE, GITHUB_ABOUT, FEATURE_ROADMAP, pyproject. S13–S18 completed registry + native runner work.
+
+## KB-009 — Post–S18 audit (2026-06-25)
+
+**Symptom:** `/audit` (R-Audit-3) on Windows; README roadmap still "Kraken today"; POST_DELIVERY snapshot stale; THREAT_MODEL/LOCAL_DEV Freqtrade refs; bash gates need WSL.
+
+**Fix:** R-Audit-3 synced README, POST_DELIVERY_PLAN, EXCHANGE_ROADMAP success criteria, THREAT_MODEL, LOCAL_DEV, ROADMAP_PUBLIC. Use `python scripts/run-trendalgo-tests.py`, `python scripts/founder_gate.py status`. Clear **H-030–H-034** via [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) before live worldwide trading. Enable Dependabot in GitHub settings.
+
+## Template KB entries
+
+Legacy template entries (KB-007+) remain in git history; TrendAlgo-specific entries start at KB-001 above.

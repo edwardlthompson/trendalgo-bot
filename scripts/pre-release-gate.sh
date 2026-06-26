@@ -60,6 +60,14 @@ else
   echo "OK   check-license-compliance.sh passed"
 fi
 
+if [ -f docs/risk-catalog.json ]; then
+  if ! python3 scripts/check_risk_mitigations.py --ongoing; then
+    echo "WARN: check-risk-mitigations --ongoing reported issues"
+  else
+    echo "OK   check-risk-mitigations --ongoing passed"
+  fi
+fi
+
 echo ""
 echo "REMINDER: Before tagging, trigger the Release workflow via workflow_dispatch:"
 echo "  GitHub -> Actions -> Release -> Run workflow"

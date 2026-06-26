@@ -39,3 +39,13 @@ See [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) and [`docs/PRIVACY.md`](docs/
 - Maintainer orchestrator: `bash scripts/run-maintainer-gates.sh` (weekly; full cycle omits `--quick`)
 - Secrets must never be committed (Gitleaks pre-commit enforced)
 - Report dependency vulnerabilities via Dependabot; do not commit patched forks without review
+
+## Security Onboarding (TrendAlgo — M11 / S10)
+
+1. Create Kraken API keys with **trade only** — never enable Withdraw permission
+2. Store keys in `.env` only; run `bash scripts/setup-secrets.sh` (H-008/H-011)
+3. Enable 2FA on exchange and VPS provider
+4. Review `docs/THREAT_MODEL.md` before live trading
+5. Run `bash scripts/check-api-key-policy.sh` before Sprint 10 release
+
+See `docs/features/security-onboarding.md` for full wizard (Sprint 10).

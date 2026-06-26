@@ -1,28 +1,104 @@
 # HUMAN Backlog — TrendAlgo Bot
 
-All founder actions. Blocks AGENT work when marked **gate**.
+> **Single source of truth** for founder actions. BUILD_PLAN lists **AGENT/AUTO only** — all `[HUMAN]` gates live here.
+>
+> **Automation:** `python scripts/founder_gate.py preflight H-00N` · `approve H-00N` · `approve-all-soft` · `preflight-sprint --sprint N`
+>
+> **Exchange program gates:** H-030–H-034 · **Post-delivery matrix:** [`docs/POST_DELIVERY_PLAN.md`](POST_DELIVERY_PLAN.md)
 
-## A — One-time setup (Sprint 0)
-| ID | Item | Status |
-|----|------|--------|
-| H-001 | Confirm name + GitHub repo `edwardlthompson/trendalgo-bot` | 🔲 Partial — repo create pending push |
-| H-002 | Pick Cursor mode (`docs/CURSOR_MODES.md`) | 🔲 |
-| H-004 | Oracle Cloud Always Free ARM eligibility | 🔲 |
-| H-005 | Confirm SQLite, Ollama-first AI, TZ America/Puerto_Rico | 🔲 |
-| H-006 | One-time attorney consult + approve ADR-0008 | 🔲 |
+## How to clear items
 
-## B — Sprint gates
-H-007 S1 · H-013 S4.5 · H-015 S5 · H-018 S6 · H-019 S7 · H-020 S8 · H-022 S10 · H-024 S11 · H-025 S12
+| Type | Command |
+|------|---------|
+| After preflight PASS | `python scripts/founder_gate.py approve H-00N` |
+| All soft gates (batch) | `python scripts/founder_gate.py approve-all-soft` |
+| Pre-Sprint-1 bundle | `python scripts/founder_gate.py approve-bundle pre-sprint-1` |
+| Sprint gates | `python scripts/founder_gate.py preflight-sprint --sprint N` |
 
-## E — Go-live (every live enable)
-H-010 / H-028: `config.live.json`, Kraken IP whitelist, position caps
+**Hard gates (never AUTO-approve):** H-006, H-008, H-010, H-011, H-023, H-028, **H-031**, **H-032**
 
-## F — Validation
-H-009 UX smoke · H-012 cost budget · H-014 LTS archive · H-017 CoinStats cancel · H-021 second exchange
+---
 
-## G — Recurring
-H-026 monthly snapshot review · H-027 cost ≤ $10/mo
+## Master tier table — Exchange Program (S13+)
 
-**Pre-Sprint-1:** Complete H-001, H-005, H-007 → say **proceed to Sprint 1**.
+| ID | Item | Tier | AUTO preflight | Blocks |
+|----|------|------|----------------|--------|
+| H-021 | Old second-exchange choice | superseded | — | → H-030 |
+| H-030 | Exchange program + native-only scope | soft | ✅ | S13 AGENT work |
+| H-031 | ADR-0010 + approve Freqtrade removal | **hard** | ⚠️ ADR exists | S15 |
+| H-032 | Worldwide bot trading phases | **hard** | ⚠️ roadmap § Tier D | S18 |
+| H-034 | Local preview sign-off (L1+ per sprint) | soft | ✅ | S13+ commits |
 
-Full detail: `docs/CANONICAL_PLAN.md` § HUMAN Backlog.
+**H-030 preflight:** `docs/EXCHANGE_ROADMAP.md` + BUILD_PLAN S13 section present.
+
+**H-031 preflight:** `docs/adr/0010-ccxt-native-engine.md` present (approve = explicit FT removal consent).
+
+**H-034 preflight:** `docs/LOCAL_DEV.md` + `scripts/dev-local.ps1` present.
+
+---
+
+## Master tier table — Post-delivery (S0–S12)
+
+| ID | Sprint | Item | Tier | AUTO preflight | Blocks |
+|----|--------|------|------|----------------|--------|
+| H-001 | S0 | Repo name, origin, README | soft | ✅ | Pre-Sprint-1 |
+| H-002 | S0 | Pick Cursor mode | optional | ✅ | — |
+| H-004 | S0 | VPS hosting (Oracle / Hetzner) | soft | ✅ | S4 deploy |
+| H-005 | S0 | Founder defaults | soft | ✅ | — |
+| H-006 | S0 | Attorney + ADR-0008 | **hard** | ⚠️ legal packet | Public beta |
+| H-007 | S1 | ADR-0001 / S1 scope | soft | ✅ | Pre-Sprint-1 |
+| H-008 | S2 | Telegram token | **hard** | ⚠️ `.env` | Alerts |
+| H-009 | S3 | Playwright smoke | soft | ✅ | — |
+| H-010 | S4 | Live-trading approval | **hard** | ✅ script | Live orders |
+| H-011 | S4 | Kraken read-only keys | **hard** | ⚠️ `.env` | Portfolio sync |
+| H-012 | S4 | Production cost check | soft | ✅ | — |
+| H-013 | S4.5 | LTS absorption scope | soft | ✅ S4 preflight | Archive path |
+| H-014 | S4.5 | Archive LTS repo | soft | ✅ parity script | Deprecation |
+| H-015 | S5 | S5 scope / UI bar | soft | ✅ S5 preflight | — |
+| H-016 | S5 | Notification hour | soft | ✅ smoke | Daily P/L |
+| H-017 | S5 | CoinStats parity | soft | ✅ parity script | Cancel CoinStats |
+| H-018 | S6 | S6 scope (templates) | soft | ✅ S6 preflight | — |
+| H-019 | S7 | S7 scope (analytics) | soft | ✅ S7 preflight | — |
+| H-020 | S8 | S8 scope (multi-exchange) | soft | ✅ S8 preflight | — |
+| H-022 | S10 | License ADR attorney | **hard** | ⚠️ legal docs | Public beta |
+| H-023 | S10 | TERMS sign-off | **hard** | ⚠️ TERMS.md | Distribution |
+| H-024 | S11 | S11 scope (no marketplace) | soft | ✅ S11 preflight | — |
+| H-025 | S12 | On-chain provider | soft | ✅ S12 preflight | On-chain live |
+
+---
+
+## Ongoing / maintenance
+
+| ID | Cadence | Item | AUTO | Human |
+|----|---------|------|------|-------|
+| H-026 | Monthly | Portfolio integrity | ✅ script | Review report |
+| H-027 | Monthly | VPS cost ≤ $10 | ✅ script | Confirm invoice |
+| H-028 | Every go-live | Repeat H-010 checklist | ✅ script | Explicit approve |
+
+---
+
+## Fully automated (appendix — not in backlog)
+
+H-003 · H-009 · H-012 · H-029 · H-005 (defaults applied)
+
+---
+
+## Pre-Sprint-1 bundle
+
+```bash
+python scripts/founder_gate.py preflight H-001
+python scripts/founder_gate.py preflight H-005
+python scripts/founder_gate.py preflight H-007
+python scripts/founder_gate.py approve-bundle pre-sprint-1
+```
+
+**Exchange program start:**
+
+```bash
+python scripts/founder_gate.py preflight H-034
+python scripts/founder_gate.py approve H-034 --note "L1 preview OK"
+python scripts/founder_gate.py preflight H-030
+python scripts/founder_gate.py approve H-030
+```
+
+**Full reference:** [`docs/FOUNDER_GATES.md`](FOUNDER_GATES.md) · [`docs/CANONICAL_PLAN.md`](CANONICAL_PLAN.md)

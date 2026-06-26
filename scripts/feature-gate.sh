@@ -130,7 +130,8 @@ should_run() {
 
 skip_or_block() {
   local msg="$1"
-  if [ "$STRICT" = true ]; then
+  # Strict multi-stack runs skip optional stacks locally when tooling is missing (CI runs full matrix).
+  if [ "$STRICT" = true ] && [ "$STACK" != "multi" ] && [ "$STACK" != "none" ]; then
     block_env "$msg"
   fi
   log "$msg"
@@ -190,7 +191,15 @@ if should_run web && [ -f examples/web/package.json ]; then
   fi
 fi
 
-if should_run python && [ -f examples/python/pyproject.toml ]; then
+if should_run python && [ -f pyproject.toml ] && grep -q 'name = "trendalgo-bot"' pyproject.toml 2>/dev/null; then
+  PY_DIR="."
+elif should_run python && [ -f examples/python/pyproject.toml ]; then
+  PY_DIR="examples/python"
+else
+  PY_DIR=""
+fi
+
+if [ -n "$PY_DIR" ]; then
   if ! command -v uv >/dev/null 2>&1; then
     if [ "$STACK" = "python" ]; then
       block_env "uv not found"
@@ -198,11 +207,11 @@ if should_run python && [ -f examples/python/pyproject.toml ]; then
       skip_or_block "Skipping python gate (uv not found)"
     fi
   else
-    run_in_dir examples/python python-lint uv run ruff check .
-    run_in_dir examples/python python-format uv run ruff format --check .
-    run_in_dir examples/python python-type-mypy uv run mypy src
-    run_in_dir examples/python python-type-pyright uv run pyright
-    run_in_dir examples/python python-test uv run pytest -q
+    run_in_dir "$PY_DIR" python-lint uv run ruff check .
+    run_in_dir "$PY_DIR" python-format uv run ruff format --check .
+    run_in_dir "$PY_DIR" python-type-mypy uv run mypy src
+    run_in_dir "$PY_DIR" python-type-pyright uv run pyright
+    run_in_dir "$PY_DIR" python-test uv run pytest -q
   fi
 fi
 
@@ -261,7 +270,11 @@ fi
 
 if [ "$STRICT" = true ] && [ "$STACK" = "multi" ]; then
   run_cmd design-cohesion bash scripts/check-design-cohesion.sh
-  run_cmd about-feature-gate bash scripts/verify-about-feature-gate.sh
+  if command -v npm >/dev/null 2>&1; then
+    run_cmd about-feature-gate bash scripts/verify-about-feature-gate.sh
+  else
+    skip_or_block "Skipping about-feature-gate (npm not found)"
+  fi
 fi
 
 log "Feature gate passed (${#GATES_PASSED[@]} stages)."

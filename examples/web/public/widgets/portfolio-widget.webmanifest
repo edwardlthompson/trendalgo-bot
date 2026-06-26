@@ -1,0 +1,10 @@
+{
+  "name": "TrendAlgo Portfolio",
+  "short_name": "Portfolio",
+  "description": "Quick-glance net worth and daily P/L",
+  "start_url": "/?view=portfolio",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

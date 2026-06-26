@@ -2,8 +2,8 @@
 
 ## Draft Description (edit to <=350 chars)
 
-TrendAlgo Bot - Self-hosted Kraken spot algo bot: Freqtrade, LTS Scanner, CoinStats portfolio, AI-recommended strategies.. Built with agent-project-bootstrap. FOSS MIT.
+Self-hosted crypto platform: native CCXT trading, CoinStats-class portfolio, LTS scanner, AI strategies, performance license. FOSS MIT. Run on your VPS — dry-run default.
 
 ## Topics
 
-Add topics relevant to your project and stack.
+algo-trading, cryptocurrency, ccxt, fastapi, pwa, self-hosted, foss, kraken, portfolio-tracker, python

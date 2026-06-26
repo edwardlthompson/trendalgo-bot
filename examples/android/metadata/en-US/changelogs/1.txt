@@ -1,1 +1,0 @@
-Initial Golden Path Android stub for agent-project-bootstrap template.

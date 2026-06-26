@@ -1,0 +1,13 @@
+{
+  "project_name": "TrendAlgo Bot",
+  "database": "sqlite",
+  "ai_mode": "ollama-first",
+  "timezone": "America/Puerto_Rico",
+  "license_fee_percent": 12,
+  "license_fee_percent_min": 10,
+  "license_fee_percent_max": 15,
+  "second_exchange": null,
+  "vps_monthly_budget_usd": 10,
+  "production_hosting": "external_vps_only",
+  "notification_quiet_hours_default": true
+}

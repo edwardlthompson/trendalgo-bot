@@ -13,6 +13,9 @@
     "lint": "tsc --noEmit",
     "lighthouse": "lhci autorun"
   },
+  "dependencies": {
+    "lightweight-charts": "^4.2.0"
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@lhci/cli": "^0.15.1",

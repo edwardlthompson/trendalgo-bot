@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Founder gate state (.cursor/founder-gates.json)",
+  "type": "object",
+  "required": ["version", "gates"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "updated_at": { "type": "string" },
+    "gates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "enum": ["pending", "preflight_ok", "approved", "backlog", "regressed"]
+          },
+          "approved_at": { "type": "string" },
+          "preflight_exit": { "type": "integer" },
+          "note": { "type": "string" },
+          "backlog_reason": { "type": "string" }
+        }
+      }
+    }
+  }
+}
