@@ -461,6 +461,22 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
       );
       return;
     }
+    if (url.includes("/platform/forager")) {
+      await route.fulfill(json({ pairs: [{ pair: "BTC/USD", forager_score: 0.8 }], pair_count: 1 }));
+      return;
+    }
+    if (url.includes("/platform/funding")) {
+      await route.fulfill(json({ rates: [{ exchange: "kraken", rate: 0.0001 }], rows: [] }));
+      return;
+    }
+    if (url.includes("/platform/postgres")) {
+      await route.fulfill(json({ enabled: false, sqlite_mvp: true, schema_exists: false }));
+      return;
+    }
+    if (url.includes("/platform/")) {
+      await route.fulfill(json({ ok: true }));
+      return;
+    }
     await route.fulfill({ status: 404, body: "not mocked" });
   });
 }
