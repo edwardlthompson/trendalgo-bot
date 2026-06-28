@@ -39,6 +39,7 @@ test("passes accessibility audit with about panel open", async ({ page }) => {
 });
 
 test("homepage visual snapshot", async ({ page }) => {
+  test.skip(!!process.env.CI, "Visual baseline is captured on local Chromium; Linux CI fonts differ");
   await page.goto("/");
   await expect(page.locator("main")).toBeVisible();
   await expect(page).toHaveScreenshot("homepage.png", { maxDiffPixelRatio: 0.02 });

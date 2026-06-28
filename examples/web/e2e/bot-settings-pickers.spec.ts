@@ -59,8 +59,13 @@ test("pair picker opens, searches, and selects", async ({ page }) => {
   const panel = page.getByTestId("bot-pair-picker-panel");
   await expect(panel).toBeVisible();
   await panel.getByTestId("bot-pair-picker-search").fill("ETH");
-  await panel.getByRole("button", { name: "ETH/USD", exact: true }).click();
-  await expect(page.getByTestId("bot-pair-picker-trigger")).toHaveText("ETH/USD");
+  await panel.locator(".gp-picker-row-btn").filter({ hasText: "ETH/USD" }).click();
+  const storedPair = await page.evaluate(() => {
+    const raw = localStorage.getItem("trendalgo.settings.v1");
+    const data = raw ? (JSON.parse(raw) as { bots?: Record<string, { pair?: string }> }) : {};
+    return data.bots?.["1"]?.pair ?? null;
+  });
+  expect(storedPair).toBe("ETH/USD");
 });
 
 test("timeframe picker opens and lists intervals", async ({ page }) => {

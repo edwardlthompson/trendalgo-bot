@@ -152,10 +152,10 @@ def _parse_gemini(html: str) -> tuple[float, float] | None:
         taker = float(match.group(2)) / 100.0
         return taker, maker
     text = _strip_html(html)
-    taker = _labeled_pct(text, "taker")
-    maker = _labeled_pct(text, "maker")
-    if taker is not None and maker is not None and taker > 0 and maker >= 0:
-        return taker, maker
+    taker_opt = _labeled_pct(text, "taker")
+    maker_opt = _labeled_pct(text, "maker")
+    if taker_opt is not None and maker_opt is not None and taker_opt > 0 and maker_opt >= 0:
+        return taker_opt, maker_opt
     return None
 
 
