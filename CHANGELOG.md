@@ -20,6 +20,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.3.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.3.0...v0.3.1) (2026-06-28)
+
+
+### Fixed
+
+* **ci:** add generated web TA data and ruff/lint fixes ([93b616a](https://github.com/edwardlthompson/trendalgo-bot/commit/93b616a372278e0b7c7c3c7e0a5c03bd528e6ff3))
+* **ci:** correct hashFiles conditions and drop Android CodeQL ([0bc5355](https://github.com/edwardlthompson/trendalgo-bot/commit/0bc5355fd1f265a40ae4921a1ee427890811993b))
+* **ci:** drop node/android jobs for web-only TrendAlgo stack ([a606160](https://github.com/edwardlthompson/trendalgo-bot/commit/a6061605bb8902f4606a393fc06ea42ae5c42aea))
+* **ci:** drop prelint gen:data hook; files are committed ([82ee737](https://github.com/edwardlthompson/trendalgo-bot/commit/82ee737c4c9f136d52bf26f189a7088d442c0fff))
+* **ci:** exclude appBootstrap from vitest coverage include (Playwright covers wiring) ([87222ce](https://github.com/edwardlthompson/trendalgo-bot/commit/87222cec72427afac6b6d4dbf9acab3f67afb99f))
+* **ci:** heatmap a11y contrast, e2e portfolio landing, ruff I001 ignore ([37fdecb](https://github.com/edwardlthompson/trendalgo-bot/commit/37fdecb8ea27fcc6b75dc4b0c847fa746f18334a))
+* **ci:** ruff format, fleet e2e mocks, and playwright gates ([7be319f](https://github.com/edwardlthompson/trendalgo-bot/commit/7be319f525321b344210ae5fef190b1ef43a52aa))
+* **ci:** ruff import order and bootstrap API test mocks for portfolio bundle ([cc9238d](https://github.com/edwardlthompson/trendalgo-bot/commit/cc9238d1537ce89a1b87a6292a2441dc5643f5c2))
+* **ci:** ruff lint and format for v0.1.0 release ([dc54556](https://github.com/edwardlthompson/trendalgo-bot/commit/dc5455684ab1706fdba7938beff751b3dd61204b))
+* **ci:** skip removed stacks and defer founder gates in CI ([7154102](https://github.com/edwardlthompson/trendalgo-bot/commit/71541025e5e8b4625e5a8e4b31437b59cb95f77d))
+* **ci:** stabilize playwright e2e and fee_parsers mypy ([d4c16c1](https://github.com/edwardlthompson/trendalgo-bot/commit/d4c16c11a84840725a21e93157dfe54938ac72d7))
+* **ci:** sync manifest, ruff, design tokens, and web tests ([6d28c68](https://github.com/edwardlthompson/trendalgo-bot/commit/6d28c681435c12d1e615c7e92a4e63e8a668f425))
+* **e2e:** mock platform forager, funding, and postgres routes for bootstrap ([50d20c1](https://github.com/edwardlthompson/trendalgo-bot/commit/50d20c1e965ab92e0a06197c7c513bc60d35f673))
+* **release:** sync uv.lock for v0.2.0 and dedupe CHANGELOG Unreleased ([55bfd54](https://github.com/edwardlthompson/trendalgo-bot/commit/55bfd548d92a1a20e9cc00bdb6da5e60c79741a4))
+
+
+### Changed
+
+* **deps-dev:** Bump the web-dependencies group ([#2](https://github.com/edwardlthompson/trendalgo-bot/issues/2)) ([886a392](https://github.com/edwardlthompson/trendalgo-bot/commit/886a3926c4460a5756cd9c5bb0fe322d453c021c))
+* **deps:** Bump the android-dependencies group ([#4](https://github.com/edwardlthompson/trendalgo-bot/issues/4)) ([625027d](https://github.com/edwardlthompson/trendalgo-bot/commit/625027dc8fb34c25720a340b5ec34076e1b34d15))
+* **release:** prepare v0.1.0 release ([ad6818a](https://github.com/edwardlthompson/trendalgo-bot/commit/ad6818a939afdb3ba1421dff8398ae93ccee2217))
+* **release:** prepare v0.2.0 release ([99557b1](https://github.com/edwardlthompson/trendalgo-bot/commit/99557b18bb415a6a8e5ef06d87fb72133363ac57))
+* **release:** prepare v0.3.0 release ([5613200](https://github.com/edwardlthompson/trendalgo-bot/commit/56132009e2f6eb5dd5fa46682129a6bd38469fa6))
+* Sprint 0 scaffold TrendAlgo Bot from agent-project-bootstrap ([46e7e76](https://github.com/edwardlthompson/trendalgo-bot/commit/46e7e7684ead1033cc345a02b633dfeb8350b9d3))
+
+
+### Documentation
+
+* **build-plan:** slim active board to summary tables ([33a7f8d](https://github.com/edwardlthompson/trendalgo-bot/commit/33a7f8dc49d229157689d13074c648118ea7096f))
+* **kb:** KB-012 v0.2.0 ship CI follow-ups ([dbf6c11](https://github.com/edwardlthompson/trendalgo-bot/commit/dbf6c11173074198b11d8ed47927c1fb0586ab32))
+
 ## [Unreleased]
 
 ## [0.3.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.2.0...v0.3.0) (2026-06-26)
