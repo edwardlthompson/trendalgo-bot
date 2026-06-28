@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from trendalgo.bots.chart_regions import trade_highlight_regions
 from trendalgo.bots.equity_limits import normalize_equity_mode, validate_equity_input
 
@@ -18,11 +20,8 @@ def test_normalize_equity_mode_legacy_values() -> None:
 
 
 def test_validate_portfolio_pct_cap() -> None:
-    try:
+    with pytest.raises(ValueError, match="100"):
         validate_equity_input(_PaperState(), "BTC/USD", "portfolio_pct", 101, paper=True)
-        assert False, "expected ValueError"
-    except ValueError as exc:
-        assert "100" in str(exc)
 
 
 def test_trade_highlight_regions_pairs_buy_sell() -> None:

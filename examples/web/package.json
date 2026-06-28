@@ -10,6 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
+    "gen:data": "python ../../scripts/gen-web-data-ts.py && python ../../scripts/gen-ta-glossary-json.py && python ../../scripts/gen-ta-library-json.py",
+    "prelint": "npm run gen:data",
+    "prebuild": "npm run gen:data",
     "lint": "tsc --noEmit",
     "lighthouse": "lhci autorun"
   },

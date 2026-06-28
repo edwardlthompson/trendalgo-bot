@@ -21,15 +21,13 @@ from trendalgo.constants.timeframes import normalize_tv_interval, timeframe_for_
 from trendalgo.ta.frame_cache import ATTR_READONLY, ATTR_SIGNATURE, get_frame_cache
 from trendalgo.ta.indicator_cache import get_indicator_cache, reset_indicator_cache
 from trendalgo.ta.signals import resolve_preset, signals_for_preset
+from trendalgo.ta.signatures import OhlcvSignature, canonical_ta_params_hash
 
 MAX_SIGNAL_CACHE_ENTRIES = 256
 WARMUP_MARGIN = 10
 WARMUP_FLOOR = 50
 
 logger = logging.getLogger(__name__)
-
-
-from trendalgo.ta.signatures import OhlcvSignature, canonical_ta_params_hash
 
 
 @dataclass(frozen=True)

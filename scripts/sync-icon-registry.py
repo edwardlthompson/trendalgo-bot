@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 import argparse
-import sys
-
-from trendalgo.icons.sync import migrate_coin_icons_local, sync_all, sync_coins, sync_exchanges
-from trendalgo.icons.store import IconStore
 import os
+import sys
 from pathlib import Path
+
+from trendalgo.icons.store import IconStore
+from trendalgo.icons.sync import migrate_coin_icons_local, sync_all, sync_coins, sync_exchanges
 
 
 def main() -> int:

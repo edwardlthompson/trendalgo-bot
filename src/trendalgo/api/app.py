@@ -38,11 +38,11 @@ from trendalgo.api.routes import (
     ws,
 )
 from trendalgo.api.state import AppState, default_state
-from trendalgo.portfolio.overview import build_portfolio_overview
-from trendalgo.portfolio.snapshots import start_portfolio_scheduler
 from trendalgo.exchanges.fee_scheduler import start_fee_scheduler
 from trendalgo.exchanges.fee_store import get_fee_store
 from trendalgo.exchanges.fee_sync import startup_fee_sync
+from trendalgo.portfolio.overview import build_portfolio_overview
+from trendalgo.portfolio.snapshots import start_portfolio_scheduler
 from trendalgo.scanner.scheduler import start_scheduler
 
 if TYPE_CHECKING:

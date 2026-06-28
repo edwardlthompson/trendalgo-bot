@@ -19,8 +19,8 @@ from trendalgo.backtest.fleet_config import (
     fleet_lookback_seconds,
 )
 from trendalgo.backtest.fleet_optimize import estimate_optimize_combos, optimize_top_rows
-from trendalgo.backtest.fleet_tsl_optimize import estimate_tsl_combos, optimize_tsl_for_rows
 from trendalgo.backtest.fleet_store import FleetStore
+from trendalgo.backtest.fleet_tsl_optimize import estimate_tsl_combos, optimize_tsl_for_rows
 from trendalgo.backtest.ta_fleet import (
     all_strategies,
     backtest_one,
@@ -32,7 +32,6 @@ from trendalgo.exchanges.fees import get_fee_schedule
 from trendalgo.exchanges.pairs import list_pairs_for_exchange
 from trendalgo.exchanges.registry import get_entry
 from trendalgo.market.service import PriceHistoryService
-from trendalgo.market.types import OhlcvPoint
 from trendalgo.ta.cache import ohlcv_list_to_df
 from trendalgo.ta.indicator_cache import reset_indicator_cache
 
@@ -60,7 +59,7 @@ def validate_fleet_request(exchange_id: str, pair: str) -> tuple[str, str]:
     return eid, base_pair
 
 
-def _points_to_dicts(points: list[OlcvPoint]) -> list[dict[str, Any]]:
+def _points_to_dicts(points: list[Any]) -> list[dict[str, Any]]:
     return [
         {
             "time": p.time,

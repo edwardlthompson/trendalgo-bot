@@ -1,0 +1,1600 @@
+{
+  "categories": [
+    {
+      "name": "Overlap Studies",
+      "items": [
+        {
+          "id": "ALMA",
+          "name": "ALMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "BBANDS",
+          "name": "BBANDS",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "DEMA",
+          "name": "DEMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "DONCHIAN",
+          "name": "DONCHIAN",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "EMA",
+          "name": "EMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "FWMA",
+          "name": "FWMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HA",
+          "name": "HA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HILO",
+          "name": "HILO",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HL2",
+          "name": "HL2",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HLC3",
+          "name": "HLC3",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HMA",
+          "name": "HMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HT_TRENDLINE",
+          "name": "HT_TRENDLINE",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HWC",
+          "name": "HWC",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "HWMA",
+          "name": "HWMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "ICHIMOKU",
+          "name": "ICHIMOKU",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "JMA",
+          "name": "JMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "KAMA",
+          "name": "KAMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "KC",
+          "name": "KC",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "MA",
+          "name": "MA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "MAMA",
+          "name": "MAMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "MIDPOINT",
+          "name": "MIDPOINT",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "MIDPRICE",
+          "name": "MIDPRICE",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "OHLC4",
+          "name": "OHLC4",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "PSAR",
+          "name": "PSAR",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "PWMA",
+          "name": "PWMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "RAINBOW",
+          "name": "RAINBOW",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "RMA",
+          "name": "RMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "SAR",
+          "name": "SAR",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "SAREXT",
+          "name": "SAREXT",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "SINWMA",
+          "name": "SINWMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "SMA",
+          "name": "SMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "SUPERTREND",
+          "name": "SUPERTREND",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "SWMA",
+          "name": "SWMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "T3",
+          "name": "T3",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "TEMA",
+          "name": "TEMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "TRIMA",
+          "name": "TRIMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "VIDYA",
+          "name": "VIDYA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "VWAP",
+          "name": "VWAP",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "VWMA",
+          "name": "VWMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "WCP",
+          "name": "WCP",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "WMA",
+          "name": "WMA",
+          "category": "Overlap Studies"
+        },
+        {
+          "id": "ZLMA",
+          "name": "ZLMA",
+          "category": "Overlap Studies"
+        }
+      ]
+    },
+    {
+      "name": "Momentum Indicators",
+      "items": [
+        {
+          "id": "ADX",
+          "name": "ADX",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "ADXR",
+          "name": "ADXR",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "AO",
+          "name": "AO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "APO",
+          "name": "APO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "AROON",
+          "name": "AROON",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "AROONOSC",
+          "name": "AROONOSC",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "BIAS",
+          "name": "BIAS",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "BOP",
+          "name": "BOP",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "BRAR",
+          "name": "BRAR",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "CCI",
+          "name": "CCI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "CFO",
+          "name": "CFO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "CG",
+          "name": "CG",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "CMO",
+          "name": "CMO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "COPPOCK",
+          "name": "COPPOCK",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "CTI",
+          "name": "CTI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "DX",
+          "name": "DX",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "ER",
+          "name": "ER",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "FISHER",
+          "name": "FISHER",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "INERTIA",
+          "name": "INERTIA",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "KDJ",
+          "name": "KDJ",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "KST",
+          "name": "KST",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "LRSI",
+          "name": "LRSI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "MACD",
+          "name": "MACD",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "MACDEXT",
+          "name": "MACDEXT",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "MACDFIX",
+          "name": "MACDFIX",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "MFI",
+          "name": "MFI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "MINUS_DI",
+          "name": "MINUS_DI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "MINUS_DM",
+          "name": "MINUS_DM",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "MOM",
+          "name": "MOM",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "PGO",
+          "name": "PGO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "PLUS_DI",
+          "name": "PLUS_DI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "PLUS_DM",
+          "name": "PLUS_DM",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "PPO",
+          "name": "PPO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "QQE",
+          "name": "QQE",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "ROC",
+          "name": "ROC",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "ROCP",
+          "name": "ROCP",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "ROCR",
+          "name": "ROCR",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "ROCR100",
+          "name": "ROCR100",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "RSI",
+          "name": "RSI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "RSX",
+          "name": "RSX",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "RVGI",
+          "name": "RVGI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "RVI",
+          "name": "RVI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "SLOPE",
+          "name": "SLOPE",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "SMI",
+          "name": "SMI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "SQUEEZE",
+          "name": "SQUEEZE",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "SQUEEZE_PRO",
+          "name": "SQUEEZE_PRO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "STC",
+          "name": "STC",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "STOCH",
+          "name": "STOCH",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "STOCHF",
+          "name": "STOCHF",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "STOCHRSI",
+          "name": "STOCHRSI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "TD_SEQ",
+          "name": "TD_SEQ",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "TRIX",
+          "name": "TRIX",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "TSI",
+          "name": "TSI",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "TTM_TREND",
+          "name": "TTM_TREND",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "ULTOSC",
+          "name": "ULTOSC",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "UO",
+          "name": "UO",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "VORTEX",
+          "name": "VORTEX",
+          "category": "Momentum Indicators"
+        },
+        {
+          "id": "WILLR",
+          "name": "WILLR",
+          "category": "Momentum Indicators"
+        }
+      ]
+    },
+    {
+      "name": "Volume Indicators",
+      "items": [
+        {
+          "id": "AD",
+          "name": "AD",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "ADOSC",
+          "name": "ADOSC",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "CMF",
+          "name": "CMF",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "EFI",
+          "name": "EFI",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "EOM",
+          "name": "EOM",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "KVO",
+          "name": "KVO",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "NVI",
+          "name": "NVI",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "OBV",
+          "name": "OBV",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "PVI",
+          "name": "PVI",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "PVO",
+          "name": "PVO",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "PVT",
+          "name": "PVT",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "VFI",
+          "name": "VFI",
+          "category": "Volume Indicators"
+        },
+        {
+          "id": "VP",
+          "name": "VP",
+          "category": "Volume Indicators"
+        }
+      ]
+    },
+    {
+      "name": "Volatility Indicators",
+      "items": [
+        {
+          "id": "ABERRATION",
+          "name": "ABERRATION",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "ACCBANDS",
+          "name": "ACCBANDS",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "ATR",
+          "name": "ATR",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "CHOP",
+          "name": "CHOP",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "DECAY",
+          "name": "DECAY",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "DRAWDOWN",
+          "name": "DRAWDOWN",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "EDECAY",
+          "name": "EDECAY",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "HVOL",
+          "name": "HVOL",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "MASSI",
+          "name": "MASSI",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "NATR",
+          "name": "NATR",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "THERMO",
+          "name": "THERMO",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "TRANGE",
+          "name": "TRANGE",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "TRUE_RANGE",
+          "name": "TRUE_RANGE",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "UI",
+          "name": "UI",
+          "category": "Volatility Indicators"
+        },
+        {
+          "id": "VHF",
+          "name": "VHF",
+          "category": "Volatility Indicators"
+        }
+      ]
+    },
+    {
+      "name": "Fibonacci & Levels",
+      "items": [
+        {
+          "id": "FIB_EXT",
+          "name": "FIB_EXT",
+          "category": "Fibonacci & Levels"
+        },
+        {
+          "id": "FIB_RETRACE",
+          "name": "FIB_RETRACE",
+          "category": "Fibonacci & Levels"
+        }
+      ]
+    },
+    {
+      "name": "Pattern Recognition",
+      "items": [
+        {
+          "id": "CDL2CROWS",
+          "name": "CDL2CROWS",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDL3BLACKCROWS",
+          "name": "CDL3BLACKCROWS",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDL3INSIDE",
+          "name": "CDL3INSIDE",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDL3LINESTRIKE",
+          "name": "CDL3LINESTRIKE",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDL3STARSINSOUTH",
+          "name": "CDL3STARSINSOUTH",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDL3WHITESOLDIERS",
+          "name": "CDL3WHITESOLDIERS",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLABANDONEDBABY",
+          "name": "CDLABANDONEDBABY",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLADVANCEBLOCK",
+          "name": "CDLADVANCEBLOCK",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLBELTHOLD",
+          "name": "CDLBELTHOLD",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLBREAKAWAY",
+          "name": "CDLBREAKAWAY",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLCLOSINGMARUBOZU",
+          "name": "CDLCLOSINGMARUBOZU",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLCONCEALBABYSWALL",
+          "name": "CDLCONCEALBABYSWALL",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLCOUNTERATTACK",
+          "name": "CDLCOUNTERATTACK",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLDARKCLOUDCOVER",
+          "name": "CDLDARKCLOUDCOVER",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLDOJI",
+          "name": "CDLDOJI",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLDOJISTAR",
+          "name": "CDLDOJISTAR",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLDRAGONFLYDOJI",
+          "name": "CDLDRAGONFLYDOJI",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLENGULFING",
+          "name": "CDLENGULFING",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLEVENINGDOJISTAR",
+          "name": "CDLEVENINGDOJISTAR",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLEVENINGSTAR",
+          "name": "CDLEVENINGSTAR",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLGAPSIDESIDEWHITE",
+          "name": "CDLGAPSIDESIDEWHITE",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLGRAVESTONEDOJI",
+          "name": "CDLGRAVESTONEDOJI",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHAMMER",
+          "name": "CDLHAMMER",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHANGINGMAN",
+          "name": "CDLHANGINGMAN",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHARAMI",
+          "name": "CDLHARAMI",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHARAMICROSS",
+          "name": "CDLHARAMICROSS",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHIGHWAVE",
+          "name": "CDLHIGHWAVE",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHIKKAKE",
+          "name": "CDLHIKKAKE",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHIKKAKEMOD",
+          "name": "CDLHIKKAKEMOD",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLHOMINGPIGEON",
+          "name": "CDLHOMINGPIGEON",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLIDENTICAL3CROWS",
+          "name": "CDLIDENTICAL3CROWS",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLINNECK",
+          "name": "CDLINNECK",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLINVERTEDHAMMER",
+          "name": "CDLINVERTEDHAMMER",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLKICKING",
+          "name": "CDLKICKING",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLKICKINGBYLENGTH",
+          "name": "CDLKICKINGBYLENGTH",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLLADDERBOTTOM",
+          "name": "CDLLADDERBOTTOM",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLLONGLEGGEDDOJI",
+          "name": "CDLLONGLEGGEDDOJI",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLLONGLINE",
+          "name": "CDLLONGLINE",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLMARUBOZU",
+          "name": "CDLMARUBOZU",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLMATCHINGLOW",
+          "name": "CDLMATCHINGLOW",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLMATHOLD",
+          "name": "CDLMATHOLD",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLMORNINGDOJISTAR",
+          "name": "CDLMORNINGDOJISTAR",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLMORNINGSTAR",
+          "name": "CDLMORNINGSTAR",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLONNECK",
+          "name": "CDLONNECK",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLPIERCING",
+          "name": "CDLPIERCING",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLRICKSHAWMAN",
+          "name": "CDLRICKSHAWMAN",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLRISEFALL3METHODS",
+          "name": "CDLRISEFALL3METHODS",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLSEPARATINGLINES",
+          "name": "CDLSEPARATINGLINES",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLSHOOTINGSTAR",
+          "name": "CDLSHOOTINGSTAR",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLSHORTLINE",
+          "name": "CDLSHORTLINE",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLSPINNINGTOP",
+          "name": "CDLSPINNINGTOP",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLSTALLEDPATTERN",
+          "name": "CDLSTALLEDPATTERN",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLSTICKSANDWICH",
+          "name": "CDLSTICKSANDWICH",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLTAKURI",
+          "name": "CDLTAKURI",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLTASUKIGAP",
+          "name": "CDLTASUKIGAP",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLTHRUSTING",
+          "name": "CDLTHRUSTING",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLTRISTAR",
+          "name": "CDLTRISTAR",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLUNIQUE3RIVER",
+          "name": "CDLUNIQUE3RIVER",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLUPSIDEGAP2CROWS",
+          "name": "CDLUPSIDEGAP2CROWS",
+          "category": "Pattern Recognition"
+        },
+        {
+          "id": "CDLXSIDEGAP3METHODS",
+          "name": "CDLXSIDEGAP3METHODS",
+          "category": "Pattern Recognition"
+        }
+      ]
+    },
+    {
+      "name": "Cycle Indicators",
+      "items": [
+        {
+          "id": "EBSW",
+          "name": "EBSW",
+          "category": "Cycle Indicators"
+        },
+        {
+          "id": "HT_DCPERIOD",
+          "name": "HT_DCPERIOD",
+          "category": "Cycle Indicators"
+        },
+        {
+          "id": "HT_DCPHASE",
+          "name": "HT_DCPHASE",
+          "category": "Cycle Indicators"
+        },
+        {
+          "id": "HT_PHASOR",
+          "name": "HT_PHASOR",
+          "category": "Cycle Indicators"
+        },
+        {
+          "id": "HT_SINE",
+          "name": "HT_SINE",
+          "category": "Cycle Indicators"
+        },
+        {
+          "id": "HT_TRENDMODE",
+          "name": "HT_TRENDMODE",
+          "category": "Cycle Indicators"
+        },
+        {
+          "id": "MSW",
+          "name": "MSW",
+          "category": "Cycle Indicators"
+        },
+        {
+          "id": "SMC_SWEEP",
+          "name": "SMC_SWEEP",
+          "category": "Cycle Indicators"
+        }
+      ]
+    },
+    {
+      "name": "Price Transform",
+      "items": [
+        {
+          "id": "AVGPRICE",
+          "name": "AVGPRICE",
+          "category": "Price Transform"
+        },
+        {
+          "id": "MEDPRICE",
+          "name": "MEDPRICE",
+          "category": "Price Transform"
+        },
+        {
+          "id": "PDIST",
+          "name": "PDIST",
+          "category": "Price Transform"
+        },
+        {
+          "id": "TYPPRICE",
+          "name": "TYPPRICE",
+          "category": "Price Transform"
+        },
+        {
+          "id": "WCLPRICE",
+          "name": "WCLPRICE",
+          "category": "Price Transform"
+        }
+      ]
+    },
+    {
+      "name": "Statistic Functions",
+      "items": [
+        {
+          "id": "BETA",
+          "name": "BETA",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "CORREL",
+          "name": "CORREL",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "ENTROPY",
+          "name": "ENTROPY",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "KURTOSIS",
+          "name": "KURTOSIS",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "LINEARREG",
+          "name": "LINEARREG",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "LINEARREG_ANGLE",
+          "name": "LINEARREG_ANGLE",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "LINEARREG_INTERCEPT",
+          "name": "LINEARREG_INTERCEPT",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "LINEARREG_SLOPE",
+          "name": "LINEARREG_SLOPE",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MAD",
+          "name": "MAD",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MAX",
+          "name": "MAX",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MAXINDEX",
+          "name": "MAXINDEX",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MEDIAN",
+          "name": "MEDIAN",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MIN",
+          "name": "MIN",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MININDEX",
+          "name": "MININDEX",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MINMAX",
+          "name": "MINMAX",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "MINMAXINDEX",
+          "name": "MINMAXINDEX",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "NPABS",
+          "name": "NPABS",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "NPROUND",
+          "name": "NPROUND",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "QUANTILE",
+          "name": "QUANTILE",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "ROLLING_MAX",
+          "name": "ROLLING_MAX",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "ROLLING_MIN",
+          "name": "ROLLING_MIN",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "ROLLING_SUM",
+          "name": "ROLLING_SUM",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "SKEW",
+          "name": "SKEW",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "STDDEV",
+          "name": "STDDEV",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "STDERR",
+          "name": "STDERR",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "SUM",
+          "name": "SUM",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "TODEG",
+          "name": "TODEG",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "TORAD",
+          "name": "TORAD",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "TRUNC",
+          "name": "TRUNC",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "TSF",
+          "name": "TSF",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "VAR",
+          "name": "VAR",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "VARIANCE",
+          "name": "VARIANCE",
+          "category": "Statistic Functions"
+        },
+        {
+          "id": "ZSCORE",
+          "name": "ZSCORE",
+          "category": "Statistic Functions"
+        }
+      ]
+    },
+    {
+      "name": "Math Operators",
+      "items": [
+        {
+          "id": "ADD",
+          "name": "ADD",
+          "category": "Math Operators"
+        },
+        {
+          "id": "DIV",
+          "name": "DIV",
+          "category": "Math Operators"
+        },
+        {
+          "id": "LOG_RETURN",
+          "name": "LOG_RETURN",
+          "category": "Math Operators"
+        },
+        {
+          "id": "MULT",
+          "name": "MULT",
+          "category": "Math Operators"
+        },
+        {
+          "id": "PERCENT_RETURN",
+          "name": "PERCENT_RETURN",
+          "category": "Math Operators"
+        },
+        {
+          "id": "SUB",
+          "name": "SUB",
+          "category": "Math Operators"
+        }
+      ]
+    },
+    {
+      "name": "Math Transform",
+      "items": [
+        {
+          "id": "ACOS",
+          "name": "ACOS",
+          "category": "Math Transform"
+        },
+        {
+          "id": "ASIN",
+          "name": "ASIN",
+          "category": "Math Transform"
+        },
+        {
+          "id": "ATAN",
+          "name": "ATAN",
+          "category": "Math Transform"
+        },
+        {
+          "id": "CEIL",
+          "name": "CEIL",
+          "category": "Math Transform"
+        },
+        {
+          "id": "COS",
+          "name": "COS",
+          "category": "Math Transform"
+        },
+        {
+          "id": "COSH",
+          "name": "COSH",
+          "category": "Math Transform"
+        },
+        {
+          "id": "EXP",
+          "name": "EXP",
+          "category": "Math Transform"
+        },
+        {
+          "id": "FLOOR",
+          "name": "FLOOR",
+          "category": "Math Transform"
+        },
+        {
+          "id": "LN",
+          "name": "LN",
+          "category": "Math Transform"
+        },
+        {
+          "id": "LOG10",
+          "name": "LOG10",
+          "category": "Math Transform"
+        },
+        {
+          "id": "SIN",
+          "name": "SIN",
+          "category": "Math Transform"
+        },
+        {
+          "id": "SINH",
+          "name": "SINH",
+          "category": "Math Transform"
+        },
+        {
+          "id": "SQRT",
+          "name": "SQRT",
+          "category": "Math Transform"
+        },
+        {
+          "id": "TAN",
+          "name": "TAN",
+          "category": "Math Transform"
+        },
+        {
+          "id": "TANH",
+          "name": "TANH",
+          "category": "Math Transform"
+        }
+      ]
+    },
+    {
+      "name": "Extended Indicators",
+      "items": [
+        {
+          "id": "ABOVE",
+          "name": "ABOVE",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "ABOVE_VALUE",
+          "name": "ABOVE_VALUE",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "AMAT",
+          "name": "AMAT",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "AOBV",
+          "name": "AOBV",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "AVOLUME",
+          "name": "AVOLUME",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "BELOW",
+          "name": "BELOW",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "BELOW_VALUE",
+          "name": "BELOW_VALUE",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CE",
+          "name": "CE",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CKSP",
+          "name": "CKSP",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CPR",
+          "name": "CPR",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CROSS",
+          "name": "CROSS",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CROSSANY",
+          "name": "CROSSANY",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CROSSOVER",
+          "name": "CROSSOVER",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CROSS_VALUE",
+          "name": "CROSS_VALUE",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "CVI",
+          "name": "CVI",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "DECREASING",
+          "name": "DECREASING",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "DM",
+          "name": "DM",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "DPO",
+          "name": "DPO",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "DSP",
+          "name": "DSP",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "EMV",
+          "name": "EMV",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "ERI",
+          "name": "ERI",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "FOSC",
+          "name": "FOSC",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "INCREASING",
+          "name": "INCREASING",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "LAG",
+          "name": "LAG",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "LINREG",
+          "name": "LINREG",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "LINREGANGLE",
+          "name": "LINREGANGLE",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "LINREGINTERCEPT",
+          "name": "LINREGINTERCEPT",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "LINREGSLOPE",
+          "name": "LINREGSLOPE",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "LONG_RUN",
+          "name": "LONG_RUN",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "MARKETFI",
+          "name": "MARKETFI",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "MAVP",
+          "name": "MAVP",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "MCGD",
+          "name": "MCGD",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "MD",
+          "name": "MD",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "MMAR",
+          "name": "MMAR",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "PMAX",
+          "name": "PMAX",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "PO",
+          "name": "PO",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "PSL",
+          "name": "PSL",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "PVOL",
+          "name": "PVOL",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "PVR",
+          "name": "PVR",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "QSTICK",
+          "name": "QSTICK",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "SHORT_RUN",
+          "name": "SHORT_RUN",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "SSF",
+          "name": "SSF",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "STDEV",
+          "name": "STDEV",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "TOS_STDEVALL",
+          "name": "TOS_STDEVALL",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "TRIXH",
+          "name": "TRIXH",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "TSIGNALS",
+          "name": "TSIGNALS",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "VOSC",
+          "name": "VOSC",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "VWMACD",
+          "name": "VWMACD",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "WAD",
+          "name": "WAD",
+          "category": "Extended Indicators"
+        },
+        {
+          "id": "XSIGNALS",
+          "name": "XSIGNALS",
+          "category": "Extended Indicators"
+        }
+      ]
+    }
+  ],
+  "count": 307
+}

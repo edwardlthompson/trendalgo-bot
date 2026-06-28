@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import itertools
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 
@@ -38,7 +39,7 @@ def param_variants(strategy_id: str, *, max_variants: int = OPTIMIZE_MAX_VARIANT
         if len(combos) >= max_variants:
             break
         row = dict(base)
-        for key, val in zip(keys, tup):
+        for key, val in zip(keys, tup, strict=True):
             row[key] = val
         combos.append(row)
     return combos or [base]

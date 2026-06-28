@@ -2,8 +2,9 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from trendalgo.icons.store import IconStore
 from trendalgo.api.state import _data_dir
+from trendalgo.icons.aliases import resolve_symbol
+from trendalgo.icons.store import IconStore
 
 router = APIRouter()
 
@@ -16,10 +17,6 @@ def _store() -> IconStore:
 def list_exchange_icons() -> dict[str, Any]:
     store = _store()
     return {"exchanges": store.list_exchanges()}
-
-
-from trendalgo.icons.aliases import resolve_symbol
-
 
 @router.get("/icons/coin/{symbol}")
 def get_coin_icon(symbol: str) -> dict[str, Any]:

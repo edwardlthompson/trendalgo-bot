@@ -147,7 +147,7 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
     const label = document.createElement("strong");
     label.textContent = t("bots.glossary.see_also");
     block.append(label, " ");
-    related.forEach((id, idx) => {
+    related.forEach((id: string, idx: number) => {
       if (idx > 0) block.append(", ");
       const link = document.createElement("a");
       link.href = `#${glossaryAnchorId(id)}`;
@@ -218,7 +218,7 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
 
   function matchesSearch(entry: TaGlossaryEntry, q: string): boolean {
     if (!q) return true;
-    const relatedText = (entry.related ?? []).map((id) => taGlossaryEntry(id).title).join(" ");
+    const relatedText = (entry.related ?? []).map((id: string) => taGlossaryEntry(id).title).join(" ");
     const haystack = [entry.id, entry.title, entry.short, entry.long, entry.formula, entry.category ?? "", relatedText]
       .join(" ")
       .toLowerCase();
@@ -234,9 +234,9 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
   function render(): void {
     const q = search.value.trim().toLowerCase();
     const target = pendingTarget?.toUpperCase() ?? null;
-    let entries = allTaGlossaryEntries().filter((e) => matchesCategory(e) && matchesSearch(e, q));
-    if (target && !entries.some((e) => e.id.toUpperCase() === target)) {
-      const hit = allTaGlossaryEntries().find((e) => e.id.toUpperCase() === target);
+    let entries = allTaGlossaryEntries().filter((e: TaGlossaryEntry) => matchesCategory(e) && matchesSearch(e, q));
+    if (target && !entries.some((e: TaGlossaryEntry) => e.id.toUpperCase() === target)) {
+      const hit = allTaGlossaryEntries().find((e: TaGlossaryEntry) => e.id.toUpperCase() === target);
       if (hit) entries = [hit, ...entries.filter((e) => e.id.toUpperCase() !== target)];
     }
     if (selectedCategory) {

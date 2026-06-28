@@ -7,7 +7,7 @@ import statistics
 import time
 from typing import Any
 
-from trendalgo.ta.cache import ohlcv_list_to_df, get_ta_signal_cache, reset_all_ta_caches
+from trendalgo.ta.cache import get_ta_signal_cache, ohlcv_list_to_df, reset_all_ta_caches
 from trendalgo.ta.signals import resolve_preset, signals_for_preset
 
 
