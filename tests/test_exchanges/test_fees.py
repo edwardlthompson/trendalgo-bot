@@ -1,12 +1,11 @@
 """Tests for exchange fee schedules."""
 
-import os
 from pathlib import Path
 
 import pytest
 
-from trendalgo.exchanges.fee_store import FeeStore, reset_fee_store
 from trendalgo.exchanges import fees
+from trendalgo.exchanges.fee_store import FeeStore, reset_fee_store
 
 
 @pytest.fixture

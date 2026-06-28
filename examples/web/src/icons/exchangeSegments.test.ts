@@ -1,10 +1,14 @@
+import exchangesRegistry from "../../public/icon-registry/exchanges.json";
 import { describe, expect, it } from "vitest";
 import { buildExchangeSegments, sortAccountsByValue } from "./exchangeSegments";
 import type { ExchangeIconMeta } from "./iconRegistry";
 
+const krakenColor = exchangesRegistry.exchanges.kraken.color;
+const binanceColor = exchangesRegistry.exchanges.binance.color;
+
 const registry = new Map<string, ExchangeIconMeta>([
-  ["kraken", { brand: "Kraken", color: "#5741D9", icon: "/icons/exchanges/kraken.svg" }],
-  ["binance", { brand: "Binance", color: "#F3BA2F", icon: "/icons/exchanges/binance.svg" }],
+  ["kraken", { brand: "Kraken", color: krakenColor, icon: "/icons/exchanges/kraken.svg" }],
+  ["binance", { brand: "Binance", color: binanceColor, icon: "/icons/exchanges/binance.svg" }],
 ]);
 
 describe("exchangeSegments", () => {
@@ -28,6 +32,6 @@ describe("exchangeSegments", () => {
     expect(segments[0].exchange).toBe("kraken");
     expect(segments[0].widthPct).toBeCloseTo(75, 1);
     expect(segments[1].widthPct).toBeCloseTo(25, 1);
-    expect(segments[0].color).toBe("#5741D9");
+    expect(segments[0].color).toBe(krakenColor);
   });
 });

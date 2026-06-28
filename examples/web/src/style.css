@@ -957,7 +957,7 @@ canvas {
 }
 
 .gp-cap-warning {
-  background: var(--gp-color-warning, #c9870a);
+  background: var(--gp-color-tertiary);
 }
 
 .gp-cap-full {
@@ -984,7 +984,7 @@ canvas {
 }
 
 .gp-limits-warning {
-  color: var(--gp-color-warning, #c9870a);
+  color: var(--gp-color-tertiary);
 }
 
 .gp-limits-blocked {

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 
-from trendalgo.exchanges.fees import ExchangeFeeSchedule
 from trendalgo.backtest.ta_simulator import simulate_buy_and_hold, simulate_long_with_fees
+from trendalgo.exchanges.fees import ExchangeFeeSchedule
 from trendalgo.ta.cache import ohlcv_list_to_df, preset_warmup_bars
 from trendalgo.ta.catalog import all_ta_names
 from trendalgo.ta.param_specs import ta_param_specs

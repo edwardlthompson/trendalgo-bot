@@ -3,9 +3,9 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from trendalgo.exchanges.fee_website import FetchedFees
 from trendalgo.exchanges.fee_store import FeeStore
 from trendalgo.exchanges.fee_sync import fees_differ, sync_exchange_fees
+from trendalgo.exchanges.fee_website import FetchedFees
 
 
 def test_fees_differ_epsilon() -> None:

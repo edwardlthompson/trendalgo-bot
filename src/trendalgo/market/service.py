@@ -9,8 +9,9 @@ from pathlib import Path
 
 from trendalgo.constants.timeframes import ccxt_interval_seconds
 from trendalgo.market.cache import PriceCache
-from trendalgo.market.kraken import fetch_closes, fetch_ohlcv as fetch_kraken_ohlcv
 from trendalgo.market.ccxt_ohlcv import fetch_exchange_ohlcv
+from trendalgo.market.kraken import fetch_closes
+from trendalgo.market.kraken import fetch_ohlcv as fetch_kraken_ohlcv
 from trendalgo.market.ohlcv_cache import OhlcvCache
 from trendalgo.market.symbols import base_symbol
 from trendalgo.market.synthetic import synthetic_ohlcv, synthetic_series

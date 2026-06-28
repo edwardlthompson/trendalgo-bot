@@ -6,12 +6,12 @@ from typing import Any
 
 from fastapi import APIRouter, Query, Request
 
-from trendalgo.exchanges.fees import all_fee_schedules
+from trendalgo.constants.timeframes import TRADINGVIEW_INTERVAL_LABELS, TRADINGVIEW_INTERVALS
 from trendalgo.exchanges.fee_store import get_fee_store
 from trendalgo.exchanges.fee_sync import sync_exchange_fees
-from trendalgo.exchanges.registry import list_exchanges, load_registry
+from trendalgo.exchanges.fees import all_fee_schedules
 from trendalgo.exchanges.pairs import list_pairs_for_exchange
-from trendalgo.constants.timeframes import TRADINGVIEW_INTERVALS, TRADINGVIEW_INTERVAL_LABELS
+from trendalgo.exchanges.registry import list_exchanges, load_registry
 
 router = APIRouter()
 

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import Any
 
 from trendalgo.exchanges.pair_normalizer import normalize_pair
 from trendalgo.exchanges.registry import get_entry

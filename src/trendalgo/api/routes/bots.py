@@ -23,9 +23,9 @@ from trendalgo.constants.timeframes import (
 )
 from trendalgo.market.warmup import cache_status_for_bots, get_warmup_runner
 from trendalgo.ta.cache import get_ta_signal_cache
-from trendalgo.ta.prewarm import get_ta_prewarm_runner
 from trendalgo.ta.catalog import all_ta_names
 from trendalgo.ta.param_specs import ta_param_specs
+from trendalgo.ta.prewarm import get_ta_prewarm_runner
 from trendalgo.templates.import_export import list_param_specs
 from trendalgo.templates.registry import get
 from trendalgo.trading.multi_exchange import route_order

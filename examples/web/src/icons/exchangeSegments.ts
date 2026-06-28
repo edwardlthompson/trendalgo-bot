@@ -27,7 +27,7 @@ export function buildExchangeSegments(
     return {
       exchange: acc.exchange,
       brand: meta?.brand ?? acc.exchange,
-      color: meta?.color ?? "#888888",
+      color: meta?.color ?? "var(--gp-color-outline)",
       total_usd: acc.total_usd,
       pct,
       widthPct: pct * 100,

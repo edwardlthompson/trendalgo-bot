@@ -44,6 +44,7 @@ vi.mock("./api/client", () => ({
   ),
   fetchFleetActive: vi.fn(() => Promise.resolve({ status: "idle" })),
   fetchFleetLatest: vi.fn(() => Promise.resolve({ rankings: [], total_rankings: 0 })),
+  fetchFleetHistory: vi.fn(() => Promise.resolve({ runs: [], total: 0 })),
   fetchExchangeFees: vi.fn(() =>
     Promise.resolve({
       tier: "retail_default",

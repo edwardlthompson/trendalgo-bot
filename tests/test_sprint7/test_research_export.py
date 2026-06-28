@@ -1,6 +1,5 @@
 """Sprint 7 research & export tests."""
 
-from pathlib import Path
 
 from trendalgo.export.tax import fifo_tax_rows, tax_csv
 from trendalgo.optimize.heatmap import hyperopt_heatmap_grid

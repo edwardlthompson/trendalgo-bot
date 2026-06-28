@@ -10,7 +10,12 @@ import pytest
 from trendalgo.exchanges.adapters.generic import GenericCcxtPortfolioAdapter
 from trendalgo.exchanges.asset_mapper import normalize_asset
 from trendalgo.exchanges.pair_normalizer import normalize_pair, quote_currency, to_ccxt_pair
-from trendalgo.exchanges.registry import ExchangeEntry, get_entry, list_portfolio_exchanges, load_registry
+from trendalgo.exchanges.registry import (
+    ExchangeEntry,
+    get_entry,
+    list_portfolio_exchanges,
+    load_registry,
+)
 from trendalgo.exchanges.scheduler import sync_portfolio_staggered
 from trendalgo.exchanges.sync import sync_all_exchanges
 from trendalgo.portfolio.db import PortfolioStore

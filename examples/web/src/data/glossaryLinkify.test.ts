@@ -4,7 +4,7 @@ import { setTaGlossaryEntries } from "./taGlossary";
 
 describe("glossaryLinkify", () => {
   it("parses glossary hash anchors", () => {
-    expect(parseGlossaryHash("#glossary-CDLDOJI")).toBe("CDLDOJI");
+    expect(parseGlossaryHash("#ta-glossary-cdldoji")).toBe("CDLDOJI");
     expect(parseGlossaryHash("")).toBeNull();
   });
 
@@ -33,7 +33,7 @@ describe("glossaryLinkify", () => {
     appendLinkifiedText(host, "a [[CDLDOJI|doji]] gapped away", (id) => clicked.push(id));
     const link = host.querySelector("a.gp-ta-glossary-link");
     expect(link?.textContent).toBe("doji");
-    expect(link?.getAttribute("href")).toBe("#glossary-CDLDOJI");
+    expect(link?.getAttribute("href")).toBe("#ta-glossary-cdldoji");
     link?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     expect(clicked).toEqual(["CDLDOJI"]);
   });

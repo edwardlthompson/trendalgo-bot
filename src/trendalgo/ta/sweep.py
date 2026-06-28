@@ -10,7 +10,7 @@ import pandas as pd
 from trendalgo.strategies.runtime.contract import Candle
 from trendalgo.ta.catalog import all_ta_count
 from trendalgo.ta.engine import talib_available
-from trendalgo.ta.signals import resolve_preset, signals_for_preset
+from trendalgo.ta.signals import signals_for_preset
 from trendalgo.trading.backtest.walk_forward import fixture_candles
 
 # Smoke sweep presets — each maps to TA function name(s).

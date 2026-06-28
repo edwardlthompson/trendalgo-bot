@@ -12,9 +12,9 @@ def client() -> TestClient:
     data_dir = Path(tempfile.mkdtemp(prefix="trendalgo-api-test-"))
     os.environ["TRENDALGO_DATA_DIR"] = str(data_dir)
     os.environ["TRENDALGO_FEE_SYNC_ON_START"] = "0"
+    from trendalgo.exchanges import fees
     from trendalgo.exchanges.fee_store import get_fee_store, reset_fee_store
     from trendalgo.exchanges.fee_sync import ensure_fee_db_ready
-    from trendalgo.exchanges import fees
 
     reset_fee_store()
     fees.clear_fee_cache()

@@ -1,3 +1,4 @@
+import exchangesRegistry from "../../public/icon-registry/exchanges.json";
 import { resolveCoinSymbol } from "./coinAliases";
 
 export type ExchangeIconMeta = {
@@ -28,17 +29,12 @@ let exchangeCache: Map<string, ExchangeIconMeta> | null = null;
 let coinCache: Map<string, CoinIconMeta> | null = null;
 let coinLoadPromise: Promise<Map<string, CoinIconMeta>> | null = null;
 
-const FALLBACK_EXCHANGES: Record<string, ExchangeIconMeta> = {
-  kraken: { brand: "Kraken", color: "#5741D9", icon: "/icons/exchanges/kraken.jpg" },
-  binanceus: { brand: "Binance.US", color: "#F0B90B", icon: "/icons/exchanges/binanceus.png" },
-  coinbaseadvanced: { brand: "Coinbase Advanced", color: "#0052FF", icon: "/icons/exchanges/coinbaseadvanced.png" },
-  gemini: { brand: "Gemini", color: "#00DCFA", icon: "/icons/exchanges/gemini.png" },
-  bitstamp: { brand: "Bitstamp", color: "#1C3584", icon: "/icons/exchanges/bitstamp.jpg" },
-  cryptocom: { brand: "Crypto.com", color: "#1199FA", icon: "/icons/exchanges/cryptocom.jpg" },
-  binance: { brand: "Binance", color: "#F3BA2F", icon: "/icons/exchanges/binance.jpg" },
-  bybit: { brand: "Bybit", color: "#F7A600", icon: "/icons/exchanges/bybit.png" },
-  okx: { brand: "OKX", color: "#2B2B2B", icon: "/icons/exchanges/okx.png" },
-};
+const FALLBACK_EXCHANGES: Record<string, ExchangeIconMeta> = Object.fromEntries(
+  Object.entries(exchangesRegistry.exchanges).map(([id, meta]) => [
+    id,
+    { brand: meta.brand, color: meta.color, icon: meta.icon },
+  ]),
+);
 
 export async function loadExchangeIcons(): Promise<Map<string, ExchangeIconMeta>> {
   if (exchangeCache) return exchangeCache;
@@ -92,7 +88,7 @@ export function exchangeMeta(
   return (
     registry.get(exchangeId) ?? {
       brand: exchangeId,
-      color: "#888888",
+      color: "var(--gp-color-outline)",
       icon: "/icons/exchanges/generic.png",
     }
   );

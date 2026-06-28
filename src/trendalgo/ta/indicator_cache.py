@@ -10,8 +10,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from trendalgo.ta.signatures import OhlcvSignature, canonical_ta_params_hash
 from trendalgo.ta.frame_cache import ATTR_SIGNATURE
+from trendalgo.ta.signatures import OhlcvSignature, canonical_ta_params_hash
 
 MAX_INDICATOR_CACHE_ENTRIES = 512
 

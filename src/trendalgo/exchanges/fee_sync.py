@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from trendalgo.exchanges.fee_fetcher import fetch_exchange_fees
-from trendalgo.exchanges.fee_store import FeeStore, _SEED_PATH
+from trendalgo.exchanges.fee_store import _SEED_PATH, FeeStore
 from trendalgo.exchanges.registry import load_registry
 
 _FEE_EPS = 1e-9

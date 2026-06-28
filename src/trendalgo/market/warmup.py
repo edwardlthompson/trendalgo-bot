@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import threading
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from trendalgo.bots.limits import chart_lookback_seconds
-from trendalgo.constants.timeframes import ccxt_interval_seconds, normalize_tv_interval, timeframe_for_fetch
-from trendalgo.market.symbols import base_symbol
+from trendalgo.constants.timeframes import (
+    ccxt_interval_seconds,
+    normalize_tv_interval,
+    timeframe_for_fetch,
+)
 from trendalgo.market.service import PriceHistoryService
+from trendalgo.market.symbols import base_symbol
 from trendalgo.ta.prewarm import schedule_ta_prewarm_after_ohlcv
 
 ProgressCallback = Callable[[str], None]

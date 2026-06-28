@@ -17,8 +17,8 @@ from trendalgo.ta.cache import (
     reset_all_ta_caches,
     trim_df_for_bot,
 )
-from trendalgo.ta.signatures import OhlcvSignature, canonical_ta_params_hash
 from trendalgo.ta.signals import resolve_preset, signals_for_preset
+from trendalgo.ta.signatures import OhlcvSignature, canonical_ta_params_hash
 
 
 def _bot(**overrides: object) -> dict:
@@ -145,7 +145,7 @@ def test_lru_eviction() -> None:
     ohlcv = _ohlcv(60)
     df = ohlcv_list_to_df(ohlcv)
     for i in range(3):
-        bot = _bot(strategy_id=f"RSI", ta_params={"timeperiod": 10 + i})
+        bot = _bot(strategy_id="RSI", ta_params={"timeperiod": 10 + i})
         cache.get_or_compute_signals(df, ohlcv, bot)
     assert cache.stats.evictions >= 1
     assert len(cache._entries) <= 2

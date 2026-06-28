@@ -9,12 +9,16 @@ from trendalgo.ai.insights import expanded_insights
 from trendalgo.analytics.metrics import compute_metrics, equity_curve
 from trendalgo.api.backtest_runner import run_native_backtest_for_strategy, run_sample_backtest
 from trendalgo.backtest.attribution import attribute_signals
+from trendalgo.backtest.fleet_config import (
+    FLEET_LOOKBACK_DAYS,
+    FLEET_LOOKBACK_SECONDS,
+    fleet_lookback_seconds,
+)
 from trendalgo.backtest.fleet_runner import FleetPreflightError, get_fleet_runner
 from trendalgo.backtest.slippage import apply_slippage
-from trendalgo.backtest.fleet_config import FLEET_LOOKBACK_DAYS, FLEET_LOOKBACK_SECONDS, fleet_lookback_seconds
-from trendalgo.constants.timeframes import TRADINGVIEW_INTERVALS, TRADINGVIEW_INTERVAL_LABELS
-from trendalgo.exchanges.fees import all_fee_schedules
+from trendalgo.constants.timeframes import TRADINGVIEW_INTERVAL_LABELS, TRADINGVIEW_INTERVALS
 from trendalgo.exchanges.fee_store import get_fee_store
+from trendalgo.exchanges.fees import all_fee_schedules
 from trendalgo.scanner.backtest import BacktestDataLoader
 from trendalgo.strategies.runtime.loader import supported_strategy_ids
 

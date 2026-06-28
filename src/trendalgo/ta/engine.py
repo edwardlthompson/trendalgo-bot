@@ -10,9 +10,8 @@ import pandas as pd
 from trendalgo.strategies.runtime.indicators import ema, macd, rsi, sma
 from trendalgo.ta.custom_indicators import compute_custom
 from trendalgo.ta.extended_catalog import CUSTOM_TA_NAMES
-from trendalgo.ta.pandas_ta_catalog import is_pandas_ta_indicator, pandas_ta_available
 from trendalgo.ta.indicator_cache import get_indicator_cache, signature_from_df
-
+from trendalgo.ta.pandas_ta_catalog import is_pandas_ta_indicator, pandas_ta_available
 from trendalgo.ta.pandas_ta_engine import compute_pandas_ta
 
 _OHLCV = ("open", "high", "low", "close", "volume")

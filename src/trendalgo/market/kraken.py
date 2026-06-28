@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import Any
 
 from trendalgo.market.symbols import kraken_ccxt_pair
 from trendalgo.market.types import OhlcvPoint, PricePoint
