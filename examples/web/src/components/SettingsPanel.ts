@@ -72,6 +72,7 @@ export function createSettingsPanel(callbacks: SettingsPanelCallbacks): HTMLElem
       btn.className = "gp-accent-swatch";
       btn.style.background = color;
       btn.title = color;
+      btn.setAttribute("aria-label", `${t("settings.accent.label")}: ${color}`);
       if (color === currentAccent) btn.setAttribute("aria-pressed", "true");
       btn.addEventListener("click", () => setAccentColor(color));
       accentRow.appendChild(btn);

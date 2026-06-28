@@ -12,7 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from trendalgo.api.routes import (
     ai_growth,
     backtest,
-    backtest_library,
     billing,
     bots,
     dashboard,
@@ -21,6 +20,7 @@ from trendalgo.api.routes import (
     export,
     health,
     hyperopt,
+    icons,
     notifications,
     ops,
     pairs,
@@ -40,6 +40,9 @@ from trendalgo.api.routes import (
 from trendalgo.api.state import AppState, default_state
 from trendalgo.portfolio.overview import build_portfolio_overview
 from trendalgo.portfolio.snapshots import start_portfolio_scheduler
+from trendalgo.exchanges.fee_scheduler import start_fee_scheduler
+from trendalgo.exchanges.fee_store import get_fee_store
+from trendalgo.exchanges.fee_sync import startup_fee_sync
 from trendalgo.scanner.scheduler import start_scheduler
 
 if TYPE_CHECKING:
@@ -65,11 +68,17 @@ def create_app(state: AppState | None = None) -> FastAPI:
             on_log=app_state.log,
         )
         app_state.portfolio_scheduler = portfolio_sched
+        fee_store = get_fee_store()
+        startup_fee_sync(fee_store, on_log=app_state.log)
+        fee_sched = start_fee_scheduler(fee_store, on_log=app_state.log)
+        app_state.fee_scheduler = fee_sched
         yield
         if scanner_sched is not None and hasattr(scanner_sched, "shutdown"):
             scanner_sched.shutdown(wait=False)
         if portfolio_sched is not None and hasattr(portfolio_sched, "shutdown"):
             portfolio_sched.shutdown(wait=False)
+        if fee_sched is not None and hasattr(fee_sched, "shutdown"):
+            fee_sched.shutdown(wait=False)
 
     app = FastAPI(title="TrendAlgo API", version="0.1.0", lifespan=lifespan)
     app.state.trendalgo = app_state
@@ -86,7 +95,6 @@ def create_app(state: AppState | None = None) -> FastAPI:
     app.include_router(pairs.router, prefix=prefix, tags=["pairs"])
     app.include_router(strategies.router, prefix=prefix, tags=["strategies"])
     app.include_router(backtest.router, prefix=prefix, tags=["backtest"])
-    app.include_router(backtest_library.router, prefix=prefix, tags=["backtest-library"])
     app.include_router(dashboard.router, prefix=prefix, tags=["dashboard"])
     app.include_router(risk.router, prefix=prefix, tags=["risk"])
     app.include_router(debug.router, prefix=prefix, tags=["debug"])
@@ -94,6 +102,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
     app.include_router(portfolio.router, prefix=prefix, tags=["portfolio"])
     app.include_router(portfolio_advanced.router, prefix=prefix, tags=["portfolio-advanced"])
     app.include_router(exchanges.router, prefix=prefix, tags=["exchanges"])
+    app.include_router(icons.router, prefix=prefix, tags=["icons"])
     app.include_router(platform.router, prefix=prefix, tags=["platform"])
     app.include_router(billing.router, prefix=prefix, tags=["billing"])
     app.include_router(ai_growth.router, prefix=prefix, tags=["ai-growth"])

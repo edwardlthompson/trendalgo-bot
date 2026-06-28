@@ -7,10 +7,9 @@
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Python | 3.11+ | `pip install -e .` or `uv sync` from repo root |
+| Python | 3.12+ | `uv sync --extra dev --extra ta` from repo root |
 | Node.js | 20+ | For `examples/web` |
 | npm | 10+ | `cd examples/web && npm ci` |
-
 On Windows, use **PowerShell** scripts (`scripts/dev-local.ps1`). Bash scripts work in WSL or Git Bash.
 
 ## Three preview tiers
@@ -20,19 +19,20 @@ On Windows, use **PowerShell** scripts (`scripts/dev-local.ps1`). Bash scripts w
 | **L1 — Dev hot reload** | Daily UI/API work | Vite HMR + live API on port 8000 |
 | **L2 — Production build** | Before PR / sprint sign-off | Built PWA + API (no HMR) |
 | **L3 — Docker stack** | Parity with prod compose | API in container (`docker compose --profile full`) |
-
 ## L1 — Quick start (recommended)
 
 ### Windows (PowerShell)
 
 ```powershell
 .\scripts\dev-local.ps1
+
 ```
 
 ### Linux / macOS / WSL
 
 ```bash
 bash scripts/dev-local.sh
+
 ```
 
 Then open **http://localhost:5173** (Vite proxies `/api` → `http://127.0.0.1:8000`).
@@ -47,12 +47,14 @@ python -m trendalgo.api.main
 
 # Terminal 2 — Web
 cd examples/web && npm run dev
+
 ```
 
 ## L2 — Production build preview
 
 ```powershell
 .\scripts\preview-local.ps1
+
 ```
 
 Or manually:
@@ -60,6 +62,7 @@ Or manually:
 ```bash
 cd examples/web && npm run build && npm run preview
 # Separate terminal: python -m trendalgo.api.main
+
 ```
 
 Preview server defaults to port **4173**; API stays on **8000**.
@@ -68,6 +71,7 @@ Preview server defaults to port **4173**; API stays on **8000**.
 
 ```bash
 docker compose -f docker/docker-compose.yml --profile full up trendalgo-api
+
 ```
 
 API is exposed on **8000** (aligned with Vite proxy). Native CCXT API only — no Freqtrade service in compose.
@@ -80,7 +84,6 @@ API is exposed on **8000** (aligned with Vite proxy). Native CCXT API only — n
 | `TRENDALGO_DATA_DIR` | `./data/dev` | Isolated SQLite + fixtures |
 | `TRENDALGO_API_PORT` | `8000` | API listen port |
 | `DATABASE_URL` | `sqlite:///./data/dev/trendalgo.db` | Override via `.env` |
-
 Copy [`.env.example`](../.env.example) → `.env`. **Never commit `.env`.**
 
 Exchange keys are optional for L1 — portfolio sync returns dry-run sample data when keys are absent.
@@ -108,7 +111,6 @@ Sign off in founder gates: `python scripts/founder_gate.py approve H-034 --note 
 | API import errors | `pip install -e .` from repo root |
 | Bash gates fail on Windows | Use `python scripts/founder_gate.py` (see KB-001) |
 | Blank portfolio | Ensure `TRENDALGO_DATA_DIR` exists; API logs should show dry-run mode |
-
 ## Gate
 
 **H-034 (soft):** Local preview completed for current sprint. Preflight checks this doc + dev scripts exist; human confirms L1/L2 run.

@@ -60,11 +60,23 @@ class PortfolioStore:
             if goal is None:
                 conn.execute(
                     """
-                    INSERT INTO performance_goals (id, target_net_worth_usd, deadline, label, updated_at)
-                    VALUES (1, 2000, NULL, 'Growth goal', ?)
+                    INSERT INTO performance_goals (
+                        id, target_net_worth_usd, deadline, label,
+                        goal_type, horizon_months, target_return_pct, updated_at
+                    )
+                    VALUES (1, 2000, NULL, 'Growth goal', 'portfolio_growth', 12, 0, ?)
                     """,
                     (_utc_now(),),
                 )
+            for ddl in (
+                "ALTER TABLE performance_goals ADD COLUMN goal_type TEXT NOT NULL DEFAULT 'portfolio_growth'",
+                "ALTER TABLE performance_goals ADD COLUMN horizon_months INTEGER NOT NULL DEFAULT 12",
+                "ALTER TABLE performance_goals ADD COLUMN target_return_pct REAL NOT NULL DEFAULT 0",
+            ):
+                try:
+                    conn.execute(ddl)
+                except sqlite3.OperationalError:
+                    pass
 
     def get_or_create_account(self, exchange: str, label: str) -> int:
         with self._connect() as conn:
@@ -88,13 +100,30 @@ class PortfolioStore:
         *,
         source: str,
     ) -> int:
+        return self.insert_snapshot_at(
+            account_id,
+            total_usd,
+            holdings,
+            captured_at=_utc_now(),
+            source=source,
+        )
+
+    def insert_snapshot_at(
+        self,
+        account_id: int,
+        total_usd: float,
+        holdings: list[HoldingRow],
+        *,
+        captured_at: str,
+        source: str,
+    ) -> int:
         with self._connect() as conn:
             cur = conn.execute(
                 """
                 INSERT INTO portfolio_snapshots (account_id, captured_at, total_usd, source)
                 VALUES (?, ?, ?, ?)
                 """,
-                (account_id, _utc_now(), total_usd, source),
+                (account_id, captured_at, total_usd, source),
             )
             snapshot_id = int(cur.lastrowid)
             for h in holdings:
@@ -244,6 +273,36 @@ class PortfolioStore:
                 WHERE account_id = ? ORDER BY date DESC LIMIT ?
                 """,
                 (account_id, limit),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def count_daily_aggregates(self, account_id: int) -> int:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) AS c FROM portfolio_daily_aggregates WHERE account_id = ?",
+                (account_id,),
+            ).fetchone()
+            return int(row["c"]) if row else 0
+
+    def clear_daily_aggregates(self, account_id: int) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                "DELETE FROM portfolio_daily_aggregates WHERE account_id = ?",
+                (account_id,),
+            )
+
+    def list_daily_aggregates_since(
+        self, account_id: int, start_date: str
+    ) -> list[dict[str, float | str]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT date, total_usd, daily_pnl_usd, realized_pnl_usd, unrealized_pnl_usd
+                FROM portfolio_daily_aggregates
+                WHERE account_id = ? AND date >= ?
+                ORDER BY date ASC
+                """,
+                (account_id, start_date),
             ).fetchall()
             return [dict(r) for r in rows]
 
@@ -444,8 +503,11 @@ class PortfolioStore:
                 now = _utc_now()
                 conn.execute(
                     """
-                    INSERT INTO performance_goals (id, target_net_worth_usd, deadline, label, updated_at)
-                    VALUES (1, 2000, NULL, 'Growth goal', ?)
+                    INSERT INTO performance_goals (
+                        id, target_net_worth_usd, deadline, label,
+                        goal_type, horizon_months, target_return_pct, updated_at
+                    )
+                    VALUES (1, 2000, NULL, 'Growth goal', 'portfolio_growth', 12, 0, ?)
                     """,
                     (now,),
                 )
@@ -457,19 +519,37 @@ class PortfolioStore:
         target_net_worth_usd: float,
         label: str,
         deadline: str | None,
+        *,
+        goal_type: str = "portfolio_growth",
+        horizon_months: int = 12,
+        target_return_pct: float = 0.0,
     ) -> dict[str, Any]:
         with self._connect() as conn:
             conn.execute(
                 """
-                INSERT INTO performance_goals (id, target_net_worth_usd, deadline, label, updated_at)
-                VALUES (1, ?, ?, ?, ?)
+                INSERT INTO performance_goals (
+                    id, target_net_worth_usd, deadline, label,
+                    goal_type, horizon_months, target_return_pct, updated_at
+                )
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     target_net_worth_usd = excluded.target_net_worth_usd,
                     deadline = excluded.deadline,
                     label = excluded.label,
+                    goal_type = excluded.goal_type,
+                    horizon_months = excluded.horizon_months,
+                    target_return_pct = excluded.target_return_pct,
                     updated_at = excluded.updated_at
                 """,
-                (target_net_worth_usd, deadline, label, _utc_now()),
+                (
+                    target_net_worth_usd,
+                    deadline,
+                    label,
+                    goal_type,
+                    horizon_months,
+                    target_return_pct,
+                    _utc_now(),
+                ),
             )
             row = conn.execute("SELECT * FROM performance_goals WHERE id = 1").fetchone()
             return dict(row) if row else {}

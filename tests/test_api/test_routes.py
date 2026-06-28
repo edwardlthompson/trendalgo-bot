@@ -11,6 +11,14 @@ from trendalgo.api.state import default_state
 def client() -> TestClient:
     data_dir = Path(tempfile.mkdtemp(prefix="trendalgo-api-test-"))
     os.environ["TRENDALGO_DATA_DIR"] = str(data_dir)
+    os.environ["TRENDALGO_FEE_SYNC_ON_START"] = "0"
+    from trendalgo.exchanges.fee_store import get_fee_store, reset_fee_store
+    from trendalgo.exchanges.fee_sync import ensure_fee_db_ready
+    from trendalgo.exchanges import fees
+
+    reset_fee_store()
+    fees.clear_fee_cache()
+    ensure_fee_db_ready(get_fee_store())
     return TestClient(create_app(default_state()))
 
 
@@ -42,14 +50,14 @@ def test_backtest_and_latest() -> None:
     c = client()
     resp = c.post(
         "/api/v1/backtest",
-        json={"strategy": "multi-tf-example", "pair": "BTC/USD"},
+        json={"strategy": "legacy-ui-sample", "pair": "BTC/USD"},
     )
     assert resp.status_code == 200
     body = resp.json()
     assert body["result"]["total_trades"] == 3
     assert body["metrics"]["total_trades"] == 3
     latest = c.get("/api/v1/backtest/latest").json()
-    assert latest["result"]["strategy"] == "multi-tf-example"
+    assert latest["result"]["strategy"] == "legacy-ui-sample"
 
 
 def test_dashboard_and_risk_pause() -> None:
@@ -91,7 +99,8 @@ def test_notification_preferences() -> None:
 def test_portfolio_sync() -> None:
     c = client()
     sync = c.post("/api/v1/portfolio/sync").json()
-    assert sync["total_usd"] > 0
+    assert sync["exchange_count"] == 9
+    assert sync["kraken"]["total_usd"] > 0
     summary = c.get("/api/v1/portfolio/summary").json()
     assert summary["latest"] is not None
 
@@ -117,6 +126,19 @@ def test_sprint6_bots_library_watchlist() -> None:
     c = client()
     bots = c.get("/api/v1/bots").json()
     assert bots["bots"]
+    limits = c.get("/api/v1/bots/limits").json()
+    assert limits["max_bots_total"] == 500
+    assert limits["bot_count"] == len(bots["bots"])
+    assert limits["enabled_count"] == sum(1 for b in bots["bots"] if b["enabled"])
+    assert limits["ohlcv_cache"]["bot_scoped"] is True
+    assert limits["ta_cache"]["shared_fingerprint"] is True
+    ta_stats = c.get("/api/v1/bots/ta-cache/stats").json()
+    assert "hits_exact" in ta_stats
+    assert "max_entries" in ta_stats
+    cache = c.get("/api/v1/bots/ohlcv/cache").json()
+    assert cache["bot_scoped"] is True
+    warmup = c.post("/api/v1/bots/ohlcv/warmup").json()
+    assert warmup["status"] in {"running", "complete"}
     added = c.post(
         "/api/v1/bots",
         json={"label": "Grid-2", "strategy_id": "grid-trading", "pair": "ETH/USD"},
@@ -124,11 +146,9 @@ def test_sprint6_bots_library_watchlist() -> None:
     assert len(added["bots"]) >= 2
     bt = c.post(
         "/api/v1/backtest",
-        json={"strategy": "smart-dca", "pair": "BTC/USD", "save_to_library": True},
+        json={"strategy": "smart-dca", "pair": "BTC/USD"},
     ).json()
-    assert bt.get("library_id")
-    lib = c.get("/api/v1/backtest/library").json()
-    assert lib["runs"]
+    assert bt.get("result") is not None
     c.post(
         "/api/v1/watchlist", json={"pair": "SOL/USD", "alert_price_pct": 0.05, "alert_pl_usd": 50}
     )
@@ -138,6 +158,50 @@ def test_sprint6_bots_library_watchlist() -> None:
     assert hyper["status"] == "queued"
     export = c.get("/api/v1/strategies/smart-dca/export").json()
     assert "smart-dca" in export["json"]
+
+
+def test_ta_cache_stats_and_config_invalidation() -> None:
+    from trendalgo.ta.cache import reset_all_ta_caches
+
+    reset_all_ta_caches()
+    c = client()
+    bots = c.get("/api/v1/bots").json()["bots"]
+    bot_id = bots[0]["id"]
+    before = c.get("/api/v1/bots/ta-cache/stats").json()
+    detail = c.get(f"/api/v1/bots/{bot_id}").json()
+    assert "ta_cache_meta" in detail
+    after_detail = c.get("/api/v1/bots/ta-cache/stats").json()
+    assert after_detail["misses_full"] >= before["misses_full"]
+    bot = detail["bot"]
+    c.put(
+        f"/api/v1/bots/{bot_id}",
+        json={
+            "label": bot["label"],
+            "strategy_id": "MACD",
+            "pair": bot["pair"],
+            "equity_usd": bot["equity_usd"],
+            "timeframe": bot["timeframe"],
+            "exchange": bot.get("exchange", "kraken"),
+            "ta_params": {},
+        },
+    )
+    stats = c.get("/api/v1/bots/ta-cache/stats").json()
+    assert stats["invalidations_config"] >= 1
+
+
+def test_bot_detail_trades_zero_skips_ta_cache_meta() -> None:
+    from trendalgo.ta.cache import reset_all_ta_caches
+
+    reset_all_ta_caches()
+    c = client()
+    bots = c.get("/api/v1/bots").json()["bots"]
+    bot_id = bots[0]["id"]
+    before = c.get("/api/v1/bots/ta-cache/stats").json()
+    detail = c.get(f"/api/v1/bots/{bot_id}?trades=0").json()
+    after = c.get("/api/v1/bots/ta-cache/stats").json()
+    assert detail["simulated_trades"] == []
+    assert "ta_cache_meta" not in detail
+    assert after["misses_full"] == before["misses_full"]
 
 
 def test_tradingview_webhook_rejects_unsigned() -> None:
@@ -200,13 +264,8 @@ def test_sprint7_research_export() -> None:
     assert rules["trailing_stop_pct"] == 0.04
     c.post(
         "/api/v1/backtest",
-        json={"strategy": "multi-tf-example", "pair": "BTC/USD", "save_to_library": True},
+        json={"strategy": "multi-tf-example", "pair": "BTC/USD"},
     )
-    lib = c.get("/api/v1/backtest/library").json()
-    if lib["runs"]:
-        share = c.post(f"/api/v1/backtest/library/{lib['runs'][0]['id']}/share").json()
-        shared = c.get(f"/api/v1/backtest/shared/{share['token']}").json()
-        assert shared["read_only"]
 
 
 def test_sprint8_portfolio_advanced() -> None:
@@ -276,3 +335,77 @@ def test_sprint11_ai_growth() -> None:
     assert lb["no_pii"] and lb["rows"]
     boost = c.post("/api/v1/billing/boost-mode").json()
     assert boost["boost_mode"] and boost["license_rate_pct"] == 0.15
+
+
+def test_fleet_exchange_fees() -> None:
+    c = client()
+    resp = c.get("/api/v1/backtest/exchange-fees")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["tier"] == "retail_default"
+    assert any(row["exchange_id"] == "kraken" for row in body["exchanges"])
+
+    catalog = c.get("/api/v1/exchanges/fees")
+    assert catalog.status_code == 200
+    assert catalog.json()["venue_count"] >= 5
+
+    checks = c.get("/api/v1/exchanges/fees/checks")
+    assert checks.status_code == 200
+    assert "checks" in checks.json()
+
+
+def test_fleet_preflight_bad_pair() -> None:
+    c = client()
+    resp = c.post(
+        "/api/v1/backtest/fleet",
+        json={"exchange_id": "kraken", "pair": "NOTREAL/USD"},
+    )
+    assert resp.status_code == 400
+
+
+def test_fleet_start_and_complete(monkeypatch) -> None:
+    import time
+
+    import trendalgo.backtest.fleet_runner as fleet_runner_mod
+
+    os.environ["TRENDALGO_MARKET_SOURCE"] = "synthetic"
+    monkeypatch.setattr(fleet_runner_mod, "TRADINGVIEW_INTERVALS", ("60",))
+    monkeypatch.setattr(fleet_runner_mod, "all_strategies", lambda: ("RSI", "MACD", "ROC"))
+
+    c = client()
+    resp = c.post(
+        "/api/v1/backtest/fleet",
+        json={"exchange_id": "kraken", "pair": "BTC/USD", "stake_usd": 1000},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["status"] == "running"
+    assert body["total_combinations"] == 3
+
+    active = body
+    for _ in range(120):
+        if active.get("status") in ("complete", "error"):
+            break
+        time.sleep(0.25)
+        active = c.get("/api/v1/backtest/fleet/active").json()
+
+    assert active["status"] == "complete"
+    assert active.get("elapsed_seconds", 0) >= 0
+    latest = c.get("/api/v1/backtest/fleet/latest").json()
+    assert "rankings" in latest
+    summary = latest.get("summary") or {}
+    assert summary.get("buy_and_hold") is not None
+    assert summary.get("lookback_days") == 30
+    assert "optimized_top10" in summary
+    assert isinstance(summary.get("optimized_top10"), list)
+    assert "final_top10" in summary
+    assert isinstance(summary.get("final_top10"), list)
+    assert len(summary.get("final_top10") or []) <= 10
+
+    history = c.get("/api/v1/backtest/fleet/history").json()
+    assert "runs" in history
+    assert history.get("total", 0) >= 1
+    job_id = history["runs"][0]["job_id"]
+    saved = c.get(f"/api/v1/backtest/fleet/history/{job_id}").json()
+    assert saved["job_id"] == job_id
+    assert saved.get("final_top10") is not None or saved.get("summary", {}).get("final_top10")

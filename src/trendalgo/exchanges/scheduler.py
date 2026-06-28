@@ -54,7 +54,7 @@ def sync_portfolio_staggered(
     started = time.perf_counter()
 
     for index, entry in enumerate(entries):
-        if index > 0:
+        if index > 0 and not dry_run:
             time.sleep(stagger_delay_sec(entry))
         result = runner(store, entry, dry_run)
         results[entry.id] = result

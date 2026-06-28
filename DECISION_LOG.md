@@ -12,9 +12,31 @@
 - **Decision:** ...
 - **Alternatives considered:** ...
 - **Consequences:** ...
+
 ```
 
 ## Entries
+
+### 2026-06-26 — Release v0.3.0 — S27 fleet backtest + website fee sync
+- **Status:** Accepted
+- **Context:** `/ship` after S27 TA fleet backtest, exchange fee SQLite sync from public pages (no trading API), bot dashboard overhaul, backtest library removal.
+- **Decision:** Release `0.3.0` with 3-pass fleet backtest, fleet history UI, fee parsers for Kraken/Binance.US/Coinbase/OKX/Gemini; documented fallback for bot-blocked venues (Bitstamp, Binance, Crypto.com, Bybit).
+- **Verification:** `pytest` (267 pass, 5 skip); `tests/test_exchanges/test_fee_*.py`; `python scripts/sync-exchange-fees.py`.
+- **Consequences:** Gemini base tier fees (1.2%/0.6%) differ from older third-party articles; monthly fee sync on startup unless `TRENDALGO_FEE_SYNC_ON_START=0`.
+
+### 2026-06-26 — S27 TA fleet backtest — taker fees + per-exchange OHLCV cache
+- **Status:** Accepted
+- **Context:** Backtest tab replaced single-strategy run with background fleet sweep (~307 TA strategies × 16 TradingView intervals) on user-selected exchange/pair.
+- **Decision:** v1 uses **retail-default taker** round-trip fees from `config/exchange_fees.json`; OHLCV fetched via CCXT keyed by `source=exchange_id` in SQLite cache; legacy `POST /backtest` unchanged for library/API compat; rankings by net P&L with UI filters (all / by timeframe / best per strategy).
+- **Verification:** `pytest tests/test_exchanges/test_fees.py tests/test_backtest/test_ta_simulator.py tests/test_backtest/test_ta_fleet.py tests/test_backtest/test_fleet_store.py`; fleet routes in `tests/test_api/test_routes.py` with `TRENDALGO_MARKET_SOURCE=synthetic`.
+- **Consequences:** First fleet run is OHLCV-bound; repeat runs cache-heavy. Maker/VIP tiers and save-to-library deferred post-S27.
+
+### 2026-06-26 — S25 TA cache benchmark — sub-minute caps unchanged
+- **Status:** Accepted
+- **Context:** S25.3 required p50/p95 TA timing before raising `MAX_SUB_MINUTE_ENABLED_PAPER` / `MAX_1S_ENABLED`. Stack: signal cache, `OhlcvFrameCache`, `IndicatorOutputCache`, incremental tail, optional pre-warm (`TRENDALGO_TA_PARALLEL=0` default).
+- **Decision:** Run `scripts/benchmark-ta-cache.py` (3600 bars, RSI @ 1S, 20 runs). Identical-fingerprint exact-hit p95 **0.02 ms** vs full recompute p95 **0.46 ms** (~96% savings). **Keep** paper sub-minute cap at 3 and 1S cap at 1 — synthetic benchmark measures deduped hot path only; diverse-fleet and live VPS profiling still required before guardrail bump (OHLCV fetch volume dominates heterogeneous fleets).
+- **Verification:** `pytest tests/test_ta/test_cache.py` (19 pass); `python scripts/benchmark-ta-cache.py`.
+- **Consequences:** `limits_payload.ta_cache.limits_adjustment` remains `"none"`; revisit caps when mixed-strategy benchmark or production metrics available.
 
 ### 2026-06-26 — Release v0.2.0 — DEX program + exchange S19–S20
 - **Status:** Accepted
@@ -83,4 +105,3 @@ _Seed template ADR: `docs/adr/0000-template-baseline.md`. Child repos use `docs/
 - **Decision:** Ship all three with Golden Path stubs, MODULE.md guides, and path-gated CI jobs (`lightroom`, `rust`, `go`) that skip when child repos remove the directories
 - **Alternatives considered:** Lightroom-only (rejected: Rust/Go stubs are low-cost and popular); defer all optional modules (rejected: COMPLETED_TASKS M3 work already landed)
 - **Consequences:** Template CI runs more jobs on `main`; child repos can delete unused `examples/` folders to skip jobs via `hashFiles` guards
-

@@ -74,6 +74,12 @@
 
 **Fix:** Commits `99557b1`–`37fdecb` on `main` (release + uv.lock + e2e mocks + heatmap contrast). Re-run `bash scripts/check-github-ci.sh --wait 600`. Remaining: mypy strict debt (pre-existing), axe audit on default portfolio view, service-worker offline test. Trigger Release Please / tag `v0.2.0` after CI green. Human gates H-032/H-035/H-036 still open.
 
+## KB-013 — R-Audit-5 CI green (2026-06-26)
+
+**Symptom:** `/audit` R-Audit-5; CI red on Playwright axe (timeline range label, portfolio load), flaky SW offline navigation e2e; WSL absent on Windows founder machine.
+
+**Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
+
 ## Template KB entries
 
 Legacy template entries (KB-007+) remain in git history; TrendAlgo-specific entries start at KB-001 above.

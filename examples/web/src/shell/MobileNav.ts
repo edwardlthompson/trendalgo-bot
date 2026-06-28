@@ -3,19 +3,19 @@ import { t } from "../i18n";
 export type AppView =
   | "portfolio"
   | "dashboard"
-  | "strategies"
   | "backtest"
   | "export"
   | "billing"
   | "scanner"
   | "risk"
   | "config"
-  | "debug";
+  | "debug"
+  | "glossary";
 
-const VIEWS: AppView[] = [
+const NAV_VIEWS: AppView[] = [
   "portfolio",
   "dashboard",
-  "strategies",
+  "glossary",
   "backtest",
   "export",
   "billing",
@@ -34,7 +34,7 @@ export function createMobileNav(
   nav.setAttribute("aria-label", t("nav.label"));
   nav.dataset.testid = "mobile-nav";
 
-  for (const view of VIEWS) {
+  for (const view of NAV_VIEWS) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "gp-nav-btn";

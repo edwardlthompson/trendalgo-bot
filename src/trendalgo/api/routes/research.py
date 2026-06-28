@@ -9,6 +9,12 @@ from trendalgo.optimize.portfolio_stress import portfolio_monte_carlo
 from trendalgo.optimize.walk_forward import walk_forward_from_backtest
 from trendalgo.portfolio.correlation import correlation_matrix, diversification_suggestions
 from trendalgo.portfolio.overview import build_portfolio_overview
+from trendalgo.ta.catalog import all_ta_count, all_ta_names, ta_function_count
+from trendalgo.ta.categories import CATEGORY_ORDER, build_ta_library
+from trendalgo.ta.engine import talib_available
+from trendalgo.ta.glossary import glossary_payload
+from trendalgo.ta.pandas_ta_catalog import pandas_ta_available, pandas_ta_function_count
+from trendalgo.ta.sweep import run_ta_sweep
 from trendalgo.trading.backtest.walk_forward import run_native_walk_forward
 
 router = APIRouter()
@@ -21,6 +27,72 @@ class WalkForwardBody(BaseModel):
     use_native: bool = True
 
     model_config = {"extra": "forbid"}
+
+
+class TaSweepBody(BaseModel):
+    pair: str = "BTC/USD"
+    exchange_id: str = "kraken"
+    timeframe: str = "1h"
+    candle_count: int = 200
+
+    model_config = {"extra": "forbid"}
+
+
+@router.get("/research/ta-catalog")
+def research_ta_catalog() -> dict[str, Any]:
+    return {
+        "functions": list(all_ta_names()),
+        "count": all_ta_count(),
+        "talib_count": ta_function_count(),
+        "pandas_ta_count": pandas_ta_function_count(),
+        "extended_count": all_ta_count() - ta_function_count() - pandas_ta_function_count(),
+        "talib_available": talib_available(),
+        "pandas_ta_available": pandas_ta_available(),
+        "sources": [
+            "https://ta-lib.org/functions/",
+            "pandas-ta-classic (MIT community fork)",
+            "trendalgo Fibonacci extensions",
+        ],
+    }
+
+
+@router.get("/research/ta-library")
+def research_ta_library() -> dict[str, Any]:
+    items = build_ta_library()
+    by_category: dict[str, list[dict[str, str]]] = {cat: [] for cat in CATEGORY_ORDER}
+    for item in items:
+        by_category.setdefault(item["category"], []).append(item)
+    for cat in by_category:
+        by_category[cat].sort(key=lambda x: x["name"])
+    return {
+        "categories": [{"name": cat, "items": by_category.get(cat, [])} for cat in CATEGORY_ORDER],
+        "count": len(items),
+        "talib_available": talib_available(),
+        "pandas_ta_available": pandas_ta_available(),
+        "pandas_ta_count": pandas_ta_function_count(),
+    }
+
+
+@router.get("/research/ta-glossary")
+def research_ta_glossary() -> dict[str, Any]:
+    return glossary_payload()
+
+
+@router.post("/research/ta-sweep")
+def research_ta_sweep(body: TaSweepBody, request: Request) -> dict[str, Any]:
+    result = run_ta_sweep(
+        pair=body.pair,
+        exchange_id=body.exchange_id,
+        timeframe=body.timeframe,
+        candle_count=body.candle_count,
+    )
+    best = result.get("best") or {}
+    state = request.app.state.trendalgo
+    state.last_ta_sweep = result
+    request.app.state.trendalgo.log(
+        f"ta-sweep {body.pair} {body.timeframe}: best={best.get('indicator')} pnl={best.get('profit_total')}"
+    )
+    return result
 
 
 @router.post("/research/walk-forward")

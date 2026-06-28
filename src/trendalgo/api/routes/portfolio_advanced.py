@@ -45,6 +45,9 @@ class GoalBody(BaseModel):
     target_net_worth_usd: float = Field(..., gt=0)
     label: str = "Growth goal"
     deadline: str | None = None
+    goal_type: str = "portfolio_growth"
+    horizon_months: int = Field(default=12, ge=1, le=120)
+    target_return_pct: float = Field(default=0.0, ge=0, le=100)
 
     model_config = {"extra": "forbid"}
 
@@ -176,22 +179,39 @@ def portfolio_arbitrage(request: Request) -> dict[str, Any]:
     return detect_arbitrage_opportunities(dry_run=state.bot.dry_run)
 
 
+def _goal_from_overview(overview: dict[str, Any], goal_row: dict[str, Any]) -> dict[str, Any]:
+    comparison = overview.get("top10_comparison") or {}
+    alpha = float(comparison.get("alpha_pct", 0)) / 100.0
+    return goal_progress(
+        float(overview["net_worth_usd"]),
+        goal_row,
+        max_drawdown_pct=float(overview.get("max_drawdown_pct", 0)),
+        comparisons=list(overview.get("comparisons") or []),
+        alpha_pct=alpha,
+    )
+
+
 @router.get("/portfolio/goals")
 def portfolio_goals(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
     overview = build_portfolio_overview(state)
-    goal = goal_progress(
-        float(overview["net_worth_usd"]), state.portfolio_store.get_performance_goal()
-    )
+    goal = _goal_from_overview(overview, state.portfolio_store.get_performance_goal())
     return {"goal": goal}
 
 
 @router.put("/portfolio/goals")
 def portfolio_put_goals(body: GoalBody, request: Request) -> dict[str, Any]:
     store = request.app.state.trendalgo.portfolio_store
-    saved = store.update_performance_goal(body.target_net_worth_usd, body.label, body.deadline)
+    saved = store.update_performance_goal(
+        body.target_net_worth_usd,
+        body.label,
+        body.deadline,
+        goal_type=body.goal_type,
+        horizon_months=body.horizon_months,
+        target_return_pct=body.target_return_pct,
+    )
     overview = build_portfolio_overview(request.app.state.trendalgo)
-    return {"goal": goal_progress(float(overview["net_worth_usd"]), saved)}
+    return {"goal": _goal_from_overview(overview, saved)}
 
 
 @router.get("/portfolio/basket")

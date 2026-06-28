@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "tier": "retail_default",
+  "note": "Documented retail spot fees + public source_url per venue. Monthly sync fetches these pages (no trading API). CCXT/API sync is a future upgrade.",
+  "exchanges": {
+    "kraken": {
+      "taker_pct": 0.0026,
+      "maker_pct": 0.0016,
+      "source_url": "https://www.kraken.com/features/fee-schedule"
+    },
+    "binanceus": {
+      "taker_pct": 0.0001,
+      "maker_pct": 0.0,
+      "source_url": "https://www.binance.us/fees"
+    },
+    "coinbaseadvanced": {
+      "taker_pct": 0.006,
+      "maker_pct": 0.004,
+      "source_url": "https://help.coinbase.com/en/coinbase/trading-and-funding/advanced-trade/advanced-trade-fees",
+      "alternate_urls": [
+        "https://help.coinbase.com/en/exchange/trading-and-funding/exchange-fees"
+      ]
+    },
+    "gemini": {
+      "taker_pct": 0.012,
+      "maker_pct": 0.006,
+      "source_url": "https://www.gemini.com/fees/activetrader-fee-schedule",
+      "alternate_urls": [
+        "https://www.gemini.com/fees"
+      ]
+    },
+    "bitstamp": {
+      "taker_pct": 0.004,
+      "maker_pct": 0.003,
+      "source_url": "https://www.bitstamp.net/fee-schedule/"
+    },
+    "cryptocom": {
+      "taker_pct": 0.005,
+      "maker_pct": 0.0025,
+      "source_url": "https://crypto.com/exchange/document/fees-limits"
+    },
+    "binance": {
+      "taker_pct": 0.001,
+      "maker_pct": 0.001,
+      "source_url": "https://www.binance.com/en/fee/schedule"
+    },
+    "bybit": {
+      "taker_pct": 0.001,
+      "maker_pct": 0.001,
+      "source_url": "https://www.bybit.com/en/help-center/article/Trading-Fee-Structure",
+      "alternate_urls": [
+        "https://www.bybithelp.com/en-US/s/article/Trading-Fee-Structure"
+      ]
+    },
+    "okx": {
+      "taker_pct": 0.0035,
+      "maker_pct": 0.002,
+      "source_url": "https://www.okx.com/fees"
+    }
+  }
+}

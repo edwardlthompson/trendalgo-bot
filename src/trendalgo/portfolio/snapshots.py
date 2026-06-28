@@ -10,7 +10,12 @@ from trendalgo.notifications.daily_summary import format_daily_summary, send_dai
 from trendalgo.portfolio.alerts import check_portfolio_alerts
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.portfolio.metrics import daily_pnl_from_curve, pl_breakdown
-from trendalgo.portfolio.sync import sync_kraken_balances
+from trendalgo.portfolio.multi_exchange import aggregate_holdings, sync_all_exchanges
+from trendalgo.portfolio.performance import (
+    curve_for_metrics,
+    ensure_btc_dry_run_fixture,
+    performance_curve,
+)
 
 
 def capture_portfolio_snapshot(
@@ -19,24 +24,34 @@ def capture_portfolio_snapshot(
     dry_run: bool = True,
     on_log: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
-    result = sync_kraken_balances(store, dry_run=dry_run)
+    """Sync all exchanges, record today's aggregate on the primary account."""
+    sync_all_exchanges(store, dry_run=dry_run)
     account_id = store.get_or_create_account("kraken", "default")
-    curve = store.equity_curve(account_id)
+    if dry_run:
+        ensure_btc_dry_run_fixture(store, account_id)
+    aggregated = aggregate_holdings(store)
+    total_usd = float(aggregated["total_usd"])
+    curve = curve_for_metrics(performance_curve(store, account_id, "7d"))
     daily_pnl, _ = daily_pnl_from_curve(curve)
     snap = store.latest_snapshot(account_id)
-    pl = pl_breakdown(snap["holdings"] if snap else [])
+    pl = pl_breakdown(snap["holdings"] if snap else aggregated["holdings"])
     today = datetime.now(UTC).strftime("%Y-%m-%d")
     store.upsert_daily_aggregate(
         account_id,
         today,
-        float(result["total_usd"]),
+        total_usd,
         daily_pnl,
         pl.realized_usd,
         pl.unrealized_usd,
     )
     if on_log:
-        on_log(f"portfolio snapshot: ${result['total_usd']}")
-    return result
+        on_log(f"portfolio snapshot (all exchanges): ${total_usd}")
+    return {
+        "account_id": account_id,
+        "total_usd": total_usd,
+        "mode": "dry-run" if dry_run else "live",
+        "exchange_count": aggregated["exchange_count"],
+    }
 
 
 def run_daily_notification(
@@ -72,23 +87,15 @@ def start_portfolio_scheduler(
 ) -> object | None:
     try:
         from apscheduler.schedulers.background import BackgroundScheduler
+        from apscheduler.triggers.cron import CronTrigger
     except ImportError:
         return None
 
-    scheduler = BackgroundScheduler()
+    scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(
         lambda: scheduled_portfolio_job(store, overview_builder, dry_run=dry_run, on_log=on_log),
-        "cron",
-        hour=8,
-        minute=0,
+        CronTrigger(hour=0, minute=0, timezone="UTC"),
         id="trendalgo-portfolio-daily",
-        replace_existing=True,
-    )
-    scheduler.add_job(
-        lambda: capture_portfolio_snapshot(store, dry_run=dry_run, on_log=on_log),
-        "interval",
-        hours=6,
-        id="trendalgo-portfolio-snapshot",
         replace_existing=True,
     )
     scheduler.start()

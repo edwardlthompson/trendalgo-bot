@@ -1,0 +1,68 @@
+"""Exchange/asset symbol aliases for coin icon lookup."""
+
+from __future__ import annotations
+
+# Kraken and other venues use alternate tickers for the same asset.
+SYMBOL_ALIASES: dict[str, str] = {
+    "XBT": "BTC",
+    "XXBT": "BTC",
+    "XETH": "ETH",
+    "XXDG": "DOGE",
+    "XDG": "DOGE",
+    "XLTC": "LTC",
+    "XXRP": "XRP",
+    "XRP": "XRP",
+    "XXLM": "XLM",
+    "XLM": "XLM",
+    "XZEC": "ZEC",
+    "XXMR": "XMR",
+    "XMR": "XMR",
+    "REPV2": "REP",
+    "TBTC": "BTC",
+    "WBTC": "BTC",
+    "MSOL": "SOL",
+    "BIT": "BTC",
+    "POL": "MATIC",
+    "RNDR": "RNDR",
+    "FTM": "FTM",
+    "LUNA": "LUNA",
+    "LUNA2": "LUNA",
+    "WAXL": "AXL",
+    "BONK": "BONK",
+    "PEPE": "PEPE",
+    "SHIB": "SHIB",
+    "SAMO": "SAMO",
+    "GST": "GST",
+    "HDX": "HDX",
+    "KAR": "KAR",
+    "KINT": "KINT",
+    "BNC": "BNC",
+    "AIR": "AIR",
+    "TEER": "TEER",
+    "NODL": "NODL",
+    "PSTAKE": "PSTAKE",
+    "GARI": "GARI",
+    "MV": "MV",
+    "MC": "MC",
+    "MULTI": "MULTI",
+    "ROOK": "ROOK",
+    "UNFI": "UNFI",
+    "FIS": "FIS",
+    "CSM": "CSM",
+    "EUL": "EUL",
+    "FORTH": "FORTH",
+    "KP3R": "KP3R",
+    "LCX": "LCX",
+    "OXY": "OXY",
+    "RBC": "RBC",
+    "SDN": "SDN",
+    "SUPER": "SUPER",
+    "SYN": "SYN",
+    "TRU": "TRU",
+    "XCN": "XCN",
+}
+
+
+def resolve_symbol(symbol: str) -> str:
+    raw = symbol.strip().upper()
+    return SYMBOL_ALIASES.get(raw, raw)

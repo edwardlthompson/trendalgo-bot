@@ -7,14 +7,13 @@
 | Layer | Technology | Notes |
 |-------|-----------|-------|
 | Trading | Native CCXT runner (ADR-0010) | `strategies/runtime/` + `trading/runner/` |
-| Backend | Python 3.11+ (uv) | `src/trendalgo/` hexagonal modules |
+| Backend | Python 3.12+ (uv) | `src/trendalgo/` hexagonal modules |
 | Web | Vite + TypeScript PWA | `examples/web/` |
 | DB MVP | SQLite on VPS | Postgres path Sprint 12 |
 | Exchange | 9 portfolio / 7 trading venues | Registry v5; worldwide Phase 1 (S18) |
 | DEX | Venue plugin engine (ADR-0011) | S21–S24; Base Phase 1 live path; H-036 open |
 | Scanner | linear-trend-spotter → `scanner/` | ADR-0006 absorption S4.5 |
 | License | Performance software license | Calculation-only; user pays externally (ADR-0008) |
-
 ## Active Modules
 
 - ✅ Python (`modules/python/MODULE.md`)
@@ -30,7 +29,6 @@
 | Dry-run | Default until go-live gate (H-010/H-028) |
 | Secrets | Never in VCS; Gitleaks pre-commit |
 | Telemetry | Opt-in only |
-
 ## Threat Model
 
 - ✅ `docs/THREAT_MODEL.md` — TrendAlgo trust boundaries (Sprint 0 draft)
@@ -48,6 +46,11 @@
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### R-Audit-5 (2026-06-26)
+
+- 170 tests, ~85% coverage; CI blockers triaged (axe timeline label, offline e2e, sw.js API bypass)
+- KB-013 documents Windows gate fallbacks; push required to confirm GitHub CI green + v0.2.0 tag
 
 ### R-Audit (2026-06-25)
 

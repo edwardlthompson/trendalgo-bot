@@ -1,7 +1,9 @@
 import { createBacktestPanel } from "../backtest/BacktestPanel";
 import type { BacktestPayload, DashboardData } from "../api/client";
 import { createConfigForm, type ExitRulesState } from "../config/ConfigForm";
-import { createBotDashboard } from "../dashboard/BotDashboard";
+import { createBotDashboard, createBotDetailLoading } from "../dashboard/BotDashboard";
+import { createBotDetailPage } from "../dashboard/BotDetailPage";
+import { createTaGlossaryPage } from "../dashboard/TaGlossaryPage";
 import { createDebugLogViewer } from "../debug/DebugLogViewer";
 import { createNotificationInbox, type InboxItem } from "../notifications/Inbox";
 import { createPortfolioPanel } from "../portfolio/PortfolioPanel";
@@ -9,26 +11,34 @@ import type { PortfolioOverviewData } from "../portfolio/PortfolioSections";
 import { createRiskPanel } from "../risk/RiskPanel";
 import { createScannerPanel } from "../scanner/ScannerPanel";
 import type { ScannerSettings, ScannerSnapshot } from "../scanner/ScannerPanel";
-import { createStrategiesPanel } from "../strategies/StrategiesPanel";
-import type { StrategyTemplate } from "../strategies/StrategiesPanel";
-import { createRecommenderPanel, type Recommendation } from "../ai/RecommenderPanel";
-import { createCuratedLibraryPanel, type CuratedPreset } from "../ai/CuratedLibraryPanel";
-import { createGrowthPanel } from "../growth/GrowthPanel";
+import type { PerformanceRange } from "../portfolio/PortfolioPerformanceChart";
 import type { EquityPoint } from "../charts/EquityChart";
 import { createExportHub, type ExportItem } from "../export/ExportHub";
 import { createBillingDashboard, type BillingDashboardData } from "../billing/BillingDashboard";
 import { createSettlementPanel, type SettlementData } from "../billing/pay/SettlementPanel";
-import { createBacktestVisualizer } from "../research/BacktestVisualizer";
 import { createDiversificationPanel } from "../research/DiversificationPanel";
 import { createResearchToolsPanel } from "../research/ResearchTools";
-import type { LibraryRun } from "../backtest/library/BacktestLibrary";
 import type { AppView } from "./MobileNav";
+import { t } from "../i18n";
+import { DEFAULT_BOT_LIMITS, syncBotLimits } from "../bots/botGuardrails";
+import { listBotTemplates } from "../bots/botTemplatesStore";
 
 export type MainViewState = {
   view: AppView;
   dashboard: DashboardData | null;
   backtest: BacktestPayload | null;
   backtestLoading: boolean;
+  fleetExchangeId: string;
+  fleetPair: string;
+  fleetStakeUsd: number;
+  fleetPairs: string[];
+  fleetActive: import("../api/client").FleetActiveSnapshot | null;
+  fleetResults: import("../api/client").FleetLatestPayload | null;
+  fleetFeeSchedule: import("../api/client").ExchangeFeeSchedule | null;
+  fleetHistoryRuns: import("../api/client").FleetHistoryEntry[];
+  fleetSelectedHistoryJobId: string | null;
+  fleetFilterMode: "all" | "timeframe" | "strategy";
+  fleetFilterTimeframe: string;
   strategyParams: Record<string, number>;
   pairs: string[];
   debugLogs: string[];
@@ -38,6 +48,9 @@ export type MainViewState = {
   scannerLoading: boolean;
   portfolioOverview: PortfolioOverviewData | null;
   portfolioEquityCurve: EquityPoint[];
+  portfolioTop10Curve: EquityPoint[];
+  portfolioTop10Comparison: import("../charts/EquityChart").PerformanceComparison | null;
+  portfolioPerformanceRange: PerformanceRange;
   portfolioSnapshotDates: string[];
   portfolioHeatmap: Array<{ asset: string; return_pct: number; volatility_pct: number }>;
   portfolioSelectedDate: string | null;
@@ -46,9 +59,6 @@ export type MainViewState = {
   portfolioTagFilter: string | null;
   showInbox: boolean;
   inboxItems: InboxItem[];
-  strategyTemplates: StrategyTemplate[];
-  composerCode: string;
-  backtestLibrary: LibraryRun[];
   exportItems: ExportItem[];
   researchResults: Record<string, unknown>;
   diversification: { suggestions: string[]; correlation: { assets: string[]; matrix: number[][] } } | null;
@@ -56,18 +66,24 @@ export type MainViewState = {
   billingDashboard: BillingDashboardData | null;
   billingSettlement: SettlementData | null;
   showBillingSettlement: boolean;
-  aiRecommendations: Recommendation[];
-  aiDisclaimer: string;
-  curatedPresets: CuratedPreset[];
-  curatedVersion: string;
-  referralCode: string;
-  leaderboardRows: Array<{ pseudonym: string; score_usd: number }>;
   portfolioPlatform: import("../platform/PlatformPanel").PlatformData | null;
   exchangeRegistry: import("../portfolio/AccountsPanel").ExchangeRegistryEntry[] | null;
+  selectedBotId: number | null;
+  botDetail: import("../api/client").BotDetailData | null;
+  botDetailLoading: boolean;
+  botDetailLocal: boolean;
+  taLibrary: import("../api/client").TaLibraryCategory[];
+  botExchangePairs: string[];
+  botLimits: import("../bots/botGuardrails").BotLimits | null;
 };
 
 export type MainViewCallbacks = {
   onRunBacktest: () => void;
+  onFleetExchangeChange: (exchangeId: string) => void;
+  onFleetPairChange: (pair: string) => void;
+  onFleetStakeChange: (stakeUsd: number) => void;
+  onFleetFilterChange: (mode: "all" | "timeframe" | "strategy", timeframe?: string) => void;
+  onLoadFleetHistoryRun: (jobId: string) => void;
   onPause: () => void;
   onResume: () => void;
   onSaveConfig: (params: Record<string, number>) => void;
@@ -80,14 +96,10 @@ export type MainViewCallbacks = {
   onTagFilter: (tag: string | null) => void;
   onRebalanceApply: () => void;
   onScrubDate: (date: string) => void;
+  onPerformanceRangeChange: (range: PerformanceRange) => void;
   onOpenInbox: () => void;
   onCloseInbox: () => void;
-  onDeployStrategy: (id: string) => void;
-  onExportStrategy: (id: string) => void;
-  onImportStrategy: (json: string) => void;
-  onComposeStrategy: (code: string) => void;
-  onCloneBacktest: (id: number) => void;
-  onCompareBacktests: (ids: number[]) => void;
+  onSaveGoal: (payload: import("../portfolio/GoalsPanel").GoalSavePayload) => void;
   onExportDownload: (path: string, id: string) => void;
   onWalkForward: () => void;
   onMonteCarlo: () => void;
@@ -99,8 +111,22 @@ export type MainViewCallbacks = {
   onBillingMarkPaid: () => void;
   onCopySettlement: (text: string) => void;
   onBillingLightning: () => void;
-  onLeaderboardOptIn: () => void;
-  onBoostMode: () => void;
+  onBotToggle: (botId: number, enabled: boolean) => void;
+  onBotUpdate: (botId: number, payload: import("../dashboard/BotDetailPage").BotUpdatePayload) => void;
+  onBotDelete: (botId: number) => void;
+  onBotForceTrade: (botId: number, side: "buy" | "sell") => void;
+  onOpenBot: (botId: number) => void;
+  onCloseBot: () => void;
+  onBotSaveParams: (botId: number, strategyId: string, params: Record<string, number>) => void;
+  onBotExchangeChange: (exchangeId: string, applyPairs: (pairs: string[]) => void) => void;
+  onBotPairChange?: (botId: number, pair: string) => void;
+  onOpenGlossary?: () => void;
+  onCloseGlossary?: () => void;
+  onBotApplyBacktest: (botId: number, ranking: import("../api/client").BacktestRanking) => void;
+  onCreateBot: () => void;
+  onApplyTemplate: (templateId: string) => void;
+  onDeleteTemplate: (templateId: string) => void;
+  onSaveBotTemplate: (botId: number, name: string) => void;
 };
 
 export function renderMainView(
@@ -118,14 +144,23 @@ export function renderMainView(
     return cleanup;
   }
 
+  if (state.view === "glossary") {
+    const page = createTaGlossaryPage(() => callbacks.onCloseGlossary?.());
+    mount.appendChild(page.root);
+    return page.cleanup;
+  }
+
   if (state.view === "portfolio") {
+    const risk = state.dashboard.risk ?? {};
+    const overview = state.portfolioOverview;
     const panel = createPortfolioPanel(
       {
-        overview: state.portfolioOverview,
+        overview,
         equityCurve: state.portfolioEquityCurve,
-        snapshotDates: state.portfolioSnapshotDates,
+        top10Curve: state.portfolioTop10Curve,
+        top10Comparison: state.portfolioTop10Comparison,
+        performanceRange: state.portfolioPerformanceRange,
         heatmap: state.portfolioHeatmap,
-        selectedDate: state.portfolioSelectedDate,
         rebalanceSuggestions: state.portfolioRebalanceSuggestions as Array<{
           asset: string;
           current_pct: number;
@@ -137,15 +172,28 @@ export function renderMainView(
         tagFilter: state.portfolioTagFilter,
         platform: state.portfolioPlatform,
         exchangeRegistry: state.exchangeRegistry ?? undefined,
+        healthSnapshot: {
+          equity_usd: Number(risk.equity_usd ?? state.dashboard.equity_usd ?? 0),
+          drawdown_pct: Number(risk.drawdown_pct ?? 0),
+          open_exposure_usd: Number(risk.open_exposure_usd ?? 0),
+          bot_count: state.dashboard.bot_count ?? 0,
+          can_trade: Boolean(risk.can_trade ?? false),
+          dry_run: state.dashboard.dry_run ?? true,
+          paused: Boolean(risk.paused),
+          net_worth_usd: overview?.net_worth_usd,
+          max_drawdown_pct: overview?.max_drawdown_pct,
+          health_score: overview?.health_score,
+        },
       },
       {
         onSync: callbacks.onPortfolioSync,
         onSelectDate: callbacks.onScrubDate,
         onOpenInbox: callbacks.onOpenInbox,
-        onScrubDate: callbacks.onScrubDate,
         onSyncAll: callbacks.onPortfolioSyncAll,
         onTagFilter: callbacks.onTagFilter,
         onRebalanceApply: callbacks.onRebalanceApply,
+        onPerformanceRangeChange: callbacks.onPerformanceRangeChange,
+        onSaveGoal: callbacks.onSaveGoal,
       },
     );
     mount.appendChild(panel.root);
@@ -154,59 +202,103 @@ export function renderMainView(
   }
 
   if (state.view === "dashboard") {
-    mount.appendChild(createBotDashboard(state.dashboard));
-    return cleanup;
-  }
-  if (state.view === "strategies") {
-    mount.appendChild(
-      createStrategiesPanel(state.strategyTemplates, state.composerCode, {
-        onDeploy: callbacks.onDeployStrategy,
-        onExport: callbacks.onExportStrategy,
-        onImport: callbacks.onImportStrategy,
-        onCompose: callbacks.onComposeStrategy,
-      }),
-    );
-    if (state.aiRecommendations.length) {
-      mount.appendChild(
-        createRecommenderPanel(
-          state.aiRecommendations,
-          state.aiDisclaimer,
-          callbacks.onDeployStrategy,
-        ),
+    if (state.selectedBotId != null) {
+      if (state.botDetailLoading || !state.botDetail) {
+        const label =
+          state.dashboard.bots?.find((b) => b.id === state.selectedBotId)?.label ?? t("bots.detail.title");
+        mount.appendChild(createBotDetailLoading(label));
+        return cleanup;
+      }
+      const detailPage = createBotDetailPage(
+        state.botDetail,
+        {
+          settings: {
+            botId: state.botDetail.bot.id,
+            exchanges: (state.exchangeRegistry ?? []).map((e) => ({
+              id: e.id,
+              name: e.brand || e.id,
+            })),
+            taLibrary: state.taLibrary.length ? state.taLibrary : [],
+            exchangePairs: state.botExchangePairs.length
+              ? state.botExchangePairs
+              : state.pairs.length
+                ? state.pairs
+                : [state.dashboard.pair],
+            equityLimits: state.botDetail.equity_limits ?? {
+              base: { symbol: "BTC", max: 10 },
+              quote: { symbol: "USD", max: 50_000 },
+              portfolio_usd: 100_000,
+              paper: true,
+            },
+            onExchangeChange: callbacks.onBotExchangeChange,
+            onPairChange: (pair) => {
+              const id = state.botDetail?.bot.id;
+              if (id != null) callbacks.onBotPairChange?.(id, pair);
+            },
+            onOpenGlossary: () => callbacks.onOpenGlossary?.(),
+            botEnabled: state.botDetail.bot.enabled,
+            botLimits: state.botLimits ?? undefined,
+            guardrailBots: state.dashboard.bots ?? [],
+          },
+          onBack: callbacks.onCloseBot,
+          onSave: callbacks.onBotUpdate,
+          onSaveParams: callbacks.onBotSaveParams,
+          onApplyBacktest: callbacks.onBotApplyBacktest,
+          onSaveTemplate: callbacks.onSaveBotTemplate,
+        },
+        { paperLocal: state.botDetailLocal },
       );
-    }
-    if (state.curatedPresets.length) {
-      mount.appendChild(
-        createCuratedLibraryPanel(
-          state.curatedPresets,
-          state.curatedVersion,
-          callbacks.onDeployStrategy,
-        ),
-      );
+      mount.appendChild(detailPage.root);
+      cleanup = detailPage.cleanup;
+      return cleanup;
     }
     mount.appendChild(
-      createGrowthPanel(
-        state.referralCode,
-        state.leaderboardRows,
-        callbacks.onLeaderboardOptIn,
-        callbacks.onBoostMode,
+      createBotDashboard(
+        state.dashboard,
+        {
+          onOpenBot: callbacks.onOpenBot,
+          onToggleEnabled: callbacks.onBotToggle,
+          onDelete: callbacks.onBotDelete,
+          onForceTrade: callbacks.onBotForceTrade,
+          onCreateBot: callbacks.onCreateBot,
+          onApplyTemplate: callbacks.onApplyTemplate,
+          onDeleteTemplate: callbacks.onDeleteTemplate,
+        },
+        {
+          templates: listBotTemplates(),
+          limits: syncBotLimits(state.botLimits ?? DEFAULT_BOT_LIMITS, state.dashboard.bots ?? [], state.dashboard.dry_run),
+        },
       ),
     );
     return cleanup;
   }
   if (state.view === "backtest") {
     const panel = createBacktestPanel(
-      state.backtest,
-      state.backtestLoading,
+      {
+        loading: state.backtestLoading,
+        exchangeId: state.fleetExchangeId,
+        pair: state.fleetPair,
+        stakeUsd: state.fleetStakeUsd,
+        exchanges: state.exchangeRegistry ?? [],
+        pairs: state.fleetPairs.length ? state.fleetPairs : state.pairs,
+        feeSchedule: state.fleetFeeSchedule,
+        active: state.fleetActive,
+        results: state.fleetResults,
+        historyRuns: state.fleetHistoryRuns,
+        selectedHistoryJobId: state.fleetSelectedHistoryJobId,
+        filterMode: state.fleetFilterMode,
+        filterTimeframe: state.fleetFilterTimeframe,
+      },
       {
         onRun: callbacks.onRunBacktest,
-        onCloneRun: callbacks.onCloneBacktest,
-        onCompareRuns: callbacks.onCompareBacktests,
+        onExchangeChange: callbacks.onFleetExchangeChange,
+        onPairChange: callbacks.onFleetPairChange,
+        onStakeChange: callbacks.onFleetStakeChange,
+        onFilterChange: callbacks.onFleetFilterChange,
+        onLoadHistoryRun: callbacks.onLoadFleetHistoryRun,
       },
-      state.backtestLibrary,
     );
     mount.appendChild(panel.root);
-    mount.appendChild(createBacktestVisualizer(state.backtest));
     mount.appendChild(
       createResearchToolsPanel(state.researchResults, {
         onWalkForward: callbacks.onWalkForward,

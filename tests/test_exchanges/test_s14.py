@@ -10,7 +10,7 @@ import pytest
 from trendalgo.exchanges.adapters.generic import GenericCcxtPortfolioAdapter
 from trendalgo.exchanges.asset_mapper import normalize_asset
 from trendalgo.exchanges.pair_normalizer import normalize_pair, quote_currency, to_ccxt_pair
-from trendalgo.exchanges.registry import get_entry, list_portfolio_exchanges, load_registry
+from trendalgo.exchanges.registry import ExchangeEntry, get_entry, list_portfolio_exchanges, load_registry
 from trendalgo.exchanges.scheduler import sync_portfolio_staggered
 from trendalgo.exchanges.sync import sync_all_exchanges
 from trendalgo.portfolio.db import PortfolioStore
@@ -72,6 +72,10 @@ def test_sync_all_nine_exchanges(tmp_path: Path) -> None:
 def test_scheduler_stagger_calls_sleep(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     store = PortfolioStore(tmp_path / "portfolio.db")
     monkeypatch.setenv("TRENDALGO_SYNC_STAGGER_SEC", "2")
+
+    def fake_sync(_store: PortfolioStore, entry: ExchangeEntry, _dry_run: bool) -> dict[str, str]:
+        return {"mode": "dry-run", "exchange": entry.id}
+
     with patch("trendalgo.exchanges.scheduler.time.sleep") as sleep_mock:
-        sync_portfolio_staggered(store, dry_run=True)
+        sync_portfolio_staggered(store, dry_run=False, sync_fn=fake_sync)
         assert sleep_mock.call_count == 8

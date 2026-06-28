@@ -39,6 +39,17 @@ vi.mock("./api/client", () => ({
       equity_curve: [{ time: 1, value: 1005 }],
     }),
   ),
+  startFleetBacktest: vi.fn(() =>
+    Promise.resolve({ status: "running", progress_pct: 0, total_combinations: 3 }),
+  ),
+  fetchFleetActive: vi.fn(() => Promise.resolve({ status: "idle" })),
+  fetchFleetLatest: vi.fn(() => Promise.resolve({ rankings: [], total_rankings: 0 })),
+  fetchExchangeFees: vi.fn(() =>
+    Promise.resolve({
+      tier: "retail_default",
+      exchanges: [{ exchange_id: "kraken", taker_pct: 0.0026, maker_pct: 0.0016, tier: "retail_default", source_url: "" }],
+    }),
+  ),
   saveStrategyParams: vi.fn(() => Promise.resolve()),
   connectLiveSocket: vi.fn(() => null),
   fetchScannerSnapshot: vi.fn(() => Promise.resolve({ pairs: [], scanned_at: null })),
@@ -68,21 +79,57 @@ vi.mock("./api/client", () => ({
       snapshot_dates: [],
     }),
   ),
+  fetchPortfolioPerformance: vi.fn(() =>
+    Promise.resolve({
+      range: "1y",
+      points: [
+        { time: 1, value: 42000 },
+        { time: 2, value: 98000 },
+      ],
+      top10_index: [
+        { time: 1, value: 42000 },
+        { time: 2, value: 95000 },
+      ],
+      comparison: { portfolio_return_pct: 10, top10_return_pct: 8, alpha_pct: 2 },
+    }),
+  ),
   fetchPortfolioHeatmap: vi.fn(() => Promise.resolve({ rows: [] })),
   fetchNotificationInbox: vi.fn(() => Promise.resolve({ items: [] })),
   fetchPortfolioRebalance: vi.fn(() => Promise.resolve({ suggestions: [] })),
   fetchPortfolioArbitrage: vi.fn(() => Promise.resolve({ alerts: [], disclaimer: "" })),
   fetchExchangeRegistry: vi.fn(() => Promise.resolve({ exchanges: [] })),
-  fetchStrategies: vi.fn(() => Promise.resolve({ strategies: [] })),
-  fetchBacktestLibrary: vi.fn(() => Promise.resolve({ runs: [] })),
+  fetchTaLibrary: vi.fn(() =>
+    Promise.resolve({
+      categories: [],
+      count: 0,
+    }),
+  ),
+  fetchTaGlossary: vi.fn(() => Promise.resolve({ entries: [], count: 0 })),
+  fetchBotEquityLimits: vi.fn(() =>
+    Promise.resolve({
+      base: { symbol: "BTC", max: 1 },
+      quote: { symbol: "USD", max: 10000 },
+      portfolio_usd: 100000,
+    }),
+  ),
+  fetchExchangePairs: vi.fn(() => Promise.resolve({ pairs: ["BTC/USD"] })),
+  fetchBotLimits: vi.fn(() =>
+    Promise.resolve({
+      max_bots_total: 500,
+      max_enabled_bots: 50,
+      max_sub_minute_enabled: 3,
+      max_1s_enabled: 1,
+      sub_minute_intervals: ["1S", "5S", "15S", "30S"],
+      bot_count: 1,
+      enabled_count: 1,
+      paper: true,
+    }),
+  ),
+  addBot: vi.fn(() => Promise.resolve({ id: 2, bots: [] })),
   fetchExportHub: vi.fn(() => Promise.resolve({ exports: [] })),
   fetchResearchCorrelation: vi.fn(() => Promise.resolve(null)),
   fetchExitRules: vi.fn(() => Promise.resolve({ trailing_stop_pct: 0.03, scale_out_pct: 0.5 })),
   fetchBillingDashboard: vi.fn(() => Promise.resolve({ period: "2026-06", status: "draft" })),
-  fetchAiRecommendations: vi.fn(() => Promise.resolve({ recommendations: [], disclaimer: "" })),
-  fetchCuratedLibrary: vi.fn(() => Promise.resolve({ presets: [], version: "1" })),
-  fetchGrowthReferral: vi.fn(() => Promise.resolve({ code: "" })),
-  fetchGrowthLeaderboard: vi.fn(() => Promise.resolve({ rows: [] })),
   fetchPlatformForager: vi.fn(() => Promise.resolve({ pairs: [] })),
   fetchPlatformFunding: vi.fn(() => Promise.resolve({ rates: [] })),
   fetchPlatformPostgres: vi.fn(() => Promise.resolve({ enabled: false })),
@@ -145,7 +192,7 @@ describe("bootstrapApp API wiring", () => {
     await vi.waitFor(() => expect(api.pauseTrading).toHaveBeenCalled());
   });
 
-  it("runs backtest via API handler", async () => {
+  it("runs fleet backtest via API handler", async () => {
     const root = document.createElement("div");
     bootstrapApp(root);
     await vi.waitFor(() =>
@@ -154,6 +201,6 @@ describe("bootstrapApp API wiring", () => {
       ).toBe(true),
     );
     handlers?.onRunBacktest?.();
-    await vi.waitFor(() => expect(api.runBacktest).toHaveBeenCalled());
+    await vi.waitFor(() => expect(api.startFleetBacktest).toHaveBeenCalled());
   });
 });

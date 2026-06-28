@@ -104,6 +104,9 @@ CREATE TABLE IF NOT EXISTS performance_goals (
     target_net_worth_usd REAL NOT NULL DEFAULT 2000,
     deadline TEXT,
     label TEXT NOT NULL DEFAULT 'Growth goal',
+    goal_type TEXT NOT NULL DEFAULT 'portfolio_growth',
+    horizon_months INTEGER NOT NULL DEFAULT 12,
+    target_return_pct REAL NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL
 );
 

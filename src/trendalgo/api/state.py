@@ -9,8 +9,6 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.api.public_dashboard import PublicDashboardStore
-from trendalgo.backtest.library import BacktestLibrary
-from trendalgo.backtest.sharing import BacktestShareStore
 from trendalgo.billing.store import BillingStore
 from trendalgo.bots.orchestrator import BotOrchestrator
 from trendalgo.dex.control import DexVenueControlStore
@@ -49,10 +47,8 @@ class AppState:
     portfolio_store: PortfolioStore
     scanner_store: ScannerStore
     bot_orchestrator: BotOrchestrator
-    backtest_library: BacktestLibrary
     watchlist_store: WatchlistStore
     trade_journal: TradeJournal
-    share_store: BacktestShareStore
     public_dashboard_store: PublicDashboardStore
     billing_store: BillingStore
     growth_store: GrowthStore
@@ -62,8 +58,11 @@ class AppState:
     dex_nonce_store: NonceStore
     debug_logs: deque[str] = field(default_factory=lambda: deque(maxlen=500))
     last_backtest: dict[str, Any] | None = None
+    last_ta_sweep: dict[str, Any] | None = None
+    last_ta_fleet: dict[str, Any] | None = None
     scanner_scheduler: Any = None
     portfolio_scheduler: Any = None
+    fee_scheduler: Any = None
 
     def log(self, message: str) -> None:
         self.debug_logs.appendleft(message)
@@ -90,10 +89,8 @@ def default_state() -> AppState:
         portfolio_store=PortfolioStore(_data_dir() / "portfolio.db"),
         scanner_store=ScannerStore(_data_dir() / "scanner.db"),
         bot_orchestrator=BotOrchestrator(_data_dir() / "bots.db"),
-        backtest_library=BacktestLibrary(_data_dir() / "backtest_library.db"),
         watchlist_store=WatchlistStore(_data_dir() / "watchlist.db"),
         trade_journal=TradeJournal(_data_dir() / "journal.db"),
-        share_store=BacktestShareStore(_data_dir() / "shares.db"),
         public_dashboard_store=PublicDashboardStore(_data_dir() / "public_dashboard.db"),
         billing_store=BillingStore(_data_dir() / "billing.db"),
         growth_store=GrowthStore(_data_dir() / "growth.db"),

@@ -1,6 +1,6 @@
 import { APP_VERSION } from "./about/aboutSession";
 import type { DonationConfig } from "./about/types";
-import type { BacktestPayload, DashboardData } from "./api/client";
+import type { BacktestPayload, BotDetailData, DashboardData, ExchangeFeeSchedule, FleetActiveSnapshot, FleetLatestPayload } from "./api/client";
 import { createAboutPanel } from "./components/AboutPanel";
 import { createSettingsPanel } from "./components/SettingsPanel";
 import { createThemeToggle } from "./components/ThemeToggle";
@@ -8,15 +8,10 @@ import { isOnline } from "./greet";
 import { t } from "./i18n";
 import { bindPanelDialog } from "./panelDialog";
 import type { ExportItem } from "./export/ExportHub";
-import type { LibraryRun } from "./backtest/library/BacktestLibrary";
 import type { ScannerSettings, ScannerSnapshot } from "./scanner/ScannerPanel";
 import type { BillingDashboardData } from "./billing/BillingDashboard";
 import type { SettlementData } from "./billing/pay/SettlementPanel";
 import type { ExitRulesState } from "./config/ConfigForm";
-import type { StrategyTemplate } from "./strategies/StrategiesPanel";
-import type { Recommendation } from "./ai/RecommenderPanel";
-import type { CuratedPreset } from "./ai/CuratedLibraryPanel";
-import { createHealthWidget } from "./shell/HealthWidget";
 import { createMobileNav, type AppView } from "./shell/MobileNav";
 import { renderMainView } from "./shell/renderMainView";
 
@@ -32,6 +27,17 @@ export type AppShellState = {
   dashboard: DashboardData | null;
   backtest: BacktestPayload | null;
   backtestLoading: boolean;
+  fleetExchangeId: string;
+  fleetPair: string;
+  fleetStakeUsd: number;
+  fleetPairs: string[];
+  fleetActive: FleetActiveSnapshot | null;
+  fleetResults: FleetLatestPayload | null;
+  fleetFeeSchedule: ExchangeFeeSchedule | null;
+  fleetHistoryRuns: import("./api/client").FleetHistoryEntry[];
+  fleetSelectedHistoryJobId: string | null;
+  fleetFilterMode: "all" | "timeframe" | "strategy";
+  fleetFilterTimeframe: string;
   strategyParams: Record<string, number>;
   pairs: string[];
   debugLogs: string[];
@@ -42,6 +48,9 @@ export type AppShellState = {
   scannerLoading: boolean;
   portfolioOverview: import("./portfolio/PortfolioSections").PortfolioOverviewData | null;
   portfolioEquityCurve: import("./charts/EquityChart").EquityPoint[];
+  portfolioTop10Curve: import("./charts/EquityChart").EquityPoint[];
+  portfolioTop10Comparison: import("./charts/EquityChart").PerformanceComparison | null;
+  portfolioPerformanceRange: import("./portfolio/PortfolioPerformanceChart").PerformanceRange;
   portfolioSnapshotDates: string[];
   portfolioHeatmap: Array<{ asset: string; return_pct: number; volatility_pct: number }>;
   portfolioSelectedDate: string | null;
@@ -50,9 +59,6 @@ export type AppShellState = {
   portfolioTagFilter: string | null;
   showInbox: boolean;
   inboxItems: import("./notifications/Inbox").InboxItem[];
-  strategyTemplates: StrategyTemplate[];
-  composerCode: string;
-  backtestLibrary: LibraryRun[];
   exportItems: ExportItem[];
   researchResults: Record<string, unknown>;
   diversification: { suggestions: string[]; correlation: { assets: string[]; matrix: number[][] } } | null;
@@ -60,14 +66,17 @@ export type AppShellState = {
   billingDashboard: BillingDashboardData | null;
   billingSettlement: SettlementData | null;
   showBillingSettlement: boolean;
-  aiRecommendations: Recommendation[];
-  aiDisclaimer: string;
-  curatedPresets: CuratedPreset[];
-  curatedVersion: string;
-  referralCode: string;
-  leaderboardRows: Array<{ pseudonym: string; score_usd: number }>;
   portfolioPlatform: import("./platform/PlatformPanel").PlatformData | null;
   exchangeRegistry: import("./portfolio/AccountsPanel").ExchangeRegistryEntry[] | null;
+  selectedBotId: number | null;
+  botDetail: BotDetailData | null;
+  botDetailLoading: boolean;
+  botDetailError: string | null;
+  botDetailLocal: boolean;
+  taLibrary: import("./api/client").TaLibraryCategory[];
+  botExchangePairs: string[];
+  botLimits: import("./bots/botGuardrails").BotLimits | null;
+  glossaryReturnView: AppView | null;
 };
 
 export type AppShellCallbacks = {
@@ -76,6 +85,11 @@ export type AppShellCallbacks = {
   onApplyUpdate?: () => void;
   canApplyUpdate?: boolean;
   onRunBacktest?: () => void;
+  onFleetExchangeChange?: (exchangeId: string) => void;
+  onFleetPairChange?: (pair: string) => void;
+  onFleetStakeChange?: (stakeUsd: number) => void;
+  onFleetFilterChange?: (mode: "all" | "timeframe" | "strategy", timeframe?: string) => void;
+  onLoadFleetHistoryRun?: (jobId: string) => void;
   onPause?: () => void;
   onResume?: () => void;
   onSaveConfig?: (params: Record<string, number>) => void;
@@ -88,14 +102,26 @@ export type AppShellCallbacks = {
   onTagFilter?: (tag: string | null) => void;
   onRebalanceApply?: () => void;
   onScrubDate?: (date: string) => void;
+  onPerformanceRangeChange?: (range: import("./portfolio/PortfolioPerformanceChart").PerformanceRange) => void;
+  onSaveGoal?: (payload: import("./portfolio/GoalsPanel").GoalSavePayload) => void;
+  onBotToggle?: (botId: number, enabled: boolean) => void;
+  onBotUpdate?: (botId: number, payload: import("./dashboard/BotDetailPage").BotUpdatePayload) => void;
+  onBotDelete?: (botId: number) => void;
+  onBotForceTrade?: (botId: number, side: "buy" | "sell") => void;
+  onOpenBot?: (botId: number) => void;
+  onCloseBot?: () => void;
+  onBotSaveParams?: (botId: number, strategyId: string, params: Record<string, number>) => void;
+  onBotExchangeChange?: (exchangeId: string, applyPairs: (pairs: string[]) => void) => void;
+  onBotPairChange?: (botId: number, pair: string) => void;
+  onOpenGlossary?: () => void;
+  onCloseGlossary?: () => void;
+  onBotApplyBacktest?: (botId: number, ranking: import("./api/client").BacktestRanking) => void;
+  onCreateBot?: () => void;
+  onApplyTemplate?: (templateId: string) => void;
+  onDeleteTemplate?: (templateId: string) => void;
+  onSaveBotTemplate?: (botId: number, name: string) => void;
   onOpenInbox?: () => void;
   onCloseInbox?: () => void;
-  onDeployStrategy?: (id: string) => void;
-  onExportStrategy?: (id: string) => void;
-  onImportStrategy?: (json: string) => void;
-  onComposeStrategy?: (code: string) => void;
-  onCloneBacktest?: (id: number) => void;
-  onCompareBacktests?: (ids: number[]) => void;
   onExportDownload?: (path: string, id: string) => void;
   onWalkForward?: () => void;
   onMonteCarlo?: () => void;
@@ -107,8 +133,6 @@ export type AppShellCallbacks = {
   onBillingMarkPaid?: () => void;
   onCopySettlement?: (text: string) => void;
   onBillingLightning?: () => void;
-  onLeaderboardOptIn?: () => void;
-  onBoostMode?: () => void;
 };
 
 export function createAppShell(
@@ -127,23 +151,27 @@ export function createAppShell(
 
   root.innerHTML = `
     <main class="gp-app">
-      <div class="gp-header">
-        <h1 class="gp-title">${t("app.title")}</h1>
-        <div class="gp-header-actions">
-          <button type="button" class="gp-settings-btn" data-settings-open aria-label="${t("settings.open")}">⚙</button>
-          <button type="button" class="gp-about-btn" data-about-open aria-label="${t("about.open")}">i</button>
+      <div class="gp-sticky-top">
+        <div class="gp-header">
+          <h1 class="gp-title">${t("app.title")}</h1>
+          <div class="gp-header-actions">
+            <button type="button" class="gp-settings-btn" data-settings-open aria-label="${t("settings.open")}">⚙</button>
+            <button type="button" class="gp-about-btn" data-about-open aria-label="${t("about.open")}">i</button>
+          </div>
         </div>
+        <div data-nav-mount></div>
       </div>
+      <div class="gp-scroll-body">
       <p class="gp-body" data-testid="status">${t(statusKey)}</p>
+      ${state.botDetailError ? `<p class="gp-error-banner" data-testid="bot-detail-error" role="alert">${state.botDetailError}</p>` : ""}
       ${
         showHomeUpdate
           ? `<p class="gp-update-banner" data-testid="home-update-status" aria-live="polite">${state.updateStatus}</p>`
           : ""
       }
-      <div data-health-mount></div>
       <div data-main-mount></div>
-      <div data-nav-mount></div>
       <div data-panel-mount></div>
+      </div>
     </main>
   `;
 
@@ -157,21 +185,11 @@ export function createAppShell(
     callbacks.onState({ showSettings: !state.showSettings, showAbout: false });
   });
 
-  const healthMount = root.querySelector("[data-health-mount]");
-  if (healthMount) {
-    healthMount.innerHTML = "";
-    const d = state.dashboard;
-    const risk = d?.risk ?? {};
-    healthMount.appendChild(
-      createHealthWidget({
-        equity_usd: Number(risk.equity_usd ?? d?.equity_usd ?? 0),
-        drawdown_pct: Number(risk.drawdown_pct ?? 0),
-        open_exposure_usd: Number(risk.open_exposure_usd ?? 0),
-        bot_count: d?.bot_count ?? 0,
-        can_trade: Boolean(risk.can_trade ?? false),
-        dry_run: d?.dry_run ?? true,
-        paused: Boolean(risk.paused),
-      }),
+  const navMount = root.querySelector("[data-nav-mount]");
+  if (navMount) {
+    navMount.innerHTML = "";
+    navMount.appendChild(
+      createMobileNav(state.view, (view) => callbacks.onState({ view, showAbout: false, showSettings: false })),
     );
   }
 
@@ -181,6 +199,11 @@ export function createAppShell(
   if (mainMount) {
     viewCleanup = renderMainView(mainMount as HTMLElement, state, {
       onRunBacktest: () => callbacks.onRunBacktest?.(),
+      onFleetExchangeChange: (exchangeId) => callbacks.onFleetExchangeChange?.(exchangeId),
+      onFleetPairChange: (pair) => callbacks.onFleetPairChange?.(pair),
+      onFleetStakeChange: (stakeUsd) => callbacks.onFleetStakeChange?.(stakeUsd),
+      onFleetFilterChange: (mode, timeframe) => callbacks.onFleetFilterChange?.(mode, timeframe),
+      onLoadFleetHistoryRun: (jobId) => callbacks.onLoadFleetHistoryRun?.(jobId),
       onPause: () => callbacks.onPause?.(),
       onResume: () => callbacks.onResume?.(),
       onSaveConfig: (params) => callbacks.onSaveConfig?.(params),
@@ -193,14 +216,28 @@ export function createAppShell(
       onTagFilter: (tag) => callbacks.onTagFilter?.(tag),
       onRebalanceApply: () => callbacks.onRebalanceApply?.(),
       onScrubDate: (date) => callbacks.onScrubDate?.(date),
+      onPerformanceRangeChange: (range) => callbacks.onPerformanceRangeChange?.(range),
+      onSaveGoal: (payload) => callbacks.onSaveGoal?.(payload),
+      onBotToggle: (botId, enabled) => callbacks.onBotToggle?.(botId, enabled),
+      onBotUpdate: (botId, payload) => callbacks.onBotUpdate?.(botId, payload),
+      onBotDelete: (botId) => callbacks.onBotDelete?.(botId),
+      onBotForceTrade: (botId, side) => callbacks.onBotForceTrade?.(botId, side),
+      onOpenBot: (botId) => callbacks.onOpenBot?.(botId),
+      onCloseBot: () => callbacks.onCloseBot?.(),
+      onBotSaveParams: (botId, strategyId, params) =>
+        callbacks.onBotSaveParams?.(botId, strategyId, params),
+      onBotExchangeChange: (exchangeId, applyPairs) =>
+        callbacks.onBotExchangeChange?.(exchangeId, applyPairs),
+      onBotPairChange: (botId, pair) => callbacks.onBotPairChange?.(botId, pair),
+      onOpenGlossary: () => callbacks.onOpenGlossary?.(),
+      onCloseGlossary: () => callbacks.onCloseGlossary?.(),
+      onBotApplyBacktest: (botId, ranking) => callbacks.onBotApplyBacktest?.(botId, ranking),
+      onCreateBot: () => callbacks.onCreateBot?.(),
+      onApplyTemplate: (id) => callbacks.onApplyTemplate?.(id),
+      onDeleteTemplate: (id) => callbacks.onDeleteTemplate?.(id),
+      onSaveBotTemplate: (botId, name) => callbacks.onSaveBotTemplate?.(botId, name),
       onOpenInbox: () => callbacks.onOpenInbox?.(),
       onCloseInbox: () => callbacks.onCloseInbox?.(),
-      onDeployStrategy: (id) => callbacks.onDeployStrategy?.(id),
-      onExportStrategy: (id) => callbacks.onExportStrategy?.(id),
-      onImportStrategy: (json) => callbacks.onImportStrategy?.(json),
-      onComposeStrategy: (code) => callbacks.onComposeStrategy?.(code),
-      onCloneBacktest: (id) => callbacks.onCloneBacktest?.(id),
-      onCompareBacktests: (ids) => callbacks.onCompareBacktests?.(ids),
       onExportDownload: (path, id) => callbacks.onExportDownload?.(path, id),
       onWalkForward: () => callbacks.onWalkForward?.(),
       onMonteCarlo: () => callbacks.onMonteCarlo?.(),
@@ -212,17 +249,7 @@ export function createAppShell(
       onBillingMarkPaid: () => callbacks.onBillingMarkPaid?.(),
       onCopySettlement: (text) => callbacks.onCopySettlement?.(text),
       onBillingLightning: () => callbacks.onBillingLightning?.(),
-      onLeaderboardOptIn: () => callbacks.onLeaderboardOptIn?.(),
-      onBoostMode: () => callbacks.onBoostMode?.(),
     });
-  }
-
-  const navMount = root.querySelector("[data-nav-mount]");
-  if (navMount) {
-    navMount.innerHTML = "";
-    navMount.appendChild(
-      createMobileNav(state.view, (view) => callbacks.onState({ view, showAbout: false, showSettings: false })),
-    );
   }
 
   const mount = root.querySelector("[data-panel-mount]");

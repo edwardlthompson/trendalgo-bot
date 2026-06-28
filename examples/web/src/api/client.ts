@@ -15,6 +15,15 @@ export type DashboardData = {
     equity_usd: number;
     engine?: string;
     exchange?: string;
+    timeframe?: string;
+    equity_mode?: "base" | "quote" | "portfolio_pct" | "usd" | "pct" | "manual";
+    equity_input?: number;
+    ta_params?: Record<string, number>;
+    pnl_usd?: number;
+    pnl_pct?: number;
+    realized_pnl_usd?: number;
+    unrealized_pnl_usd?: number;
+    trade_count?: number;
   }>;
   strategy_id: string;
   pair: string;
@@ -44,7 +53,15 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!resp.ok) {
-    throw new Error(`API ${resp.status}`);
+    let detail = `API ${resp.status}`;
+    try {
+      const body = (await resp.json()) as { detail?: string | Array<{ msg?: string }> };
+      if (typeof body.detail === "string") detail = body.detail;
+      else if (Array.isArray(body.detail) && body.detail[0]?.msg) detail = body.detail[0].msg;
+    } catch {
+      /* keep status-only message */
+    }
+    throw new Error(detail);
   }
   return (await resp.json()) as T;
 }
@@ -72,8 +89,6 @@ export async function runBacktest(body: {
   timerange?: string;
   slippage_pct?: number;
   fee_pct?: number;
-  save_to_library?: boolean;
-  tag?: string;
 }): Promise<BacktestPayload> {
   return apiFetch<BacktestPayload>("/backtest", {
     method: "POST",
@@ -84,6 +99,144 @@ export async function runBacktest(body: {
 
 export async function fetchLatestBacktest(): Promise<BacktestPayload> {
   return apiFetch<BacktestPayload>("/backtest/latest");
+}
+
+export type ExchangeFeeSchedule = {
+  exchange_id: string;
+  taker_pct: number;
+  maker_pct: number;
+  tier: string;
+  source_url: string;
+};
+
+export type FleetTestStatus = {
+  strategy_id: string;
+  timeframe: string;
+  status: string;
+  net_profit?: number | null;
+  trades?: number;
+  phase?: string;
+};
+
+export type FleetActiveSnapshot = {
+  id?: string;
+  status: "idle" | "running" | "complete" | "error";
+  phase?: "pass1" | "optimize_params" | "optimize_tsl" | "complete";
+  exchange_id?: string;
+  pair?: string;
+  stake_usd?: number;
+  trailing_stop_pct?: number;
+  lookback_days?: number;
+  lookback_seconds?: number;
+  total_combinations?: number;
+  completed?: number;
+  progress_pct?: number;
+  elapsed_seconds?: number;
+  current_timeframe?: string;
+  current_strategy?: string;
+  current_test?: string;
+  eta_seconds?: number | null;
+  messages?: string[];
+  recent_tests?: FleetTestStatus[];
+  top10?: FleetResultRow[];
+  summary?: Record<string, unknown>;
+  error?: string | null;
+};
+
+export type FleetResultRow = {
+  rank?: number;
+  strategy_id: string;
+  timeframe: string;
+  net_profit: number;
+  gross_profit: number;
+  fees_paid: number;
+  trades: number;
+  bar_count: number;
+  lookback_seconds?: number;
+  win_rate?: number;
+  fee_taker_pct?: number;
+  trailing_stop_pct?: number;
+  params?: Record<string, number | string | boolean>;
+  phase?: string;
+  optimized?: boolean;
+  optimal_tsl_pct?: number;
+  tsl_optimized?: boolean;
+  baseline_net_profit?: number;
+};
+
+export type FleetLatestPayload = {
+  job_id?: string;
+  exchange_id?: string;
+  pair?: string;
+  stake_usd?: number;
+  created_at?: string;
+  summary?: Record<string, unknown>;
+  rankings: FleetResultRow[];
+  total_rankings: number;
+  limit?: number;
+  offset?: number;
+};
+
+export async function fetchExchangeFees(): Promise<{
+  tier: string;
+  exchanges: ExchangeFeeSchedule[];
+}> {
+  return apiFetch("/backtest/exchange-fees");
+}
+
+export type FleetHistoryEntry = {
+  job_id: string;
+  exchange_id: string;
+  pair: string;
+  stake_usd: number;
+  created_at: string;
+  lookback_days?: number;
+  best_strategy?: string;
+  best_net_profit?: number;
+  best_timeframe?: string;
+  buy_hold_net?: number;
+};
+
+export async function startFleetBacktest(body: {
+  exchange_id: string;
+  pair: string;
+  stake_usd?: number;
+}): Promise<FleetActiveSnapshot> {
+  return apiFetch<FleetActiveSnapshot>("/backtest/fleet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fetchFleetActive(): Promise<FleetActiveSnapshot> {
+  return apiFetch<FleetActiveSnapshot>("/backtest/fleet/active");
+}
+
+export async function fetchFleetLatest(opts?: {
+  limit?: number;
+  offset?: number;
+  group_by?: string;
+}): Promise<FleetLatestPayload> {
+  const params = new URLSearchParams();
+  if (opts?.limit != null) params.set("limit", String(opts.limit));
+  if (opts?.offset != null) params.set("offset", String(opts.offset));
+  if (opts?.group_by) params.set("group_by", opts.group_by);
+  const qs = params.toString();
+  return apiFetch<FleetLatestPayload>(`/backtest/fleet/latest${qs ? `?${qs}` : ""}`);
+}
+
+export async function fetchFleetHistory(limit = 20): Promise<{
+  runs: FleetHistoryEntry[];
+  total: number;
+}> {
+  return apiFetch(`/backtest/fleet/history?limit=${limit}`);
+}
+
+export async function fetchFleetHistoryRun(jobId: string): Promise<FleetLatestPayload & {
+  final_top10?: FleetResultRow[];
+}> {
+  return apiFetch(`/backtest/fleet/history/${encodeURIComponent(jobId)}`);
 }
 
 export async function fetchStrategyParams(
@@ -236,6 +389,29 @@ export async function fetchPortfolioOverview(): Promise<PortfolioOverviewPayload
   return apiFetch<PortfolioOverviewPayload>("/portfolio/overview");
 }
 
+export type PortfolioPerformanceRange = "1y" | "6m" | "3m" | "1m" | "14d" | "7d" | "24h";
+
+export type PortfolioPerformancePayload = {
+  range: string;
+  points: Array<{ time: number; value: number }>;
+  top10_index: Array<{ time: number; value: number }>;
+  comparison: {
+    portfolio_return_pct: number;
+    top10_return_pct: number;
+    alpha_pct: number;
+    symbols?: string[];
+  };
+  top10_symbols?: string[];
+  asset?: string;
+  quantity?: number;
+};
+
+export async function fetchPortfolioPerformance(
+  range: PortfolioPerformanceRange,
+): Promise<PortfolioPerformancePayload> {
+  return apiFetch(`/portfolio/performance?range=${encodeURIComponent(range)}`);
+}
+
 export async function syncPortfolio(): Promise<Record<string, unknown>> {
   return apiFetch("/portfolio/sync", { method: "POST" });
 }
@@ -251,6 +427,23 @@ export async function fetchPortfolioHeatmap(): Promise<{
   rows: Array<{ asset: string; return_pct: number; volatility_pct: number }>;
 }> {
   return apiFetch("/portfolio/heatmap");
+}
+
+export type PortfolioGoalPayload = {
+  target_net_worth_usd: number;
+  label: string;
+  deadline?: string | null;
+  goal_type?: string;
+  horizon_months?: number;
+  target_return_pct?: number;
+};
+
+export async function updatePortfolioGoal(body: PortfolioGoalPayload): Promise<{ goal: Record<string, unknown> }> {
+  return apiFetch("/portfolio/goals", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 export type InboxItemPayload = {
@@ -280,41 +473,247 @@ export async function importStrategyTemplate(json: string): Promise<{ strategy_i
   });
 }
 
-export async function fetchBacktestLibrary(): Promise<{
-  runs: Array<{ id: number; strategy: string; pair: string; tag: string | null; created_at: string }>;
+export async function fetchBotLimits(): Promise<{
+  max_bots_total: number;
+  max_enabled_bots: number;
+  max_sub_minute_enabled: number;
+  max_1s_enabled: number;
+  sub_minute_intervals: string[];
+  bot_count: number;
+  enabled_count: number;
+  paper: boolean;
+  ohlcv_cache?: {
+    bot_scoped: boolean;
+    dedupe_shared_pair_timeframe: boolean;
+    limits_adjustment: string;
+    reason: string;
+  };
+  ta_cache?: {
+    shared_fingerprint: boolean;
+    incremental_tail: boolean;
+    limits_adjustment: string;
+    reason: string;
+  };
 }> {
-  return apiFetch("/backtest/library");
+  return apiFetch("/bots/limits");
 }
 
-export async function cloneBacktestRun(
-  runId: number,
-  tag?: string,
-): Promise<{ id: number }> {
-  return apiFetch(`/backtest/library/${runId}/clone`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tag }),
-  });
+export type OhlcvWarmupJob = {
+  id?: string;
+  status: "idle" | "running" | "complete" | "error";
+  progress_pct?: number;
+  total_series?: number;
+  completed_series?: number;
+  current_series?: string;
+  bars_cached?: number;
+  bars_downloaded?: number;
+  messages?: string[];
+  series_results?: Array<{
+    pair: string;
+    timeframe: string;
+    bars: number;
+    downloaded: number;
+    bots: string[];
+  }>;
+  error?: string | null;
+};
+
+export async function startOhlcvWarmup(): Promise<OhlcvWarmupJob> {
+  return apiFetch("/bots/ohlcv/warmup", { method: "POST" });
 }
 
-export async function compareBacktestRuns(runIds: number[]): Promise<Record<string, unknown>> {
-  return apiFetch("/backtest/compare", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ run_ids: runIds }),
-  });
+export async function fetchOhlcvWarmupActive(): Promise<OhlcvWarmupJob> {
+  return apiFetch("/bots/ohlcv/warmup/active");
+}
+
+export async function fetchOhlcvCacheStatus(): Promise<{
+  bot_scoped: boolean;
+  bot_count: number;
+  unique_series: number;
+  series: Array<{
+    pair: string;
+    timeframe: string;
+    cached_bars: number;
+    expected_bars: number;
+    coverage_pct: number;
+    bots: string[];
+  }>;
+}> {
+  return apiFetch("/bots/ohlcv/cache");
 }
 
 export async function addBot(body: {
   label: string;
-  strategy_id: string;
-  pair: string;
+  strategy_id?: string;
+  pair?: string;
   equity_usd?: number;
-}): Promise<void> {
-  await apiFetch("/bots", {
+  exchange?: string;
+  timeframe?: string;
+  enabled?: boolean;
+  ta_params?: Record<string, number>;
+}): Promise<{ id: number; bots: DashboardData["bots"] }> {
+  return apiFetch("/bots", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+  });
+}
+
+export async function setBotEnabled(
+  botId: number,
+  enabled: boolean,
+): Promise<{ bots: DashboardData["bots"] }> {
+  return apiFetch(`/bots/${botId}/enabled`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled }),
+  });
+}
+
+export async function updateBot(
+  botId: number,
+  body: {
+    label: string;
+    strategy_id: string;
+    pair: string;
+    exchange?: string;
+    equity_usd: number;
+    equity_mode?: "base" | "quote" | "portfolio_pct" | "usd" | "pct" | "manual";
+    equity_input?: number;
+    timeframe?: string;
+    ta_params?: Record<string, number>;
+  },
+): Promise<{ bots: DashboardData["bots"] }> {
+  return apiFetch(`/bots/${botId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export type BacktestRanking = {
+  id?: string;
+  fn?: string;
+  indicator?: string;
+  ta_function?: string;
+  strategy_id?: string;
+  profit_total?: number;
+  trades?: number;
+  timeframe?: string;
+  pair?: string;
+  exchange_id?: string;
+};
+
+export type TaLibraryItem = { id: string; name: string; category: string };
+export type TaLibraryCategory = { name: string; items: TaLibraryItem[] };
+
+export type BotEquityLimits = {
+  base: { symbol: string; max: number };
+  quote: { symbol: string; max: number };
+  portfolio_usd: number;
+  paper?: boolean;
+};
+
+export type OhlcvBar = {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+export type TradeHighlightRegion = {
+  time_start: number;
+  time_end: number;
+  entry_price: number;
+  exit_price: number;
+  profitable: boolean;
+  pnl_usd?: number | null;
+};
+
+export type BotDetailData = {
+  bot: NonNullable<DashboardData["bots"]>[number] & {
+    equity_mode?: string;
+    equity_input?: number;
+    ta_params?: Record<string, number>;
+  };
+  realized_pnl_usd: number;
+  unrealized_pnl_usd: number;
+  pnl_usd: number;
+  pnl_pct: number;
+  trade_count: number;
+  trades: Array<{
+    pair: string;
+    side: string;
+    stake_usd: number;
+    pnl_usd: number;
+    created_at: string;
+  }>;
+  simulated_trades?: Array<{
+    pair: string;
+    side: string;
+    stake_usd: number;
+    pnl_usd: number;
+    created_at: string;
+    simulated?: boolean;
+  }>;
+  chart: Array<{ time: number; value: number }>;
+  ohlcv?: OhlcvBar[];
+  trade_markers?: Array<{ time: number; side: string; pnl_usd?: number | null; pnl_pct?: number | null }>;
+  simulated_markers?: Array<{ time: number; side: string; pnl_usd?: number | null; pnl_pct?: number | null }>;
+  trade_regions?: TradeHighlightRegion[];
+  simulated_regions?: TradeHighlightRegion[];
+  equity_limits?: BotEquityLimits;
+  strategy_params: Record<string, number>;
+  available_timeframes: string[];
+  timeframe_labels?: Record<string, string>;
+  param_specs: Array<{ key: string; label?: string; default?: number; min?: number; max?: number }>;
+  backtest_top5?: BacktestRanking[];
+};
+
+export async function fetchBotDetail(botId: number): Promise<BotDetailData> {
+  return apiFetch(`/bots/${botId}`);
+}
+
+export async function fetchTaGlossary(): Promise<{
+  entries: Array<{ id: string; title: string; short: string; long: string; formula: string }>;
+  count: number;
+}> {
+  return apiFetch("/research/ta-glossary");
+}
+
+export async function fetchBotEquityLimits(botId: number): Promise<BotEquityLimits> {
+  return apiFetch(`/bots/${botId}/equity-limits`);
+}
+
+export async function fetchTaLibrary(): Promise<{ categories: TaLibraryCategory[]; count: number }> {
+  return apiFetch("/research/ta-library");
+}
+
+export async function fetchExchangePairs(exchangeId: string): Promise<{ pairs: string[] }> {
+  return apiFetch(`/exchanges/${encodeURIComponent(exchangeId)}/pairs`);
+}
+
+export async function fetchChartTimeframes(): Promise<{
+  intervals: string[];
+  labels: Record<string, string>;
+}> {
+  return apiFetch("/constants/timeframes");
+}
+
+export async function deleteBot(botId: number): Promise<{ bots: DashboardData["bots"] }> {
+  return apiFetch(`/bots/${botId}`, { method: "DELETE" });
+}
+
+export async function forceBotTrade(
+  botId: number,
+  side: "buy" | "sell",
+): Promise<Record<string, unknown>> {
+  return apiFetch(`/bots/${botId}/force`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ side }),
   });
 }
 

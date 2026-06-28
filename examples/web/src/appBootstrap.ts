@@ -1,4 +1,6 @@
 import { handleRestartGuard, checkForUpdates } from "./about/aboutSession";
+import { setTaGlossaryEntries, ensureTaGlossaryLoaded } from "./data/taGlossary";
+import { ensureTaLibraryBundled } from "./data/taLibraryFallback";
 import { applyPwaUpdate } from "./about/applyUpdate";
 import { loadDonations } from "./about/donations";
 import {
@@ -14,16 +16,14 @@ import {
   fetchPortfolioHeatmap,
   fetchPortfolioHistory,
   fetchPortfolioOverview,
+  fetchPortfolioPerformance,
+  updatePortfolioGoal,
   fetchNotificationInbox,
-  syncPortfolio,
+  deleteBot,
   addBot,
-  cloneBacktestRun,
-  compareBacktestRuns,
-  exportStrategyTemplate,
-  fetchBacktestLibrary,
-  fetchStrategies,
-  importStrategyTemplate,
-  triggerHyperopt,
+  fetchBotLimits,
+  fetchBotDetail,
+  forceBotTrade,
   fetchExitRules,
   saveExitRules,
   fetchBillingDashboard,
@@ -32,16 +32,14 @@ import {
   fetchBillingSettlement,
   markBillingPaid,
   createBillingLightningInvoice,
-  fetchAiRecommendations,
-  fetchCuratedLibrary,
-  fetchGrowthReferral,
-  fetchGrowthLeaderboard,
   fetchPlatformForager,
   fetchPlatformFunding,
   fetchPlatformPostgres,
   fetchExchangeRegistry,
-  optInLeaderboard,
-  enableBoostMode,
+  fetchExchangePairs,
+  fetchTaLibrary,
+  fetchTaGlossary,
+  fetchBotEquityLimits,
   fetchExportHub,
   fetchHyperoptHeatmap,
   fetchResearchCorrelation,
@@ -54,33 +52,69 @@ import {
   pauseTrading,
   pinScannerPair,
   resumeTrading,
-  runBacktest,
+  startFleetBacktest,
+  fetchFleetActive,
+  fetchFleetLatest,
+  fetchFleetHistory,
+  fetchFleetHistoryRun,
+  fetchExchangeFees,
   runScannerScan,
   saveScannerSettings,
   saveStrategyParams,
   fetchStrategyParams,
-  type BacktestPayload,
+  setBotEnabled,
+  updateBot,
+  type BacktestRanking,
   type DashboardData,
+  type FleetActiveSnapshot,
   type ScannerSettingsPayload,
 } from "./api/client";
 import { createAppShell, type AppShellState } from "./AppShell";
+import {
+  buildLocalBotDetail,
+  isPaperTrading,
+  enrichDetailWithPersisted,
+  resolveBotDetail,
+  type BotDetailContext,
+} from "./dashboard/botDetailLocal";
 import type { PortfolioOverviewData } from "./portfolio/PortfolioSections";
 import { assetUrl } from "./assetUrl";
+import { normalizeTimeframe } from "./components/tradingViewIntervals";
+import { krakenPairsFallback } from "./data/krakenUsdPairs";
 import { t } from "./i18n";
+import {
+  loadCachedPairs,
+  loadCachedTaLibrary,
+  saveBotSettings,
+  saveCachedPairs,
+  saveCachedTaLibrary,
+} from "./settings/settingsStore";
+import { loadNavigation, saveNavigation } from "./settings/navigationStore";
 import { initTheme, subscribeThemeChange } from "./theme";
+import { DEFAULT_BOT_LIMITS, checkGuardrailAction, nextBotLabel, syncBotLimits } from "./bots/botGuardrails";
+import { showGuardrailNotice } from "./bots/botLimitsBanner";
+import {
+  deleteBotTemplate,
+  getBotTemplate,
+  saveBotTemplate,
+  templateToNewBotPayload,
+} from "./bots/botTemplatesStore";
+import { runOhlcvWarmupWithUi } from "./market/ohlcvWarmup";
 
 function isUpdateAvailableStatus(status: string): boolean {
   return status.startsWith(t("about.update.available"));
 }
 
 async function loadPortfolioBundle(): Promise<Partial<AppShellState>> {
-  const [overview, heatmap, inbox, rebalance, arbitrage, exchangeRegistry] = await Promise.all([
+  const [overview, heatmap, inbox, rebalance, arbitrage, exchangeRegistry, performance] =
+    await Promise.all([
     fetchPortfolioOverview(),
     fetchPortfolioHeatmap(),
     fetchNotificationInbox(),
     fetchPortfolioRebalance(),
     fetchPortfolioArbitrage(),
     fetchExchangeRegistry(),
+    fetchPortfolioPerformance("1y"),
   ]);
   return {
     portfolioOverview: {
@@ -98,7 +132,10 @@ async function loadPortfolioBundle(): Promise<Partial<AppShellState>> {
       performance_goal: overview.performance_goal as PortfolioOverviewData["performance_goal"],
       bot: overview.bot,
     },
-    portfolioEquityCurve: overview.equity_curve,
+    portfolioEquityCurve: performance.points,
+    portfolioTop10Curve: performance.top10_index,
+    portfolioTop10Comparison: performance.comparison,
+    portfolioPerformanceRange: "1y",
     portfolioSnapshotDates: overview.snapshot_dates,
     portfolioHeatmap: heatmap.rows,
     portfolioSelectedDate: overview.snapshot_dates[0] ?? null,
@@ -112,7 +149,7 @@ async function loadPortfolioBundle(): Promise<Partial<AppShellState>> {
 
 async function loadApiData(): Promise<Partial<AppShellState>> {
   const dashboard = await fetchDashboard();
-  const [pairs, paramsResp, backtest, logs, scannerSnap, scannerSettings, watchlist, portfolio, strategies, library, exportHub, diversification, exitRules, billingDash, aiRecs, curated, referral, leaderboard, forager, funding, postgres] =
+  const [pairs, paramsResp, backtest, logs, scannerSnap, scannerSettings, watchlist, portfolio, exportHub, diversification, exitRules, billingDash, forager, funding, postgres, taLibrary, botLimits, fleetLatest, exchangeFees, fleetActive, fleetHistory] =
     await Promise.all([
       fetchPairs(),
       fetchStrategyParams(dashboard.strategy_id),
@@ -122,20 +159,33 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
       fetchScannerSettings(),
       fetchScannerWatchlist(),
       loadPortfolioBundle(),
-      fetchStrategies(),
-      fetchBacktestLibrary(),
       fetchExportHub(),
       fetchResearchCorrelation(),
       fetchExitRules(),
       fetchBillingDashboard(),
-      fetchAiRecommendations(),
-      fetchCuratedLibrary(),
-      fetchGrowthReferral(),
-      fetchGrowthLeaderboard(),
       fetchPlatformForager(),
       fetchPlatformFunding(),
       fetchPlatformPostgres(),
+      fetchTaLibrary().catch(() => ({ categories: loadCachedTaLibrary(), count: 0 })),
+      fetchBotLimits().catch(() => DEFAULT_BOT_LIMITS),
+      fetchFleetLatest().catch(() => ({ rankings: [], total_rankings: 0 })),
+      fetchExchangeFees().catch(() => ({ tier: "retail_default", exchanges: [] })),
+      fetchFleetActive().catch(() => ({ status: "idle" as const })),
+      fetchFleetHistory().catch(() => ({ runs: [], total: 0 })),
     ]);
+  const taCategories =
+    taLibrary.categories.length > 0 ? taLibrary.categories : loadCachedTaLibrary();
+  if (taLibrary.categories.length > 0) {
+    saveCachedTaLibrary(taLibrary.categories);
+  }
+  void fetchTaGlossary()
+    .then((glossary) => {
+      if (glossary.entries?.length) setTaGlossaryEntries(glossary.entries);
+    })
+    .catch(() => undefined);
+  const defaultExchange = "kraken";
+  const krakenFee =
+    exchangeFees.exchanges.find((e) => e.exchange_id === defaultExchange) ?? null;
   return {
     dashboard,
     pairs,
@@ -145,10 +195,22 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
     scannerSnapshot: scannerSnap,
     scannerSettings: scannerSettings,
     scannerWatchlist: watchlist,
-    strategyTemplates: strategies.strategies,
-    backtestLibrary: library.runs,
     exportItems: exportHub.exports,
     diversification: diversification,
+    taLibrary: taCategories,
+    fleetExchangeId: defaultExchange,
+    fleetPair: "BTC/USD",
+    fleetStakeUsd: 1000,
+    fleetPairs: pairs.length > 2 ? pairs : krakenPairsFallback(),
+    fleetActive: fleetActive.status === "idle" ? null : fleetActive,
+    fleetResults: fleetLatest.total_rankings > 0 ? fleetLatest : null,
+    fleetFeeSchedule: krakenFee,
+    fleetHistoryRuns: fleetHistory.runs,
+    fleetSelectedHistoryJobId: null,
+    fleetFilterMode: "all" as const,
+    fleetFilterTimeframe: "60",
+    backtestLoading: fleetActive.status === "running",
+    botExchangePairs: pairs.length > 2 ? pairs : krakenPairsFallback(),
     exitRules: {
       trailing_stop_pct: Number(exitRules.trailing_stop_pct ?? 0.03),
       scale_out_pct: Number(exitRules.scale_out_pct ?? 0.5),
@@ -158,21 +220,21 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
     billingDashboard: billingDash as import("./billing/BillingDashboard").BillingDashboardData,
     billingSettlement: null,
     showBillingSettlement: false,
-    aiRecommendations: aiRecs.recommendations as import("./ai/RecommenderPanel").Recommendation[],
-    aiDisclaimer: aiRecs.disclaimer,
-    curatedPresets: curated.presets as import("./ai/CuratedLibraryPanel").CuratedPreset[],
-    curatedVersion: curated.version,
-    referralCode: referral.code,
-    leaderboardRows: leaderboard.rows,
     portfolioPlatform: { forager, funding, postgres },
+    botLimits: syncBotLimits(
+      botLimits,
+      dashboard.bots ?? [],
+      dashboard.dry_run ?? botLimits.paper,
+    ),
     ...portfolio,
     apiOnline: true,
   };
 }
 
 export function bootstrapApp(appRoot: HTMLDivElement): void {
+  const initialNav = loadNavigation();
   let state: AppShellState = {
-    view: "portfolio",
+    view: initialNav.view,
     showAbout: false,
     showSettings: false,
     showInbox: false,
@@ -181,6 +243,17 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     dashboard: null,
     backtest: null,
     backtestLoading: false,
+    fleetExchangeId: "kraken",
+    fleetPair: "BTC/USD",
+    fleetStakeUsd: 1000,
+    fleetPairs: krakenPairsFallback(),
+    fleetActive: null,
+    fleetResults: null,
+    fleetFeeSchedule: null,
+    fleetHistoryRuns: [],
+    fleetSelectedHistoryJobId: null,
+    fleetFilterMode: "all",
+    fleetFilterTimeframe: "60",
     strategyParams: {},
     pairs: ["BTC/USD"],
     debugLogs: [],
@@ -191,6 +264,9 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     scannerLoading: false,
     portfolioOverview: null,
     portfolioEquityCurve: [],
+    portfolioTop10Curve: [],
+    portfolioTop10Comparison: null,
+    portfolioPerformanceRange: "1y",
     portfolioSnapshotDates: [],
     portfolioHeatmap: [],
     portfolioSelectedDate: null,
@@ -198,9 +274,6 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     portfolioArbitrage: { alerts: [], disclaimer: "" },
     portfolioTagFilter: null,
     inboxItems: [],
-    strategyTemplates: [],
-    composerCode: "# Multi-TF composer\nrsi_entry = 35\nrsi_exit = 65",
-    backtestLibrary: [],
     exportItems: [],
     researchResults: {},
     diversification: null,
@@ -208,24 +281,235 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     billingDashboard: null,
     billingSettlement: null,
     showBillingSettlement: false,
-    aiRecommendations: [],
-    aiDisclaimer: "",
-    curatedPresets: [],
-    curatedVersion: "",
-    referralCode: "",
-    leaderboardRows: [],
     portfolioPlatform: null,
     exchangeRegistry: null,
+    selectedBotId: initialNav.selectedBotId,
+    botDetail: null,
+    botDetailLoading: initialNav.selectedBotId != null && initialNav.view === "dashboard",
+    botDetailError: null,
+    botDetailLocal: false,
+    taLibrary: loadCachedTaLibrary(),
+    botExchangePairs: krakenPairsFallback(),
+    botLimits: DEFAULT_BOT_LIMITS,
+    glossaryReturnView: null,
   };
+
+  function botDetailContext(): BotDetailContext {
+    return {
+      dashboard: state.dashboard,
+      strategyParams: state.strategyParams,
+      taLibrary: state.taLibrary,
+    };
+  }
+
+  let fleetPoll: ReturnType<typeof setInterval> | null = null;
+
+  function stopFleetPoll(): void {
+    if (fleetPoll != null) {
+      clearInterval(fleetPoll);
+      fleetPoll = null;
+    }
+  }
+
+  async function reloadFleetResults(): Promise<void> {
+    const groupBy =
+      state.fleetFilterMode === "strategy"
+        ? "strategy"
+        : state.fleetFilterMode === "timeframe"
+          ? state.fleetFilterTimeframe
+          : undefined;
+    const latest = await fetchFleetLatest({
+      limit: 50,
+      group_by: groupBy,
+    });
+    state = {
+      ...state,
+      fleetResults: latest.total_rankings > 0 ? latest : state.fleetResults,
+    };
+    render();
+  }
+
+  async function reloadFleetHistory(): Promise<void> {
+    try {
+      const payload = await fetchFleetHistory();
+      state = { ...state, fleetHistoryRuns: payload.runs };
+      render();
+    } catch {
+      /* keep prior list */
+    }
+  }
+
+  function startFleetPoll(): void {
+    stopFleetPoll();
+    fleetPoll = setInterval(() => {
+      void fetchFleetActive().then(async (active: FleetActiveSnapshot) => {
+        state = { ...state, fleetActive: active.status === "idle" ? null : active };
+        if (active.status === "complete" || active.status === "error") {
+          stopFleetPoll();
+          state = { ...state, backtestLoading: false };
+          await reloadFleetResults();
+          await reloadFleetHistory();
+        }
+        render();
+      });
+    }, 2000);
+  }
+
+  async function createNewBot(fromTemplateId?: string): Promise<void> {
+    if (!state.dashboard) return;
+    const limits = state.botLimits ?? DEFAULT_BOT_LIMITS;
+    const bots = state.dashboard.bots ?? [];
+    const label = nextBotLabel(bots);
+    let payload = {
+      label,
+      strategy_id: "RSI",
+      pair: state.dashboard.pair ?? "BTC/USD",
+      exchange: "kraken",
+      timeframe: "60",
+      equity_usd: 1000,
+      enabled: false,
+      ta_params: {} as Record<string, number>,
+    };
+    if (fromTemplateId) {
+      const tpl = getBotTemplate(fromTemplateId);
+      if (tpl) payload = templateToNewBotPayload(tpl, label);
+    }
+    const blocked = checkGuardrailAction(limits, bots, { adding: true });
+    if (blocked) {
+      showGuardrailNotice(blocked);
+      return;
+    }
+    try {
+      const resp = await addBot(payload);
+      state = {
+        ...state,
+        dashboard: { ...state.dashboard, bots: resp.bots },
+        botLimits: syncBotLimits(
+          limits,
+          resp.bots ?? bots,
+          state.dashboard?.dry_run ?? limits.paper,
+        ),
+      };
+      render();
+      void runOhlcvWarmupWithUi();
+      await openBotDetail(resp.id);
+    } catch (err) {
+      window.alert(String(err instanceof Error ? err.message : err));
+    }
+  }
+
+  async function loadPairsForExchange(
+    exchangeId: string,
+    applyPairs?: (pairs: string[]) => void,
+  ): Promise<string[]> {
+    try {
+      const { pairs } = await fetchExchangePairs(exchangeId);
+      saveCachedPairs(exchangeId, pairs);
+      state = { ...state, botExchangePairs: pairs };
+      applyPairs?.(pairs);
+      return pairs;
+    } catch {
+      const fallback =
+        loadCachedPairs(exchangeId) ??
+        (exchangeId === "kraken" ? krakenPairsFallback() : ["BTC/USD", "ETH/USD"]);
+      state = { ...state, botExchangePairs: fallback };
+      applyPairs?.(fallback);
+      return fallback;
+    }
+  }
+
+  async function reloadBotDetail(botId: number): Promise<void> {
+    const { detail, local } = await resolveBotDetail(botId, botDetailContext(), fetchBotDetail);
+    state = { ...state, botDetail: enrichDetailWithPersisted(detail), botDetailLocal: local, botDetailLoading: false, botDetailError: null };
+    render();
+  }
+
+  function patchLocalBot(botId: number, patch: Record<string, unknown>): void {
+    if (!state.dashboard?.bots) return;
+    const bots = state.dashboard.bots.map((bot) =>
+      bot.id === botId ? { ...bot, ...patch } : bot,
+    );
+    state = { ...state, dashboard: { ...state.dashboard, bots } };
+  }
+
+  function syncNavigationPersist(): void {
+    saveNavigation({
+      view: state.view,
+      selectedBotId: state.selectedBotId,
+    });
+  }
+
+  async function openBotDetail(botId: number): Promise<void> {
+    const bot = state.dashboard?.bots?.find((b) => b.id === botId);
+    if (!bot && state.dashboard?.bots) {
+      state = {
+        ...state,
+        selectedBotId: null,
+        botDetail: null,
+        botDetailLoading: false,
+        botDetailError: null,
+        botDetailLocal: false,
+      };
+      syncNavigationPersist();
+      render();
+      return;
+    }
+    state = {
+      ...state,
+      selectedBotId: botId,
+      botDetail: null,
+      botDetailLoading: true,
+      botDetailError: null,
+      botDetailLocal: false,
+      view: "dashboard",
+    };
+    syncNavigationPersist();
+    render();
+    await loadPairsForExchange(String(bot?.exchange ?? "kraken"));
+    try {
+      const { detail, local } = await resolveBotDetail(botId, botDetailContext(), fetchBotDetail);
+      state = {
+        ...state,
+        botDetail: enrichDetailWithPersisted(detail),
+        botDetailLoading: false,
+        botDetailError: null,
+        botDetailLocal: local,
+      };
+    } catch {
+      state = {
+        ...state,
+        selectedBotId: null,
+        botDetail: null,
+        botDetailLoading: false,
+        botDetailLocal: false,
+        botDetailError: t("bots.detail.load_error"),
+      };
+      syncNavigationPersist();
+    }
+    render();
+  }
+
+  async function restoreNavigationAfterLoad(): Promise<void> {
+    const botId = state.selectedBotId;
+    if (botId == null || state.view !== "dashboard" || state.botDetail) return;
+    await openBotDetail(botId);
+  }
 
   async function refreshDashboard(): Promise<void> {
     try {
       const patch = await loadApiData();
       state = { ...state, ...patch };
+      if ((state.dashboard?.bots?.length ?? 0) > 0) {
+        void runOhlcvWarmupWithUi({ silentIfCached: true });
+      }
     } catch {
       state = { ...state, apiOnline: false };
     }
     render();
+    if (state.backtestLoading && state.fleetActive?.status === "running") {
+      startFleetPoll();
+    }
+    await restoreNavigationAfterLoad();
   }
 
   async function handleApplyUpdate(): Promise<void> {
@@ -242,7 +526,16 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
   function render(): void {
     createAppShell(appRoot, state, {
       onState: (patch) => {
+        if (patch.view && patch.view !== "dashboard" && patch.view !== "glossary") {
+          patch = { ...patch, selectedBotId: null, botDetail: null, botDetailLoading: false, botDetailError: null, botDetailLocal: false };
+        }
         state = { ...state, ...patch };
+        if (patch.view !== undefined) {
+          syncNavigationPersist();
+        }
+        if (patch.selectedBotId !== undefined) {
+          syncNavigationPersist();
+        }
         render();
       },
       onUpdateCheckChange: (enabled) => {
@@ -258,32 +551,78 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       },
       canApplyUpdate: isUpdateAvailableStatus(state.updateStatus),
       onRunBacktest: () => {
-        const dashboard = state.dashboard;
-        if (!dashboard || state.backtestLoading) return;
+        if (state.backtestLoading) return;
         state = { ...state, backtestLoading: true };
         render();
-        const toggles = document.querySelector("[data-testid='backtest-toggles']");
-        const slip = toggles?.querySelector("[data-slippage]") as HTMLInputElement | null;
-        const fees = toggles?.querySelector("[data-fees]") as HTMLInputElement | null;
-        void runBacktest({
-          strategy: dashboard.strategy_id,
-          pair: dashboard.pair,
-          slippage_pct: slip?.checked ? 0.001 : 0,
-          fee_pct: fees?.checked ? 0.001 : 0,
-          save_to_library: true,
+        void startFleetBacktest({
+          exchange_id: state.fleetExchangeId,
+          pair: state.fleetPair,
+          stake_usd: state.fleetStakeUsd,
         })
-          .then((backtest: BacktestPayload) => {
-            state = { ...state, backtest, backtestLoading: false };
+          .then((active) => {
+            state = { ...state, fleetActive: active };
             render();
-            void fetchBacktestLibrary().then((lib) => {
-              state = { ...state, backtestLibrary: lib.runs };
-              render();
-            });
+            startFleetPoll();
           })
           .catch(() => {
             state = { ...state, backtestLoading: false };
             render();
           });
+      },
+      onFleetExchangeChange: (exchangeId) => {
+        const fee =
+          state.fleetFeeSchedule?.exchange_id === exchangeId
+            ? state.fleetFeeSchedule
+            : null;
+        state = { ...state, fleetExchangeId: exchangeId, fleetFeeSchedule: fee };
+        render();
+        void fetchExchangeFees()
+          .then((payload) => {
+            const schedule =
+              payload.exchanges.find((e) => e.exchange_id === exchangeId) ?? null;
+            state = { ...state, fleetFeeSchedule: schedule };
+            render();
+          })
+          .catch(() => undefined);
+        void loadPairsForExchange(exchangeId, (pairs) => {
+          state = {
+            ...state,
+            fleetPairs: pairs,
+            fleetPair: pairs.includes(state.fleetPair) ? state.fleetPair : (pairs[0] ?? "BTC/USD"),
+          };
+          render();
+        });
+      },
+      onFleetPairChange: (pair) => {
+        state = { ...state, fleetPair: pair };
+        render();
+      },
+      onFleetStakeChange: (stakeUsd) => {
+        state = { ...state, fleetStakeUsd: stakeUsd };
+        render();
+      },
+      onFleetFilterChange: (mode, timeframe) => {
+        state = {
+          ...state,
+          fleetFilterMode: mode,
+          fleetFilterTimeframe: timeframe ?? state.fleetFilterTimeframe,
+        };
+        render();
+        void reloadFleetResults();
+      },
+      onLoadFleetHistoryRun: (jobId) => {
+        void fetchFleetHistoryRun(jobId)
+          .then((payload) => {
+            state = {
+              ...state,
+              fleetSelectedHistoryJobId: jobId,
+              fleetResults: payload,
+              fleetExchangeId: payload.exchange_id ?? state.fleetExchangeId,
+              fleetPair: payload.pair ?? state.fleetPair,
+            };
+            render();
+          })
+          .catch(() => undefined);
       },
       onPause: () => {
         void pauseTrading().then(() => refreshDashboard());
@@ -330,7 +669,7 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         });
       },
       onPortfolioSync: () => {
-        void syncPortfolio().then(() => refreshDashboard());
+        void syncPortfolioAll().then(() => refreshDashboard());
       },
       onPortfolioSyncAll: () => {
         void syncPortfolioAll().then(() => refreshDashboard());
@@ -357,6 +696,298 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
           render();
         });
       },
+      onPerformanceRangeChange: (range) => {
+        void fetchPortfolioPerformance(range).then((payload) => {
+          state = {
+            ...state,
+            portfolioPerformanceRange: range,
+            portfolioEquityCurve: payload.points,
+            portfolioTop10Curve: payload.top10_index,
+            portfolioTop10Comparison: payload.comparison,
+          };
+          render();
+        });
+      },
+      onSaveGoal: (payload) => {
+        void updatePortfolioGoal({
+          target_net_worth_usd: payload.target_net_worth_usd,
+          label: payload.label,
+          goal_type: payload.goal_type,
+          horizon_months: payload.horizon_months,
+          target_return_pct: payload.target_return_pct,
+        }).then(() => refreshDashboard());
+      },
+      onBotToggle: (botId, enabled) => {
+        const limits = state.botLimits ?? DEFAULT_BOT_LIMITS;
+        const bots = state.dashboard?.bots ?? [];
+        const bot = bots.find((b) => b.id === botId);
+        if (enabled && bot) {
+          const blocked = checkGuardrailAction(limits, bots, {
+            enabling: true,
+            timeframe: String(bot.timeframe ?? "60"),
+            botId,
+          });
+          if (blocked) {
+            showGuardrailNotice(blocked);
+            return;
+          }
+        }
+        void setBotEnabled(botId, enabled)
+          .then((resp) => {
+            if (state.dashboard) {
+              state = {
+                ...state,
+                dashboard: { ...state.dashboard, bots: resp.bots },
+                botLimits: resp.bots
+                  ? syncBotLimits(limits, resp.bots, state.dashboard?.dry_run ?? limits.paper)
+                  : state.botLimits,
+              };
+            }
+            if (enabled) {
+              void runOhlcvWarmupWithUi();
+            }
+            void refreshDashboard();
+          })
+          .catch((err) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            window.alert(`${t("bots.limits.blocked_title")}\n\n${msg}`);
+          });
+      },
+      onCreateBot: () => {
+        void createNewBot();
+      },
+      onApplyTemplate: (templateId) => {
+        void createNewBot(templateId);
+      },
+      onDeleteTemplate: (templateId) => {
+        deleteBotTemplate(templateId);
+        render();
+      },
+      onSaveBotTemplate: (botId, name) => {
+        const detail = state.botDetail;
+        const bot = detail?.bot.id === botId ? detail.bot : state.dashboard?.bots?.find((b) => b.id === botId);
+        if (!bot) return;
+        try {
+          saveBotTemplate(
+            name,
+            {
+              label: bot.label,
+              strategy_id: bot.strategy_id,
+              pair: bot.pair,
+              exchange: String(bot.exchange ?? "kraken"),
+              timeframe: normalizeTimeframe(String(bot.timeframe ?? "60")),
+              equity_mode: (bot.equity_mode as "quote") ?? "quote",
+              equity_input: Number(bot.equity_input ?? bot.equity_usd),
+              ta_params: detail?.strategy_params ?? {},
+            },
+            botId,
+          );
+          window.alert(t("bots.templates.saved"));
+          render();
+        } catch (err) {
+          window.alert(String(err instanceof Error ? err.message : err));
+        }
+      },
+      onBotUpdate: (botId, payload) => {
+        const limits = state.botLimits ?? DEFAULT_BOT_LIMITS;
+        const bots = state.dashboard?.bots ?? [];
+        const existing = bots.find((b) => b.id === botId);
+        const willRun = existing?.enabled ?? state.botDetail?.bot.enabled ?? false;
+        if (willRun) {
+          const blocked = checkGuardrailAction(limits, bots, {
+            enabling: true,
+            timeframe: payload.timeframe,
+            botId,
+          });
+          if (blocked) {
+            showGuardrailNotice(blocked);
+            return;
+          }
+        }
+        saveBotSettings(botId, {
+          label: payload.label,
+          strategy_id: payload.strategy_id,
+          pair: payload.pair,
+          exchange: payload.exchange,
+          timeframe: payload.timeframe,
+          equity_mode: payload.equity_mode,
+          equity_input: payload.equity_input,
+          ta_params: payload.ta_params,
+        });
+        if (isPaperTrading(botDetailContext())) {
+          patchLocalBot(botId, payload);
+          const detail = buildLocalBotDetail(botId, botDetailContext());
+          state = { ...state, botDetail: detail, botDetailLocal: true };
+          render();
+          return;
+        }
+        void updateBot(botId, payload)
+          .then(() => reloadBotDetail(botId))
+          .catch((err) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            window.alert(`${t("bots.limits.blocked_title")}\n\n${msg}`);
+          });
+      },
+      onBotDelete: (botId) => {
+        void deleteBot(botId).then(() => {
+          if (state.selectedBotId === botId) {
+            state = { ...state, selectedBotId: null, botDetail: null };
+            syncNavigationPersist();
+          }
+          void refreshDashboard();
+        });
+      },
+      onBotForceTrade: (botId, side) => {
+        if (isPaperTrading(botDetailContext())) {
+          const bot = state.dashboard?.bots?.find((row) => row.id === botId);
+          if (!bot || !state.botDetail) return;
+          const trade = {
+            pair: bot.pair,
+            side,
+            stake_usd: Math.round(bot.equity_usd * 0.05),
+            pnl_usd: side === "sell" ? 4.5 : 0,
+            created_at: new Date().toISOString(),
+          };
+          state = {
+            ...state,
+            botDetail: {
+              ...state.botDetail,
+              trades: [...state.botDetail.trades, trade],
+              trade_count: state.botDetail.trade_count + 1,
+            },
+            botDetailLocal: true,
+          };
+          render();
+          return;
+        }
+        void forceBotTrade(botId, side).then(() => reloadBotDetail(botId));
+      },
+      onOpenBot: (botId) => {
+        void openBotDetail(botId);
+      },
+      onCloseBot: () => {
+        state = {
+          ...state,
+          selectedBotId: null,
+          botDetail: null,
+          botDetailLoading: false,
+          botDetailError: null,
+          botDetailLocal: false,
+        };
+        syncNavigationPersist();
+        render();
+      },
+      onBotSaveParams: (botId, strategyId, params) => {
+        const bot = state.botDetail?.bot;
+        if (bot) {
+          saveBotSettings(botId, {
+            label: bot.label,
+            strategy_id: strategyId,
+            pair: bot.pair,
+            exchange: String(bot.exchange ?? "kraken"),
+            timeframe: normalizeTimeframe(String(bot.timeframe ?? "60")),
+            equity_mode: (bot.equity_mode as "quote") ?? "quote",
+            equity_input: Number(bot.equity_input ?? bot.equity_usd),
+            ta_params: params,
+          });
+        }
+        if (isPaperTrading(botDetailContext())) {
+          patchLocalBot(botId, { ta_params: params });
+          state = { ...state, strategyParams: params };
+          const detail = buildLocalBotDetail(botId, botDetailContext());
+          state = { ...state, botDetail: { ...detail, strategy_params: params }, botDetailLocal: true };
+          render();
+          return;
+        }
+        void updateBot(botId, {
+          label: state.botDetail?.bot.label ?? "",
+          strategy_id: strategyId,
+          pair: state.botDetail?.bot.pair ?? "BTC/USD",
+          exchange: state.botDetail?.bot.exchange ?? "kraken",
+          equity_usd: state.botDetail?.bot.equity_usd ?? 1000,
+          equity_mode: (state.botDetail?.bot.equity_mode as "quote") ?? "quote",
+          equity_input: state.botDetail?.bot.equity_input,
+          timeframe: state.botDetail?.bot.timeframe ?? "60",
+          ta_params: params,
+        }).then(() => reloadBotDetail(botId));
+      },
+      onBotExchangeChange: (exchangeId, applyPairs) => {
+        void loadPairsForExchange(exchangeId, applyPairs);
+      },
+      onOpenGlossary: () => {
+        const returnView = state.view === "glossary" ? state.glossaryReturnView ?? "dashboard" : state.view;
+        state = { ...state, view: "glossary", glossaryReturnView: returnView };
+        render();
+      },
+      onCloseGlossary: () => {
+        state = {
+          ...state,
+          view: state.glossaryReturnView ?? "dashboard",
+          glossaryReturnView: null,
+        };
+        render();
+      },
+      onBotPairChange: (botId, pair) => {
+        const base = pair.split("/")[0]?.toUpperCase() ?? "BTC";
+        const quote = pair.split("/")[1]?.toUpperCase() ?? "USD";
+        if (isPaperTrading(botDetailContext())) {
+          const detail = state.botDetail;
+          if (!detail || detail.bot.id !== botId) return;
+          state = {
+            ...state,
+            botDetail: {
+              ...detail,
+              equity_limits: {
+                base: { symbol: base, max: 10 },
+                quote: { symbol: quote, max: 50_000 },
+                portfolio_usd: 100_000,
+                paper: true,
+              },
+            },
+          };
+          render();
+          return;
+        }
+        void fetchBotEquityLimits(botId).then((limits) => {
+          if (state.botDetail?.bot.id !== botId) return;
+          state = { ...state, botDetail: { ...state.botDetail!, equity_limits: limits } };
+          render();
+        });
+      },
+      onBotApplyBacktest: (botId, ranking: BacktestRanking) => {
+        const bot = state.botDetail?.bot;
+        if (!bot) return;
+        const strategyId = String(ranking.ta_function ?? ranking.indicator ?? ranking.id ?? bot.strategy_id);
+        const payload = {
+          label: bot.label,
+          strategy_id: strategyId,
+          pair: String(ranking.pair ?? bot.pair),
+          exchange: String(ranking.exchange_id ?? bot.exchange ?? "kraken"),
+          equity_usd: bot.equity_usd,
+          equity_mode: (bot.equity_mode as "quote") ?? "quote",
+          equity_input: Number(bot.equity_input ?? bot.equity_usd),
+          timeframe: String(ranking.timeframe ?? bot.timeframe ?? "60"),
+          ta_params: { ...state.botDetail?.strategy_params },
+        };
+        saveBotSettings(botId, {
+          label: payload.label,
+          strategy_id: payload.strategy_id,
+          pair: payload.pair,
+          exchange: payload.exchange,
+          timeframe: payload.timeframe,
+          equity_mode: payload.equity_mode,
+          equity_input: payload.equity_input,
+          ta_params: payload.ta_params,
+        });
+        if (isPaperTrading(botDetailContext())) {
+          patchLocalBot(botId, payload);
+          const detail = buildLocalBotDetail(botId, botDetailContext());
+          state = { ...state, botDetail: detail, botDetailLocal: true };
+          render();
+          return;
+        }
+        void updateBot(botId, payload).then(() => reloadBotDetail(botId));
+      },
       onOpenInbox: () => {
         state = { ...state, showInbox: true };
         render();
@@ -364,43 +995,6 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       onCloseInbox: () => {
         state = { ...state, showInbox: false };
         render();
-      },
-      onDeployStrategy: (id) => {
-        if (!state.dashboard) return;
-        void saveStrategyParams(id, state.strategyParams).then(() => {
-          state = { ...state, dashboard: { ...state.dashboard!, strategy_id: id } };
-          render();
-        });
-        if (id === "smart-dca" || id === "grid-trading") {
-          void addBot({ label: `${id}-bot`, strategy_id: id, pair: state.dashboard.pair });
-        }
-        void triggerHyperopt(id, state.dashboard.pair);
-        refreshDashboard();
-      },
-      onExportStrategy: (id) => {
-        void exportStrategyTemplate(id).then((r) => {
-          state = { ...state, composerCode: r.json };
-          render();
-        });
-      },
-      onImportStrategy: (json) => {
-        void importStrategyTemplate(json).then(() => refreshDashboard());
-      },
-      onComposeStrategy: (code) => {
-        state = { ...state, composerCode: code };
-        render();
-      },
-      onCloneBacktest: (id) => {
-        void cloneBacktestRun(id, `clone-${id}`).then(() =>
-          fetchBacktestLibrary().then((lib) => {
-            state = { ...state, backtestLibrary: lib.runs };
-            render();
-          }),
-        );
-      },
-      onCompareBacktests: (ids) => {
-        if (ids.length < 2) return;
-        void compareBacktestRuns(ids);
       },
       onExportDownload: (path) => {
         window.open(path, "_blank");
@@ -456,18 +1050,12 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         const amount = state.billingDashboard?.period_rollup.license_fee_usd ?? 0;
         void createBillingLightningInvoice(period, amount);
       },
-      onLeaderboardOptIn: () => {
-        const score = state.portfolioOverview?.net_worth_usd ?? 0;
-        void optInLeaderboard(score).then(() => refreshDashboard());
-      },
-      onBoostMode: () => {
-        void enableBoostMode().then(() => refreshDashboard());
-      },
     });
   }
 
   initTheme();
   subscribeThemeChange(() => render());
+  void Promise.all([ensureTaGlossaryLoaded(), ensureTaLibraryBundled()]).then(() => render());
   render();
   void refreshDashboard();
 

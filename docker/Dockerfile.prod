@@ -1,5 +1,5 @@
 # TrendAlgo API — production image (Sprint 4)
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*

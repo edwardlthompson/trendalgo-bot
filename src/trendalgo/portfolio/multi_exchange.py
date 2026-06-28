@@ -63,6 +63,7 @@ def aggregate_holdings(store: PortfolioStore) -> dict[str, Any]:
         }
         for asset, vals in merged.items()
     ]
+    account_summaries.sort(key=lambda a: float(a["total_usd"]), reverse=True)
     return {
         "accounts": account_summaries,
         "holdings": sorted(holdings, key=lambda h: h["value_usd"], reverse=True),

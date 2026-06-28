@@ -30,7 +30,7 @@ def test_rebalance_goals_basket() -> None:
         1000.0,
     )
     assert suggestions and suggestions[0]["action"] == "buy"
-    goal = goal_progress(1500, {"target_net_worth_usd": 2000, "label": "G"})
+    goal = goal_progress(1500, {"target_net_worth_usd": 2000, "label": "G", "goal_type": "portfolio_growth"})
     assert goal["progress_pct"] == 0.75
     weights = normalize_weights({"1": 60, "2": 40})
     bots = apply_basket_to_bots([{"id": 1, "label": "a", "equity_usd": 100}], weights, 1000)

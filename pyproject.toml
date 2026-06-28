@@ -3,7 +3,7 @@ name = "trendalgo-bot"
 version = "0.2.0"
 description = "Self-hosted crypto trading platform — native CCXT engine, portfolio, scanner, billing"
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "apscheduler>=3.10.0",
     "ccxt>=4.4.0",
@@ -20,6 +20,10 @@ dev = [
     "pytest-cov>=6.0.0",
     "ruff>=0.8.0",
     "pyright>=1.1.390",
+]
+ta = [
+    "TA-Lib>=0.4.28",
+    "pandas-ta-classic>=0.6.52",
 ]
 
 [project.scripts]
@@ -38,7 +42,7 @@ include = ["src/trendalgo", "tests"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -50,11 +54,11 @@ ignore = ["E501"]
 
 [tool.mypy]
 strict = true
-python_version = "3.11"
+python_version = "3.12"
 packages = ["trendalgo"]
 
 [[tool.mypy.overrides]]
-module = ["pandas_ta.*"]
+module = ["pandas_ta_classic.*", "pandas_ta.*", "talib.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -5,6 +5,7 @@ export type ChartTheme = {
   text: string;
   grid: string;
   line: string;
+  secondary: string;
   profit: string;
   loss: string;
 };
@@ -21,6 +22,7 @@ export function chartThemeFromTokens(): ChartTheme {
     text: readVar("--gp-color-on-surface", "currentColor"),
     grid: readVar("--gp-color-outline", "currentColor"),
     line: readVar("--gp-color-primary", "currentColor"),
+    secondary: readVar("--gp-color-secondary", "currentColor"),
     profit: readVar("--gp-color-secondary", "currentColor"),
     loss: readVar("--gp-color-error", "currentColor"),
   };

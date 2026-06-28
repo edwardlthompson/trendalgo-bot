@@ -1,32 +1,28 @@
-import { renderEquityChart, type EquityPoint } from "../charts/EquityChart";
+import { createPortfolioPerformanceChart, type PerformanceRange } from "./PortfolioPerformanceChart";
 import { t } from "../i18n";
 import {
-  createAllocationSection,
   createBotUnifiedSection,
-  createHoldingsTable,
-  createPeriodComparison,
-  createPlBreakdown,
   createPortfolioHero,
   createQuickActions,
   type PortfolioCallbacks,
   type PortfolioOverviewData,
 } from "./PortfolioSections";
-import { createHeatmap } from "./Heatmap";
-import { createTimelineScrubber } from "./TimelineScrubber";
-import { createAccountsPanel, type ExchangeRegistryEntry } from "./AccountsPanel";
+import { createHeatmap, heatmapFromHoldings } from "./Heatmap";
+import { mountHoldingsPanel } from "./HoldingsPanel";
+import { mountAccountsPanel, type ExchangeRegistryEntry } from "./AccountsPanel";
 import { createArbitragePanel } from "./ArbitragePanel";
-import { createComparisonsPanel } from "./ComparisonsPanel";
-import { createGoalsPanel } from "./GoalsPanel";
+import { createGoalsPanel, type GoalSavePayload } from "./GoalsPanel";
 import { createRebalancePanel } from "./RebalancePanel";
-import { createTagsPanel } from "./tags/TagsPanel";
 import { createPlatformPanel, type PlatformData } from "../platform/PlatformPanel";
+import { createHealthWidget, type HealthSnapshot } from "../shell/HealthWidget";
 
 export type PortfolioPanelState = {
   overview: PortfolioOverviewData | null;
-  equityCurve: EquityPoint[];
-  snapshotDates: string[];
+  equityCurve: import("../charts/EquityChart").EquityPoint[];
+  top10Curve: import("../charts/EquityChart").EquityPoint[];
+  top10Comparison: import("../charts/EquityChart").PerformanceComparison | null;
+  performanceRange: PerformanceRange;
   heatmap: Array<{ asset: string; return_pct: number; volatility_pct: number }>;
-  selectedDate: string | null;
   rebalanceSuggestions: Array<{
     asset: string;
     current_pct: number;
@@ -38,15 +34,17 @@ export type PortfolioPanelState = {
   tagFilter: string | null;
   platform: PlatformData | null;
   exchangeRegistry?: ExchangeRegistryEntry[];
+  healthSnapshot?: HealthSnapshot;
 };
 
 export function createPortfolioPanel(
   state: PortfolioPanelState,
   callbacks: PortfolioCallbacks & {
-    onScrubDate: (date: string) => void;
     onTagFilter: (tag: string | null) => void;
     onRebalanceApply: () => void;
     onSyncAll: () => void;
+    onPerformanceRangeChange: (range: PerformanceRange) => void;
+    onSaveGoal: (payload: GoalSavePayload) => void;
   },
 ): { root: HTMLElement; cleanup: () => void } {
   const root = document.createElement("div");
@@ -59,50 +57,49 @@ export function createPortfolioPanel(
     return { root, cleanup: () => chartCleanup() };
   }
 
-  const holdings =
-    state.tagFilter
-      ? state.overview.holdings.filter((h) => (h.tag as string | undefined) === state.tagFilter)
-      : state.overview.holdings;
-
   root.appendChild(createPortfolioHero(state.overview));
-  root.appendChild(createQuickActions(callbacks));
-
-  const syncAllBtn = document.createElement("button");
-  syncAllBtn.type = "button";
-  syncAllBtn.className = "gp-btn-secondary";
-  syncAllBtn.dataset.testid = "portfolio-sync-all";
-  syncAllBtn.textContent = t("portfolio.sync_all");
-  syncAllBtn.addEventListener("click", () => callbacks.onSyncAll());
-  root.appendChild(syncAllBtn);
+  root.appendChild(createQuickActions({ ...callbacks, onSync: callbacks.onSyncAll }));
 
   if (state.overview.accounts?.length) {
-    root.appendChild(createAccountsPanel(state.overview.accounts, state.exchangeRegistry));
-  }
-
-  const chartMount = document.createElement("div");
-  chartMount.className = "gp-chart-mount";
-  chartMount.dataset.testid = "portfolio-equity-chart";
-  root.appendChild(chartMount);
-  if (state.equityCurve.length) {
-    chartCleanup = renderEquityChart(chartMount, state.equityCurve);
-  }
-
-  if (state.snapshotDates.length) {
-    root.appendChild(
-      createTimelineScrubber(state.snapshotDates, state.selectedDate, callbacks.onScrubDate),
+    const accountsMount = document.createElement("div");
+    accountsMount.dataset.testid = "portfolio-accounts-mount";
+    root.appendChild(accountsMount);
+    mountAccountsPanel(
+      accountsMount,
+      state.overview.accounts,
+      state.overview.net_worth_usd,
+      state.exchangeRegistry,
     );
   }
 
-  root.appendChild(
-    createTagsPanel(
-      state.overview.holdings as Array<{ asset: string; tag?: string }>,
-      callbacks.onTagFilter,
-    ),
+  const perfChart = createPortfolioPerformanceChart(
+    state.equityCurve,
+    state.top10Curve,
+    state.top10Comparison,
+    state.performanceRange,
+    callbacks.onPerformanceRangeChange,
   );
-  root.appendChild(createGoalsPanel(state.overview.performance_goal ?? null));
-  if (state.overview.comparisons?.length) {
-    root.appendChild(createComparisonsPanel(state.overview.comparisons));
+  root.appendChild(perfChart.root);
+  chartCleanup = perfChart.cleanup;
+
+  const holdingsMount = document.createElement("div");
+  holdingsMount.dataset.testid = "holdings-table-mount";
+  root.appendChild(holdingsMount);
+  mountHoldingsPanel(holdingsMount, state.overview.holdings, {
+    portfolioTotalUsd: state.overview.net_worth_usd,
+    tagFilter: state.tagFilter,
+    onTagFilter: callbacks.onTagFilter,
+  });
+
+  root.appendChild(createHeatmap(heatmapFromHoldings(state.overview.holdings)));
+
+  if (state.healthSnapshot) {
+    root.appendChild(createHealthWidget(state.healthSnapshot));
   }
+
+  root.appendChild(
+    createGoalsPanel(state.overview.performance_goal ?? null, callbacks.onSaveGoal),
+  );
   root.appendChild(
     createRebalancePanel(state.rebalanceSuggestions, callbacks.onRebalanceApply),
   );
@@ -119,11 +116,6 @@ export function createPortfolioPanel(
     ),
   );
 
-  root.appendChild(createHoldingsTable(holdings));
-  root.appendChild(createAllocationSection(state.overview.allocation));
-  root.appendChild(createPlBreakdown(state.overview.pl_breakdown));
-  root.appendChild(createPeriodComparison(state.overview.periods));
-  root.appendChild(createHeatmap(state.heatmap));
   root.appendChild(createBotUnifiedSection(state.overview.bot));
   if (state.platform) {
     root.appendChild(createPlatformPanel(state.platform));

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -23,7 +24,8 @@ CREATE TABLE IF NOT EXISTS bots (
     equity_usd REAL NOT NULL DEFAULT 1000,
     engine TEXT NOT NULL DEFAULT 'native',
     exchange TEXT NOT NULL DEFAULT 'kraken',
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    timeframe TEXT NOT NULL DEFAULT '1h'
 );
 """
 
@@ -70,24 +72,41 @@ class BotOrchestrator:
             conn.execute("ALTER TABLE bots ADD COLUMN engine TEXT NOT NULL DEFAULT 'native'")
         if "exchange" not in cols:
             conn.execute("ALTER TABLE bots ADD COLUMN exchange TEXT NOT NULL DEFAULT 'kraken'")
+        if "timeframe" not in cols:
+            conn.execute("ALTER TABLE bots ADD COLUMN timeframe TEXT NOT NULL DEFAULT '1h'")
+        if "equity_mode" not in cols:
+            conn.execute("ALTER TABLE bots ADD COLUMN equity_mode TEXT NOT NULL DEFAULT 'manual'")
+        if "equity_input" not in cols:
+            conn.execute("ALTER TABLE bots ADD COLUMN equity_input REAL NOT NULL DEFAULT 1000")
+        if "ta_params" not in cols:
+            conn.execute("ALTER TABLE bots ADD COLUMN ta_params TEXT NOT NULL DEFAULT '{}'")
+
+    def _row_to_bot(self, row: sqlite3.Row) -> dict[str, Any]:
+        ta_raw = row["ta_params"] if "ta_params" in row.keys() else "{}"
+        try:
+            ta_params = json.loads(ta_raw) if ta_raw else {}
+        except json.JSONDecodeError:
+            ta_params = {}
+        return {
+            "id": int(row["id"]),
+            "label": row["label"],
+            "strategy_id": row["strategy_id"],
+            "pair": row["pair"],
+            "enabled": bool(row["enabled"]),
+            "equity_usd": float(row["equity_usd"]),
+            "engine": row["engine"] if "engine" in row.keys() else "native",
+            "exchange": row["exchange"] if "exchange" in row.keys() else "kraken",
+            "timeframe": row["timeframe"] if "timeframe" in row.keys() else "1h",
+            "equity_mode": row["equity_mode"] if "equity_mode" in row.keys() else "manual",
+            "equity_input": float(row["equity_input"]) if "equity_input" in row.keys() else float(row["equity_usd"]),
+            "ta_params": ta_params,
+        }
 
     def list_bots(self) -> list[dict[str, Any]]:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute("SELECT * FROM bots ORDER BY id").fetchall()
-            return [
-                {
-                    "id": int(r["id"]),
-                    "label": r["label"],
-                    "strategy_id": r["strategy_id"],
-                    "pair": r["pair"],
-                    "enabled": bool(r["enabled"]),
-                    "equity_usd": float(r["equity_usd"]),
-                    "engine": r["engine"] if "engine" in r.keys() else "native",
-                    "exchange": r["exchange"] if "exchange" in r.keys() else "kraken",
-                }
-                for r in rows
-            ]
+            return [self._row_to_bot(r) for r in rows]
 
     def add_bot(
         self,
@@ -98,18 +117,89 @@ class BotOrchestrator:
         *,
         engine: str = "native",
         exchange: str = "kraken",
+        timeframe: str = "60",
+        enabled: bool = True,
+        ta_params: dict[str, Any] | None = None,
     ) -> int:
+        params_json = json.dumps(ta_params or {})
         with sqlite3.connect(self.db_path) as conn:
             cur = conn.execute(
-                "INSERT INTO bots (label, strategy_id, pair, enabled, equity_usd, engine, exchange, created_at) "
-                "VALUES (?,?,?,?,?,?,?,?)",
-                (label, strategy_id, pair, 1, equity_usd, engine, exchange, _utc_now()),
+                "INSERT INTO bots (label, strategy_id, pair, enabled, equity_usd, engine, exchange, "
+                "created_at, timeframe, equity_mode, equity_input, ta_params) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    label,
+                    strategy_id,
+                    pair,
+                    int(enabled),
+                    equity_usd,
+                    engine,
+                    exchange,
+                    _utc_now(),
+                    timeframe,
+                    "quote",
+                    equity_usd,
+                    params_json,
+                ),
             )
             return int(cur.lastrowid)
 
     def set_enabled(self, bot_id: int, enabled: bool) -> None:
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("UPDATE bots SET enabled = ? WHERE id = ?", (int(enabled), bot_id))
+
+    def get_bot(self, bot_id: int) -> dict[str, Any] | None:
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute("SELECT * FROM bots WHERE id = ?", (bot_id,)).fetchone()
+            if row is None:
+                return None
+            return self._row_to_bot(row)
+
+    def update_bot(
+        self,
+        bot_id: int,
+        *,
+        label: str,
+        strategy_id: str,
+        pair: str,
+        equity_usd: float,
+        timeframe: str = "1h",
+        exchange: str = "kraken",
+        equity_mode: str = "manual",
+        equity_input: float | None = None,
+        ta_params: dict[str, Any] | None = None,
+    ) -> None:
+        resolved_input = equity_input if equity_input is not None else equity_usd
+        params_json = json.dumps(ta_params or {})
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                UPDATE bots
+                SET label = ?, strategy_id = ?, pair = ?, equity_usd = ?, timeframe = ?,
+                    exchange = ?, equity_mode = ?, equity_input = ?, ta_params = ?
+                WHERE id = ?
+                """,
+                (
+                    label,
+                    strategy_id,
+                    pair,
+                    equity_usd,
+                    timeframe,
+                    exchange,
+                    equity_mode,
+                    resolved_input,
+                    params_json,
+                    bot_id,
+                ),
+            )
+
+    def delete_bot(self, bot_id: int) -> None:
+        with sqlite3.connect(self.db_path) as conn:
+            count = conn.execute("SELECT COUNT(*) FROM bots").fetchone()[0]
+            if count <= 1:
+                raise ValueError("cannot delete the last bot")
+            conn.execute("DELETE FROM bots WHERE id = ?", (bot_id,))
 
     def count_enabled(self) -> int:
         with sqlite3.connect(self.db_path) as conn:

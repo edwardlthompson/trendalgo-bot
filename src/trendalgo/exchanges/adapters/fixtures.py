@@ -7,10 +7,11 @@ from trendalgo.portfolio.db import HoldingRow
 DRY_RUN_HOLDINGS: dict[str, list[HoldingRow]] = {
     "kraken": [
         HoldingRow(
-            asset="USD", quantity=1000.0, price_usd=1.0, value_usd=1000.0, cost_basis_usd=1000.0
-        ),
-        HoldingRow(
-            asset="BTC", quantity=0.01, price_usd=50000.0, value_usd=500.0, cost_basis_usd=450.0
+            asset="BTC",
+            quantity=1.0,
+            price_usd=98_000.0,
+            value_usd=98_000.0,
+            cost_basis_usd=42_000.0,
         ),
     ],
     "binanceus": [

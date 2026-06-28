@@ -14,7 +14,6 @@
 | Trunk-based batches | One feature per BUILD_PLAN row / PR |
 | Definition of Done | Per-feature checklist in BUILD_PLAN |
 | Fast feedback | `scripts/feature-gate.sh` after every AGENT step |
-
 ## Feature container contract
 
 | Layer | Web | Android | Python | Node |
@@ -25,6 +24,7 @@
 | Tests | `src/{feature}/*.test.ts` | `src/test/.../{feature}/` | `tests/{feature}/` | `src/{feature}/*.test.ts` |
 | i18n | `locales/en.json` `{feature}.*` | `strings.xml` `{feature}_*` | help strings module | API error messages / OpenAPI |
 | Wiring only | `appBootstrap.ts` / `main.ts` ≤10 lines/feature | `GoldenPathApp.kt` / `MainActivity` nav hook | `main` imports | `src/index.ts` imports |
+**Web view adapters** (`examples/web/src/{components,dashboard,bots,charts,ohlcv}/`): max **300** lines — enforced by `scripts/check-file-limits.sh`. **Static data** (`examples/web/src/data/`): max **300**. **Pure logic** (Python, non-UI TS): max **150**.
 
 **Lego rule:** Remove a feature by deleting its folder, removing wiring lines and i18n keys, then running `bash scripts/feature-gate.sh`. Golden Path must still pass.
 
@@ -57,6 +57,7 @@ bash scripts/agent-progress.sh status --json
 
 # Set active feature (scopes autofix paths)
 bash scripts/agent-progress.sh set-feature --name settings
+
 ```
 
 **Loop:** gate → `feature-autofix.sh` (mechanical) → re-gate → agent semantic fix from JSON → repeat.
@@ -72,7 +73,6 @@ Progress file: `.cursor/agent-progress.json` (gitignored). See `.cursor-session-
 | `scripts/watch-agent-gates.sh` | Gate loop with autofix + progress tracking |
 | `scripts/agent-progress.sh` | Read/write agent progress JSON |
 | `scripts/smoke-stack.sh` | Alias for `feature-gate.sh` |
-
 **CI-only gates (not in local `feature-gate.sh`):** Playwright e2e, Lighthouse budgets, bundle-size, license compliance — see `.github/workflows/ci.yml`. Use `watch-agent-gates.sh --wait-ci 300` after push.
 
 ## Anti-patterns
@@ -84,7 +84,6 @@ Progress file: `.cursor/agent-progress.json` (gitignored). See `.cursor-session-
 | Skip gate after AGENT step | Regressions compound |
 | Refactor unrelated code during feature work | Scope creep; breaks parallel safety |
 | `git push` without human approval | `destructive-ops.mdc` |
-
 ## Related
 
 - [`docs/FOR_AGENTS.md`](FOR_AGENTS.md) — autonomous loop

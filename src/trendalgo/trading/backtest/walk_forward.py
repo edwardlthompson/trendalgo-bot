@@ -14,15 +14,16 @@ def fixture_candles(
     count: int = 120,
     start: float = 100.0,
     drift: float = -0.003,
+    interval_ms: int = 300_000,
 ) -> list[Candle]:
-    """Deterministic downtrend/uptrend mix for walk-forward folds."""
+    """Deterministic price series for walk-forward folds and TA sweeps."""
     candles: list[Candle] = []
     price = start
     for i in range(count):
         phase_drift = drift if i < count // 2 else abs(drift) * 0.8
         candles.append(
             Candle(
-                timestamp_ms=i * 300_000,
+                timestamp_ms=i * interval_ms,
                 open=price,
                 high=price * 1.005,
                 low=price * 0.995,

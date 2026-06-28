@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from trendalgo.strategies.runtime.base import BaseNativeStrategy
 from trendalgo.strategies.runtime.grid_trading import GridTradingStrategy
+from trendalgo.strategies.runtime.macd_kraken_1h import MacdKraken1hStrategy
 from trendalgo.strategies.runtime.multi_tf import MultiTFExampleStrategy
 from trendalgo.strategies.runtime.smart_dca import SmartDCAStrategy
 
@@ -13,6 +14,7 @@ _ALIASES: dict[str, type[BaseNativeStrategy]] = {
     "multi-tf-ta": MultiTFExampleStrategy,
     "smart-dca": SmartDCAStrategy,
     "grid-trading": GridTradingStrategy,
+    "macd-kraken-1h": MacdKraken1hStrategy,
 }
 
 

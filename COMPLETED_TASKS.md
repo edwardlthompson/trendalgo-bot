@@ -2,30 +2,43 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint S26 — Gate alignment (2026-06-26)
 
+- **Critique:** View cap bump is for UI/DOM adapters only — do not raise Python logic limit; split any file still over 300 in a follow-up row.
 
+- S26.1 ✅ [AGENT] **File-limit gate alignment** — reclassify web `dashboard/`, `bots/`, `charts/`, `ohlcv/` as view adapters (300); static `data/` cap 300; keep Python/TS logic at 150 (R-036)
 
+## Sprint S25 — TA cache epic (2026-06-26)
 
+- **Critique:** Incremental tail must match full recompute (golden tests); per-fingerprint locks prevent torn splices; config/OHLCV invalidation before any Tier 2 cache sharing; benchmark before guardrail bump.
 
+- S25.1 ✅ [AGENT] **Signal cache + real OHLCV sim path** — `ta/cache.py`, `bots/chart.py`, `sim_trades.py`; golden + concurrency tests (R2, R5, R7)
+- S25.2 ✅ [AGENT] **Invalidation + observability** — cascade invalidation; LRU 256; `GET /bots/ta-cache/stats`; `limits_payload` + Why? copy
+- S25.3 ✅ [AGENT/HUMAN] **Benchmark + limits decision** — `scripts/benchmark-ta-cache.py`; `DECISION_LOG.md`; caps unchanged (diverse fleet TBD)
+- S25.4 ✅ [AGENT] **DataFrame cache (Tier 2A)** — `OhlcvFrameCache` share df per pair+tf+signature
+- S25.5 ✅ [AGENT] **Indicator cache (Tier 2B)** — `IndicatorOutputCache`; fix `ma_cross` double compute
+- S25.6 ✅ [AGENT] **TA pre-warm hook (Tier 2D)** — after OHLCV warmup, background signal precompute
+- S25.7 ✅ [AGENT] **Engine hot-path (Tier 2C)** — trim bars, numpy crosses, pandas-ta copy policy
+- S25.8 ✅ [AGENT] **Parallel pre-warm (Tier 2E, optional)** — `TRENDALGO_TA_PARALLEL=0` default off
 
+## Sprint R-Audit-5 — CI green follow-up (2026-06-26)
 
+- **Exit:** Playwright axe + offline e2e green locally; KB-013 for Windows gate fallbacks.
 
-
+- 1. ✅ [AGENT] Timeline scrubber axe label + heatmap contrast (F-049, F-055)
+- 2. ✅ [AGENT] Offline e2e stabilization + portfolio wait timeouts (F-050)
+- 3. ✅ [AGENT] KB-013 audit notes + sw.js API bypass (F-054)
 
 ## Sprint R-Audit-4 — post DEX program doc sync (2026-06-26)
 
-
 - **Exit:** Secondary docs reflect S21–S24 completion; KB-011 for Windows gate fallbacks.
-
 
 - 1. ✅ [AGENT] README — DEX capabilities + roadmap S21–S24 (F-041, F-044, F-045)
 - 2. ✅ [AGENT] POST_DELIVERY + ROADMAP_PUBLIC Phase 8 (F-042, F-043)
 - 3. ✅ [AGENT] BUILD_PLAN post-delivery + HUMAN_BACKLOG H-035/H-036 (F-046, F-047)
 - 4. ✅ [AGENT] KB-011 audit notes + test count sync (F-048)
 
-
 ## Sprint 24 — Live swaps + ops (2026-06-26)
-
 
 - **Exit:** Per-venue go-live with hard gate.
 
@@ -38,7 +51,6 @@
 
 ## Sprint 23 — Dry-run swaps (2026-06-26)
 
-
 - **Exit:** Swap simulation only — no mainnet broadcast. Covered by **H-035** program approval.
 
 - 1. ✅ [AGENT] `dex/runner/dry_run.py`
@@ -48,7 +60,6 @@
 
 ## Sprint 22 — Portfolio plugins (2026-06-26)
 
-
 - **Exit:** DEX positions surfaced in portfolio API.
 
 - 1. ✅ [AGENT] Uniswap V3 LP positions (EVM chains)
@@ -57,7 +68,6 @@
 - 4. ✅ [AGENT] Tests + LP L2
 
 ## Sprint 21 — Foundation (EVM + Solana wallet read) (2026-06-26)
-
 
 - **Exit:** Multi-chain wallet balances via plugin registry; refactor S12 `onchain.py` stub.
 
@@ -955,4 +965,3 @@ Post-M19 review: close prompt/read-order gaps and enforce CURSOR_MODES in bootst
 - ✅ [AGENT] Android About parity: DonationsLoader, ReleaseTagFetcher, GoldenPathApp composition root
 - ✅ [AGENT] Opt-in update checks default `off`; About interval UI removed (Settings toggle only)
 - ✅ [AGENT] CI/release: CodeQL java-kotlin, node SBOM + health-check audit
-

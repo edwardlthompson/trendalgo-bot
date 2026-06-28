@@ -1,5 +1,5 @@
-"""Backtest utilities."""
+"""Backtest engine helpers."""
 
-from trendalgo.backtest.library import BacktestLibrary
+from __future__ import annotations
 
-__all__ = ["BacktestLibrary"]
+__all__: list[str] = []

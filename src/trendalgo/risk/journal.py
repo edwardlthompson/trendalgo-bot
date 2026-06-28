@@ -140,3 +140,26 @@ class TradeJournal:
                 (limit,),
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def list_trades_for_bot(self, bot_id: int, limit: int = 500) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT pair, side, stake_usd, pnl_usd, signal_source, rationale, "
+                "exchange_trade_id, exchange, bot_id, created_at "
+                "FROM trades WHERE bot_id = ? ORDER BY id ASC LIMIT ?",
+                (bot_id, limit),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def pnl_for_bot(self, bot_id: int) -> dict[str, float | int]:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(pnl_usd), 0) AS pnl_usd, COUNT(*) AS trade_count "
+                "FROM trades WHERE bot_id = ?",
+                (bot_id,),
+            ).fetchone()
+        return {
+            "pnl_usd": float(row["pnl_usd"]) if row else 0.0,
+            "trade_count": int(row["trade_count"]) if row else 0,
+        }

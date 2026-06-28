@@ -10,17 +10,19 @@ test("renders TrendAlgo heading", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".gp-title")).toHaveText("TrendAlgo Bot");
   await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
-  await expect(page.getByTestId("portfolio-panel")).toBeVisible();
+  await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
 });
 
 test("passes accessibility audit", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });
 
 test("passes accessibility audit with settings panel open", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
   await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.getByTestId("settings-panel")).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
@@ -29,6 +31,7 @@ test("passes accessibility audit with settings panel open", async ({ page }) => 
 
 test("passes accessibility audit with about panel open", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
   await page.getByRole("button", { name: "About" }).click();
   await expect(page.getByTestId("about-panel")).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
@@ -205,16 +208,54 @@ test.describe("home update banner", () => {
   });
 });
 
-test.describe("service worker cache", () => {
-  test.use({ serviceWorkers: "allow" });
+test.describe("portfolio performance chart", () => {
+  const ranges = ["1y", "6m", "3m", "1m", "14d", "7d", "24h"] as const;
 
-  test("shows offline shell when network unavailable", async ({ page, context }) => {
+  test("fills chart host width for every time range", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/");
+    await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("performance-range-1y")).toBeVisible({ timeout: 15_000 });
+
+    for (const range of ranges) {
+      if (range !== "1y") {
+        const response = page.waitForResponse(
+          (resp) => resp.url().includes(`/portfolio/performance?range=${range}`) && resp.ok(),
+        );
+        await page.getByTestId(`performance-range-${range}`).click();
+        await response;
+      }
+      await expect(page.getByTestId(`performance-range-${range}`)).toHaveClass(/gp-range-btn-active/);
+      await page.waitForFunction(() => {
+        const host = document.querySelector("[data-testid=portfolio-equity-chart]");
+        const table = host?.querySelector("table");
+        return (table?.clientWidth ?? 0) > 280;
+      });
+
+      const widths = await page.evaluate(() => {
+        const host = document.querySelector("[data-testid=portfolio-equity-chart]");
+        const table = host?.querySelector("table");
+        return {
+          host: host?.clientWidth ?? 0,
+          table: table?.clientWidth ?? 0,
+        };
+      });
+
+      expect(widths.host).toBeGreaterThan(280);
+      expect(widths.table).toBeGreaterThanOrEqual(Math.floor(widths.host * 0.95));
+    }
+  });
+});
+
+test.describe("offline shell", () => {
+  test("shows offline status when connectivity drops", async ({ page, context }) => {
     await mockTrendAlgoApi(page);
     await page.goto("/");
     await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
+    await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
     await context.setOffline(true);
-    await page.reload();
-    await expect(page.getByTestId("status")).toContainText(/Offline|API unreachable|cached/i);
+    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+    await expect(page.getByTestId("status")).toContainText(/Offline|cached/i, { timeout: 5_000 });
     await expect(page.getByTestId("portfolio-panel")).toBeVisible();
   });
 });

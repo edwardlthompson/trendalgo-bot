@@ -56,20 +56,30 @@ class GenericCcxtPortfolioAdapter:
         store.set_account_meta(account_id, "spot")
 
         if dry_run and not self.entry.has_api_keys():
-            holdings = self._normalize_holdings(
-                DRY_RUN_HOLDINGS.get(
-                    self.exchange_id,
-                    [
-                        HoldingRow(
-                            asset="USD",
-                            quantity=100.0,
-                            price_usd=1.0,
-                            value_usd=100.0,
-                            cost_basis_usd=100.0,
-                        ),
-                    ],
+            from trendalgo.portfolio.stress_fixture import stress_holdings_for_exchange
+
+            stress = stress_holdings_for_exchange(self.exchange_id)
+            if stress:
+                holdings = self._normalize_holdings(stress)
+            elif self.exchange_id == "kraken":
+                from trendalgo.portfolio.performance import current_btc_holding
+
+                holdings = self._normalize_holdings([current_btc_holding()])
+            else:
+                holdings = self._normalize_holdings(
+                    DRY_RUN_HOLDINGS.get(
+                        self.exchange_id,
+                        [
+                            HoldingRow(
+                                asset="USD",
+                                quantity=100.0,
+                                price_usd=1.0,
+                                value_usd=100.0,
+                                cost_basis_usd=100.0,
+                            ),
+                        ],
+                    )
                 )
-            )
             total = sum(h.value_usd for h in holdings)
             snap_id = store.insert_snapshot(
                 account_id, total, holdings, source=f"dry-run-{self.exchange_id}"

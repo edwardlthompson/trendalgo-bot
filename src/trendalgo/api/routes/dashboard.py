@@ -1,11 +1,18 @@
+import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Request
 
 from trendalgo.api.risk import get_risk_status
 from trendalgo.billing.license_gate import check_license_gate
+from trendalgo.bots.summary import enrich_bots_with_market
 
 router = APIRouter()
+
+
+def _data_dir() -> Path:
+    return Path(os.environ.get("TRENDALGO_DATA_DIR", "data"))
 
 
 @router.get("/dashboard")
@@ -26,7 +33,11 @@ def dashboard(request: Request) -> dict[str, Any]:
         "open_trades": state.bot.open_trades,
         "open_orders": state.bot.open_orders,
         "bot_count": bot_count,
-        "bots": state.bot_orchestrator.list_bots(),
+        "bots": enrich_bots_with_market(
+            state.bot_orchestrator.list_bots(),
+            state.trade_journal,
+            _data_dir(),
+        ),
         "strategy_id": state.bot.strategy_id,
         "pair": state.bot.pair,
         "risk": risk,

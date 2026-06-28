@@ -1,11 +1,12 @@
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 
+from trendalgo.portfolio.multi_exchange import sync_all_exchanges
 from trendalgo.portfolio.overview import build_portfolio_overview, heatmap_rows
+from trendalgo.portfolio.performance import build_performance_payload
 from trendalgo.portfolio.snapshots import capture_portfolio_snapshot, run_daily_notification
-from trendalgo.portfolio.sync import sync_kraken_balances
 
 router = APIRouter()
 
@@ -13,6 +14,28 @@ router = APIRouter()
 @router.get("/portfolio/overview")
 def portfolio_overview(request: Request) -> dict[str, Any]:
     return build_portfolio_overview(request.app.state.trendalgo)
+
+
+@router.get("/portfolio/performance")
+def portfolio_performance(
+    request: Request,
+    range: str = Query("1y", alias="range", pattern="^(1y|6m|3m|1m|14d|7d|24h)$"),
+) -> dict[str, Any]:
+    state = request.app.state.trendalgo
+    store = state.portfolio_store
+    account_id = store.get_or_create_account("kraken", "default")
+    try:
+        payload = build_performance_payload(
+            store,
+            account_id,
+            range,
+            dry_run=state.bot.dry_run,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    payload["asset"] = "BTC"
+    payload["quantity"] = 1.0
+    return payload
 
 
 @router.get("/portfolio/summary")
@@ -48,8 +71,8 @@ def portfolio_export(request: Request) -> PlainTextResponse:
 @router.post("/portfolio/sync")
 def portfolio_sync(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
-    result = sync_kraken_balances(state.portfolio_store, dry_run=state.bot.dry_run)
-    state.log(f"portfolio sync: {result.get('mode')} total=${result.get('total_usd')}")
+    result = sync_all_exchanges(state.portfolio_store, dry_run=state.bot.dry_run)
+    state.log(f"portfolio sync-all: {result.get('exchange_count')} venues mode={result.get('mode')}")
     return result
 
 

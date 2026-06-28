@@ -15,15 +15,21 @@ export function createTimelineScrubber(
   input.max = String(Math.max(dates.length - 1, 0));
   input.value = String(selected ? dates.indexOf(selected) : 0);
   input.className = "gp-timeline-range";
+  input.setAttribute("aria-label", t("portfolio.timeline_scrub"));
   const label = document.createElement("p");
+  label.id = "timeline-date-label";
   label.dataset.testid = "timeline-date";
   const idx = Number(input.value);
-  label.textContent = dates[idx] ?? t("portfolio.timeline_empty");
+  const dateLabel = dates[idx] ?? t("portfolio.timeline_empty");
+  label.textContent = dateLabel;
+  input.setAttribute("aria-valuetext", dateLabel);
+  input.setAttribute("aria-labelledby", "timeline-date-label");
   input.addEventListener("input", () => {
     const i = Number(input.value);
     const date = dates[i];
     if (date) {
       label.textContent = date;
+      input.setAttribute("aria-valuetext", date);
       onSelect(date);
     }
   });

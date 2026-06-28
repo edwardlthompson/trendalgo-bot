@@ -5,6 +5,9 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 from trendalgo.schemas.backtest_result import BacktestResult, BacktestTradeSummary
+from trendalgo.strategies.runtime.loader import load_strategy
+from trendalgo.trading.backtest.native_adapter import run_native_backtest
+from trendalgo.trading.backtest.walk_forward import fixture_candles
 
 
 def run_sample_backtest(
@@ -51,4 +54,31 @@ def run_sample_backtest(
         max_drawdown=0.018,
         trades=trades,
         metadata={"engine": "sample", "dry_run": True},
+    )
+
+
+def run_native_backtest_for_strategy(
+    *,
+    strategy_id: str,
+    pair: str,
+    timeframe: str,
+    timerange: str,
+    exchange_id: str = "kraken",
+) -> BacktestResult:
+    """Native engine backtest using deterministic BTC-like fixture candles."""
+    strategy = load_strategy(strategy_id)
+    interval_ms = 3_600_000 if timeframe == "1h" else 300_000
+    start = 50_000.0 if "BTC" in pair.upper() else 100.0
+    candles = fixture_candles(
+        count=200,
+        start=start,
+        drift=0.00025,
+        interval_ms=interval_ms,
+    )
+    return run_native_backtest(
+        strategy,
+        candles,
+        pair=pair,
+        exchange_id=exchange_id,
+        timerange=timerange,
     )

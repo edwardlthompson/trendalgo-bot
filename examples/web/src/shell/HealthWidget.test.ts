@@ -13,7 +13,7 @@ describe("createHealthWidget", () => {
       paused: false,
     });
     expect(el.dataset.testid).toBe("health-widget");
-    expect(el.textContent).toContain("$1000.00");
+    expect(el.textContent).toContain("$1,000.00");
     expect(el.textContent).toContain("5.0%");
   });
 });

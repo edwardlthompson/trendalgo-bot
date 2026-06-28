@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from trendalgo.backtest.sharing import BacktestShareStore
 from trendalgo.export.tax import fifo_tax_rows, tax_csv
 from trendalgo.optimize.heatmap import hyperopt_heatmap_grid
 from trendalgo.optimize.monte_carlo import monte_carlo_trade_shuffle
@@ -36,14 +35,11 @@ def test_tax_fifo_csv() -> None:
     assert "realized_gl_usd" in csv_text
 
 
-def test_correlation_and_share(tmp_path: Path) -> None:
+def test_correlation_and_diversification() -> None:
     matrix = correlation_matrix([{"asset": "BTC", "value_usd": 100}])
     assert matrix["assets"]
     tips = diversification_suggestions([{"asset": "BTC", "pct": 0.8}])
     assert tips
-    store = BacktestShareStore(tmp_path / "shares.db")
-    token = store.create_token({"profit": 10})
-    assert store.get(token)["profit"] == 10
 
 
 def test_exit_rules_and_heatmap() -> None:

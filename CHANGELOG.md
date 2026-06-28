@@ -22,6 +22,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.2.0...v0.3.0) (2026-06-26)
+
+S27 TA fleet backtest, exchange fee sync from public pages, bot dashboard overhaul, and backtest library removal.
+
+### Added
+
+- **S27 TA fleet backtest:** 3-pass flow (scan → optimize top 10 → TSL sweep), `fleet_store.py`, fleet history API + UI
+- **Exchange fees:** SQLite store, public page sync (no trading API), monthly scheduler, `GET /exchanges/fees`
+- Bot detail page, TradingView charts, searchable pickers, portfolio performance chart, stress portfolio fixture
+- TA catalog (307 strategies), pandas-ta engine, MACD Kraken 1h strategy, icon registry
+- E2E: bot-create, bot-settings-pickers, live-smoke specs
+
+### Changed
+
+- Binance.US fees updated to 0.01% taker / 0% maker (verified from public fee page)
+- OKX/Gemini fee seeds aligned with live exchange schedules
+- Removed redundant backtest library (replaced by fleet history)
+- Kraken dry-run portfolio uses 1 BTC fixture for performance curves
+
+### Fixed
+
+- Research Tools empty `{}` JSON panel when no results
+- Test isolation for stress portfolio env (`TRENDALGO_STRESS_PORTFOLIO`)
+- Portfolio sync API test matches multi-exchange response shape
+
 ## [0.2.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.1.0...v0.2.0) (2026-06-26)
 
 Exchange program S19–S20 and DEX program S21–S24 — native multi-venue ops plus venue plugin engine.

@@ -84,3 +84,12 @@ register(
         kind="multi-tf",
     )
 )
+register(
+    StrategyTemplate(
+        id="macd-kraken-1h",
+        module_path=f"{_RUNTIME}/macd_kraken_1h.py",
+        description="MACD crossover bot — Kraken BTC/USD 1h (TA-Lib MACD semantics)",
+        timeframes=("1h",),
+        kind="macd",
+    )
+)

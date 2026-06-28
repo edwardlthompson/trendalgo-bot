@@ -1,19 +1,111 @@
-import type { BacktestPayload } from "../api/client";
-import { renderEquityChart } from "../charts/EquityChart";
-import { createBacktestLibraryPanel, type LibraryRun } from "./library/BacktestLibrary";
+import type {
+  ExchangeFeeSchedule,
+  FleetActiveSnapshot,
+  FleetHistoryEntry,
+  FleetLatestPayload,
+  FleetResultRow,
+} from "../api/client";
+import type { ExchangeRegistryEntry } from "../portfolio/AccountsPanel";
+import { createFleetHistoryPanel } from "./FleetHistoryPanel";
+import { formatUsd } from "../portfolio/formatUsd";
 import { t } from "../i18n";
+
+export type FleetFilterMode = "all" | "timeframe" | "strategy";
+
+export type BacktestPanelProps = {
+  loading: boolean;
+  exchangeId: string;
+  pair: string;
+  stakeUsd: number;
+  exchanges: ExchangeRegistryEntry[];
+  pairs: string[];
+  feeSchedule: ExchangeFeeSchedule | null;
+  active: FleetActiveSnapshot | null;
+  results: FleetLatestPayload | null;
+  historyRuns: FleetHistoryEntry[];
+  selectedHistoryJobId: string | null;
+  filterMode: FleetFilterMode;
+  filterTimeframe: string;
+};
 
 export type BacktestPanelCallbacks = {
   onRun: () => void;
-  onCloneRun?: (id: number) => void;
-  onCompareRuns?: (ids: number[]) => void;
+  onExchangeChange: (exchangeId: string) => void;
+  onPairChange: (pair: string) => void;
+  onStakeChange: (stakeUsd: number) => void;
+  onFilterChange: (mode: FleetFilterMode, timeframe?: string) => void;
+  onLoadHistoryRun: (jobId: string) => void;
 };
 
+function formatPct(rate: number): string {
+  return `${(rate * 100).toFixed(0)}%`;
+}
+
+function formatDuration(seconds: number | null | undefined): string {
+  if (seconds == null || seconds < 0) return "—";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function paramsLabel(params: Record<string, unknown> | undefined): string {
+  if (!params || !Object.keys(params).length) return "—";
+  return Object.entries(params)
+    .map(([k, v]) => `${k}=${String(v)}`)
+    .join(", ");
+}
+
+function tslLabel(row: FleetResultRow): string {
+  const pct = row.optimal_tsl_pct ?? row.trailing_stop_pct ?? 0;
+  return formatPct(Number(pct));
+}
+
+function phaseLabel(phase: string | undefined): string {
+  if (phase === "optimize_params") return t("backtest.phase.optimize");
+  if (phase === "optimize_tsl") return t("backtest.phase.optimize_tsl");
+  return t("backtest.phase.pass1");
+}
+
+function renderResultsTable(rows: FleetResultRow[], title: string): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "gp-fleet-results-block";
+  wrap.innerHTML = `<h3 class="gp-panel-subtitle">${title}</h3>`;
+  const table = document.createElement("table");
+  table.className = "gp-data-table";
+  table.innerHTML = `<thead><tr>
+    <th>${t("backtest.col.rank")}</th>
+    <th>${t("backtest.col.strategy")}</th>
+    <th>${t("backtest.col.timeframe")}</th>
+    <th>${t("backtest.col.net")}</th>
+    <th>${t("backtest.col.trades")}</th>
+    <th>${t("backtest.col.tsl")}</th>
+    <th>${t("backtest.col.params")}</th>
+  </tr></thead>`;
+  const tbody = document.createElement("tbody");
+  for (const [idx, row] of rows.entries()) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.rank ?? idx + 1}</td>
+      <td>${row.strategy_id}${row.tsl_optimized || row.optimized ? " *" : ""}</td>
+      <td>${row.timeframe}</td>
+      <td>${formatUsd(row.net_profit, { signed: true })}</td>
+      <td>${row.trades}</td>
+      <td>${tslLabel(row)}</td>
+      <td><code class="gp-params-cell">${paramsLabel(row.params as Record<string, unknown>)}</code></td>
+    `;
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  return wrap;
+}
+
 export function createBacktestPanel(
-  payload: BacktestPayload | null,
-  loading: boolean,
+  props: BacktestPanelProps,
   callbacks: BacktestPanelCallbacks,
-  libraryRuns: LibraryRun[] = [],
 ): { root: HTMLElement; cleanup: () => void } {
   const root = document.createElement("section");
   root.className = "gp-panel";
@@ -25,84 +117,180 @@ export function createBacktestPanel(
   const runBtn = document.createElement("button");
   runBtn.type = "button";
   runBtn.className = "gp-btn-primary";
-  runBtn.textContent = loading ? t("backtest.running") : t("backtest.run");
-  runBtn.disabled = loading;
+  runBtn.textContent = props.loading ? t("backtest.running") : t("backtest.run");
+  runBtn.disabled = props.loading;
   runBtn.dataset.testid = "backtest-run";
   runBtn.addEventListener("click", () => callbacks.onRun());
   header.appendChild(runBtn);
   root.appendChild(header);
 
-  const toggles = document.createElement("div");
-  toggles.className = "gp-backtest-toggles";
-  toggles.dataset.testid = "backtest-toggles";
-  toggles.innerHTML = `
-    <label><input type="checkbox" data-slippage /> ${t("backtest.slippage")}</label>
-    <label><input type="checkbox" data-fees /> ${t("backtest.fees")}</label>
-  `;
-  root.appendChild(toggles);
+  const form = document.createElement("div");
+  form.className = "gp-form-grid";
+  form.dataset.testid = "backtest-fleet-form";
+
+  const exchangeLabel = document.createElement("label");
+  exchangeLabel.textContent = t("backtest.exchange");
+  const exchangeSelect = document.createElement("select");
+  exchangeSelect.dataset.testid = "backtest-exchange";
+  const registry = props.exchanges.length
+    ? props.exchanges
+    : [{ id: "kraken", brand: "Kraken", tier: "1", portfolio_enabled: true, trading_enabled: true }];
+  for (const ex of registry) {
+    const opt = document.createElement("option");
+    opt.value = ex.id;
+    opt.textContent = ex.brand;
+    opt.selected = ex.id === props.exchangeId;
+    exchangeSelect.appendChild(opt);
+  }
+  exchangeSelect.addEventListener("change", () => callbacks.onExchangeChange(exchangeSelect.value));
+  exchangeLabel.appendChild(exchangeSelect);
+  form.appendChild(exchangeLabel);
+
+  const pairLabel = document.createElement("label");
+  pairLabel.textContent = t("backtest.pair");
+  const pairSelect = document.createElement("select");
+  pairSelect.dataset.testid = "backtest-pair";
+  for (const p of props.pairs) {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = p;
+    opt.selected = p === props.pair;
+    pairSelect.appendChild(opt);
+  }
+  pairSelect.addEventListener("change", () => callbacks.onPairChange(pairSelect.value));
+  pairLabel.appendChild(pairSelect);
+  form.appendChild(pairLabel);
+
+  const stakeLabel = document.createElement("label");
+  stakeLabel.textContent = t("backtest.stake");
+  const stakeInput = document.createElement("input");
+  stakeInput.type = "number";
+  stakeInput.min = "1";
+  stakeInput.step = "100";
+  stakeInput.value = String(props.stakeUsd);
+  stakeInput.dataset.testid = "backtest-stake";
+  stakeInput.addEventListener("change", () => {
+    const val = Number(stakeInput.value);
+    if (Number.isFinite(val) && val > 0) callbacks.onStakeChange(val);
+  });
+  stakeLabel.appendChild(stakeInput);
+  form.appendChild(stakeLabel);
+  root.appendChild(form);
+
+  const feeLine = document.createElement("p");
+  feeLine.className = "gp-body gp-muted";
+  feeLine.dataset.testid = "backtest-fee-line";
+  const fee = props.feeSchedule;
+  if (fee) {
+    feeLine.textContent = `${t("backtest.fees")}: ${fee.exchange_id} ${t("backtest.taker")} ${(fee.taker_pct * 100).toFixed(2)}% (${t("backtest.retail_default")})`;
+  } else {
+    feeLine.textContent = t("backtest.fee_loading");
+  }
+  root.appendChild(feeLine);
+
+  root.appendChild(Object.assign(document.createElement("p"), {
+    className: "gp-body gp-muted",
+    textContent: t("backtest.uniform_window_hint"),
+  }));
+
+  root.appendChild(Object.assign(document.createElement("p"), {
+    className: "gp-body gp-muted",
+    textContent: t("backtest.tsl_auto_hint"),
+  }));
 
   root.appendChild(
-    createBacktestLibraryPanel(
-      libraryRuns,
-      (id) => callbacks.onCloneRun?.(id),
-      (ids) => callbacks.onCompareRuns?.(ids),
+    createFleetHistoryPanel(props.historyRuns, props.selectedHistoryJobId, (jobId) =>
+      callbacks.onLoadHistoryRun(jobId),
     ),
   );
 
-  let cleanupChart = (): void => {};
-
-  if (payload?.result) {
-    const m = payload.metrics ?? {};
-    const stats = document.createElement("dl");
-    stats.className = "gp-stat-grid";
-    stats.dataset.testid = "backtest-metrics";
-    stats.innerHTML = `
-      <div><dt>${t("metrics.profit")}</dt><dd>$${payload.result.profit_total.toFixed(2)}</dd></div>
-      <div><dt>${t("metrics.sharpe")}</dt><dd>${(m.sharpe_ratio ?? 0).toFixed(2)}</dd></div>
-      <div><dt>${t("metrics.sortino")}</dt><dd>${(m.sortino_ratio ?? 0).toFixed(2)}</dd></div>
-      <div><dt>${t("metrics.calmar")}</dt><dd>${(m.calmar_ratio ?? 0).toFixed(2)}</dd></div>
-      <div><dt>${t("metrics.win_rate")}</dt><dd>${(((m.win_rate ?? 0) as number) * 100).toFixed(0)}%</dd></div>
-      <div><dt>${t("metrics.max_dd")}</dt><dd>${(((m.max_drawdown ?? 0) as number) * 100).toFixed(1)}%</dd></div>
+  const active = props.active;
+  if (props.loading || active?.status === "running") {
+    const progressWrap = document.createElement("div");
+    progressWrap.dataset.testid = "backtest-fleet-progress";
+    const pct = active?.progress_pct ?? 0;
+    progressWrap.innerHTML = `
+      <div class="gp-progress-bar" role="progressbar" aria-valuenow="${pct}">
+        <div class="gp-progress-fill" style="width:${pct}%"></div>
+      </div>
+      <p class="gp-body"><strong>${phaseLabel(active?.phase)}</strong> · ${pct}% · ${active?.completed ?? 0}/${active?.total_combinations ?? 0}</p>
+      <p class="gp-body">${t("backtest.elapsed")}: ${formatDuration(active?.elapsed_seconds)} · ${t("backtest.eta")}: ${formatDuration(active?.eta_seconds ?? null)}</p>
+      <p class="gp-body gp-muted">${t("backtest.current")}: ${active?.current_test || "—"}</p>
     `;
-    root.appendChild(stats);
+    root.appendChild(progressWrap);
 
-    const chartHost = document.createElement("div");
-    chartHost.className = "gp-chart-host";
-    chartHost.dataset.testid = "equity-chart";
-    root.appendChild(chartHost);
-    cleanupChart = renderEquityChart(chartHost, payload.equity_curve);
-
-    const timeline = document.createElement("ul");
-    timeline.className = "gp-trade-timeline";
-    timeline.dataset.testid = "trade-timeline";
-    for (const trade of payload.result.trades) {
-      const li = document.createElement("li");
-      const pnl = Number(trade.profit_abs ?? 0);
-      li.textContent = `${String(trade.pair)} · ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}`;
-      timeline.appendChild(li);
+    if (active?.recent_tests?.length) {
+      const testLog = document.createElement("div");
+      testLog.className = "gp-fleet-test-log";
+      testLog.dataset.testid = "backtest-fleet-test-log";
+      testLog.innerHTML = `<h4 class="gp-panel-subtitle">${t("backtest.test_log")}</h4>`;
+      const list = document.createElement("ul");
+      list.className = "gp-log-list";
+      for (const entry of [...active.recent_tests].reverse().slice(0, 20)) {
+        const li = document.createElement("li");
+        const net =
+          entry.net_profit != null ? formatUsd(Number(entry.net_profit), { signed: true }) : entry.status;
+        li.textContent = `[${entry.phase ?? "pass1"}] ${entry.strategy_id} @ ${entry.timeframe} → ${net}`;
+        list.appendChild(li);
+      }
+      testLog.appendChild(list);
+      root.appendChild(testLog);
     }
-    root.appendChild(timeline);
 
-    if (payload.attribution) {
-      const attr = document.createElement("dl");
-      attr.className = "gp-stat-grid";
-      attr.dataset.testid = "backtest-attribution";
-      const a = payload.attribution;
-      attr.innerHTML = `
-        <div><dt>LTS</dt><dd>$${Number(a.lts_contribution_usd ?? 0).toFixed(2)}</dd></div>
-        <div><dt>Scanner</dt><dd>$${Number(a.scanner_contribution_usd ?? 0).toFixed(2)}</dd></div>
-      `;
-      root.appendChild(attr);
+    if (active?.messages?.length) {
+      const log = document.createElement("ul");
+      log.className = "gp-log-list gp-fleet-verbose-log";
+      log.dataset.testid = "backtest-fleet-messages";
+      for (const msg of active.messages.slice(-12)) {
+        const li = document.createElement("li");
+        li.textContent = msg;
+        log.appendChild(li);
+      }
+      root.appendChild(log);
     }
-  } else {
+  }
+
+  const summary = props.results?.summary ?? active?.summary;
+  const buyHold = summary?.buy_and_hold as FleetResultRow | undefined;
+  if (buyHold) {
+    const bh = document.createElement("div");
+    bh.className = "gp-fleet-baseline";
+    bh.dataset.testid = "backtest-buy-hold";
+    bh.innerHTML = `<p class="gp-body"><strong>${t("backtest.buy_hold")}</strong>: ${formatUsd(buyHold.net_profit, { signed: true })} net · ${buyHold.trades} trade · ${buyHold.bar_count} bars (${summary?.lookback_days ?? 30}d)</p>`;
+    root.appendChild(bh);
+  }
+
+  const finalTop =
+    (summary?.final_top10 as FleetResultRow[] | undefined) ??
+    (summary?.optimized_top10 as FleetResultRow[] | undefined) ??
+    [];
+  if (finalTop.length) {
+    const block = renderResultsTable(finalTop.slice(0, 10), t("backtest.top10_final"));
+    block.dataset.testid = "backtest-fleet-top10";
+    root.appendChild(block);
+  }
+
+  const results = props.results;
+  if (results?.rankings?.length) {
+    const filters = document.createElement("div");
+    filters.className = "gp-tab-row";
+    filters.dataset.testid = "backtest-fleet-filters";
+    for (const mode of ["all", "timeframe", "strategy"] as FleetFilterMode[]) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = props.filterMode === mode ? "gp-btn-primary" : "gp-btn-secondary";
+      btn.textContent = t(`backtest.filter.${mode}`);
+      btn.addEventListener("click", () => callbacks.onFilterChange(mode, props.filterTimeframe));
+      filters.appendChild(btn);
+    }
+    root.appendChild(filters);
+    root.appendChild(renderResultsTable(results.rankings, t("backtest.pass1_results")));
+  } else if (!props.loading && active?.status !== "running" && !finalTop.length) {
     const empty = document.createElement("p");
     empty.className = "gp-body";
     empty.textContent = t("backtest.empty");
     root.appendChild(empty);
   }
 
-  return {
-    root,
-    cleanup: () => cleanupChart(),
-  };
+  return { root, cleanup: () => {} };
 }

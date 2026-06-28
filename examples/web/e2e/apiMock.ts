@@ -1,4 +1,6 @@
 import type { Page, Route } from "@playwright/test";
+import { buildFallbackTaLibrary } from "../src/data/taLibraryFallback";
+import { krakenPairsFallback } from "../src/data/krakenUsdPairs";
 
 const sampleDashboard = {
   dry_run: true,
@@ -9,7 +11,8 @@ const sampleDashboard = {
   strategy_id: "multi-tf-example",
   pair: "BTC/USD",
   bots: [
-    { id: 1, label: "Bot-1", strategy_id: "multi-tf-example", pair: "BTC/USD", enabled: true, equity_usd: 1000 },
+    { id: 1, label: "Bot-1", strategy_id: "multi-tf-example", pair: "BTC/USD", enabled: true, equity_usd: 1000, engine: "native", exchange: "kraken", timeframe: "1h", realized_pnl_usd: 42.5, unrealized_pnl_usd: 5, pnl_usd: 47.5, pnl_pct: 0.0475, trade_count: 2 },
+    { id: 2, label: "Bot-2", strategy_id: "grid-trading", pair: "ETH/USD", enabled: false, equity_usd: 500, engine: "native", exchange: "kraken", timeframe: "5m", realized_pnl_usd: -12, unrealized_pnl_usd: 0, pnl_usd: -12, pnl_pct: -0.024, trade_count: 1 },
   ],
   risk: {
     wallet_usd: 1000,
@@ -24,6 +27,19 @@ const sampleDashboard = {
   },
 };
 
+function mockEquityCurve(count: number, startValue = 42_000): Array<{ time: number; value: number }> {
+  const points: Array<{ time: number; value: number }> = [];
+  const now = Math.floor(Date.now() / 1000);
+  for (let i = count; i >= 0; i -= 1) {
+    const t = now - i * 86_400;
+    const value = startValue + (count - i) * 150 + Math.sin(i / 7) * 800;
+    points.push({ time: t, value: Math.round(value) });
+  }
+  return points;
+}
+
+const mockEquity1y = mockEquityCurve(365, 42_000);
+
 function json(body: unknown): { status: number; contentType: string; body: string } {
   return {
     status: 200,
@@ -34,7 +50,13 @@ function json(body: unknown): { status: number; contentType: string; body: strin
 
 export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void> {
   const risk = { ...sampleDashboard.risk, paused, can_trade: !paused };
-  const dashboard = { ...sampleDashboard, risk };
+  let mockBots = sampleDashboard.bots!.map((b) => ({ ...b }));
+  const dashboardPayload = () => ({
+    ...sampleDashboard,
+    risk,
+    bots: mockBots,
+    bot_count: mockBots.filter((b) => b.enabled).length,
+  });
 
   await page.route(/\/api\/v1\//, async (route: Route) => {
     const url = route.request().url();
@@ -45,7 +67,7 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
       return;
     }
     if (url.includes("/dashboard")) {
-      await route.fulfill(json(dashboard));
+      await route.fulfill(json(dashboardPayload()));
       return;
     }
     if (url.includes("/risk/pause") && method === "POST") {
@@ -64,8 +86,43 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
       await route.fulfill(json(risk));
       return;
     }
-    if (url.includes("/pairs")) {
-      await route.fulfill(json({ pairs: ["BTC/USD", "ETH/USD"] }));
+    if (url.includes("/pairs") && !url.includes("/exchanges/")) {
+      await route.fulfill(json({ pairs: krakenPairsFallback() }));
+      return;
+    }
+    if (url.includes("/research/ta-glossary")) {
+      await route.fulfill(
+        json({
+          entries: [
+            {
+              id: "RSI",
+              title: "Relative Strength Index",
+              short: "Momentum oscillator 0–100.",
+              long: "Compares average gains vs losses.",
+              formula: "RSI = 100 − (100 / (1 + RS))",
+            },
+          ],
+          count: 1,
+        }),
+      );
+      return;
+    }
+    if (url.includes("/research/ta-library")) {
+      const categories = buildFallbackTaLibrary();
+      await route.fulfill(json({ categories, count: categories.flatMap((c) => c.items).length }));
+      return;
+    }
+    if (url.includes("/constants/timeframes")) {
+      await route.fulfill(
+        json({
+          intervals: ["1", "60", "1D", "1W"],
+          labels: { "1": "1 minute", "60": "1 hour", "1D": "1 day", "1W": "1 week" },
+        }),
+      );
+      return;
+    }
+    if (url.match(/\/exchanges\/[^/]+\/pairs/)) {
+      await route.fulfill(json({ exchange_id: "kraken", pairs: krakenPairsFallback() }));
       return;
     }
     if (url.includes("/strategies/multi-tf-example/params")) {
@@ -124,48 +181,78 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
       await route.fulfill(json({ logs: ["boot ok", "dry-run active"] }));
       return;
     }
+    if (url.includes("/portfolio/performance")) {
+      const range = new URL(url).searchParams.get("range") ?? "1y";
+      const count =
+        range === "24h" ? 25 : range === "7d" ? 7 : range === "14d" ? 14 : range === "1m" ? 30 : range === "3m" ? 91 : range === "6m" ? 182 : 365;
+      const step = range === "24h" ? 3_600 : 86_400;
+      const now = Math.floor(Date.now() / 1000);
+      const points = Array.from({ length: count + 1 }, (_, i) => ({
+        time: now - (count - i) * step,
+        value: 42_000 + i * 150,
+      }));
+      const top10 = points.map((p, i) => ({ time: p.time, value: p.value * (0.98 + i * 0.0001) }));
+      await route.fulfill(
+        json({
+          range,
+          points,
+          top10_index: top10,
+          comparison: {
+            portfolio_return_pct: 12.5,
+            top10_return_pct: 10.2,
+            alpha_pct: 2.3,
+            symbols: ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "DOT", "LINK"],
+          },
+          top10_symbols: ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "DOT", "LINK"],
+          asset: "BTC",
+          quantity: 1,
+        }),
+      );
+      return;
+    }
     if (url.includes("/portfolio/overview")) {
       await route.fulfill(
         json({
-          net_worth_usd: 1500,
-          daily_pnl_usd: 25,
-          daily_pnl_pct: 0.016,
-          health_score: 78,
-          max_drawdown_pct: 0.02,
+          net_worth_usd: 98_000,
+          daily_pnl_usd: 850,
+          daily_pnl_pct: 0.0087,
+          health_score: 82,
+          max_drawdown_pct: 0.08,
           holdings: [
             {
               asset: "BTC",
-              quantity: 0.01,
-              price_usd: 50000,
-              value_usd: 500,
-              cost_basis_usd: 450,
-              unrealized_pnl_usd: 50,
-              pct_change: 0.11,
+              quantity: 1,
+              price_usd: 98000,
+              value_usd: 98000,
+              cost_basis_usd: 42000,
+              unrealized_pnl_usd: 56000,
+              pct_change: 1.33,
               tag: "L1",
             },
           ],
-          allocation: [{ asset: "BTC", value_usd: 500, pct: 0.33 }],
-          pl_breakdown: { realized_usd: 0, unrealized_usd: 50, total_usd: 50 },
-          periods: [{ label: "daily", pnl_usd: 25, pnl_pct: 0.016 }],
+          allocation: [{ asset: "BTC", value_usd: 98000, pct: 1 }],
+          pl_breakdown: { realized_usd: 0, unrealized_usd: 56000, total_usd: 56000 },
+          periods: [{ label: "daily", pnl_usd: 850, pnl_pct: 0.0087 }],
           comparisons: [
-            { label: "mom", title: "Month over month", pnl_usd: 25, pnl_pct: 0.016 },
-            { label: "yoy", title: "Year over year", pnl_usd: 100, pnl_pct: 0.08 },
+            { label: "mom", title: "Month over month", pnl_usd: 4200, pnl_pct: 0.045 },
+            { label: "yoy", title: "Year over year", pnl_usd: 56000, pnl_pct: 1.33 },
           ],
           accounts: [
-            { account_id: 1, exchange: "kraken", label: "default", account_type: "spot", total_usd: 1000, holdings_count: 2 },
-            { account_id: 2, exchange: "binanceus", label: "default", account_type: "spot", total_usd: 500, holdings_count: 2 },
+            { account_id: 1, exchange: "kraken", label: "default", account_type: "spot", total_usd: 98000, holdings_count: 1 },
           ],
           performance_goal: {
-            label: "Growth goal",
-            target_net_worth_usd: 2000,
-            progress_pct: 0.75,
-            remaining_usd: 500,
-            current_net_worth_usd: 1500,
+            label: "Grow portfolio to target value",
+            goal_type: "portfolio_growth",
+            horizon_months: 12,
+            target_return_pct: 0,
+            target_net_worth_usd: 120_000,
+            progress_pct: 0.82,
+            remaining_usd: 22_000,
+            current_net_worth_usd: 98_000,
           },
-          equity_curve: [
-            { time: 1700000000, value: 1475 },
-            { time: 1700003600, value: 1500 },
-          ],
+          equity_curve: mockEquity1y,
+          performance_ranges: ["1y", "6m", "3m", "1m", "14d", "7d", "24h"],
+          performance_range_default: "1y",
           snapshot_dates: ["2026-06-24", "2026-06-25"],
           bot: sampleDashboard,
         }),
@@ -174,6 +261,24 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
     }
     if (url.includes("/portfolio/heatmap")) {
       await route.fulfill(json({ rows: [{ asset: "BTC", return_pct: 5, volatility_pct: 5 }] }));
+      return;
+    }
+    if (url.includes("/portfolio/goals") && method === "PUT") {
+      const body = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill(
+        json({
+          goal: {
+            label: body.label ?? "Goal",
+            goal_type: body.goal_type ?? "portfolio_growth",
+            horizon_months: body.horizon_months ?? 12,
+            target_return_pct: body.target_return_pct ?? 0,
+            target_net_worth_usd: body.target_net_worth_usd ?? 120_000,
+            progress_pct: 0.5,
+            remaining_usd: 10_000,
+            current_net_worth_usd: 98_000,
+          },
+        }),
+      );
       return;
     }
     if (url.includes("/portfolio/history")) {
@@ -212,12 +317,243 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
       );
       return;
     }
-    if (url.includes("/backtest/library")) {
-      await route.fulfill(json({ runs: [{ id: 1, strategy: "multi-tf-example", pair: "BTC/USD", tag: "run-1", created_at: "2026-06-25" }] }));
-      return;
-    }
     if (url.includes("/bots")) {
-      await route.fulfill(json({ bots: sampleDashboard.bots, enabled_count: 1 }));
+      if (url.includes("/bots/ohlcv/warmup/active") && method === "GET") {
+        await route.fulfill(
+          json({
+            status: "complete",
+            progress_pct: 100,
+            total_series: 2,
+            completed_series: 2,
+            bars_cached: 720,
+            bars_downloaded: 0,
+            messages: ["Cache hit: mock bots already warmed"],
+          }),
+        );
+        return;
+      }
+      if (url.includes("/bots/ohlcv/warmup") && method === "POST") {
+        await route.fulfill(
+          json({
+            id: "mock-warmup",
+            status: "complete",
+            progress_pct: 100,
+            total_series: mockBots.length,
+            completed_series: mockBots.length,
+            bars_cached: 720,
+            bars_downloaded: 0,
+            messages: ["Mock OHLCV warmup complete"],
+          }),
+        );
+        return;
+      }
+      if (url.includes("/bots/ohlcv/cache") && method === "GET") {
+        await route.fulfill(
+          json({
+            bot_scoped: true,
+            bot_count: mockBots.length,
+            unique_series: mockBots.length,
+            series: mockBots.map((b) => ({
+              pair: b.pair,
+              timeframe: b.timeframe ?? "60",
+              cached_bars: 720,
+              expected_bars: 720,
+              coverage_pct: 100,
+              bots: [b.label],
+            })),
+          }),
+        );
+        return;
+      }
+      if (url.includes("/bots/limits") && method === "GET") {
+        await route.fulfill(
+          json({
+            max_bots_total: 500,
+            max_enabled_bots: 50,
+            max_sub_minute_enabled: 3,
+            max_1s_enabled: 1,
+            sub_minute_intervals: ["1S", "5S", "15S", "30S"],
+            bot_count: mockBots.length,
+            enabled_count: mockBots.filter((b) => b.enabled).length,
+            paper: true,
+          }),
+        );
+        return;
+      }
+      const forceMatch = url.match(/\/bots\/(\d+)\/force/);
+      if (forceMatch && method === "POST") {
+        const body = route.request().postDataJSON() as { side: string };
+        await route.fulfill(
+          json({
+            bot_id: Number(forceMatch[1]),
+            side: body.side,
+            amount: 0.001,
+            order: { ok: true, simulated: true },
+          }),
+        );
+        return;
+      }
+      const enabledMatch = url.match(/\/bots\/(\d+)\/enabled/);
+      if (enabledMatch && method === "PUT") {
+        const botId = Number(enabledMatch[1]);
+        const body = route.request().postDataJSON() as { enabled: boolean };
+        mockBots = mockBots.map((b) => (b.id === botId ? { ...b, enabled: body.enabled } : b));
+        await route.fulfill(json({ bots: mockBots }));
+        return;
+      }
+      const limitsMatch = url.match(/\/bots\/(\d+)\/equity-limits$/);
+      if (limitsMatch && method === "GET") {
+        const bot = mockBots.find((b) => b.id === Number(limitsMatch[1]));
+        const pair = bot?.pair ?? "BTC/USD";
+        await route.fulfill(
+          json({
+            base: { symbol: pair.split("/")[0] ?? "BTC", max: 1.5 },
+            quote: { symbol: pair.split("/")[1] ?? "USD", max: 25_000 },
+            portfolio_usd: 100_000,
+          }),
+        );
+        return;
+      }
+      const botMatch = url.match(/\/bots\/(\d+)$/);
+      if (botMatch && method === "GET") {
+        const botId = Number(botMatch[1]);
+        const bot = mockBots.find((b) => b.id === botId);
+        if (!bot) {
+          await route.fulfill({ status: 404, contentType: "application/json", body: '{"detail":"bot not found"}' });
+          return;
+        }
+        const chart = mockEquityCurve(30, bot.pair.startsWith("BTC") ? 98_000 : 3_200);
+        const ohlcv = chart.map((p) => ({
+          time: p.time,
+          open: p.value * 0.998,
+          high: p.value * 1.002,
+          low: p.value * 0.996,
+          close: p.value,
+          volume: 1000,
+        }));
+        const trades = [
+          {
+            pair: bot.pair,
+            side: "buy",
+            stake_usd: 100,
+            pnl_usd: 0,
+            created_at: new Date(Date.now() - 86_400_000).toISOString(),
+          },
+          {
+            pair: bot.pair,
+            side: "sell",
+            stake_usd: 100,
+            pnl_usd: -3,
+            created_at: new Date(Date.now() - 43_200_000).toISOString(),
+          },
+        ];
+        const markers = trades.map((t) => ({
+          time: Math.floor(new Date(t.created_at).getTime() / 1000),
+          side: t.side,
+          pnl_usd: t.side === "sell" ? t.pnl_usd : null,
+          pnl_pct: t.side === "sell" ? -3 : null,
+        }));
+        const regions =
+          markers.length >= 2
+            ? [
+                {
+                  time_start: markers[0]!.time,
+                  time_end: markers[1]!.time,
+                  entry_price: ohlcv[0]?.close ?? chart[0]?.value ?? 0,
+                  exit_price: ohlcv[ohlcv.length - 1]?.close ?? chart[chart.length - 1]?.value ?? 0,
+                  profitable: false,
+                  pnl_usd: -3,
+                },
+              ]
+            : [];
+        await route.fulfill(
+          json({
+            bot: { ...bot, equity_mode: "quote", equity_input: bot.equity_usd, ta_params: { timeperiod: 14 } },
+            pnl_usd: Number(bot.pnl_usd ?? 0),
+            pnl_pct: Number(bot.pnl_pct ?? 0),
+            realized_pnl_usd: Number(bot.realized_pnl_usd ?? 0),
+            unrealized_pnl_usd: Number(bot.unrealized_pnl_usd ?? 0),
+            trade_count: Number(bot.trade_count ?? 0),
+            trades,
+            simulated_trades: trades.map((t) => ({ ...t, simulated: true })),
+            chart,
+            ohlcv,
+            trade_markers: markers,
+            simulated_markers: markers,
+            trade_regions: regions,
+            simulated_regions: regions,
+            equity_limits: {
+              base: { symbol: bot.pair.split("/")[0] ?? "BTC", max: 1.5 },
+              quote: { symbol: bot.pair.split("/")[1] ?? "USD", max: 25_000 },
+              portfolio_usd: 100_000,
+            },
+            strategy_params: { timeperiod: 14 },
+            available_timeframes: ["1", "60", "1D", "1W"],
+            timeframe_labels: { "1": "1 minute", "60": "1 hour", "1D": "1 day", "1W": "1 week" },
+            param_specs: [{ key: "timeperiod", label: "Period", default: 14 }],
+            backtest_top5: [
+              { indicator: "RSI", ta_function: "RSI", profit_total: 24.5, timeframe: "60" },
+              { indicator: "MACD", ta_function: "MACD", profit_total: 18.2, timeframe: "60" },
+            ],
+          }),
+        );
+        return;
+      }
+      if (botMatch && method === "PUT") {
+        const botId = Number(botMatch[1]);
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        mockBots = mockBots.map((b) =>
+          b.id === botId
+            ? {
+                ...b,
+                label: String(body.label ?? b.label),
+                strategy_id: String(body.strategy_id ?? b.strategy_id),
+                pair: String(body.pair ?? b.pair),
+                equity_usd: Number(body.equity_usd ?? b.equity_usd),
+                timeframe: String(body.timeframe ?? b.timeframe ?? "1h"),
+              }
+            : b,
+        );
+        await route.fulfill(json({ bots: mockBots }));
+        return;
+      }
+      if (botMatch && method === "DELETE") {
+        const botId = Number(botMatch[1]);
+        mockBots = mockBots.filter((b) => b.id !== botId);
+        await route.fulfill(json({ bots: mockBots }));
+        return;
+      }
+      if (method === "POST") {
+        const body = route.request().postDataJSON() as {
+          label: string;
+          strategy_id?: string;
+          pair?: string;
+          equity_usd?: number;
+          enabled?: boolean;
+          timeframe?: string;
+        };
+        const id = Math.max(0, ...mockBots.map((b) => b.id)) + 1;
+        const newBot = {
+          id,
+          label: body.label,
+          strategy_id: body.strategy_id ?? "RSI",
+          pair: body.pair ?? "BTC/USD",
+          enabled: body.enabled ?? false,
+          equity_usd: body.equity_usd ?? 1000,
+          timeframe: body.timeframe ?? "60",
+          engine: "native",
+          exchange: "kraken",
+          realized_pnl_usd: 0,
+          unrealized_pnl_usd: 0,
+          pnl_usd: 0,
+          pnl_pct: 0,
+          trade_count: 0,
+        };
+        mockBots = [...mockBots, newBot];
+        await route.fulfill(json({ id, bots: mockBots }));
+        return;
+      }
+      await route.fulfill(json({ bots: mockBots, enabled_count: mockBots.filter((b) => b.enabled).length }));
       return;
     }
     if (url.includes("/hyperopt")) {

@@ -18,12 +18,22 @@ from trendalgo.portfolio.metrics import (
     pl_breakdown,
 )
 from trendalgo.portfolio.multi_exchange import aggregate_holdings
+from trendalgo.portfolio.performance import (
+    PERFORMANCE_RANGES,
+    build_performance_payload,
+    curve_for_metrics,
+    ensure_btc_dry_run_fixture,
+    list_history_dates,
+    performance_curve,
+)
 from trendalgo.portfolio.tags import tag_holdings
 
 
 def build_portfolio_overview(state: AppState) -> dict[str, Any]:
     store = state.portfolio_store
     primary_id = store.get_or_create_account("kraken", "default")
+    if state.bot.dry_run:
+        ensure_btc_dry_run_fixture(store, primary_id)
     aggregated = aggregate_holdings(store)
     accounts = aggregated["accounts"]
     use_aggregated = len(accounts) >= 2
@@ -38,7 +48,7 @@ def build_portfolio_overview(state: AppState) -> dict[str, Any]:
         raw_holdings = snap["holdings"] if snap else []
         account_id = primary_id
 
-    curve = store.equity_curve(primary_id)
+    curve = curve_for_metrics(performance_curve(store, primary_id, "1y"))
     daily_pnl_usd, daily_pnl_pct = daily_pnl_from_curve(curve)
     tag_map = store.get_asset_tags()
     holdings = enrich_holdings(tag_holdings(raw_holdings, tag_map))
@@ -46,12 +56,26 @@ def build_portfolio_overview(state: AppState) -> dict[str, Any]:
     pl = pl_breakdown(raw_holdings)
     dd = max_drawdown(curve)
     health = health_score(allocation, dd, daily_pnl_pct)
-    equity = [{"time": p["time"], "value": p["total_usd"]} for p in curve]
-    benchmarks = benchmark_curves(curve)
+    perf_default = build_performance_payload(store, primary_id, "1y", dry_run=state.bot.dry_run)
+    equity = perf_default["points"]  # type: ignore[assignment]
+    top10_comparison = perf_default.get("comparison", {})
+    top10_index = perf_default.get("top10_index", [])
+    benchmarks = {
+        "top10_index": top10_index,
+        **benchmark_curves(curve),
+    }
     periods = [p.__dict__ for p in period_comparison(curve)]
     daily_aggs = store.list_daily_aggregates(primary_id, limit=365)
     comparisons = yoy_mom_comparison(daily_aggs, curve)
-    goal = goal_progress(net_worth, store.get_performance_goal())
+    comparison_payload = perf_default.get("comparison", {})
+    alpha_pct = float(comparison_payload.get("alpha_pct", 0)) / 100.0 if comparison_payload else 0.0
+    goal = goal_progress(
+        net_worth,
+        store.get_performance_goal(),
+        max_drawdown_pct=dd,
+        comparisons=comparisons,
+        alpha_pct=alpha_pct,
+    )
     bot = {
         "dry_run": state.bot.dry_run,
         "equity_usd": state.bot.equity_usd,
@@ -72,10 +96,13 @@ def build_portfolio_overview(state: AppState) -> dict[str, Any]:
         "periods": periods,
         "comparisons": comparisons,
         "equity_curve": equity,
+        "top10_comparison": top10_comparison,
+        "performance_ranges": list(PERFORMANCE_RANGES.keys()),
+        "performance_range_default": "1y",
         "benchmarks": benchmarks,
         "max_drawdown_pct": dd,
         "health_score": health,
-        "snapshot_dates": store.list_snapshot_dates(primary_id),
+        "snapshot_dates": list_history_dates(store, primary_id, limit=365),
         "daily_aggregates": store.list_daily_aggregates(primary_id, limit=30),
         "accounts": accounts,
         "exchange_count": len(accounts),

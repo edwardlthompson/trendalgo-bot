@@ -40,7 +40,8 @@ def test_kraken_adapter_dry_run(tmp_path: Path) -> None:
     result = KrakenAdapter().sync_balances(store, dry_run=True)
     assert result["mode"] == "dry-run"
     assert result["exchange"] == "kraken"
-    assert result["total_usd"] == 1500.0
+    assert result["total_usd"] > 40_000.0
+    assert result["holdings"] == 1
 
 
 def test_binanceus_adapter_dry_run(tmp_path: Path) -> None:

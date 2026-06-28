@@ -1,5 +1,5 @@
 {
-  "template_version": "0.2.0",
+  "template_version": "0.3.0",
   "entry_points": {
     "bootstrap": "docs/START_HERE.md",
     "reference": "docs/FOR_AGENTS.md",
@@ -335,6 +335,27 @@
       "path": "scripts/setup-github-repo.sh",
       "purpose": "Idempotent gh api: Dependabot alerts, private reporting, branch protection",
       "read_when": "bootstrap_session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/setup-wsl-linux.sh",
+      "purpose": "WSL2 Linux toolchain setup for bash gates on Windows",
+      "read_when": "bootstrap_session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/setup-wsl.ps1",
+      "purpose": "Windows launcher for setup-wsl-linux.sh",
+      "read_when": "bootstrap_session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/sync-exchange-fees.py",
+      "purpose": "CLI: sync retail fees from public exchange pages into SQLite",
+      "read_when": "release",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
     },
@@ -1019,7 +1040,7 @@
     },
     {
       "path": "scripts/check-file-limits.sh",
-      "purpose": "Enforce 250-line view and 150-line logic file limits",
+      "purpose": "Enforce file line limits: web view/data 300, logic 150",
       "read_when": "milestone_boundary",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
