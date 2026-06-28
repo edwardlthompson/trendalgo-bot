@@ -19,7 +19,7 @@ def test_fees_verified_on_page() -> None:
 
 
 def test_fees_verified_kraken_comma_decimal() -> None:
-    html = '<span>Spot taker 0,26% and maker 0.16%</span>'
+    html = "<span>Spot taker 0,26% and maker 0.16%</span>"
     assert fees_verified_on_page(html, 0.0026, 0.0016)
 
 
@@ -42,10 +42,7 @@ def test_parse_coinbase_bps_html() -> None:
 
 
 def test_parse_okx_embedded_json() -> None:
-    html = (
-        '{"lowerTradeVolume":0,"makerFee":0.002,"takerFee":0.0035,'
-        '"upperTradeVolume":10000}'
-    )
+    html = '{"lowerTradeVolume":0,"makerFee":0.002,"takerFee":0.0035,"upperTradeVolume":10000}'
     parsed = parse_fees_from_html("okx", html)
     assert parsed == (0.0035, 0.002)
 

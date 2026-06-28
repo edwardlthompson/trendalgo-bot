@@ -72,7 +72,9 @@ def portfolio_export(request: Request) -> PlainTextResponse:
 def portfolio_sync(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
     result = sync_all_exchanges(state.portfolio_store, dry_run=state.bot.dry_run)
-    state.log(f"portfolio sync-all: {result.get('exchange_count')} venues mode={result.get('mode')}")
+    state.log(
+        f"portfolio sync-all: {result.get('exchange_count')} venues mode={result.get('mode')}"
+    )
     return result
 
 

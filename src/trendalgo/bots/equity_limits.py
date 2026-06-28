@@ -100,4 +100,3 @@ def resolve_equity_usd(
         return max(1.0, float(equity_input) * px)
     px = mark_price if mark_price and mark_price > 0 else 1.0
     return max(1.0, float(equity_input) * px)
-

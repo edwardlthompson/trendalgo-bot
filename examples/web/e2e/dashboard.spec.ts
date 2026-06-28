@@ -61,11 +61,10 @@ test("pause all trading from risk panel", async ({ page }) => {
   await expect(page.getByTestId("health-status")).toContainText("Paused");
 });
 
-test("runs backtest and shows metrics", async ({ page }) => {
+test("runs fleet backtest and shows results", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
   await page.getByRole("button", { name: "Backtest" }).click();
   await page.getByTestId("backtest-run").click();
-  await expect(page.getByTestId("backtest-metrics")).toBeVisible();
-  await expect(page.getByTestId("equity-chart")).toBeVisible();
+  await expect(page.getByTestId("backtest-fleet-top10")).toBeVisible({ timeout: 15_000 });
 });

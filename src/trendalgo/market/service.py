@@ -133,7 +133,9 @@ class PriceHistoryService:
                     )
 
                 if source == "kraken":
-                    fresh = fetch_kraken_ohlcv(symbol, timeframe, fetch_since, until, on_batch=batch_cb)
+                    fresh = fetch_kraken_ohlcv(
+                        symbol, timeframe, fetch_since, until, on_batch=batch_cb
+                    )
                 else:
                     fresh = fetch_exchange_ohlcv(
                         source, symbol, timeframe, fetch_since, until, on_batch=batch_cb

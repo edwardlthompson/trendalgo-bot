@@ -61,7 +61,9 @@ def _clean_cache() -> None:
 
 
 def test_canonical_ta_params_hash_normalizes_float_int() -> None:
-    assert canonical_ta_params_hash({"timeperiod": 14}) == canonical_ta_params_hash({"timeperiod": 14.0})
+    assert canonical_ta_params_hash({"timeperiod": 14}) == canonical_ta_params_hash(
+        {"timeperiod": 14.0}
+    )
 
 
 def test_exact_hit_skips_recompute() -> None:

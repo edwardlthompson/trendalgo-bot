@@ -36,7 +36,10 @@ class MacdKraken1hStrategy(BaseNativeStrategy):
         cross_up = prev["macd"] <= prev["macd_signal"] and row["macd"] > row["macd_signal"]
         if not cross_up:
             return None
-        stake = min(self.default_stake_usd, ctx.wallet_usd * 0.1 if ctx.wallet_usd else self.default_stake_usd)
+        stake = min(
+            self.default_stake_usd,
+            ctx.wallet_usd * 0.1 if ctx.wallet_usd else self.default_stake_usd,
+        )
         if stake <= 0:
             return None
         return Signal(

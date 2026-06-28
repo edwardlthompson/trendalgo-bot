@@ -34,7 +34,14 @@ def test_bot_orchestrator_add(tmp_path: Path) -> None:
 def test_bot_orchestrator_update_and_delete(tmp_path: Path) -> None:
     orch = BotOrchestrator(tmp_path / "bots.db")
     bot_id = orch.add_bot("Bot-2", "grid-trading", "ETH/USD")
-    orch.update_bot(bot_id, label="Renamed", strategy_id="smart-dca", pair="BTC/USD", equity_usd=2500, timeframe="5m")
+    orch.update_bot(
+        bot_id,
+        label="Renamed",
+        strategy_id="smart-dca",
+        pair="BTC/USD",
+        equity_usd=2500,
+        timeframe="5m",
+    )
     updated = orch.get_bot(bot_id)
     assert updated is not None
     assert updated["label"] == "Renamed"

@@ -87,15 +87,16 @@ def sync_exchange_fees(
             )
             fallback.append(entry.id)
             on_log and on_log(
-                f"exchange fees: fetch blocked {entry.id} — using documented seed "
-                f"({exc})"
+                f"exchange fees: fetch blocked {entry.id} — using documented seed ({exc})"
             )
             continue
 
         prev_taker = float(prev["taker_pct"]) if prev else None
         prev_maker = float(prev["maker_pct"]) if prev else None
-        changed = prev is None or fees_differ(prev_taker, live.taker_pct) or fees_differ(
-            prev_maker, live.maker_pct
+        changed = (
+            prev is None
+            or fees_differ(prev_taker, live.taker_pct)
+            or fees_differ(prev_maker, live.maker_pct)
         )
 
         if live.source == "documented" and not live.verified:

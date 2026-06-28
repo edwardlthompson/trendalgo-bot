@@ -18,6 +18,7 @@ def list_exchange_icons() -> dict[str, Any]:
     store = _store()
     return {"exchanges": store.list_exchanges()}
 
+
 @router.get("/icons/coin/{symbol}")
 def get_coin_icon(symbol: str) -> dict[str, Any]:
     store = _store()

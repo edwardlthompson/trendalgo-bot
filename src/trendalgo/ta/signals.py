@@ -153,7 +153,9 @@ ZERO_CROSS_IDS: frozenset[str] = frozenset(
         "VORTEX",
     }
 )
-MA_CROSS_IDS: frozenset[str] = frozenset({"SMA", "EMA", "DEMA", "TEMA", "WMA", "KAMA", "T3", "TRIMA", "HMA", "VWMA"})
+MA_CROSS_IDS: frozenset[str] = frozenset(
+    {"SMA", "EMA", "DEMA", "TEMA", "WMA", "KAMA", "T3", "TRIMA", "HMA", "VWMA"}
+)
 TALIB_NO_PERIOD: frozenset[str] = frozenset(
     {
         "APO",
@@ -263,7 +265,9 @@ def resolve_preset(strategy_id: str, ta_params: dict[str, Any] | None = None) ->
     return preset
 
 
-def _compute_kwargs(fn: str, params: dict[str, Any], *, period: int | None = None) -> dict[str, Any]:
+def _compute_kwargs(
+    fn: str, params: dict[str, Any], *, period: int | None = None
+) -> dict[str, Any]:
     """Build kwargs for compute() without duplicate length/timeperiod."""
     out = dict(params)
     out.pop("timeperiod", None)
@@ -310,7 +314,9 @@ def _bool_cross_down_arr(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 def signals_for_preset(df: pd.DataFrame, preset: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
     kind = preset["kind"]
     fn = preset["fn"]
-    params = _pta_params({k: v for k, v in preset.items() if k not in {"fn", "kind", "entry_level", "exit_level"}})
+    params = _pta_params(
+        {k: v for k, v in preset.items() if k not in {"fn", "kind", "entry_level", "exit_level"}}
+    )
     close = df["close"]
     n = len(df)
     entries = np.zeros(n, dtype=bool)
@@ -346,7 +352,9 @@ def signals_for_preset(df: pd.DataFrame, preset: dict[str, Any]) -> tuple[np.nda
         exit_level = float(preset.get("exit_level", 70))
         out = compute(fn, df, **_compute_kwargs(fn, params, period=period))
         r = primary_series(fn, out, close)
-        entries = ((r.shift(1) < entry_level) & (r >= entry_level)).fillna(False).to_numpy(dtype=bool)
+        entries = (
+            ((r.shift(1) < entry_level) & (r >= entry_level)).fillna(False).to_numpy(dtype=bool)
+        )
         exits = ((r.shift(1) > exit_level) & (r <= exit_level)).fillna(False).to_numpy(dtype=bool)
     elif kind == "cdl_pattern":
         out = compute(fn, df, **params)

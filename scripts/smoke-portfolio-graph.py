@@ -31,7 +31,9 @@ HOURLY_MIN = {"14d": 300, "7d": 140, "24h": 20}
 def main() -> int:
     try:
         overview = _get("/portfolio/overview")
-        print(f"net_worth=${overview['net_worth_usd']} history_dates={len(overview.get('snapshot_dates', []))}")
+        print(
+            f"net_worth=${overview['net_worth_usd']} history_dates={len(overview.get('snapshot_dates', []))}"
+        )
 
         sync = _post("/portfolio/sync")
         print(f"sync-all venues={sync.get('exchange_count')} mode={sync.get('mode')}")
@@ -49,7 +51,9 @@ def main() -> int:
             )
             min_pts = HOURLY_MIN.get(rng, DAILY_MIN.get(rng, 2))
             if len(pts) < min_pts:
-                print(f"FAIL: expected >={min_pts} points for {rng}, got {len(pts)}", file=sys.stderr)
+                print(
+                    f"FAIL: expected >={min_pts} points for {rng}, got {len(pts)}", file=sys.stderr
+                )
                 return 1
             if rng in DAILY_MIN and gran != "1d":
                 print(f"FAIL: {rng} should use daily granularity", file=sys.stderr)

@@ -52,7 +52,9 @@ class IndicatorOutputCache:
         del pair, fetch_tf
         return
 
-    def get(self, fn: str, signature: OhlcvSignature, params: dict[str, Any]) -> dict[str, np.ndarray] | None:
+    def get(
+        self, fn: str, signature: OhlcvSignature, params: dict[str, Any]
+    ) -> dict[str, np.ndarray] | None:
         key = IndicatorKey(fn.upper(), canonical_ta_params_hash(params), signature)
         with self._lock:
             hit = self._entries.get(key)
@@ -62,7 +64,9 @@ class IndicatorOutputCache:
                 return hit
         return None
 
-    def put(self, fn: str, signature: OhlcvSignature, params: dict[str, Any], out: dict[str, np.ndarray]) -> None:
+    def put(
+        self, fn: str, signature: OhlcvSignature, params: dict[str, Any], out: dict[str, np.ndarray]
+    ) -> None:
         key = IndicatorKey(fn.upper(), canonical_ta_params_hash(params), signature)
         stored = {k: np.asarray(v, dtype=float).copy() for k, v in out.items()}
         with self._lock:

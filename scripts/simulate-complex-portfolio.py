@@ -22,7 +22,9 @@ def _overview_smoke(api_base: str) -> dict[str, object]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Simulate complex top-100 multi-exchange portfolio")
+    parser = argparse.ArgumentParser(
+        description="Simulate complex top-100 multi-exchange portfolio"
+    )
     parser.add_argument(
         "--data-dir",
         default=os.environ.get("TRENDALGO_DATA_DIR", "data/dev"),

@@ -49,7 +49,7 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
         "title": "Amat",
         "short": "The Archer Moving Averages Trends indicator identifies trend direction by comparing",
         "long": "Archer Moving Averages Trends (AMAT) The Archer Moving Averages Trends indicator identifies trend direction by comparing fast and slow moving averages. It generates long and short run signals based on the The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Default Inputs: fast=8, slow=21, lookback=2, mamode=\"ema\" FAST_MA = MA(close, fast, mamode) SLOW_MA = MA(close, slow, mamode) AMAT_LR = LONG_RUN(FAST_MA, SLOW_MA, lookback) AMAT_SR = SHORT_RUN(FAST_MA, SLOW_MA, lookback)",
+        "formula": 'Default Inputs: fast=8, slow=21, lookback=2, mamode="ema" FAST_MA = MA(close, fast, mamode) SLOW_MA = MA(close, slow, mamode) AMAT_LR = LONG_RUN(FAST_MA, SLOW_MA, lookback) AMAT_SR = SHORT_RUN(FAST_MA, SLOW_MA, lookback)',
     },
     "AO": {
         "title": "Ao",
@@ -61,7 +61,7 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
         "title": "Aobv",
         "short": "Archer On Balance Volume enhances the traditional OBV indicator by applying moving",
         "long": "Archer On Balance Volume (AOBV) Archer On Balance Volume enhances the traditional OBV indicator by applying moving averages and detecting long/short run trends. It provides multiple signals including The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Default Inputs: fast=4, slow=12, max_lookback=2, min_lookback=2, mamode=\"ema\", run_length=2 OBV = On Balance Volume(close, volume) OBV_MIN = ROLLING_MIN(OBV, min_lookback) OBV_MAX = ROLLING_MAX(OBV, max_lookback) FAST_MA = MA(OBV, fast, mamode) SLOW_MA = MA(OBV, slow, mamode) AOBV_LR = LONG_RUN(FAST_MA, SLOW_MA, run_length)",
+        "formula": 'Default Inputs: fast=4, slow=12, max_lookback=2, min_lookback=2, mamode="ema", run_length=2 OBV = On Balance Volume(close, volume) OBV_MIN = ROLLING_MIN(OBV, min_lookback) OBV_MAX = ROLLING_MAX(OBV, max_lookback) FAST_MA = MA(OBV, fast, mamode) SLOW_MA = MA(OBV, slow, mamode) AOBV_LR = LONG_RUN(FAST_MA, SLOW_MA, run_length)',
     },
     "ASIN": {
         "title": "Asin",
@@ -149,8 +149,8 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
     },
     "COPPOCK": {
         "title": "Coppock",
-        "short": "Coppock Curve (originally called the \"Trendex Model\") is a momentum indicator",
-        "long": "Coppock Curve (COPC) Coppock Curve (originally called the \"Trendex Model\") is a momentum indicator is designed for use on a monthly time scale. Although designed for monthly The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+        "short": 'Coppock Curve (originally called the "Trendex Model") is a momentum indicator',
+        "long": 'Coppock Curve (COPC) Coppock Curve (originally called the "Trendex Model") is a momentum indicator is designed for use on a monthly time scale. Although designed for monthly The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
         "formula": "Default Inputs: length=10, fast=11, slow=14 SMA = Simple Moving Average MAD = Mean Absolute Deviation tp = typical_price = hlc3 = (high + low + close) / 3 mean_tp = SMA(tp, length) mad_tp = MAD(tp, length) CCI = (tp - mean_tp) / (c * mad_tp)",
     },
     "COS": {
@@ -169,7 +169,7 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
         "title": "Cpr",
         "short": "Central Pivot Range is a trending indicator that helps identify potential",
         "long": "CPR (Central Pivot Range) Central Pivot Range is a trending indicator that helps identify potential support and resistance levels for the trading session based on previous The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Default Inputs: method=\"classic\", timeframe=\"daily\", levels=\"standard\" Pivot = (H + L + C) / 3 BC = (H + L) / 2 TC = (Pivot - BC) + Pivot R1 = (2 * Pivot) - L S1 = (2 * Pivot) - H R2 = Pivot + (H - L)",
+        "formula": 'Default Inputs: method="classic", timeframe="daily", levels="standard" Pivot = (H + L + C) / 3 BC = (H + L) / 2 TC = (Pivot - BC) + Pivot R1 = (2 * Pivot) - L S1 = (2 * Pivot) - H R2 = Pivot + (H - L)',
     },
     "CROSS": {
         "title": "Cross",
@@ -210,8 +210,8 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
     "DECAY": {
         "title": "Decay",
         "short": "Creates a decay moving forward from prior signals like crosses. The default is",
-        "long": "Creates a decay moving forward from prior signals like crosses. The default is \"linear\". Exponential is optional as \"exponential\" or \"exp\". https://tulipindicators.org/decay The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Default Inputs: length=5, mode=None if mode == \"exponential\" or mode == \"exp\":",
+        "long": 'Creates a decay moving forward from prior signals like crosses. The default is "linear". Exponential is optional as "exponential" or "exp". https://tulipindicators.org/decay The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
+        "formula": 'Default Inputs: length=5, mode=None if mode == "exponential" or mode == "exp":',
     },
     "DECREASING": {
         "title": "Decreasing",
@@ -229,7 +229,7 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
         "title": "Dm",
         "short": "The Directional Movement was developed by J. Welles Wilder in 1978 attempts to",
         "long": "Directional Movement (DM) The Directional Movement was developed by J. Welles Wilder in 1978 attempts to determine which direction the price of an asset is moving. It compares prior The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Default Inputs: length=14, mamode=\"rma\", drift=1 up = high - high.shift(drift) dn = low.shift(drift) - low pos_ = ((up > dn) & (up > 0)) * up neg_ = ((dn > up) & (dn > 0)) * dn pos_ = pos_.apply(zero) neg_ = neg_.apply(zero)",
+        "formula": 'Default Inputs: length=14, mamode="rma", drift=1 up = high - high.shift(drift) dn = low.shift(drift) - low pos_ = ((up > dn) & (up > 0)) * up neg_ = ((dn > up) & (dn > 0)) * dn pos_ = pos_.apply(zero) neg_ = neg_.apply(zero)',
     },
     "DONCHIAN": {
         "title": "Donchian",
@@ -293,8 +293,8 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
     },
     "ER": {
         "title": "Er",
-        "short": "The Efficiency Ratio was invented by Perry J. Kaufman and presented in his book \"New Trading Systems and Methods\". It is designed to account for market noise or volatility.",
-        "long": "Efficiency Ratio (ER) The Efficiency Ratio was invented by Perry J. Kaufman and presented in his book \"New Trading Systems and Methods\". It is designed to account for market noise or volatility. It is calculated by dividing the net change in price movement over N periods by the sum of the absolute net changes over the same N periods. The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+        "short": 'The Efficiency Ratio was invented by Perry J. Kaufman and presented in his book "New Trading Systems and Methods". It is designed to account for market noise or volatility.',
+        "long": 'Efficiency Ratio (ER) The Efficiency Ratio was invented by Perry J. Kaufman and presented in his book "New Trading Systems and Methods". It is designed to account for market noise or volatility. It is calculated by dividing the net change in price movement over N periods by the sum of the absolute net changes over the same N periods. The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
         "formula": "Default Inputs: length=10 ABS = Absolute Value EMA = Exponential Moving Average abs_diff = ABS(close.diff(length)) volatility = ABS(close.diff(1)) ER = abs_diff / SUM(volatility, length)",
     },
     "ERI": {
@@ -343,7 +343,7 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
         "title": "Hilo",
         "short": "The Gann High Low Activator Indicator was created by Robert Krausz in a 1998",
         "long": "Gann HiLo Activator(HiLo) The Gann High Low Activator Indicator was created by Robert Krausz in a 1998 issue of Stocks & Commodities Magazine. It is a moving average based trend The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Default Inputs: high_length=13, low_length=21, mamode=\"sma\" EMA = Exponential Moving Average HMA = Hull Moving Average SMA = Simple Moving Average # Default high_ma = EMA(high, high_length) low_ma = EMA(low, low_length) high_ma = HMA(high, high_length)",
+        "formula": 'Default Inputs: high_length=13, low_length=21, mamode="sma" EMA = Exponential Moving Average HMA = Hull Moving Average SMA = Simple Moving Average # Default high_ma = EMA(high, high_length) low_ma = EMA(low, low_length) high_ma = HMA(high, high_length)',
     },
     "HL2": {
         "title": "Hl2",
@@ -401,15 +401,15 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
     },
     "JMA": {
         "title": "Jma",
-        "short": "Mark Jurik's Moving Average (JMA) attempts to eliminate noise to see the \"true\"",
-        "long": "Jurik Moving Average Average (JMA) Mark Jurik's Moving Average (JMA) attempts to eliminate noise to see the \"true\" underlying activity. It has extremely low lag, is very smooth and is responsive The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+        "short": 'Mark Jurik\'s Moving Average (JMA) attempts to eliminate noise to see the "true"',
+        "long": 'Jurik Moving Average Average (JMA) Mark Jurik\'s Moving Average (JMA) attempts to eliminate noise to see the "true" underlying activity. It has extremely low lag, is very smooth and is responsive The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
         "formula": "Default Inputs: length=7, phase=0",
     },
     "KC": {
         "title": "Kc",
         "short": "A popular volatility indicator similar to Bollinger Bands and",
         "long": "Keltner Channels (KC) A popular volatility indicator similar to Bollinger Bands and Donchian Channels. The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Default Inputs: length=20, scalar=2, mamode=None, tr=True TR = True Range SMA = Simple Moving Average EMA = Exponential Moving Average RANGE = TR(high, low, close) RANGE = high - low if mamode == \"ema\":",
+        "formula": 'Default Inputs: length=20, scalar=2, mamode=None, tr=True TR = True Range SMA = Simple Moving Average EMA = Exponential Moving Average RANGE = TR(high, low, close) RANGE = high - low if mamode == "ema":',
     },
     "KDJ": {
         "title": "Kdj",
@@ -545,9 +545,9 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
     },
     "MSW": {
         "title": "Msw",
-        "short": "Introduced by John F. Ehlers in \"Rocket Science For Traders\" (2001).",
-        "long": "Mesa Sine Wave (MSW) Introduced by John F. Ehlers in \"Rocket Science For Traders\" (2001). Uses a DFT of the recent ``period`` bars to estimate phase and outputs The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-        "formula": "Introduced by John F. Ehlers in \"Rocket Science For Traders\" (2001).",
+        "short": 'Introduced by John F. Ehlers in "Rocket Science For Traders" (2001).',
+        "long": 'Mesa Sine Wave (MSW) Introduced by John F. Ehlers in "Rocket Science For Traders" (2001). Uses a DFT of the recent ``period`` bars to estimate phase and outputs The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
+        "formula": 'Introduced by John F. Ehlers in "Rocket Science For Traders" (2001).',
     },
     "MULT": {
         "title": "Mult",
@@ -581,8 +581,8 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
     },
     "PDIST": {
         "title": "Pdist",
-        "short": "Measures the \"distance\" covered by price movements.",
-        "long": "Price Distance (PDIST) Measures the \"distance\" covered by price movements. https://www.prorealcode.com/prorealtime-indicators/pricedistance/ The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+        "short": 'Measures the "distance" covered by price movements.',
+        "long": 'Price Distance (PDIST) Measures the "distance" covered by price movements. https://www.prorealcode.com/prorealtime-indicators/pricedistance/ The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
         "formula": "Default Inputs: drift=1 PDIST = 2(high - low) - ABS(close - open) + ABS(open - close[drift])",
     },
     "PERCENT_RETURN": {
@@ -661,7 +661,7 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
         "title": "Qqe",
         "short": "The Quantitative Qualitative Estimation (QQE) is similar to SuperTrend but uses a Smoothed RSI with an upper and lower bands. The band width is a combination of a one period True Range of the Smoothed RSI which is double smoothed using Wilder's smoothing length (2 * rsiLength - 1) and multiplied by the default factor of 4.236. A Long trend is determined when the Smoothed RSI crosses the previous upperband and a Short trend when the Smoothed RSI crosses the previous lowerband.",
         "long": "Quantitative Qualitative Estimation (QQE) The Quantitative Qualitative Estimation (QQE) is similar to SuperTrend but uses a Smoothed RSI with an upper and lower bands. The band width is a combination of a one period True Range of the Smoothed RSI which is double smoothed using Wilder's smoothing length (2 * rsiLength - 1) and multiplied by the default factor of 4.236. A Long trend is determined when the Smoothed RSI crosses the previous upperband and a Short trend when the Smoothed RSI crosses t",
-        "formula": "Default Inputs: length=14, smooth=5, factor=4.236, mamode=\"ema\", drift=1",
+        "formula": 'Default Inputs: length=14, smooth=5, factor=4.236, mamode="ema", drift=1',
     },
     "QSTICK": {
         "title": "Qstick",
@@ -779,14 +779,14 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
     },
     "SQUEEZE": {
         "title": "Squeeze",
-        "short": "The default is based on John Carter's \"TTM Squeeze\" indicator, as discussed",
-        "long": "Squeeze (SQZ) The default is based on John Carter's \"TTM Squeeze\" indicator, as discussed in his book \"Mastering the Trade\" (chapter 11). The Squeeze indicator attempts The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+        "short": 'The default is based on John Carter\'s "TTM Squeeze" indicator, as discussed',
+        "long": 'Squeeze (SQZ) The default is based on John Carter\'s "TTM Squeeze" indicator, as discussed in his book "Mastering the Trade" (chapter 11). The Squeeze indicator attempts The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
         "formula": "Default Inputs: bb_length=20, bb_std=2, kc_length=20, kc_scalar=1.5, mom_length=12, mom_smooth=12, tr=True, lazybear=False, BB = Bollinger Bands KC = Keltner Channels MOM = Momentum SMA = Simple Moving Average EMA = Exponential Moving Average",
     },
     "SQUEEZE_PRO": {
         "title": "Squeeze Pro",
-        "short": "This indicator is an extended version of \"TTM Squeeze\" from John Carter.",
-        "long": "Squeeze PRO(SQZPRO) This indicator is an extended version of \"TTM Squeeze\" from John Carter. The default is based on John Carter's \"TTM Squeeze\" indicator, as discussed The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+        "short": 'This indicator is an extended version of "TTM Squeeze" from John Carter.',
+        "long": 'Squeeze PRO(SQZPRO) This indicator is an extended version of "TTM Squeeze" from John Carter. The default is based on John Carter\'s "TTM Squeeze" indicator, as discussed The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.',
         "formula": "Default Inputs: bb_length=20, bb_std=2, kc_length=20, kc_scalar_wide=2, kc_scalar_normal=1.5, kc_scalar_narrow=1, mom_length=12, mom_smooth=6, tr=True, BB = Bollinger Bands KC = Keltner Channels MOM = Momentum SMA = Simple Moving Average",
     },
     "SSF": {
@@ -1012,4 +1012,3 @@ PANDAS_TA_GLOSSARY_ENTRIES: dict[str, dict[str, str]] = {
         "formula": "Default Inputs: length=30, std=1 SMA = Simple Moving Average STDEV = Standard Deviation std = std * STDEV(close, length) mean = SMA(close, length) ZSCORE = (close - mean) / std",
     },
 }
-

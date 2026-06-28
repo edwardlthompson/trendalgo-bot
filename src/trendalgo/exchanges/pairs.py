@@ -9,9 +9,42 @@ from trendalgo.exchanges.static_kraken_usd import KRAKEN_USD_PAIRS
 
 _STATIC: dict[str, list[str]] = {
     "kraken": list(KRAKEN_USD_PAIRS),
-    "coinbase": ["BTC/USD", "ETH/USD", "SOL/USD", "AVAX/USD", "LINK/USD", "ADA/USD", "DOT/USD", "MATIC/USD", "UNI/USD", "LTC/USD"],
-    "binanceus": ["BTC/USD", "ETH/USD", "SOL/USD", "BNB/USD", "XRP/USD", "ADA/USD", "DOGE/USD", "AVAX/USD", "LINK/USD", "DOT/USD"],
-    "gemini": ["BTC/USD", "ETH/USD", "SOL/USD", "LTC/USD", "XRP/USD", "DOGE/USD", "AVAX/USD", "LINK/USD", "UNI/USD", "MATIC/USD"],
+    "coinbase": [
+        "BTC/USD",
+        "ETH/USD",
+        "SOL/USD",
+        "AVAX/USD",
+        "LINK/USD",
+        "ADA/USD",
+        "DOT/USD",
+        "MATIC/USD",
+        "UNI/USD",
+        "LTC/USD",
+    ],
+    "binanceus": [
+        "BTC/USD",
+        "ETH/USD",
+        "SOL/USD",
+        "BNB/USD",
+        "XRP/USD",
+        "ADA/USD",
+        "DOGE/USD",
+        "AVAX/USD",
+        "LINK/USD",
+        "DOT/USD",
+    ],
+    "gemini": [
+        "BTC/USD",
+        "ETH/USD",
+        "SOL/USD",
+        "LTC/USD",
+        "XRP/USD",
+        "DOGE/USD",
+        "AVAX/USD",
+        "LINK/USD",
+        "UNI/USD",
+        "MATIC/USD",
+    ],
 }
 
 

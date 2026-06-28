@@ -22,51 +22,216 @@ CATEGORY_ORDER: tuple[str, ...] = (
 )
 
 _OVERLAP = {
-    "BBANDS", "DEMA", "EMA", "HT_TRENDLINE", "KAMA", "MA", "MAMA", "MIDPOINT", "MIDPRICE",
-    "SAR", "SAREXT", "SMA", "T3", "TEMA", "TRIMA", "WMA",
+    "BBANDS",
+    "DEMA",
+    "EMA",
+    "HT_TRENDLINE",
+    "KAMA",
+    "MA",
+    "MAMA",
+    "MIDPOINT",
+    "MIDPRICE",
+    "SAR",
+    "SAREXT",
+    "SMA",
+    "T3",
+    "TEMA",
+    "TRIMA",
+    "WMA",
 }
 _MOMENTUM = {
-    "ADX", "ADXR", "APO", "AROON", "AROONOSC", "BOP", "CCI", "CMO", "DX", "MACD", "MACDEXT",
-    "MACDFIX", "MFI", "MINUS_DI", "MINUS_DM", "MOM", "PLUS_DI", "PLUS_DM", "PPO", "ROC", "ROCP",
-    "ROCR", "ROCR100", "RSI", "STOCH", "STOCHF", "STOCHRSI", "TRIX", "ULTOSC", "WILLR",
+    "ADX",
+    "ADXR",
+    "APO",
+    "AROON",
+    "AROONOSC",
+    "BOP",
+    "CCI",
+    "CMO",
+    "DX",
+    "MACD",
+    "MACDEXT",
+    "MACDFIX",
+    "MFI",
+    "MINUS_DI",
+    "MINUS_DM",
+    "MOM",
+    "PLUS_DI",
+    "PLUS_DM",
+    "PPO",
+    "ROC",
+    "ROCP",
+    "ROCR",
+    "ROCR100",
+    "RSI",
+    "STOCH",
+    "STOCHF",
+    "STOCHRSI",
+    "TRIX",
+    "ULTOSC",
+    "WILLR",
 }
 _VOLUME = {"AD", "ADOSC", "OBV"}
 _VOLATILITY = {"ATR", "NATR", "TRANGE"}
 _CYCLE = {"HT_DCPERIOD", "HT_DCPHASE", "HT_PHASOR", "HT_SINE", "HT_TRENDMODE"}
 _PRICE = {"AVGPRICE", "MEDPRICE", "TYPPRICE", "WCLPRICE"}
-_STATS = {"BETA", "CORREL", "LINEARREG", "LINEARREG_ANGLE", "LINEARREG_INTERCEPT", "LINEARREG_SLOPE",
-          "STDDEV", "TSF", "VAR", "MAX", "MAXINDEX", "MIN", "MININDEX", "MINMAX", "MINMAXINDEX", "SUM"}
+_STATS = {
+    "BETA",
+    "CORREL",
+    "LINEARREG",
+    "LINEARREG_ANGLE",
+    "LINEARREG_INTERCEPT",
+    "LINEARREG_SLOPE",
+    "STDDEV",
+    "TSF",
+    "VAR",
+    "MAX",
+    "MAXINDEX",
+    "MIN",
+    "MININDEX",
+    "MINMAX",
+    "MINMAXINDEX",
+    "SUM",
+}
 _MATH_OP = {"ADD", "DIV", "MAX", "MIN", "MULT", "SUB", "SUM"}
-_MATH_TR = {"ACOS", "ASIN", "ATAN", "CEIL", "COS", "COSH", "EXP", "FLOOR", "LN", "LOG10", "SIN",
-              "SINH", "SQRT", "TAN", "TANH"}
+_MATH_TR = {
+    "ACOS",
+    "ASIN",
+    "ATAN",
+    "CEIL",
+    "COS",
+    "COSH",
+    "EXP",
+    "FLOOR",
+    "LN",
+    "LOG10",
+    "SIN",
+    "SINH",
+    "SQRT",
+    "TAN",
+    "TANH",
+}
 
 
 _FIBONACCI = set(CUSTOM_TA_NAMES)
 _PTA_OVERLAP = {
-    "ALMA", "DONCHIAN", "FWMA", "HA", "HILO", "HL2", "HLC3", "HMA", "HWC", "HWMA", "ICHIMOKU",
-    "JMA", "KC", "OHLC4", "PSAR", "PWMA", "RAINBOW", "RMA", "SINWMA", "SUPERTREND", "SWMA",
-    "VIDYA", "VWAP", "VWMA", "WCP", "ZLMA",
+    "ALMA",
+    "DONCHIAN",
+    "FWMA",
+    "HA",
+    "HILO",
+    "HL2",
+    "HLC3",
+    "HMA",
+    "HWC",
+    "HWMA",
+    "ICHIMOKU",
+    "JMA",
+    "KC",
+    "OHLC4",
+    "PSAR",
+    "PWMA",
+    "RAINBOW",
+    "RMA",
+    "SINWMA",
+    "SUPERTREND",
+    "SWMA",
+    "VIDYA",
+    "VWAP",
+    "VWMA",
+    "WCP",
+    "ZLMA",
 }
 _PTA_MOMENTUM = {
-    "AO", "BIAS", "BRAR", "CFO", "CG", "COPPOCK", "CTI", "ER", "FISHER", "INERTIA", "KDJ", "KST",
-    "LRSI", "PGO", "QQE", "RSX", "RVGI", "RVI", "SLOPE", "SMI", "SQUEEZE", "SQUEEZE_PRO", "STC",
-    "TD_SEQ", "TSI", "TTM_TREND", "UO", "VORTEX",
+    "AO",
+    "BIAS",
+    "BRAR",
+    "CFO",
+    "CG",
+    "COPPOCK",
+    "CTI",
+    "ER",
+    "FISHER",
+    "INERTIA",
+    "KDJ",
+    "KST",
+    "LRSI",
+    "PGO",
+    "QQE",
+    "RSX",
+    "RVGI",
+    "RVI",
+    "SLOPE",
+    "SMI",
+    "SQUEEZE",
+    "SQUEEZE_PRO",
+    "STC",
+    "TD_SEQ",
+    "TSI",
+    "TTM_TREND",
+    "UO",
+    "VORTEX",
 }
 _PTA_VOLUME = {"CMF", "EFI", "EOM", "KVO", "NVI", "PVI", "PVT", "PVO", "VFI", "VP", "VWAP", "VWMA"}
 _PTA_MATH = {
-    "ACOS", "ASIN", "ATAN", "CEIL", "COS", "COSH", "EXP", "FLOOR", "LN", "LOG10", "SIN", "SINH", "SQRT", "TAN",
-    "TANH", "ADD", "DIV", "MULT", "SUB", "LOG_RETURN", "PERCENT_RETURN",
+    "ACOS",
+    "ASIN",
+    "ATAN",
+    "CEIL",
+    "COS",
+    "COSH",
+    "EXP",
+    "FLOOR",
+    "LN",
+    "LOG10",
+    "SIN",
+    "SINH",
+    "SQRT",
+    "TAN",
+    "TANH",
+    "ADD",
+    "DIV",
+    "MULT",
+    "SUB",
+    "LOG_RETURN",
+    "PERCENT_RETURN",
 }
 _PTA_STATS = {
-    "ENTROPY", "KURTOSIS", "MAD", "MEDIAN", "SKEW", "STDERR", "VARIANCE", "ZSCORE", "QUANTILE", "TODEG", "TORAD",
-    "ROLLING_MAX", "ROLLING_MIN", "ROLLING_SUM", "NPABS", "NPROUND", "TRUNC",
+    "ENTROPY",
+    "KURTOSIS",
+    "MAD",
+    "MEDIAN",
+    "SKEW",
+    "STDERR",
+    "VARIANCE",
+    "ZSCORE",
+    "QUANTILE",
+    "TODEG",
+    "TORAD",
+    "ROLLING_MAX",
+    "ROLLING_MIN",
+    "ROLLING_SUM",
+    "NPABS",
+    "NPROUND",
+    "TRUNC",
 }
 _PTA_PRICE = {"HL2", "HLC3", "OHLC4", "WCP", "PDIST"}
 _PTA_CYCLE = {"EBSW", "MSW", "REFLEX", "SMC_SWEEP"}
 
 
 _PTA_VOLATILITY = {
-    "ABERRATION", "ACCBANDS", "CHOP", "HVOL", "MASSI", "THERMO", "UI", "VHF", "TRUE_RANGE", "DECAY", "EDECAY", "DRAWDOWN",
+    "ABERRATION",
+    "ACCBANDS",
+    "CHOP",
+    "HVOL",
+    "MASSI",
+    "THERMO",
+    "UI",
+    "VHF",
+    "TRUE_RANGE",
+    "DECAY",
+    "EDECAY",
+    "DRAWDOWN",
 }
 
 
@@ -90,7 +255,23 @@ def ta_category(name: str) -> str:
         if upper in _PTA_STATS:
             return "Statistic Functions"
         if upper in _PTA_MATH:
-            if upper in {"ACOS", "ASIN", "ATAN", "CEIL", "COS", "COSH", "EXP", "FLOOR", "LN", "LOG10", "SIN", "SINH", "SQRT", "TAN", "TANH"}:
+            if upper in {
+                "ACOS",
+                "ASIN",
+                "ATAN",
+                "CEIL",
+                "COS",
+                "COSH",
+                "EXP",
+                "FLOOR",
+                "LN",
+                "LOG10",
+                "SIN",
+                "SINH",
+                "SQRT",
+                "TAN",
+                "TANH",
+            }:
                 return "Math Transform"
             return "Math Operators"
         return "Extended Indicators"
@@ -119,5 +300,10 @@ def ta_category(name: str) -> str:
 
 def build_ta_library() -> list[dict[str, str]]:
     items = [{"id": name, "name": name, "category": ta_category(name)} for name in all_ta_names()]
-    items.sort(key=lambda x: (CATEGORY_ORDER.index(x["category"]) if x["category"] in CATEGORY_ORDER else 99, x["name"]))
+    items.sort(
+        key=lambda x: (
+            CATEGORY_ORDER.index(x["category"]) if x["category"] in CATEGORY_ORDER else 99,
+            x["name"],
+        )
+    )
     return items

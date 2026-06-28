@@ -113,4 +113,6 @@ def fetch_closes(
     until: datetime,
 ) -> list[PricePoint]:
     """Fetch close prices from Kraken between since and until (UTC)."""
-    return [PricePoint(time=p.time, close=p.close) for p in fetch_ohlcv(symbol, timeframe, since, until)]
+    return [
+        PricePoint(time=p.time, close=p.close) for p in fetch_ohlcv(symbol, timeframe, since, until)
+    ]

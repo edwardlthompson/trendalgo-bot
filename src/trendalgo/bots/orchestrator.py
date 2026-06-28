@@ -98,7 +98,9 @@ class BotOrchestrator:
             "exchange": row["exchange"] if "exchange" in row.keys() else "kraken",
             "timeframe": row["timeframe"] if "timeframe" in row.keys() else "1h",
             "equity_mode": row["equity_mode"] if "equity_mode" in row.keys() else "manual",
-            "equity_input": float(row["equity_input"]) if "equity_input" in row.keys() else float(row["equity_usd"]),
+            "equity_input": float(row["equity_input"])
+            if "equity_input" in row.keys()
+            else float(row["equity_usd"]),
             "ta_params": ta_params,
         }
 

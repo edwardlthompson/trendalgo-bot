@@ -325,7 +325,14 @@ class TaFleetBacktestRunner:
                         phase="pass1",
                     )
                     elapsed_ms = (time.monotonic() - t0) * 1000
-                    self._tick(job, strategy=sid, timeframe=tv_tf, row=row, reason=reason, elapsed_ms=elapsed_ms)
+                    self._tick(
+                        job,
+                        strategy=sid,
+                        timeframe=tv_tf,
+                        row=row,
+                        reason=reason,
+                        elapsed_ms=elapsed_ms,
+                    )
                     if row:
                         all_results.append(row)
                         tf_hits += 1
@@ -454,8 +461,12 @@ class TaFleetBacktestRunner:
                     "rankings": ranked,
                     "top10": final_top10 or optimized or top10,
                     "final_top10": final_top10,
-                    "top5": _top5_for_bots(final_top10 or optimized or top10, job.pair, job.exchange_id),
-                    "best": final_top10[0] if final_top10 else ((optimized or top10)[0] if (optimized or top10) else None),
+                    "top5": _top5_for_bots(
+                        final_top10 or optimized or top10, job.pair, job.exchange_id
+                    ),
+                    "best": final_top10[0]
+                    if final_top10
+                    else ((optimized or top10)[0] if (optimized or top10) else None),
                     "buy_and_hold": buy_hold,
                 }
             bh_net = buy_hold.get("net_profit") if buy_hold else None

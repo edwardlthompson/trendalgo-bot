@@ -100,9 +100,7 @@ class FleetStore:
     ) -> dict[str, Any] | None:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            run = conn.execute(
-                "SELECT * FROM ta_fleet_runs ORDER BY id DESC LIMIT 1"
-            ).fetchone()
+            run = conn.execute("SELECT * FROM ta_fleet_runs ORDER BY id DESC LIMIT 1").fetchone()
             if run is None:
                 return None
             run_id = int(run["id"])

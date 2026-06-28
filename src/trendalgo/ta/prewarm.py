@@ -63,7 +63,9 @@ class TaPrewarmRunner:
                 job.messages.append("No bot fingerprints to prewarm.")
                 self._active = job
                 return job.to_dict()
-            job.messages.append(f"Precomputing TA signals for {len(targets)} unique fingerprint(s).")
+            job.messages.append(
+                f"Precomputing TA signals for {len(targets)} unique fingerprint(s)."
+            )
             self._active = job
             self._thread = threading.Thread(
                 target=self._run,

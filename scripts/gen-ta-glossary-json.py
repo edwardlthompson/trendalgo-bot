@@ -18,7 +18,9 @@ OUT = ROOT / "examples" / "web" / "public" / "data" / "ta-glossary.json"
 def main() -> None:
     entries = build_ta_glossary()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({"entries": entries, "count": len(entries)}, indent=2), encoding="utf-8")
+    OUT.write_text(
+        json.dumps({"entries": entries, "count": len(entries)}, indent=2), encoding="utf-8"
+    )
     print(f"wrote {len(entries)} entries to {OUT}")
 
 

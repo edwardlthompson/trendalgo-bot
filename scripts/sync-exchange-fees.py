@@ -14,7 +14,9 @@ if str(_REPO / "src") not in sys.path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Sync exchange fee schedules from public fee pages")
+    parser = argparse.ArgumentParser(
+        description="Sync exchange fee schedules from public fee pages"
+    )
     parser.add_argument(
         "--data-dir",
         default=os.environ.get("TRENDALGO_DATA_DIR", "data"),

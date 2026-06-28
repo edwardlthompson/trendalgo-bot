@@ -1,4 +1,5 @@
 """Generate examples/web/src/data/krakenUsdPairs.ts from static_kraken_usd.py."""
+
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]

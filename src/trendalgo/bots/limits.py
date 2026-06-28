@@ -51,7 +51,9 @@ def is_sub_minute(tv_interval: str) -> bool:
 def chart_lookback_seconds(tv_interval: str) -> int:
     from trendalgo.constants.timeframes import normalize_tv_interval
 
-    return CHART_LOOKBACK_SECONDS.get(normalize_tv_interval(tv_interval), DEFAULT_CHART_LOOKBACK_SECONDS)
+    return CHART_LOOKBACK_SECONDS.get(
+        normalize_tv_interval(tv_interval), DEFAULT_CHART_LOOKBACK_SECONDS
+    )
 
 
 def max_ohlcv_bars(tv_interval: str) -> int:
@@ -137,7 +139,9 @@ def limits_payload(*, paper: bool) -> dict[str, Any]:
     return {
         "max_bots_total": MAX_BOTS_TOTAL,
         "max_enabled_bots": MAX_ENABLED_BOTS_PAPER if paper else MAX_ENABLED_BOTS_LIVE,
-        "max_sub_minute_enabled": MAX_SUB_MINUTE_ENABLED_PAPER if paper else MAX_SUB_MINUTE_ENABLED_LIVE,
+        "max_sub_minute_enabled": MAX_SUB_MINUTE_ENABLED_PAPER
+        if paper
+        else MAX_SUB_MINUTE_ENABLED_LIVE,
         "max_1s_enabled": MAX_1S_ENABLED,
         "sub_minute_intervals": sorted(SUB_MINUTE_INTERVALS),
         "chart_lookback_seconds": CHART_LOOKBACK_SECONDS,

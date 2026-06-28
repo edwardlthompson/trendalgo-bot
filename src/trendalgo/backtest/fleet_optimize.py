@@ -16,7 +16,9 @@ from trendalgo.ta.param_specs import ta_param_specs
 ProgressCb = Callable[[str, dict[str, Any] | None, str | None], None]
 
 
-def param_variants(strategy_id: str, *, max_variants: int = OPTIMIZE_MAX_VARIANTS) -> list[dict[str, Any]]:
+def param_variants(
+    strategy_id: str, *, max_variants: int = OPTIMIZE_MAX_VARIANTS
+) -> list[dict[str, Any]]:
     specs = ta_param_specs(strategy_id)
     base = default_params(strategy_id)
     if not specs:

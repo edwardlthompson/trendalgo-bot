@@ -49,9 +49,53 @@ def _extract_formula(doc: str | None, slug: str) -> str:
     calc = re.search(r"Calculation:\s*(.+?)(?:\nArgs:|\nKwargs:|\Z)", doc, re.S | re.I)
     if calc:
         body = calc.group(1).strip()
-        lines = [ln.strip() for ln in body.splitlines() if ln.strip() and not ln.strip().startswith("Sources:")]
+        lines = [
+            ln.strip()
+            for ln in body.splitlines()
+            if ln.strip() and not ln.strip().startswith("Sources:")
+        ]
         # Drop header-only lines, keep equations.
-        eq = [ln for ln in lines if ln.lower().startswith(("default inputs", "typical", "vfi", "inter", "cutoff", "mf", "vave", "vmax", "vc", "vcp", "bb ", "kc ", "mom", "hma", "wma", "upper", "lower", "middle", "macd", "signal", "rsi", "ema", "sma", "atr", "adx", "supert", "length", "close", "high", "low", "open", "volume")) or "=" in ln]
+        eq = [
+            ln
+            for ln in lines
+            if ln.lower().startswith(
+                (
+                    "default inputs",
+                    "typical",
+                    "vfi",
+                    "inter",
+                    "cutoff",
+                    "mf",
+                    "vave",
+                    "vmax",
+                    "vc",
+                    "vcp",
+                    "bb ",
+                    "kc ",
+                    "mom",
+                    "hma",
+                    "wma",
+                    "upper",
+                    "lower",
+                    "middle",
+                    "macd",
+                    "signal",
+                    "rsi",
+                    "ema",
+                    "sma",
+                    "atr",
+                    "adx",
+                    "supert",
+                    "length",
+                    "close",
+                    "high",
+                    "low",
+                    "open",
+                    "volume",
+                )
+            )
+            or "=" in ln
+        ]
         if eq:
             return _clean(" ".join(eq[:8]))
         return _clean(" ".join(lines[:6]))

@@ -16,7 +16,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Sync icon registry")
     parser.add_argument("--coins-only", action="store_true")
     parser.add_argument("--exchanges-only", action="store_true")
-    parser.add_argument("--migrate-coins", action="store_true", help="Download local coin files from existing coins.json URLs")
+    parser.add_argument(
+        "--migrate-coins",
+        action="store_true",
+        help="Download local coin files from existing coins.json URLs",
+    )
     parser.add_argument("--refresh", action="store_true", help="Re-download all icon files")
     parser.add_argument("--limit", type=int, default=1000)
     args = parser.parse_args()

@@ -110,7 +110,9 @@ def _mark_price(chart: list[dict[str, int | float]]) -> float | None:
 def _resolve_equity_usd(state: Any, body: UpdateBotBody, *, mark: float | None) -> float:
     mode = normalize_equity_mode(body.equity_mode)
     amount = float(body.equity_input or body.equity_usd)
-    return resolve_equity_usd(state, body.pair, mode, amount, float(body.equity_usd), mark_price=mark)
+    return resolve_equity_usd(
+        state, body.pair, mode, amount, float(body.equity_usd), mark_price=mark
+    )
 
 
 def _param_specs_for_strategy(strategy_id: str) -> list[dict[str, Any]]:
@@ -122,7 +124,9 @@ def _param_specs_for_strategy(strategy_id: str) -> list[dict[str, Any]]:
     return [s.model_dump() for s in ta_param_specs(strategy_id)]
 
 
-def _merged_strategy_params(bot: dict[str, Any], specs: list[dict[str, Any]]) -> dict[str, float | int]:
+def _merged_strategy_params(
+    bot: dict[str, Any], specs: list[dict[str, Any]]
+) -> dict[str, float | int]:
     stored = dict(bot.get("ta_params") or {})
     merged: dict[str, float | int] = {}
     for spec in specs:
@@ -232,7 +236,9 @@ def get_bot_detail(
     breakdown = bot_pnl_breakdown(state.trade_journal, bot_id, chart=chart, current_price=mark)
     journal_trades = state.trade_journal.list_trades_for_bot(bot_id)
     if include_sim_trades:
-        sim_trades, ta_cache_meta = simulated_trades_for_bot(bot, ohlcv, chart=chart, return_meta=True)
+        sim_trades, ta_cache_meta = simulated_trades_for_bot(
+            bot, ohlcv, chart=chart, return_meta=True
+        )
     else:
         sim_trades = []
         ta_cache_meta = None

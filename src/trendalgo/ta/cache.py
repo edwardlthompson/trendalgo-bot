@@ -98,7 +98,6 @@ class CacheMeta:
         }
 
 
-
 def ohlcv_list_to_df(
     ohlcv: list[dict[str, Any]],
     *,
@@ -219,7 +218,9 @@ class CacheCoordinator:
         self._cache.stats.invalidations_ohlcv += 1
 
 
-def _signals_for_bot_df(df: pd.DataFrame, preset: dict[str, Any], bot: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
+def _signals_for_bot_df(
+    df: pd.DataFrame, preset: dict[str, Any], bot: dict[str, Any]
+) -> tuple[np.ndarray, np.ndarray]:
     work_df = trim_df_for_bot(df, preset, bot)
     entries, exits = signals_for_preset(work_df, preset)
     if len(entries) == len(df):
@@ -328,12 +329,17 @@ class TaSignalCache:
                 ms = (time.perf_counter() - t0) * 1000
                 if spliced is not None:
                     entries, exits = spliced
-                    self._put(fp, CachedSignals(signature=sig, entries=entries, exits=exits, compute_ms=ms))
+                    self._put(
+                        fp,
+                        CachedSignals(signature=sig, entries=entries, exits=exits, compute_ms=ms),
+                    )
                     self.stats.hits_incremental += 1
                     return (
                         entries,
                         exits,
-                        CacheMeta(hit="incremental", shared=False, warmup_bars=warmup, compute_ms=ms),
+                        CacheMeta(
+                            hit="incremental", shared=False, warmup_bars=warmup, compute_ms=ms
+                        ),
                     )
                 self.stats.incremental_rejected += 1
                 logger.debug(
@@ -348,7 +354,11 @@ class TaSignalCache:
                 entries, exits = _signals_for_bot_df(df, preset, bot)
             except (KeyError, ValueError, TypeError):
                 empty = np.zeros(len(df), dtype=bool)
-                return empty, empty, CacheMeta(hit="miss", shared=False, warmup_bars=warmup, compute_ms=0.0)
+                return (
+                    empty,
+                    empty,
+                    CacheMeta(hit="miss", shared=False, warmup_bars=warmup, compute_ms=0.0),
+                )
             ms = (time.perf_counter() - t0) * 1000
             self._put(fp, CachedSignals(signature=sig, entries=entries, exits=exits, compute_ms=ms))
             self.stats.misses_full += 1

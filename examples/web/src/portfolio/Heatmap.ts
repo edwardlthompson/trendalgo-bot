@@ -25,7 +25,7 @@ export function heatmapColor(returnPct: number): string {
       ? yellowHue + t * (142 - yellowHue)
       : yellowHue + t * yellowHue;
   const saturation = 52 + Math.abs(t) * 28;
-  const lightness = 46 - Math.abs(t) * 10;
+  const lightness = 28 - Math.abs(t) * 8;
   return `hsl(${Math.round(hue)} ${Math.round(saturation)}% ${Math.round(lightness)}%)`;
 }
 

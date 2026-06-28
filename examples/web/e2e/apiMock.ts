@@ -51,6 +51,8 @@ function json(body: unknown): { status: number; contentType: string; body: strin
 export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void> {
   const risk = { ...sampleDashboard.risk, paused, can_trade: !paused };
   let mockBots = sampleDashboard.bots!.map((b) => ({ ...b }));
+  let fleetStatus: "idle" | "running" | "complete" = "idle";
+  let fleetPolls = 0;
   const dashboardPayload = () => ({
     ...sampleDashboard,
     risk,
@@ -145,6 +147,86 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
     }
     if (url.includes("/backtest/latest")) {
       await route.fulfill(json({ result: null, metrics: null, equity_curve: [] }));
+      return;
+    }
+    if (url.includes("/backtest/fleet/history/")) {
+      await route.fulfill(
+        json({
+          rankings: [{ strategy_id: "RSI", timeframe: "60", net_profit: 100, trades: 5, rank: 1 }],
+          total_rankings: 1,
+          summary: {
+            final_top10: [{ strategy_id: "RSI", timeframe: "60", net_profit: 100, trades: 5, bar_count: 720 }],
+            buy_and_hold: { net_profit: 50, trades: 1, bar_count: 720 },
+            lookback_days: 30,
+          },
+        }),
+      );
+      return;
+    }
+    if (url.includes("/backtest/fleet/history")) {
+      await route.fulfill(json({ runs: [], total: 0 }));
+      return;
+    }
+    if (url.includes("/backtest/fleet/active")) {
+      if (fleetStatus === "running") {
+        fleetPolls += 1;
+        if (fleetPolls >= 2) fleetStatus = "complete";
+      }
+      const running = fleetStatus === "running";
+      const complete = fleetStatus === "complete";
+      await route.fulfill(
+        json({
+          status: complete ? "complete" : running ? "running" : "idle",
+          progress_pct: complete ? 100 : running ? 50 : 0,
+          total_combinations: 3,
+          completed: complete ? 3 : running ? 1 : 0,
+          phase: complete ? "done" : "pass1",
+          summary: complete
+            ? {
+                final_top10: [
+                  { strategy_id: "RSI", timeframe: "60", net_profit: 100, trades: 5, bar_count: 720 },
+                ],
+                buy_and_hold: { net_profit: 50, trades: 1, bar_count: 720 },
+                lookback_days: 30,
+              }
+            : undefined,
+        }),
+      );
+      return;
+    }
+    if (url.includes("/backtest/fleet/latest")) {
+      await route.fulfill(
+        json({
+          rankings:
+            fleetStatus === "complete"
+              ? [{ strategy_id: "RSI", timeframe: "60", net_profit: 100, trades: 5, rank: 1 }]
+              : [],
+          total_rankings: fleetStatus === "complete" ? 1 : 0,
+        }),
+      );
+      return;
+    }
+    if (url.includes("/backtest/exchange-fees")) {
+      await route.fulfill(
+        json({
+          tier: "retail_default",
+          exchanges: [
+            {
+              exchange_id: "kraken",
+              taker_pct: 0.0026,
+              maker_pct: 0.0016,
+              tier: "retail_default",
+              source_url: "",
+            },
+          ],
+        }),
+      );
+      return;
+    }
+    if (url.includes("/backtest/fleet") && method === "POST") {
+      fleetStatus = "running";
+      fleetPolls = 0;
+      await route.fulfill(json({ status: "running", progress_pct: 0, total_combinations: 3 }));
       return;
     }
     if (url.includes("/backtest") && method === "POST") {

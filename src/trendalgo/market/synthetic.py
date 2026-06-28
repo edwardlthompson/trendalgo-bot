@@ -92,7 +92,11 @@ def synthetic_series(
     points: list[PricePoint] = []
     ts = int(since.timestamp())
     end = int(until.timestamp())
-    price_fn = btc_usd_price_at if sym == "BTC" else lambda t, anchor=anchor: token_usd_price_at(sym, t, anchor=anchor)
+    price_fn = (
+        btc_usd_price_at
+        if sym == "BTC"
+        else lambda t, anchor=anchor: token_usd_price_at(sym, t, anchor=anchor)
+    )
     while ts <= end:
         dt = datetime.fromtimestamp(ts, tz=UTC)
         points.append(PricePoint(time=ts, close=price_fn(dt, anchor=anchor)))

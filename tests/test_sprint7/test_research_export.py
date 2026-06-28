@@ -1,6 +1,5 @@
 """Sprint 7 research & export tests."""
 
-
 from trendalgo.export.tax import fifo_tax_rows, tax_csv
 from trendalgo.optimize.heatmap import hyperopt_heatmap_grid
 from trendalgo.optimize.monte_carlo import monte_carlo_trade_shuffle

@@ -120,6 +120,9 @@ jobs:
       - name: Install web dependencies
         working-directory: examples/web
         run: npm ci
+      - name: Sync trendalgo-bot python (dev tools)
+        if: ${{ hashFiles('pyproject.toml') != '' }}
+        run: uv sync --locked --extra dev
       - name: Sync python example
         if: ${{ hashFiles('examples/python/pyproject.toml') != '' }}
         working-directory: examples/python

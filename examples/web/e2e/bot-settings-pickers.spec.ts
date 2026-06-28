@@ -47,10 +47,10 @@ test("strategy picker opens and selects an item", async ({ page }) => {
   await page.getByTestId("bot-strategy-picker-trigger").click();
   const panel = page.getByTestId("bot-strategy-picker-panel");
   await expect(panel).toBeVisible();
-  await expect(panel.getByRole("button", { name: "RSI", exact: true })).toBeVisible();
-  await panel.getByRole("button", { name: "RSI", exact: true }).click();
+  await expect(panel.getByRole("button", { name: "Relative Strength Index", exact: true })).toBeVisible();
+  await panel.getByRole("button", { name: "Relative Strength Index", exact: true }).click();
   await expect(panel).toBeHidden();
-  await expect(page.getByTestId("bot-strategy-picker-trigger")).toHaveText("RSI");
+  await expect(page.getByTestId("bot-strategy-picker-trigger")).toHaveText("Relative Strength Index");
 });
 
 test("pair picker opens, searches, and selects", async ({ page }) => {

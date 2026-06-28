@@ -98,7 +98,9 @@ def generate_stress_holdings(
     return out
 
 
-def load_or_build_stress_cache(*, seed: int = 42, refresh: bool = False) -> dict[str, list[HoldingRow]]:
+def load_or_build_stress_cache(
+    *, seed: int = 42, refresh: bool = False
+) -> dict[str, list[HoldingRow]]:
     path = _cache_path()
     if not refresh and path.is_file():
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -157,12 +159,7 @@ def apply_stress_portfolio(
         )
     aggregated = sum(s["total_usd"] for s in summaries)
     unique_assets = len(
-        {
-            h.asset
-            for rows in holdings_by_exchange.values()
-            for h in rows
-            if h.asset not in _STABLE
-        }
+        {h.asset for rows in holdings_by_exchange.values() for h in rows if h.asset not in _STABLE}
     )
     return {
         "mode": "stress",

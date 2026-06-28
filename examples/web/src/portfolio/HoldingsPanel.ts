@@ -171,7 +171,8 @@ export async function createHoldingsPanel(
         const img = document.createElement("img");
         img.className = "gp-coin-icon";
         img.src = iconSrc;
-        img.alt = asset;
+        img.alt = "";
+        img.setAttribute("aria-hidden", "true");
         img.width = 18;
         img.height = 18;
         img.loading = "lazy";

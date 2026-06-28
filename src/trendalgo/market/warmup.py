@@ -140,13 +140,17 @@ class OhlcvWarmupRunner:
     def _log(self, job: WarmupJob, message: str) -> None:
         job.messages.append(message)
 
-    def _run(self, job: WarmupJob, targets: list[WarmupSeriesTarget], bots: list[dict[str, Any]]) -> None:
+    def _run(
+        self, job: WarmupJob, targets: list[WarmupSeriesTarget], bots: list[dict[str, Any]]
+    ) -> None:
         service = PriceHistoryService(self._data_dir / "prices.db")
         try:
             for target in targets:
                 with self._lock:
                     job.current_series = target.label
-                self._log(job, f"▶ {target.label} — lookback {target.lookback_seconds // 3600}h window")
+                self._log(
+                    job, f"▶ {target.label} — lookback {target.lookback_seconds // 3600}h window"
+                )
 
                 until = datetime.now(UTC)
                 since = until - timedelta(seconds=target.lookback_seconds)
@@ -181,7 +185,9 @@ class OhlcvWarmupRunner:
             with self._lock:
                 job.status = "complete"
                 job.current_series = ""
-                self._log(job, "OHLCV cache warmup complete. Charts and TA will reuse stored candles.")
+                self._log(
+                    job, "OHLCV cache warmup complete. Charts and TA will reuse stored candles."
+                )
             schedule_ta_prewarm_after_ohlcv(self._data_dir, bots)
         except Exception as exc:
             with self._lock:
