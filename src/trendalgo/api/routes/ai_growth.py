@@ -12,8 +12,8 @@ from trendalgo.ai.nl_draft import draft_from_nl
 from trendalgo.ai.recommender import recommend_strategies
 from trendalgo.ai.scanner_pipeline import pipeline_suggestions
 from trendalgo.api.risk import get_risk_status
-from trendalgo.billing.boost import disable_boost_mode, enable_boost_mode
 from trendalgo.api.state import AppState
+from trendalgo.billing.boost import disable_boost_mode, enable_boost_mode
 from trendalgo.growth.store import GrowthStore
 
 router = APIRouter()

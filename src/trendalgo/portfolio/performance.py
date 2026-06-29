@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import Any
 
 from trendalgo.market.portfolio_curves import btc_portfolio_curve, token_closes_for_range
 from trendalgo.market.service import HOURLY_RANGES
