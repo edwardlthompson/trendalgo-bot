@@ -39,7 +39,9 @@ def forage_pairs(settings: ScannerSettings | None = None, *, top_n: int = 8) -> 
             }
         )
 
-    scored.sort(key=lambda r: float(cast(float | int | str, r.get("forager_score", 0))), reverse=True)
+    scored.sort(
+        key=lambda r: float(cast(float | int | str, r.get("forager_score", 0))), reverse=True
+    )
     picks = scored[:top_n]
     return {
         "generated_at": datetime.now(UTC).isoformat(),
