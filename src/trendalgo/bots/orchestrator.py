@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 from trendalgo.db.rowid import require_row_id
 
 
