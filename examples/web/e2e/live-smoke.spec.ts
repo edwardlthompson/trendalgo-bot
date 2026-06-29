@@ -12,8 +12,7 @@ const VIEWS = [
   { label: "Export", testId: "export-hub" },
   { label: "Billing", testId: "billing-dashboard" },
   { label: "Scanner", testId: "scanner-panel" },
-  { label: "Risk", testId: "risk-panel" },
-  { label: "Config", testId: "config-form" },
+  { label: "Settings", testId: "settings-view" },
   { label: "Debug", testId: "debug-log-viewer" },
 ] as const;
 
@@ -49,34 +48,15 @@ test.describe("live dev smoke", () => {
     }
   });
 
-  test("settings panel opens and theme toggle works", async ({ page }) => {
-    await page.getByRole("button", { name: "Settings" }).click();
+  test("settings tab shows theme and about section", async ({ page }) => {
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await expect(page.getByTestId("settings-view")).toBeVisible();
     await expect(page.getByTestId("settings-panel")).toBeVisible();
+    await expect(page.getByTestId("about-panel")).toBeVisible();
     await page.locator("[data-settings-theme]").selectOption("dark");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
-  });
-
-  test("about panel opens with version", async ({ page }) => {
-    await page.getByRole("button", { name: "About" }).click();
-    await expect(page.getByTestId("about-panel")).toBeVisible();
-    await expect(page.getByTestId("about-status")).toBeVisible();
-    const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations).toEqual([]);
-  });
-
-  test("risk pause and resume round-trip", async ({ page }) => {
-    await page.getByRole("button", { name: "Risk" }).click();
-    await expect(page.getByTestId("risk-panel")).toBeVisible();
-    await page.getByTestId("pause-all").click();
-    await page.getByRole("button", { name: "Portfolio" }).click();
-    await expect(page.getByTestId("health-widget")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByTestId("health-status")).toContainText(/Paused/i, { timeout: 10_000 });
-    await page.getByRole("button", { name: "Risk" }).click();
-    await page.getByTestId("resume-trading").click();
-    await page.getByRole("button", { name: "Portfolio" }).click();
-    await expect(page.getByTestId("health-status")).not.toContainText(/Paused/i, { timeout: 10_000 });
   });
 
   test("backtest run produces metrics", async ({ page }) => {

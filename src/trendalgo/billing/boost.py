@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 BOOST_LICENSE_RATE = 0.15
-STANDARD_LICENSE_RATE = 0.12
+STANDARD_LICENSE_RATE = 0.05
 
 
 def enable_boost_mode(billing_store: Any) -> dict[str, Any]:

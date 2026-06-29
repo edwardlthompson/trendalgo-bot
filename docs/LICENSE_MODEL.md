@@ -5,7 +5,7 @@
 ## Structure
 
 1. **Free tier** — dry-run, limited history
-2. **Performance license** — % of bot-attributed net-positive closed trades (default 12%)
+2. **Performance license** — % of bot-attributed net-positive closed trades (default 5%)
 3. **Boost tier (B1)** — optional higher rate for premium AI strategy docs (S11)
 
 ## Terms sections (outline)

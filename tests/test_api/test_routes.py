@@ -2,6 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from trendalgo.api.app import create_app
@@ -294,16 +295,26 @@ def test_sprint8_portfolio_advanced() -> None:
     assert discord["sent"] is False
 
 
-def test_sprint10_billing() -> None:
+def test_sprint10_billing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TRENDALGO_BTC_USD_RATE", "100000")
     c = client()
     dash = c.get("/api/v1/billing/dashboard").json()
     assert dash["net_loss_equals_zero_fee"]
+    assert dash["payment_auto_verify"] is True
+    assert "billing_eligibility" in dash
     c.post("/api/v1/billing/process-trades").json()
     enrolled = c.post(
         "/api/v1/billing/enroll",
         json={"license_rate_pct": 0.12, "terms_version": "2026-06-draft-1", "accept_terms": True},
     ).json()
     assert enrolled["enrollment"]["enrolled"] == 1
+    from pathlib import Path
+
+    from trendalgo.billing.store import BillingStore
+
+    data_dir = Path(os.environ["TRENDALGO_DATA_DIR"])
+    store = BillingStore(data_dir / "billing.db")
+    store.set_billing_eligibility("2025-01-01T00:00:00+00:00", "2025-01-01T00:00:00+00:00")
     c.post("/api/v1/billing/process-trades")
     stmt = c.get("/api/v1/billing/statement/2026-06")
     if stmt.status_code == 200:
@@ -311,9 +322,14 @@ def test_sprint10_billing() -> None:
     settlement = c.get("/api/v1/billing/settlement").json()
     assert settlement["user_initiated_only"]
     assert settlement["auto_withdraw"] is False
+    assert settlement["auto_verify"] is True
+    assert settlement.get("payment_id") or settlement.get("id")
+    payment_id = settlement.get("payment_id") or settlement.get("id")
+    monkeypatch.setenv("TRENDALGO_PAYMENT_SIMULATE", "1")
+    confirmed = c.get(f"/api/v1/billing/payment/status/{payment_id}").json()
+    assert confirmed["verified"] is True
     recon = c.get("/api/v1/billing/reconcile").json()
     assert "ok" in recon
-    c.post("/api/v1/billing/mark-paid")
     lightning = c.post(
         "/api/v1/billing/lightning-invoice", json={"period": "2026-06", "amount_usd": 10}
     ).json()

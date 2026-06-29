@@ -40,7 +40,7 @@ Versioned presets in `src/trendalgo/ai/curated_library.py` — operator-maintain
 
 ## Boost Mode (B1)
 
-Optional 15% performance license rate (vs 12% standard) for premium curated AI documentation. User-initiated enrollment via API.
+Optional 15% performance license rate (vs 5% standard) for premium curated AI documentation. User-initiated enrollment via API.
 
 ## Legal disclaimers
 

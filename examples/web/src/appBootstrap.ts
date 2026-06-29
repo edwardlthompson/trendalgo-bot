@@ -1,6 +1,12 @@
 import { handleRestartGuard, checkForUpdates } from "./about/aboutSession";
 import { setTaGlossaryEntries, ensureTaGlossaryLoaded } from "./data/taGlossary";
+import { glossaryAnchorId } from "./data/glossaryLinkify";
 import { ensureTaLibraryBundled } from "./data/taLibraryFallback";
+import {
+  bundledExchangeFees,
+  feeForExchange,
+  mergeFeeCatalogs,
+} from "./data/exchangeFeesFallback";
 import { applyPwaUpdate } from "./about/applyUpdate";
 import { loadDonations } from "./about/donations";
 import {
@@ -29,7 +35,8 @@ import {
   fetchBillingDashboard,
   enrollBilling,
   processBillingTrades,
-  fetchBillingSettlement,
+  startBillingPayment,
+  checkBillingPayment,
   markBillingPaid,
   createBillingLightningInvoice,
   fetchPlatformForager,
@@ -67,6 +74,8 @@ import {
   type BacktestRanking,
   type DashboardData,
   type FleetActiveSnapshot,
+  type FleetResultRow,
+  type FleetHistoryEntry,
   type ScannerSettingsPayload,
 } from "./api/client";
 import { createAppShell, type AppShellState } from "./AppShell";
@@ -91,6 +100,7 @@ import {
 } from "./settings/settingsStore";
 import { loadNavigation, saveNavigation } from "./settings/navigationStore";
 import { initTheme, subscribeThemeChange } from "./theme";
+import { initDisplayCurrency, subscribeDisplayCurrencyChange } from "./settings/displayCurrency";
 import { DEFAULT_BOT_LIMITS, checkGuardrailAction, nextBotLabel, syncBotLimits } from "./bots/botGuardrails";
 import { showGuardrailNotice } from "./bots/botLimitsBanner";
 import {
@@ -184,8 +194,8 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
     })
     .catch(() => undefined);
   const defaultExchange = "kraken";
-  const krakenFee =
-    exchangeFees.exchanges.find((e) => e.exchange_id === defaultExchange) ?? null;
+  const feeCatalog = mergeFeeCatalogs(exchangeFees.exchanges);
+  const krakenFee = feeForExchange(defaultExchange, feeCatalog);
   return {
     dashboard,
     pairs,
@@ -205,6 +215,7 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
     fleetActive: fleetActive.status === "idle" ? null : fleetActive,
     fleetResults: fleetLatest.total_rankings > 0 ? fleetLatest : null,
     fleetFeeSchedule: krakenFee,
+    fleetFeeCatalog: feeCatalog,
     fleetHistoryRuns: fleetHistory.runs,
     fleetSelectedHistoryJobId: null,
     fleetFilterMode: "all" as const,
@@ -218,8 +229,9 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
       scale_out_enabled: Boolean(exitRules.scale_out_enabled ?? true),
     },
     billingDashboard: billingDash as import("./billing/BillingDashboard").BillingDashboardData,
-    billingSettlement: null,
-    showBillingSettlement: false,
+  billingSettlement: null,
+  showBillingSettlement: false,
+  billingSettlementAsset: "BTC",
     portfolioPlatform: { forager, funding, postgres },
     botLimits: syncBotLimits(
       botLimits,
@@ -233,10 +245,9 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
 
 export function bootstrapApp(appRoot: HTMLDivElement): void {
   const initialNav = loadNavigation();
+  const initialFeeCatalog = bundledExchangeFees();
   let state: AppShellState = {
     view: initialNav.view,
-    showAbout: false,
-    showSettings: false,
     showInbox: false,
     updateStatus: t("about.update.current"),
     donations: { enabled: false, message: "", links: [] },
@@ -249,7 +260,8 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     fleetPairs: krakenPairsFallback(),
     fleetActive: null,
     fleetResults: null,
-    fleetFeeSchedule: null,
+    fleetFeeSchedule: feeForExchange("kraken", initialFeeCatalog),
+    fleetFeeCatalog: initialFeeCatalog,
     fleetHistoryRuns: [],
     fleetSelectedHistoryJobId: null,
     fleetFilterMode: "all",
@@ -279,8 +291,9 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     diversification: null,
     exitRules: null,
     billingDashboard: null,
-    billingSettlement: null,
-    showBillingSettlement: false,
+  billingSettlement: null,
+  showBillingSettlement: false,
+  billingSettlementAsset: "BTC",
     portfolioPlatform: null,
     exchangeRegistry: null,
     selectedBotId: initialNav.selectedBotId,
@@ -292,6 +305,7 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     botExchangePairs: krakenPairsFallback(),
     botLimits: DEFAULT_BOT_LIMITS,
     glossaryReturnView: null,
+    glossaryFocusId: null,
   };
 
   function botDetailContext(): BotDetailContext {
@@ -329,13 +343,46 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     render();
   }
 
-  async function reloadFleetHistory(): Promise<void> {
+  async function reloadFleetHistory(): Promise<FleetHistoryEntry[]> {
     try {
       const payload = await fetchFleetHistory();
       state = { ...state, fleetHistoryRuns: payload.runs };
       render();
+      return payload.runs;
     } catch {
-      /* keep prior list */
+      return state.fleetHistoryRuns;
+    }
+  }
+
+  async function loadFleetHistoryRun(jobId: string): Promise<void> {
+    try {
+      const payload = await fetchFleetHistoryRun(jobId);
+      state = {
+        ...state,
+        fleetSelectedHistoryJobId: jobId,
+        fleetResults: payload,
+        fleetExchangeId: payload.exchange_id ?? state.fleetExchangeId,
+        fleetPair: payload.pair ?? state.fleetPair,
+        fleetStakeUsd: payload.stake_usd ?? state.fleetStakeUsd,
+        fleetActive: null,
+        backtestLoading: false,
+      };
+      render();
+    } catch {
+      /* keep prior results */
+    }
+  }
+
+  async function refreshBacktestView(): Promise<void> {
+    await reloadFleetHistory();
+    await reloadFleetResults();
+    const runs = state.fleetHistoryRuns;
+    if (runs.length && !state.fleetResults?.rankings?.length) {
+      await loadFleetHistoryRun(runs[0].job_id);
+      return;
+    }
+    if (runs.length && !state.fleetSelectedHistoryJobId) {
+      await loadFleetHistoryRun(runs[0].job_id);
     }
   }
 
@@ -374,6 +421,51 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       const tpl = getBotTemplate(fromTemplateId);
       if (tpl) payload = templateToNewBotPayload(tpl, label);
     }
+    const blocked = checkGuardrailAction(limits, bots, { adding: true });
+    if (blocked) {
+      showGuardrailNotice(blocked);
+      return;
+    }
+    try {
+      const resp = await addBot(payload);
+      state = {
+        ...state,
+        dashboard: { ...state.dashboard, bots: resp.bots },
+        botLimits: syncBotLimits(
+          limits,
+          resp.bots ?? bots,
+          state.dashboard?.dry_run ?? limits.paper,
+        ),
+      };
+      render();
+      void runOhlcvWarmupWithUi();
+      await openBotDetail(resp.id);
+    } catch (err) {
+      window.alert(String(err instanceof Error ? err.message : err));
+    }
+  }
+
+  async function createBotFromFleetResult(row: FleetResultRow): Promise<void> {
+    if (!state.dashboard) return;
+    const limits = state.botLimits ?? DEFAULT_BOT_LIMITS;
+    const bots = state.dashboard.bots ?? [];
+    const label = nextBotLabel(bots);
+    const taParams: Record<string, number> = {};
+    if (row.params) {
+      for (const [key, value] of Object.entries(row.params)) {
+        if (typeof value === "number" && Number.isFinite(value)) taParams[key] = value;
+      }
+    }
+    const payload = {
+      label,
+      strategy_id: row.strategy_id,
+      pair: state.fleetPair,
+      exchange: state.fleetExchangeId,
+      timeframe: row.timeframe,
+      equity_usd: state.fleetStakeUsd,
+      enabled: false,
+      ta_params: taParams,
+    };
     const blocked = checkGuardrailAction(limits, bots, { adding: true });
     if (blocked) {
       showGuardrailNotice(blocked);
@@ -506,10 +598,66 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       state = { ...state, apiOnline: false };
     }
     render();
+    if (state.view === "billing") {
+      void maybeAutoOpenBillingSettlement();
+    }
     if (state.backtestLoading && state.fleetActive?.status === "running") {
       startFleetPoll();
     }
     await restoreNavigationAfterLoad();
+  }
+
+  function mapPaymentToSettlement(raw: Record<string, unknown>): import("./billing/pay/SettlementPanel").SettlementData {
+    return {
+      period: String(raw.period ?? ""),
+      amount_usd: Number(raw.amount_usd ?? 0),
+      address: String(raw.address ?? ""),
+      asset: String(raw.asset ?? "BTC"),
+      chain: raw.chain != null ? String(raw.chain) : undefined,
+      amount_btc: raw.amount_btc != null ? Number(raw.amount_btc) : undefined,
+      amount_sats: raw.amount_sats != null ? Number(raw.amount_sats) : undefined,
+      amount_to_send: raw.amount_to_send != null ? Number(raw.amount_to_send) : undefined,
+      payment_id: raw.id != null ? String(raw.id) : raw.payment_id != null ? String(raw.payment_id) : undefined,
+      payment_reference: raw.payment_reference != null ? String(raw.payment_reference) : undefined,
+      status: raw.status != null ? String(raw.status) : undefined,
+      licensed_until: raw.licensed_until != null ? String(raw.licensed_until) : undefined,
+      qr_payload: String(raw.qr_payload ?? ""),
+      disclaimer: String(raw.disclaimer ?? ""),
+      user_initiated_only: Boolean(raw.user_initiated_only ?? true),
+      auto_verify: raw.auto_verify !== false,
+      payment_instructions: raw.payment_instructions != null ? String(raw.payment_instructions) : undefined,
+      min_confirmations: raw.min_confirmations != null ? Number(raw.min_confirmations) : undefined,
+      grace_period_days: raw.grace_period_days != null ? Number(raw.grace_period_days) : undefined,
+    };
+  }
+
+  async function openBillingSettlement(period?: string, asset?: string): Promise<void> {
+    const payAsset = asset ?? state.billingSettlementAsset ?? "BTC";
+    try {
+      const raw = await startBillingPayment(period, payAsset);
+      state = {
+        ...state,
+        billingSettlement: mapPaymentToSettlement(raw),
+        billingSettlementAsset: payAsset,
+        showBillingSettlement: true,
+      };
+      render();
+    } catch {
+      /* no fee due or API offline */
+    }
+  }
+
+  async function maybeAutoOpenBillingSettlement(): Promise<void> {
+    const dash = state.billingDashboard;
+    if (!dash || state.showBillingSettlement) return;
+    const fee = dash.period_rollup.license_fee_usd;
+    if (fee <= 0) return;
+    const status = dash.license_status;
+    const graceDay = Number(status.grace_day ?? 0);
+    const suspended = Number(status.suspended ?? 0) === 1;
+    if (graceDay > 0 || suspended) {
+      await openBillingSettlement(dash.current_period);
+    }
   }
 
   async function handleApplyUpdate(): Promise<void> {
@@ -526,6 +674,7 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
   function render(): void {
     createAppShell(appRoot, state, {
       onState: (patch) => {
+        const prevView = state.view;
         if (patch.view && patch.view !== "dashboard" && patch.view !== "glossary") {
           patch = { ...patch, selectedBotId: null, botDetail: null, botDetailLoading: false, botDetailError: null, botDetailLocal: false };
         }
@@ -536,6 +685,12 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         if (patch.selectedBotId !== undefined) {
           syncNavigationPersist();
         }
+        if (patch.view === "backtest" && prevView !== "backtest") {
+          void refreshBacktestView();
+        }
+        if (patch.view === "billing" && prevView !== "billing") {
+          void maybeAutoOpenBillingSettlement();
+        }
         render();
       },
       onUpdateCheckChange: (enabled) => {
@@ -545,6 +700,9 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
             render();
           });
         }
+      },
+      onDisplayCurrencyChange: () => {
+        render();
       },
       onApplyUpdate: () => {
         void handleApplyUpdate();
@@ -570,17 +728,24 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
           });
       },
       onFleetExchangeChange: (exchangeId) => {
-        const fee =
-          state.fleetFeeSchedule?.exchange_id === exchangeId
-            ? state.fleetFeeSchedule
-            : null;
-        state = { ...state, fleetExchangeId: exchangeId, fleetFeeSchedule: fee };
+        const schedule = feeForExchange(exchangeId, state.fleetFeeCatalog);
+        state = {
+          ...state,
+          fleetExchangeId: exchangeId,
+          fleetFeeSchedule: schedule,
+        };
         render();
         void fetchExchangeFees()
           .then((payload) => {
-            const schedule =
-              payload.exchanges.find((e) => e.exchange_id === exchangeId) ?? null;
-            state = { ...state, fleetFeeSchedule: schedule };
+            if (!payload.exchanges.length) return;
+            const merged = mergeFeeCatalogs(payload.exchanges, state.fleetFeeCatalog);
+            const next = feeForExchange(exchangeId, merged);
+            state = {
+              ...state,
+              fleetFeeCatalog: merged,
+              fleetFeeSchedule:
+                state.fleetExchangeId === exchangeId ? next : state.fleetFeeSchedule,
+            };
             render();
           })
           .catch(() => undefined);
@@ -611,18 +776,10 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         void reloadFleetResults();
       },
       onLoadFleetHistoryRun: (jobId) => {
-        void fetchFleetHistoryRun(jobId)
-          .then((payload) => {
-            state = {
-              ...state,
-              fleetSelectedHistoryJobId: jobId,
-              fleetResults: payload,
-              fleetExchangeId: payload.exchange_id ?? state.fleetExchangeId,
-              fleetPair: payload.pair ?? state.fleetPair,
-            };
-            render();
-          })
-          .catch(() => undefined);
+        void loadFleetHistoryRun(jobId);
+      },
+      onCreateBotFromFleetResult: (row) => {
+        void createBotFromFleetResult(row);
       },
       onPause: () => {
         void pauseTrading().then(() => refreshDashboard());
@@ -914,9 +1071,18 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       onBotExchangeChange: (exchangeId, applyPairs) => {
         void loadPairsForExchange(exchangeId, applyPairs);
       },
-      onOpenGlossary: () => {
+      onOpenGlossary: (strategyId?: string) => {
+        const focusId = strategyId?.toUpperCase() ?? null;
+        if (focusId) {
+          const anchor = glossaryAnchorId(focusId);
+          history.replaceState(
+            null,
+            "",
+            `${window.location.pathname}${window.location.search}#${anchor}`,
+          );
+        }
         const returnView = state.view === "glossary" ? state.glossaryReturnView ?? "dashboard" : state.view;
-        state = { ...state, view: "glossary", glossaryReturnView: returnView };
+        state = { ...state, view: "glossary", glossaryReturnView: returnView, glossaryFocusId: focusId };
         render();
       },
       onCloseGlossary: () => {
@@ -924,7 +1090,9 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
           ...state,
           view: state.glossaryReturnView ?? "dashboard",
           glossaryReturnView: null,
+          glossaryFocusId: null,
         };
+        history.replaceState(null, "", window.location.pathname + window.location.search);
         render();
       },
       onBotPairChange: (botId, pair) => {
@@ -1024,20 +1192,16 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         });
       },
       onBillingEnroll: () => {
-        void enrollBilling("2026-06-draft-1", 0.12).then(() => refreshDashboard());
+        void enrollBilling("2026-06-draft-1", 0.05).then(() => refreshDashboard());
       },
       onBillingProcess: () => {
         void processBillingTrades().then(() => refreshDashboard());
       },
       onBillingSettlement: () => {
-        void fetchBillingSettlement().then((s) => {
-          state = {
-            ...state,
-            billingSettlement: s as import("./billing/pay/SettlementPanel").SettlementData,
-            showBillingSettlement: true,
-          };
-          render();
-        });
+        void openBillingSettlement(state.billingDashboard?.current_period);
+      },
+      onBillingAssetChange: (asset) => {
+        void openBillingSettlement(state.billingDashboard?.current_period, asset);
       },
       onBillingMarkPaid: () => {
         void markBillingPaid().then(() => refreshDashboard());
@@ -1050,14 +1214,35 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         const amount = state.billingDashboard?.period_rollup.license_fee_usd ?? 0;
         void createBillingLightningInvoice(period, amount);
       },
+      onBillingPaymentPoll: async (paymentId) => {
+        try {
+          const result = await checkBillingPayment(paymentId);
+          const payment = (result.payment ?? {}) as Record<string, unknown>;
+          const merged = mapPaymentToSettlement({ ...payment, status: result.status ?? payment.status });
+          state = { ...state, billingSettlement: merged };
+          render();
+          return merged;
+        } catch {
+          return null;
+        }
+      },
+      onBillingPaymentConfirmed: () => {
+        void refreshDashboard();
+      },
     });
   }
 
   initTheme();
+  initDisplayCurrency();
   subscribeThemeChange(() => render());
+  subscribeDisplayCurrencyChange(() => render());
   void Promise.all([ensureTaGlossaryLoaded(), ensureTaLibraryBundled()]).then(() => render());
   render();
-  void refreshDashboard();
+  void refreshDashboard().then(() => {
+    if (state.view === "backtest") {
+      void refreshBacktestView();
+    }
+  });
 
   const ws = connectLiveSocket((msg) => {
     if (!state.dashboard || msg.type !== "snapshot") return;
@@ -1091,6 +1276,12 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
+      if (import.meta.env.DEV) {
+        void navigator.serviceWorker.getRegistrations().then((regs) =>
+          Promise.all(regs.map((reg) => reg.unregister())),
+        );
+        return;
+      }
       navigator.serviceWorker.register(assetUrl("sw.js")).catch(() => {});
     });
   }

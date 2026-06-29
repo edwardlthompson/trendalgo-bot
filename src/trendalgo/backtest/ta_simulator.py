@@ -23,6 +23,7 @@ def simulate_long_with_fees(
     fees_paid = 0.0
     trades = 0
     wins = 0
+    tsl_hits = 0
     in_pos = False
     entry_price = 0.0
     peak_price = 0.0
@@ -39,6 +40,8 @@ def simulate_long_with_fees(
             peak_price = max(peak_price, closes[i])
             stop_hit = tsl > 0 and closes[i] <= peak_price * (1.0 - tsl)
             if exits[i] or stop_hit:
+                if stop_hit:
+                    tsl_hits += 1
                 gross_pnl = stake_usd * ((closes[i] / entry_price) - 1.0) if entry_price else 0.0
                 net_pnl = gross_pnl - fee_per_trade
                 gross += gross_pnl
@@ -66,6 +69,7 @@ def simulate_long_with_fees(
         "fees_paid": round(fees_paid, 4),
         "net_profit": round(net, 4),
         "trades": trades,
+        "tsl_hits": tsl_hits,
         "win_rate": round(win_rate, 4),
         "fee_taker_pct": fee.taker_pct,
     }
@@ -94,6 +98,7 @@ def simulate_buy_and_hold(
         "fees_paid": round(fee_paid, 4),
         "net_profit": round(net, 4),
         "trades": 1,
+        "tsl_hits": 0,
         "win_rate": 1.0 if net > 0 else 0.0,
         "fee_taker_pct": fee.taker_pct,
         "params": {},

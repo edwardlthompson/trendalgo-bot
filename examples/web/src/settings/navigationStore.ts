@@ -10,8 +10,7 @@ const VALID_VIEWS: AppView[] = [
   "export",
   "billing",
   "scanner",
-  "risk",
-  "config",
+  "settings",
   "debug",
 ];
 
@@ -26,6 +25,7 @@ function defaultNavigation(): PersistedNavigation {
 
 function normalizeView(raw: unknown): AppView {
   if (raw === "strategies") return "dashboard";
+  if (raw === "risk" || raw === "config") return "portfolio";
   return VALID_VIEWS.includes(raw as AppView) ? (raw as AppView) : "portfolio";
 }
 

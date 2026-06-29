@@ -1,7 +1,7 @@
 """Tests for TA fleet backtest engine."""
 
 from trendalgo.backtest.fleet_runner import FleetPreflightError, validate_fleet_request
-from trendalgo.backtest.ta_fleet import merge_rank, run_timeframe_slice
+from trendalgo.backtest.ta_fleet import filter_beats_buy_hold, merge_rank, run_timeframe_slice
 from trendalgo.exchanges.fees import get_fee_schedule
 from trendalgo.trading.backtest.walk_forward import fixture_candles
 
@@ -46,6 +46,29 @@ def test_merge_rank_orders_by_net_profit() -> None:
     ranked = merge_rank(rows, top_n=2)
     assert ranked[0]["strategy_id"] == "B"
     assert ranked[0]["rank"] == 1
+
+
+def test_filter_beats_buy_hold() -> None:
+    rows = [
+        {"net_profit": 12.0, "strategy_id": "WIN", "timeframe": "60"},
+        {"net_profit": -5.0, "strategy_id": "LOSE", "timeframe": "60"},
+        {"net_profit": 10.0, "strategy_id": "TIE", "timeframe": "60"},
+        {"net_profit": 8.0, "strategy_id": "POS_BELOW", "timeframe": "60"},
+    ]
+    buy_hold = {"net_profit": 10.0, "strategy_id": "BUY_AND_HOLD"}
+    filtered = filter_beats_buy_hold(rows, buy_hold, top_n=10)
+    assert [r["strategy_id"] for r in filtered] == ["WIN"]
+    assert filtered[0]["rank"] == 1
+
+
+def test_filter_beats_buy_hold_positive_only_without_baseline() -> None:
+    rows = [
+        {"net_profit": -1.0, "strategy_id": "A", "timeframe": "60"},
+        {"net_profit": 0.0, "strategy_id": "B", "timeframe": "60"},
+        {"net_profit": 3.0, "strategy_id": "C", "timeframe": "60"},
+    ]
+    filtered = filter_beats_buy_hold(rows, None, top_n=10)
+    assert [r["strategy_id"] for r in filtered] == ["C"]
 
 
 def test_preflight_rejects_unknown_pair() -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import calendar
 from datetime import UTC, datetime
 from typing import Any
 
@@ -10,6 +11,25 @@ from trendalgo.billing.schema import GRACE_PERIOD_DAYS
 
 def _utc_now() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+
+def licensed_until_for_period(period: str) -> str:
+    """End of the calendar month following the paid statement period (UTC)."""
+    year, month = (int(x) for x in period.split("-"))
+    if month == 12:
+        end_year, end_month = year + 1, 1
+    else:
+        end_year, end_month = year, month + 1
+    last_day = calendar.monthrange(end_year, end_month)[1]
+    end = datetime(end_year, end_month, last_day, 23, 59, 59, tzinfo=UTC)
+    return end.isoformat()
+
+
+def _is_future(iso_ts: str) -> bool:
+    try:
+        return datetime.fromisoformat(iso_ts) > datetime.now(UTC)
+    except ValueError:
+        return False
 
 
 def check_license_gate(
@@ -22,6 +42,9 @@ def check_license_gate(
         return True, "dry_run"
     if not enrollment.get("enrolled"):
         return True, "free_tier"
+    licensed_until = status.get("licensed_until")
+    if licensed_until and _is_future(str(licensed_until)):
+        return True, "licensed_until"
     if not status.get("suspended"):
         return True, "ok"
     return False, "license_suspended"

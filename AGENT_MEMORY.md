@@ -41,7 +41,9 @@
 
 **Current sprint:** Post-Delivery / maintenance (BUILD_PLAN); human gates H-032, H-035, H-036 open.
 
-**Tests:** 170 pass · ~85% coverage (2026-06-26 v0.2.0 release).
+**Tests:** 170+ pass · ~86% coverage (2026-06-29 v0.4.0 release).
+
+**Recent:** v0.4.0 — Settings tab, fiat display currency, on-chain billing (BTC + Base stables), 5% fee, post-profit trial month.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 

@@ -1,27 +1,20 @@
-import { APP_VERSION } from "./about/aboutSession";
 import type { DonationConfig } from "./about/types";
 import type { BacktestPayload, BotDetailData, DashboardData, ExchangeFeeSchedule, FleetActiveSnapshot, FleetLatestPayload } from "./api/client";
-import { createAboutPanel } from "./components/AboutPanel";
-import { createSettingsPanel } from "./components/SettingsPanel";
-import { createThemeToggle } from "./components/ThemeToggle";
 import { isOnline } from "./greet";
 import { t } from "./i18n";
-import { bindPanelDialog } from "./panelDialog";
 import type { ExportItem } from "./export/ExportHub";
 import type { ScannerSettings, ScannerSnapshot } from "./scanner/ScannerPanel";
 import type { BillingDashboardData } from "./billing/BillingDashboard";
 import type { SettlementData } from "./billing/pay/SettlementPanel";
 import type { ExitRulesState } from "./config/ConfigForm";
+import type { DisplayCurrencyCode } from "./settings/displayCurrency";
 import { createMobileNav, type AppView } from "./shell/MobileNav";
 import { renderMainView } from "./shell/renderMainView";
 
-let dialogCleanup: (() => void) | undefined;
 let viewCleanup: (() => void) | undefined;
 
 export type AppShellState = {
   view: AppView;
-  showAbout: boolean;
-  showSettings: boolean;
   updateStatus: string;
   donations: DonationConfig;
   dashboard: DashboardData | null;
@@ -34,6 +27,7 @@ export type AppShellState = {
   fleetActive: FleetActiveSnapshot | null;
   fleetResults: FleetLatestPayload | null;
   fleetFeeSchedule: ExchangeFeeSchedule | null;
+  fleetFeeCatalog: ExchangeFeeSchedule[];
   fleetHistoryRuns: import("./api/client").FleetHistoryEntry[];
   fleetSelectedHistoryJobId: string | null;
   fleetFilterMode: "all" | "timeframe" | "strategy";
@@ -66,6 +60,7 @@ export type AppShellState = {
   billingDashboard: BillingDashboardData | null;
   billingSettlement: SettlementData | null;
   showBillingSettlement: boolean;
+  billingSettlementAsset?: string;
   portfolioPlatform: import("./platform/PlatformPanel").PlatformData | null;
   exchangeRegistry: import("./portfolio/AccountsPanel").ExchangeRegistryEntry[] | null;
   selectedBotId: number | null;
@@ -77,11 +72,13 @@ export type AppShellState = {
   botExchangePairs: string[];
   botLimits: import("./bots/botGuardrails").BotLimits | null;
   glossaryReturnView: AppView | null;
+  glossaryFocusId: string | null;
 };
 
 export type AppShellCallbacks = {
   onState: (next: Partial<AppShellState>) => void;
   onUpdateCheckChange?: (enabled: boolean) => void;
+  onDisplayCurrencyChange?: (code: DisplayCurrencyCode) => void;
   onApplyUpdate?: () => void;
   canApplyUpdate?: boolean;
   onRunBacktest?: () => void;
@@ -90,6 +87,7 @@ export type AppShellCallbacks = {
   onFleetStakeChange?: (stakeUsd: number) => void;
   onFleetFilterChange?: (mode: "all" | "timeframe" | "strategy", timeframe?: string) => void;
   onLoadFleetHistoryRun?: (jobId: string) => void;
+  onCreateBotFromFleetResult?: (row: import("./api/client").FleetResultRow) => void;
   onPause?: () => void;
   onResume?: () => void;
   onSaveConfig?: (params: Record<string, number>) => void;
@@ -113,7 +111,7 @@ export type AppShellCallbacks = {
   onBotSaveParams?: (botId: number, strategyId: string, params: Record<string, number>) => void;
   onBotExchangeChange?: (exchangeId: string, applyPairs: (pairs: string[]) => void) => void;
   onBotPairChange?: (botId: number, pair: string) => void;
-  onOpenGlossary?: () => void;
+  onOpenGlossary?: (strategyId?: string) => void;
   onCloseGlossary?: () => void;
   onBotApplyBacktest?: (botId: number, ranking: import("./api/client").BacktestRanking) => void;
   onCreateBot?: () => void;
@@ -133,6 +131,9 @@ export type AppShellCallbacks = {
   onBillingMarkPaid?: () => void;
   onCopySettlement?: (text: string) => void;
   onBillingLightning?: () => void;
+  onBillingPaymentPoll?: (paymentId: string) => Promise<import("./billing/pay/SettlementPanel").SettlementData | null>;
+  onBillingPaymentConfirmed?: (data: import("./billing/pay/SettlementPanel").SettlementData) => void;
+  onBillingAssetChange?: (asset: string) => void;
 };
 
 export function createAppShell(
@@ -154,10 +155,6 @@ export function createAppShell(
       <div class="gp-sticky-top">
         <div class="gp-header">
           <h1 class="gp-title">${t("app.title")}</h1>
-          <div class="gp-header-actions">
-            <button type="button" class="gp-settings-btn" data-settings-open aria-label="${t("settings.open")}">⚙</button>
-            <button type="button" class="gp-about-btn" data-about-open aria-label="${t("about.open")}">i</button>
-          </div>
         </div>
         <div data-nav-mount></div>
       </div>
@@ -170,26 +167,15 @@ export function createAppShell(
           : ""
       }
       <div data-main-mount></div>
-      <div data-panel-mount></div>
       </div>
     </main>
   `;
-
-  const actions = root.querySelector<HTMLDivElement>(".gp-header-actions");
-  if (actions) actions.insertBefore(createThemeToggle(), actions.firstChild);
-
-  root.querySelector("[data-about-open]")?.addEventListener("click", () => {
-    callbacks.onState({ showAbout: !state.showAbout, showSettings: false });
-  });
-  root.querySelector("[data-settings-open]")?.addEventListener("click", () => {
-    callbacks.onState({ showSettings: !state.showSettings, showAbout: false });
-  });
 
   const navMount = root.querySelector("[data-nav-mount]");
   if (navMount) {
     navMount.innerHTML = "";
     navMount.appendChild(
-      createMobileNav(state.view, (view) => callbacks.onState({ view, showAbout: false, showSettings: false })),
+      createMobileNav(state.view, (view) => callbacks.onState({ view })),
     );
   }
 
@@ -197,13 +183,20 @@ export function createAppShell(
   viewCleanup?.();
   viewCleanup = undefined;
   if (mainMount) {
-    viewCleanup = renderMainView(mainMount as HTMLElement, state, {
+    viewCleanup = renderMainView(
+      mainMount as HTMLElement,
+      {
+        ...state,
+        canApplyUpdate: callbacks.canApplyUpdate,
+      },
+      {
       onRunBacktest: () => callbacks.onRunBacktest?.(),
       onFleetExchangeChange: (exchangeId) => callbacks.onFleetExchangeChange?.(exchangeId),
       onFleetPairChange: (pair) => callbacks.onFleetPairChange?.(pair),
       onFleetStakeChange: (stakeUsd) => callbacks.onFleetStakeChange?.(stakeUsd),
       onFleetFilterChange: (mode, timeframe) => callbacks.onFleetFilterChange?.(mode, timeframe),
       onLoadFleetHistoryRun: (jobId) => callbacks.onLoadFleetHistoryRun?.(jobId),
+      onCreateBotFromFleetResult: (row) => callbacks.onCreateBotFromFleetResult?.(row),
       onPause: () => callbacks.onPause?.(),
       onResume: () => callbacks.onResume?.(),
       onSaveConfig: (params) => callbacks.onSaveConfig?.(params),
@@ -229,7 +222,7 @@ export function createAppShell(
       onBotExchangeChange: (exchangeId, applyPairs) =>
         callbacks.onBotExchangeChange?.(exchangeId, applyPairs),
       onBotPairChange: (botId, pair) => callbacks.onBotPairChange?.(botId, pair),
-      onOpenGlossary: () => callbacks.onOpenGlossary?.(),
+      onOpenGlossary: (strategyId) => callbacks.onOpenGlossary?.(strategyId),
       onCloseGlossary: () => callbacks.onCloseGlossary?.(),
       onBotApplyBacktest: (botId, ranking) => callbacks.onBotApplyBacktest?.(botId, ranking),
       onCreateBot: () => callbacks.onCreateBot?.(),
@@ -249,40 +242,12 @@ export function createAppShell(
       onBillingMarkPaid: () => callbacks.onBillingMarkPaid?.(),
       onCopySettlement: (text) => callbacks.onCopySettlement?.(text),
       onBillingLightning: () => callbacks.onBillingLightning?.(),
-    });
-  }
-
-  const mount = root.querySelector("[data-panel-mount]");
-  if (!mount) return;
-
-  dialogCleanup?.();
-  dialogCleanup = undefined;
-  mount.innerHTML = "";
-
-  if (state.showSettings) {
-    const panel = createSettingsPanel({
-      onClose: () => callbacks.onState({ showSettings: false }),
+      onBillingPaymentPoll: (paymentId) => callbacks.onBillingPaymentPoll?.(paymentId) ?? Promise.resolve(null),
+      onBillingPaymentConfirmed: (data) => callbacks.onBillingPaymentConfirmed?.(data),
+      onBillingAssetChange: (asset) => callbacks.onBillingAssetChange?.(asset),
       onUpdateCheckChange: callbacks.onUpdateCheckChange,
+      onDisplayCurrencyChange: callbacks.onDisplayCurrencyChange,
+      onApplyUpdate: callbacks.onApplyUpdate,
     });
-    mount.appendChild(panel);
-    dialogCleanup = bindPanelDialog(panel, () => callbacks.onState({ showSettings: false }));
-    return;
   }
-
-  if (!state.showAbout) return;
-
-  mount.appendChild(
-    createAboutPanel(
-      {
-        version: APP_VERSION,
-        updateStatus: state.updateStatus,
-        donations: state.donations,
-        canApplyUpdate: callbacks.canApplyUpdate,
-      },
-      () => callbacks.onState({ showAbout: false }),
-      callbacks.onApplyUpdate,
-    ),
-  );
-  const aboutPanel = mount.lastElementChild as HTMLElement;
-  dialogCleanup = bindPanelDialog(aboutPanel, () => callbacks.onState({ showAbout: false }));
 }

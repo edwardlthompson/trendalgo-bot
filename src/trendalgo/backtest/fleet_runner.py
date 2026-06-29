@@ -25,12 +25,14 @@ from trendalgo.backtest.ta_fleet import (
     all_strategies,
     backtest_one,
     buy_and_hold_row,
+    filter_beats_buy_hold,
     merge_rank,
 )
 from trendalgo.constants.timeframes import TRADINGVIEW_INTERVALS, timeframe_for_fetch
 from trendalgo.exchanges.fees import get_fee_schedule
 from trendalgo.exchanges.pairs import list_pairs_for_exchange
 from trendalgo.exchanges.registry import get_entry
+from trendalgo.market.fleet_ohlcv import resolve_fleet_timeframes
 from trendalgo.market.service import PriceHistoryService
 from trendalgo.ta.cache import ohlcv_list_to_df
 from trendalgo.ta.indicator_cache import reset_indicator_cache
@@ -191,7 +193,8 @@ class TaFleetBacktestRunner:
     ) -> dict[str, Any]:
         eid, normalized_pair = validate_fleet_request(exchange_id, pair)
         strat_list = strategies or all_strategies()
-        tf_list = timeframes or TRADINGVIEW_INTERVALS
+        tf_list = timeframes
+        tf_estimate = len(tf_list) if tf_list else len(TRADINGVIEW_INTERVALS)
         with self._lock:
             if self._active and self._active.status == "running":
                 return self._active.to_dict()
@@ -201,11 +204,11 @@ class TaFleetBacktestRunner:
                 exchange_id=eid,
                 pair=normalized_pair,
                 stake_usd=stake_usd,
-                total=len(strat_list) * len(tf_list),
+                total=len(strat_list) * tf_estimate,
             )
             job.messages.append(
-                f"Fleet pass 1: {len(strat_list)} strategies × {len(tf_list)} timeframes · "
-                f"{FLEET_LOOKBACK_DAYS}d window (all TFs) · TSL optimized in pass 3"
+                f"Fleet pass 1: {len(strat_list)} strategies · "
+                f"{FLEET_LOOKBACK_DAYS}d window · resolving OHLCV timeframes…"
             )
             self._active = job
             self._thread = threading.Thread(
@@ -259,7 +262,7 @@ class TaFleetBacktestRunner:
         self,
         job: FleetJob,
         strategies: tuple[str, ...],
-        timeframes: tuple[str, ...],
+        timeframes: tuple[str, ...] | None,
     ) -> None:
         fee = get_fee_schedule(job.exchange_id)
         all_results: list[dict[str, Any]] = []
@@ -272,6 +275,24 @@ class TaFleetBacktestRunner:
         until = datetime.now(UTC)
         since = until - timedelta(seconds=lookback)
         try:
+            timeframes = resolve_fleet_timeframes(
+                self._market,
+                job.exchange_id,
+                job.pair,
+                since,
+                until,
+                timeframes,
+                on_progress=lambda kind, msg: self._log(job, msg),
+                on_log=lambda msg: self._log(job, msg),
+            )
+            with self._lock:
+                job.total = len(strategies) * len(timeframes)
+                job.completed = 0
+            self._log(
+                job,
+                f"Fleet pass 1: {len(strategies)} strategies × {len(timeframes)} timeframes · "
+                f"TSL optimized in pass 3",
+            )
             for tv_tf in timeframes:
                 fetch_tf = timeframe_for_fetch(tv_tf)
                 fetch_tf_map[tv_tf] = fetch_tf
@@ -427,8 +448,10 @@ class TaFleetBacktestRunner:
                 lookback_seconds=lookback,
                 on_trial=on_tsl,
             )
-
-            ranked = merge_rank(all_results, top_n=100)
+            final_top10 = filter_beats_buy_hold(final_top10, buy_hold, top_n=10)
+            top10_bh = filter_beats_buy_hold(top10, buy_hold, top_n=OPTIMIZE_TOP_N)
+            optimized_bh = filter_beats_buy_hold(optimized, buy_hold, top_n=OPTIMIZE_TOP_N)
+            ranked = filter_beats_buy_hold(merge_rank(all_results, top_n=100), buy_hold, top_n=100)
             summary = {
                 "skipped": sum(skips.values()),
                 "errors_by_reason": skips,
@@ -439,9 +462,10 @@ class TaFleetBacktestRunner:
                 "pair": job.pair,
                 "lookback_days": FLEET_LOOKBACK_DAYS,
                 "lookback_seconds": lookback,
+                "timeframes_tested": list(timeframes),
                 "buy_and_hold": buy_hold,
-                "top10_pass1": top10,
-                "optimized_top10": optimized,
+                "top10_pass1": top10_bh,
+                "optimized_top10": optimized_bh,
                 "final_top10": final_top10,
             }
             self._store.save_run(job.id, job.exchange_id, job.pair, job.stake_usd, summary, ranked)

@@ -218,6 +218,13 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
               tier: "retail_default",
               source_url: "",
             },
+            {
+              exchange_id: "binanceus",
+              taker_pct: 0.0001,
+              maker_pct: 0,
+              tier: "retail_default",
+              source_url: "",
+            },
           ],
         }),
       );
@@ -783,32 +790,89 @@ export async function mockTrendAlgoApi(page: Page, paused = false): Promise<void
     if (url.includes("/billing/dashboard")) {
       await route.fulfill(
         json({
-          enrollment: { enrolled: 0, license_rate_pct: 0.12 },
+          enrollment: { enrolled: 0, license_rate_pct: 0.05 },
           license_status: { suspended: 0, grace_day: 0 },
           lifetime: { lifetime_gross_profit_usd: 65, lifetime_license_fees_usd: 7.8, lifetime_net_benefit_usd: 57.2 },
           current_period: "2026-06",
-          period_rollup: { gross_profit_usd: 65, license_fee_usd: 7.8, net_benefit_usd: 57.2 },
-          line_items: [{ pair: "BTC/USD", gross_profit_usd: 25, license_fee_usd: 3, rule_applied: "net_positive" }],
-          statements: [{ period: "2026-06", license_fee_usd: 7.8 }],
+          period_rollup: { gross_profit_usd: 65, license_fee_usd: 3.25, net_benefit_usd: 61.75 },
+          line_items: [{ pair: "BTC/USD", gross_profit_usd: 25, license_fee_usd: 1.25, rule_applied: "net_positive" }],
+          statements: [{ period: "2026-06", license_fee_usd: 3.25 }],
           can_trade_live: true,
-          dry_run_fee_preview: { rate_pct: 0.12, sample_profit_usd: 100, sample_fee_usd: 12 },
+          dry_run_fee_preview: { rate_pct: 0.05, sample_profit_usd: 100, sample_fee_usd: 5 },
           disclaimer: "Software license only.",
           net_loss_equals_zero_fee: true,
+          payment_auto_verify: true,
+          billing_eligibility: {
+            first_profitable_trade_at: "2025-01-01T00:00:00+00:00",
+            billing_starts_at: "2025-02-01T00:00:00+00:00",
+            billing_active: true,
+            awaiting_first_profit: false,
+            trial_period: false,
+            delay_months: 1,
+          },
         }),
       );
       return;
     }
-    if (url.includes("/billing/settlement")) {
+    if (url.includes("/billing/payment/assets")) {
       await route.fulfill(
         json({
+          assets: [
+            { asset: "BTC", label: "Bitcoin (BTC)", chain: "bitcoin", enabled: true },
+            { asset: "USDC", label: "USD Coin (USDC)", chain: "base", enabled: true },
+            { asset: "USDT", label: "Tether (USDT)", chain: "base", enabled: true },
+          ],
+        }),
+      );
+      return;
+    }
+    if (url.includes("/billing/settlement") || url.includes("/billing/payment/start")) {
+      const body = route.request().postDataJSON?.() as { asset?: string } | undefined;
+      const asset = body?.asset ?? "BTC";
+      const isStable = asset === "USDC" || asset === "USDT";
+      await route.fulfill(
+        json({
+          id: "pay-mock001",
+          payment_id: "pay-mock001",
           period: "2026-06",
-          amount_usd: 7.8,
-          asset: "BTC",
-          address: "bc1q-sample",
-          qr_payload: "bitcoin:bc1q-sample?amount=7.8",
+          amount_usd: 3.25,
+          amount_to_send: isStable ? 3.250421 : 0.00003425,
+          amount_btc: isStable ? 0 : 0.00003425,
+          amount_sats: isStable ? 0 : 3425,
+          amount_atomic: isStable ? 3250421 : 3425,
+          payment_reference: "abc123def456",
+          status: "pending",
+          asset,
+          chain: isStable ? "base" : "bitcoin",
+          chain_id: isStable ? 8453 : null,
+          address: isStable ? "0xdead000000000000000000000000000000beef" : "bc1q-sample",
+          qr_payload: isStable
+            ? "ethereum:0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913@8453/transfer?address=0xdead&uint256=3250421"
+            : "bitcoin:bc1q-sample?amount=0.00003425",
           user_initiated_only: true,
           auto_withdraw: false,
+          auto_verify: true,
+          payment_instructions: isStable
+            ? "Send exactly 3.250421 USDC on Base"
+            : "Send exactly 0.00003425 BTC",
           disclaimer: "User-initiated only",
+          grace_period_days: 7,
+        }),
+      );
+      return;
+    }
+    if (url.match(/\/billing\/payment\/status\//)) {
+      await route.fulfill(
+        json({
+          verified: true,
+          status: "confirmed",
+          payment: {
+            id: "pay-mock001",
+            period: "2026-06",
+            amount_usd: 3.25,
+            status: "confirmed",
+            licensed_until: "2026-07-31T23:59:59+00:00",
+          },
         }),
       );
       return;

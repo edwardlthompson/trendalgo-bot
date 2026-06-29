@@ -10,28 +10,32 @@ export interface AboutPanelState {
 
 export function createAboutPanel(
   state: AboutPanelState,
-  onClose: () => void,
+  onClose?: () => void,
   onApplyUpdate?: () => void,
+  options?: { embedded?: boolean },
 ): HTMLElement {
   const panel = document.createElement("section");
-  panel.className = "gp-about-panel";
+  panel.className = options?.embedded ? "gp-about-panel gp-about-panel--embedded" : "gp-about-panel";
   panel.setAttribute("aria-label", t("about.title"));
   panel.dataset.testid = "about-panel";
 
-  const header = document.createElement("header");
-  header.className = "gp-about-header";
+  if (!options?.embedded) {
+    const header = document.createElement("header");
+    header.className = "gp-about-header";
 
-  const title = document.createElement("h2");
-  title.textContent = t("about.title");
+    const title = document.createElement("h2");
+    title.textContent = t("about.title");
 
-  const closeBtn = document.createElement("button");
-  closeBtn.type = "button";
-  closeBtn.className = "gp-about-close";
-  closeBtn.setAttribute("aria-label", t("about.close"));
-  closeBtn.textContent = "×";
-  closeBtn.addEventListener("click", onClose);
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "gp-about-close";
+    closeBtn.setAttribute("aria-label", t("about.close"));
+    closeBtn.textContent = "×";
+    closeBtn.addEventListener("click", () => onClose?.());
 
-  header.append(title, closeBtn);
+    header.append(title, closeBtn);
+    panel.appendChild(header);
+  }
 
   const versionP = document.createElement("p");
   versionP.append(`${t("about.version")}: `);
@@ -51,7 +55,7 @@ export function createAboutPanel(
   statusP.setAttribute("aria-live", "polite");
   statusP.textContent = state.updateStatus;
 
-  panel.append(header, versionP, formatP, statusP);
+  panel.append(versionP, formatP, statusP);
 
   if (state.canApplyUpdate && onApplyUpdate) {
     const applyBtn = document.createElement("button");

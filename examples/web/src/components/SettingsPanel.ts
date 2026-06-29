@@ -11,26 +11,43 @@ import {
   isUpdateCheckEnabled,
   setUpdateCheckEnabled,
 } from "../settings/preferences";
+import {
+  DISPLAY_CURRENCIES,
+  getDisplayCurrency,
+  setDisplayCurrency,
+  type DisplayCurrencyCode,
+} from "../settings/displayCurrency";
 
 export type SettingsPanelCallbacks = {
-  onClose: () => void;
+  onClose?: () => void;
   onUpdateCheckChange?: (enabled: boolean) => void;
+  onDisplayCurrencyChange?: (code: DisplayCurrencyCode) => void;
+  embedded?: boolean;
 };
 
 export function createSettingsPanel(callbacks: SettingsPanelCallbacks): HTMLElement {
   const panel = document.createElement("section");
-  panel.className = "gp-settings-panel";
+  panel.className = callbacks.embedded ? "gp-settings-panel gp-settings-panel--embedded" : "gp-settings-panel";
   panel.setAttribute("aria-label", t("settings.title"));
   panel.dataset.testid = "settings-panel";
 
   const themeMode = getSettingsThemeMode();
   const updateEnabled = isUpdateCheckEnabled();
+  const displayCurrency = getDisplayCurrency();
 
-  panel.innerHTML = `
-    <header class="gp-settings-header">
+  const headerHtml = callbacks.embedded
+    ? ""
+    : `<header class="gp-settings-header">
       <h2>${t("settings.title")}</h2>
       <button type="button" class="gp-settings-close" aria-label="${t("settings.close")}">×</button>
-    </header>
+    </header>`;
+
+  const currencyOptions = DISPLAY_CURRENCIES.map(
+    (row) => `<option value="${row.code}">${row.label}</option>`,
+  ).join("");
+
+  panel.innerHTML = `
+    ${headerHtml}
     <label class="gp-settings-field">
       <span>${t("settings.theme.label")}</span>
       <select data-settings-theme>
@@ -39,6 +56,11 @@ export function createSettingsPanel(callbacks: SettingsPanelCallbacks): HTMLElem
         <option value="dark">${t("settings.theme.mode.dark")}</option>
       </select>
     </label>
+    <label class="gp-settings-field">
+      <span>${t("settings.currency.label")}</span>
+      <select data-settings-currency>${currencyOptions}</select>
+    </label>
+    <p class="gp-body gp-settings-hint">${t("settings.currency.hint")}</p>
     <label class="gp-settings-field gp-settings-toggle">
       <input type="checkbox" data-settings-update ${updateEnabled ? "checked" : ""} />
       <span>${t("settings.update_check.label")}</span>
@@ -54,6 +76,16 @@ export function createSettingsPanel(callbacks: SettingsPanelCallbacks): HTMLElem
     themeSelect.value = themeMode;
     themeSelect.addEventListener("change", () => {
       applySettingsThemeMode(themeSelect.value as ThemeMode);
+    });
+  }
+
+  const currencySelect = panel.querySelector<HTMLSelectElement>("[data-settings-currency]");
+  if (currencySelect) {
+    currencySelect.value = displayCurrency;
+    currencySelect.addEventListener("change", () => {
+      const code = currencySelect.value as DisplayCurrencyCode;
+      setDisplayCurrency(code);
+      callbacks.onDisplayCurrencyChange?.(code);
     });
   }
 
@@ -79,6 +111,6 @@ export function createSettingsPanel(callbacks: SettingsPanelCallbacks): HTMLElem
     }
   }
 
-  panel.querySelector(".gp-settings-close")?.addEventListener("click", callbacks.onClose);
+  panel.querySelector(".gp-settings-close")?.addEventListener("click", () => callbacks.onClose?.());
   return panel;
 }

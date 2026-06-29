@@ -58,6 +58,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-06-29
+
+### Added
+
+- **Settings tab:** main-nav Settings view with theme, accent color, update check, About section, and display currency selector (USD/EUR/GBP/JPY/CAD/AUD/CHF)
+- **On-chain billing unlock:** BTC (Blockstream) and USDC/USDT on Base with payment intent polling and automatic license activation
+- **Billing trial:** no license fees until one calendar month after the first profitable trade; grace period only when billing is active
+- **Fleet backtest UX:** history panel, beat-buy-and-hold filter, TSL hits column, P/L % and Δ vs B&H in results table, glossary focus per strategy
+- **Settlement UI:** asset selector, auto-poll payment status, grace-period auto-open
+- E2E: live backtest history, glossary smokes; unit tests for fleet results, display currency, diversification panel
+
+### Changed
+
+- License fee reduced to **5%** (15% boost tier unchanged)
+- Removed redundant **Risk** and **Config** nav tabs; legacy localStorage views map to Portfolio
+- Billing docs and `.env.example` updated for settlement addresses and payment simulation
+
+### Fixed
+
+- `build_dashboard` passes trade journal into billing eligibility sync
+- Restored `settlement_info` helper for billing coverage tests
+
 ## [0.3.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.2.0...v0.3.0) (2026-06-26)
 
 S27 TA fleet backtest, exchange fee sync from public pages, bot dashboard overhaul, and backtest library removal.

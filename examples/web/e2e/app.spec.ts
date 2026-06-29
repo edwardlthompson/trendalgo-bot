@@ -20,20 +20,11 @@ test("passes accessibility audit", async ({ page }) => {
   expect(results.violations).toEqual([]);
 });
 
-test("passes accessibility audit with settings panel open", async ({ page }) => {
+test("passes accessibility audit on settings tab", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
-  await page.getByRole("button", { name: "Settings" }).click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test("passes accessibility audit with about panel open", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
-  await page.getByRole("button", { name: "About" }).click();
-  await expect(page.getByTestId("about-panel")).toBeVisible();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.getByTestId("settings-view")).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });
@@ -45,17 +36,21 @@ test("homepage visual snapshot", async ({ page }) => {
   await expect(page).toHaveScreenshot("homepage.png", { maxDiffPixelRatio: 0.02 });
 });
 
-test("opens settings panel and toggles theme", async ({ page }) => {
+test("settings tab shows preferences, theme, and about", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.getByTestId("settings-view")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "About" })).toBeVisible();
+  await expect(page.getByTestId("about-panel")).toBeVisible();
   await page.locator("[data-settings-theme]").selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
 test("persists dark theme after reload", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.locator("[data-settings-theme]").selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.reload();
@@ -64,18 +59,21 @@ test("persists dark theme after reload", async ({ page }) => {
 
 test("toggles update check in settings", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   const toggle = page.locator("[data-settings-update]");
   await expect(toggle).not.toBeChecked();
   await toggle.check();
   await expect(toggle).toBeChecked();
 });
 
-test("opens about panel with version", async ({ page }) => {
+test("changes display currency preference", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "About" }).click();
-  await expect(page.getByRole("heading", { name: "About" })).toBeVisible();
-  await expect(page.getByTestId("about-status")).toBeVisible();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.locator("[data-settings-currency]").selectOption("EUR");
+  await expect(page.locator("[data-settings-currency]")).toHaveValue("EUR");
+  await page.reload();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(page.locator("[data-settings-currency]")).toHaveValue("EUR");
 });
 
 test.describe("update status", () => {
@@ -107,14 +105,11 @@ test.describe("update status", () => {
   });
 
   await page.goto("/");
-  await page.locator("[data-about-open]").click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.getByTestId("about-status")).toContainText("latest version");
 
-  await page.getByRole("button", { name: "Close about" }).click();
-  await page.getByRole("button", { name: "Settings" }).click();
   await page.locator("[data-settings-update]").check();
   await page.waitForResponse(/releases\/latest/);
-  await page.locator("[data-about-open]").click();
   const status = page.getByTestId("about-status");
   await expect(status).toBeVisible();
   await expect(status).toContainText("Update available");
@@ -152,10 +147,9 @@ test.describe("PWA apply update", () => {
     });
 
     await page.goto("/");
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.locator("[data-settings-update]").check();
     await page.waitForResponse(/releases\/latest/);
-    await page.getByRole("button", { name: "About" }).click();
     await expect(page.getByTestId("about-apply")).toBeVisible();
     await expect(page.getByTestId("about-apply")).toBeEnabled();
   });
@@ -201,7 +195,7 @@ test.describe("home update banner", () => {
     });
 
     await page.goto("/");
-    await page.getByRole("button", { name: "Settings" }).click();
+    await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.locator("[data-settings-update]").check();
     await page.waitForResponse(/releases\/latest/);
     await expect(page.getByTestId("home-update-status")).toContainText("Update available");

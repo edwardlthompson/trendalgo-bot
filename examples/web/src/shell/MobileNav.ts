@@ -7,10 +7,9 @@ export type AppView =
   | "export"
   | "billing"
   | "scanner"
-  | "risk"
-  | "config"
   | "debug"
-  | "glossary";
+  | "glossary"
+  | "settings";
 
 const NAV_VIEWS: AppView[] = [
   "portfolio",
@@ -20,8 +19,7 @@ const NAV_VIEWS: AppView[] = [
   "export",
   "billing",
   "scanner",
-  "risk",
-  "config",
+  "settings",
   "debug",
 ];
 

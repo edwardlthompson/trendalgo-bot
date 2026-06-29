@@ -103,6 +103,56 @@ export function glossaryCategoriesWithCounts(): Array<{{ category: string; count
     print(f"wrote {len(entries)} glossary entries -> {path}")
 
 
+def write_exchange_fees_fallback() -> None:
+    path_json = ROOT / "config" / "exchange_fees.json"
+    data = json.loads(path_json.read_text(encoding="utf-8"))
+    tier = data.get("tier", "retail_default")
+    schedules = []
+    for exchange_id, row in sorted((data.get("exchanges") or {}).items()):
+        schedules.append(
+            {
+                "exchange_id": exchange_id,
+                "taker_pct": row["taker_pct"],
+                "maker_pct": row["maker_pct"],
+                "tier": tier,
+                "source_url": row.get("source_url", ""),
+            }
+        )
+    blob = json.dumps(schedules, ensure_ascii=False)
+    content = f"""import type {{ ExchangeFeeSchedule }} from "../api/client";
+
+const BUNDLED_EXCHANGE_FEES: ExchangeFeeSchedule[] = {blob};
+
+export function bundledExchangeFees(): ExchangeFeeSchedule[] {{
+  return BUNDLED_EXCHANGE_FEES;
+}}
+
+export function mergeFeeCatalogs(
+  api: ExchangeFeeSchedule[],
+  existing: ExchangeFeeSchedule[] = [],
+): ExchangeFeeSchedule[] {{
+  const map = new Map(bundledExchangeFees().map((e) => [e.exchange_id, e]));
+  for (const row of existing) map.set(row.exchange_id, row);
+  for (const row of api) map.set(row.exchange_id, row);
+  return [...map.values()].sort((a, b) => a.exchange_id.localeCompare(b.exchange_id));
+}}
+
+export function feeForExchange(
+  exchangeId: string,
+  catalog: ExchangeFeeSchedule[],
+): ExchangeFeeSchedule | null {{
+  return (
+    catalog.find((e) => e.exchange_id === exchangeId) ??
+    bundledExchangeFees().find((e) => e.exchange_id === exchangeId) ??
+    null
+  );
+}}
+"""
+    path = OUT_DIR / "exchangeFeesFallback.ts"
+    path.write_text(content, encoding="utf-8")
+    print(f"wrote {len(schedules)} exchange fees -> {path}")
+
+
 def write_ta_library_fallback() -> None:
     items = build_ta_library()
     names = sorted({item["name"] for item in items})
@@ -140,6 +190,7 @@ def main() -> None:
     write_kraken_pairs()
     write_ta_glossary()
     write_ta_library_fallback()
+    write_exchange_fees_fallback()
     print("gen-web-data-ts: done")
 
 

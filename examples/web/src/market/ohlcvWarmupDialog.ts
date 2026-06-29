@@ -17,7 +17,8 @@ export type OhlcvWarmupDialogHandle = {
   close: () => void;
 };
 
-export function createOhlcvWarmupDialog(): OhlcvWarmupDialogHandle {
+export function createOhlcvWarmupDialog(opts?: { blocking?: boolean }): OhlcvWarmupDialogHandle {
+  const blocking = opts?.blocking !== false;
   const dialog = document.createElement("dialog");
   dialog.className = "gp-ohlcv-warmup-dialog";
   dialog.dataset.testid = "ohlcv-warmup-dialog";
@@ -82,8 +83,12 @@ export function createOhlcvWarmupDialog(): OhlcvWarmupDialogHandle {
   });
 
   if (typeof dialog.showModal === "function") {
-    dialog.showModal();
-    unbind = bindPanelDialog(panel, close);
+    if (blocking) {
+      dialog.showModal();
+      unbind = bindPanelDialog(panel, close);
+    } else {
+      dialog.show();
+    }
   }
 
   function update(job: OhlcvWarmupJob): void {

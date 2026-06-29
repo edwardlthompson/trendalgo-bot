@@ -10,14 +10,17 @@ from pydantic import BaseModel, Field
 
 from trendalgo.billing.engine import (
     build_dashboard,
+    check_settlement_payment,
     mark_payment_received,
+    poll_settlement_payments,
     process_journal_trades,
     reconcile_fees,
     seed_sample_trades,
+    start_settlement_payment,
 )
 from trendalgo.billing.lightning import create_lightning_invoice
 from trendalgo.billing.schema import DEFAULT_LICENSE_RATE
-from trendalgo.billing.settlement import settlement_info
+from trendalgo.billing.settlement import list_available_assets
 from trendalgo.billing.statements import export_statement_json
 
 router = APIRouter()
@@ -44,16 +47,59 @@ class LightningBody(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class PaymentStartBody(BaseModel):
+    period: str | None = None
+    asset: str = "BTC"
+
+    model_config = {"extra": "forbid"}
+
+
+class PaymentCheckBody(BaseModel):
+    payment_id: str
+    simulate_tx_hash: str | None = None
+
+    model_config = {"extra": "forbid"}
+
+
+def _resolve_period_and_amount(store: Any, period: str | None) -> tuple[str, float]:
+    if period is None:
+        statements = store.list_statements()
+        status = store.get_license_status()
+        period = str(status.get("unpaid_period") or (statements[0]["period"] if statements else ""))
+    if not period or period == "current":
+        from datetime import UTC, datetime
+
+        period = datetime.now(UTC).strftime("%Y-%m")
+    stmt = store.get_statement(period)
+    amount = float(stmt["license_fee_usd"]) if stmt else 0.0
+    return period, amount
+
+
+@router.get("/billing/payment/assets")
+def billing_payment_assets() -> dict[str, Any]:
+    return {"assets": list_available_assets()}
+
+
 @router.get("/billing/dashboard")
 def billing_dashboard(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
-    return build_dashboard(state.billing_store, state.risk_manager, dry_run=state.bot.dry_run)
+    return build_dashboard(
+        state.billing_store,
+        state.risk_manager,
+        journal=state.trade_journal,
+        dry_run=state.bot.dry_run,
+    )
 
 
 @router.get("/billing/preview")
 def billing_preview(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
-    dash = build_dashboard(state.billing_store, state.risk_manager, dry_run=state.bot.dry_run)
+    dash = build_dashboard(
+        state.billing_store,
+        state.risk_manager,
+        journal=state.trade_journal,
+        dry_run=state.bot.dry_run,
+    )
     return {"preview": dash["dry_run_fee_preview"], "disclaimer": dash["disclaimer"]}
 
 
@@ -103,16 +149,58 @@ def billing_statement_export(period: str, request: Request) -> PlainTextResponse
 
 
 @router.get("/billing/settlement")
-def billing_settlement(request: Request, period: str | None = None) -> dict[str, Any]:
+def billing_settlement(
+    request: Request,
+    period: str | None = None,
+    asset: str = "BTC",
+) -> dict[str, Any]:
     state = request.app.state.trendalgo
-    period = (
-        period or state.billing_store.list_statements()[0]["period"]
-        if state.billing_store.list_statements()
-        else "current"
+    resolved, amount = _resolve_period_and_amount(state.billing_store, period)
+    return start_settlement_payment(
+        state.billing_store, period=resolved, amount_usd=amount, asset=asset
     )
-    stmt = state.billing_store.get_statement(period)
-    amount = float(stmt["license_fee_usd"]) if stmt else 0.0
-    return settlement_info(amount, period)
+
+
+@router.post("/billing/payment/start")
+def billing_payment_start(body: PaymentStartBody, request: Request) -> dict[str, Any]:
+    state = request.app.state.trendalgo
+    resolved, amount = _resolve_period_and_amount(state.billing_store, body.period)
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="no license fee due for this period")
+    return start_settlement_payment(
+        state.billing_store,
+        period=resolved,
+        amount_usd=amount,
+        asset=body.asset,
+    )
+
+
+@router.get("/billing/payment/status/{payment_id}")
+def billing_payment_status(payment_id: str, request: Request) -> dict[str, Any]:
+    state = request.app.state.trendalgo
+    try:
+        return check_settlement_payment(state.billing_store, payment_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/billing/payment/check")
+def billing_payment_check(body: PaymentCheckBody, request: Request) -> dict[str, Any]:
+    state = request.app.state.trendalgo
+    try:
+        return check_settlement_payment(
+            state.billing_store,
+            body.payment_id,
+            simulate_tx_hash=body.simulate_tx_hash,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/billing/payment/watch")
+def billing_payment_watch(request: Request) -> dict[str, Any]:
+    state = request.app.state.trendalgo
+    return poll_settlement_payments(state.billing_store)
 
 
 @router.post("/billing/lightning-invoice")
@@ -129,7 +217,7 @@ def billing_process_trades(request: Request) -> dict[str, Any]:
 
 @router.post("/billing/mark-paid")
 def billing_mark_paid(request: Request) -> dict[str, Any]:
-    """User confirms external payment — clears grace (no custody)."""
+    """Fallback when on-chain auto-verify is unavailable."""
     state = request.app.state.trendalgo
     status = mark_payment_received(state.billing_store)
     state.log("license marked paid by user")

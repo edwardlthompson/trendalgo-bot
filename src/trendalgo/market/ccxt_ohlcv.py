@@ -56,11 +56,12 @@ def fetch_exchange_ohlcv(
                 rows.extend(batch)
                 on_batch and on_batch(len(batch), len(rows))
                 last_ms = int(batch[-1][0])
-                if last_ms <= cursor:
+                if last_ms >= until_ms:
                     break
-                cursor = last_ms + 1
-                if len(batch) < 720:
+                next_cursor = last_ms + 1
+                if next_cursor <= cursor:
                     break
+                cursor = next_cursor
             return _rows_to_points(rows, since, until)
         except Exception as exc:
             last_exc = exc

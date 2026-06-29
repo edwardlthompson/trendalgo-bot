@@ -13,7 +13,7 @@ Signals, backtests, and AI commentary are informational. You are solely responsi
 ## 3. Performance license
 
 - Optional enrollment after free tier / dry-run.
-- Default rate: **12%** of bot-attributed **net-positive closed trades** (H-029).
+- Default rate: **5%** of bot-attributed **net-positive closed trades** (H-029).
 - **Net-loss trades = $0 license fee** for that trade.
 - License amounts are **calculated** by the software; you **initiate payment externally**.
 

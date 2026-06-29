@@ -11,7 +11,10 @@ import { t } from "../i18n";
 
 const HIGHLIGHT_MS = 2200;
 
-export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; cleanup: () => void } {
+export function createTaGlossaryPage(
+  onBack: () => void,
+  focusEntryId?: string | null,
+): { root: HTMLElement; cleanup: () => void } {
   const root = document.createElement("section");
   root.className = "gp-panel gp-ta-glossary-page";
   root.dataset.testid = "ta-glossary-page";
@@ -54,9 +57,27 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
   const list = document.createElement("div");
   list.className = "gp-ta-glossary-list gp-ta-glossary-page-list";
 
-  let pendingTarget: string | null = parseGlossaryHash(window.location.hash);
+  let pendingTarget: string | null =
+    focusEntryId?.toUpperCase() ?? parseGlossaryHash(window.location.hash);
   let selectedCategory: string | null = null;
+  let singleEntryFilter: string | null = pendingTarget;
   let highlightTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const clearFilterBtn = document.createElement("button");
+  clearFilterBtn.type = "button";
+  clearFilterBtn.className = "gp-btn-secondary gp-ta-glossary-clear-filter";
+  clearFilterBtn.dataset.testid = "ta-glossary-show-all";
+  clearFilterBtn.textContent = t("bots.glossary.show_all");
+  clearFilterBtn.hidden = true;
+  clearFilterBtn.addEventListener("click", () => {
+    singleEntryFilter = null;
+    pendingTarget = null;
+    search.value = "";
+    selectedCategory = null;
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+    renderCategoryNav();
+    render();
+  });
 
   function clearHighlight(): void {
     list.querySelectorAll(".gp-ta-glossary-card-highlight").forEach((el) => {
@@ -73,6 +94,8 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
   }
 
   function setCategory(category: string | null): void {
+    singleEntryFilter = null;
+    pendingTarget = null;
     selectedCategory = category;
     renderCategoryNav();
     render();
@@ -108,9 +131,11 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
     const updateHash = opts?.updateHash ?? true;
     const scroll = opts?.scroll ?? true;
 
-    if (search.value.trim()) search.value = "";
+    singleEntryFilter = id;
+    search.value = id;
     selectedCategory = null;
     pendingTarget = id;
+    clearFilterBtn.hidden = false;
     renderCategoryNav();
     render();
 
@@ -233,13 +258,23 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
 
   function render(): void {
     const q = search.value.trim().toLowerCase();
-    const target = pendingTarget?.toUpperCase() ?? null;
-    let entries = allTaGlossaryEntries().filter((e: TaGlossaryEntry) => matchesCategory(e) && matchesSearch(e, q));
-    if (target && !entries.some((e: TaGlossaryEntry) => e.id.toUpperCase() === target)) {
-      const hit = allTaGlossaryEntries().find((e: TaGlossaryEntry) => e.id.toUpperCase() === target);
-      if (hit) entries = [hit, ...entries.filter((e) => e.id.toUpperCase() !== target)];
+    const target = pendingTarget?.toUpperCase() ?? singleEntryFilter;
+    clearFilterBtn.hidden = !singleEntryFilter;
+
+    let entries: TaGlossaryEntry[];
+    if (singleEntryFilter) {
+      entries = allTaGlossaryEntries().filter(
+        (e: TaGlossaryEntry) => e.id.toUpperCase() === singleEntryFilter,
+      );
+    } else {
+      entries = allTaGlossaryEntries().filter(
+        (e: TaGlossaryEntry) => matchesCategory(e) && matchesSearch(e, q),
+      );
     }
-    if (selectedCategory) {
+
+    if (singleEntryFilter && entries.length) {
+      meta.textContent = t("bots.glossary.single_entry").replace("{id}", entries[0]!.id);
+    } else if (selectedCategory) {
       meta.textContent = t("bots.glossary.count_in_category")
         .replace("{category}", selectedCategory)
         .replace("{count}", String(entries.length));
@@ -271,10 +306,21 @@ export function createTaGlossaryPage(onBack: () => void): { root: HTMLElement; c
     navigateToEntry(target, { updateHash: false });
   }
 
-  search.addEventListener("input", render);
+  search.addEventListener("input", () => {
+    singleEntryFilter = null;
+    pendingTarget = null;
+    render();
+  });
   window.addEventListener("hashchange", onHashChange);
   renderCategoryNav();
-  root.append(header, search, categoryNav, meta, list);
+  const searchRow = document.createElement("div");
+  searchRow.className = "gp-ta-glossary-search-row";
+  searchRow.append(search, clearFilterBtn);
+  root.append(header, searchRow, categoryNav, meta, list);
+  if (singleEntryFilter) {
+    search.value = singleEntryFilter;
+    clearFilterBtn.hidden = false;
+  }
   render();
   if (pendingTarget) {
     navigateToEntry(pendingTarget, { updateHash: false });

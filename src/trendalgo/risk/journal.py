@@ -74,7 +74,8 @@ class TradeJournal:
             )
             self._migrate(conn)
 
-    def append_trade(self, record: TradeRecord) -> int:
+    def append_trade(self, record: TradeRecord, *, created_at: str | None = None) -> int:
+        ts = created_at or _utc_now()
         with self._connect() as conn:
             cur = conn.execute(
                 """
@@ -92,10 +93,22 @@ class TradeJournal:
                     record.exchange_trade_id,
                     record.exchange,
                     record.bot_id,
-                    _utc_now(),
+                    ts,
                 ),
             )
             return int(cur.lastrowid)
+
+    def first_profitable_trade(self) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT pair, side, stake_usd, pnl_usd, signal_source, rationale,
+                       exchange_trade_id, exchange, bot_id, created_at
+                FROM trades WHERE pnl_usd > 0
+                ORDER BY created_at ASC LIMIT 1
+                """
+            ).fetchone()
+            return dict(row) if row else None
 
     def record_fee_hook(
         self,

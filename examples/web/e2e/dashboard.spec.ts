@@ -51,16 +51,6 @@ test("opens bot detail from dashboard card", async ({ page }) => {
   await expect(page.getByTestId("bot-dashboard")).toBeVisible();
 });
 
-test("pause all trading from risk panel", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
-  await page.getByRole("button", { name: "Risk" }).click();
-  await expect(page.getByTestId("risk-panel")).toBeVisible();
-  await page.getByTestId("pause-all").click();
-  await page.getByRole("button", { name: "Portfolio" }).click();
-  await expect(page.getByTestId("health-status")).toContainText("Paused");
-});
-
 test("runs fleet backtest and shows results", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });

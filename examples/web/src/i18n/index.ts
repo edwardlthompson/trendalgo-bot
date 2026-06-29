@@ -18,9 +18,15 @@ export function setLocale(locale: string): void {
   document.documentElement.lang = locale;
 }
 
-export function t(key: string): string {
+export function t(key: string, vars?: Record<string, string>): string {
   const catalog = catalogs[currentLocale] ?? catalogs.en;
-  return catalog[key] ?? catalogs.en[key] ?? key;
+  let value = catalog[key] ?? catalogs.en[key] ?? key;
+  if (vars) {
+    for (const [name, replacement] of Object.entries(vars)) {
+      value = value.replaceAll(`{${name}}`, replacement);
+    }
+  }
+  return value;
 }
 
 export function supportedLocales(): string[] {

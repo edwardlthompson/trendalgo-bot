@@ -34,4 +34,11 @@ describe("navigationStore", () => {
     localStorage.setItem(KEY, JSON.stringify({ view: "strategies", selectedBotId: null }));
     expect(loadNavigation()).toEqual({ view: "dashboard", selectedBotId: null });
   });
+
+  it("maps removed risk and config views to portfolio", () => {
+    localStorage.setItem(KEY, JSON.stringify({ view: "risk", selectedBotId: null }));
+    expect(loadNavigation()).toEqual({ view: "portfolio", selectedBotId: null });
+    localStorage.setItem(KEY, JSON.stringify({ view: "config", selectedBotId: null }));
+    expect(loadNavigation()).toEqual({ view: "portfolio", selectedBotId: null });
+  });
 });

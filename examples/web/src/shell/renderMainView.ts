@@ -1,6 +1,6 @@
 import { createBacktestPanel } from "../backtest/BacktestPanel";
 import type { BacktestPayload, DashboardData } from "../api/client";
-import { createConfigForm, type ExitRulesState } from "../config/ConfigForm";
+import type { ExitRulesState } from "../config/ConfigForm";
 import { createBotDashboard, createBotDetailLoading } from "../dashboard/BotDashboard";
 import { createBotDetailPage } from "../dashboard/BotDetailPage";
 import { createTaGlossaryPage } from "../dashboard/TaGlossaryPage";
@@ -8,7 +8,6 @@ import { createDebugLogViewer } from "../debug/DebugLogViewer";
 import { createNotificationInbox, type InboxItem } from "../notifications/Inbox";
 import { createPortfolioPanel } from "../portfolio/PortfolioPanel";
 import type { PortfolioOverviewData } from "../portfolio/PortfolioSections";
-import { createRiskPanel } from "../risk/RiskPanel";
 import { createScannerPanel } from "../scanner/ScannerPanel";
 import type { ScannerSettings, ScannerSnapshot } from "../scanner/ScannerPanel";
 import type { PerformanceRange } from "../portfolio/PortfolioPerformanceChart";
@@ -18,6 +17,9 @@ import { createBillingDashboard, type BillingDashboardData } from "../billing/Bi
 import { createSettlementPanel, type SettlementData } from "../billing/pay/SettlementPanel";
 import { createDiversificationPanel } from "../research/DiversificationPanel";
 import { createResearchToolsPanel } from "../research/ResearchTools";
+import { createSettingsView } from "../settings/SettingsView";
+import type { DonationConfig } from "../about/types";
+import type { DisplayCurrencyCode } from "../settings/displayCurrency";
 import type { AppView } from "./MobileNav";
 import { t } from "../i18n";
 import { DEFAULT_BOT_LIMITS, syncBotLimits } from "../bots/botGuardrails";
@@ -66,6 +68,7 @@ export type MainViewState = {
   billingDashboard: BillingDashboardData | null;
   billingSettlement: SettlementData | null;
   showBillingSettlement: boolean;
+  billingSettlementAsset?: string;
   portfolioPlatform: import("../platform/PlatformPanel").PlatformData | null;
   exchangeRegistry: import("../portfolio/AccountsPanel").ExchangeRegistryEntry[] | null;
   selectedBotId: number | null;
@@ -75,6 +78,10 @@ export type MainViewState = {
   taLibrary: import("../api/client").TaLibraryCategory[];
   botExchangePairs: string[];
   botLimits: import("../bots/botGuardrails").BotLimits | null;
+  glossaryFocusId: string | null;
+  updateStatus: string;
+  donations: DonationConfig;
+  canApplyUpdate?: boolean;
 };
 
 export type MainViewCallbacks = {
@@ -84,6 +91,7 @@ export type MainViewCallbacks = {
   onFleetStakeChange: (stakeUsd: number) => void;
   onFleetFilterChange: (mode: "all" | "timeframe" | "strategy", timeframe?: string) => void;
   onLoadFleetHistoryRun: (jobId: string) => void;
+  onCreateBotFromFleetResult: (row: import("../api/client").FleetResultRow) => void;
   onPause: () => void;
   onResume: () => void;
   onSaveConfig: (params: Record<string, number>) => void;
@@ -111,6 +119,9 @@ export type MainViewCallbacks = {
   onBillingMarkPaid: () => void;
   onCopySettlement: (text: string) => void;
   onBillingLightning: () => void;
+  onBillingPaymentPoll: (paymentId: string) => Promise<SettlementData | null>;
+  onBillingPaymentConfirmed: (data: SettlementData) => void;
+  onBillingAssetChange: (asset: string) => void;
   onBotToggle: (botId: number, enabled: boolean) => void;
   onBotUpdate: (botId: number, payload: import("../dashboard/BotDetailPage").BotUpdatePayload) => void;
   onBotDelete: (botId: number) => void;
@@ -120,13 +131,16 @@ export type MainViewCallbacks = {
   onBotSaveParams: (botId: number, strategyId: string, params: Record<string, number>) => void;
   onBotExchangeChange: (exchangeId: string, applyPairs: (pairs: string[]) => void) => void;
   onBotPairChange?: (botId: number, pair: string) => void;
-  onOpenGlossary?: () => void;
+  onOpenGlossary?: (strategyId?: string) => void;
   onCloseGlossary?: () => void;
   onBotApplyBacktest: (botId: number, ranking: import("../api/client").BacktestRanking) => void;
   onCreateBot: () => void;
   onApplyTemplate: (templateId: string) => void;
   onDeleteTemplate: (templateId: string) => void;
   onSaveBotTemplate: (botId: number, name: string) => void;
+  onUpdateCheckChange?: (enabled: boolean) => void;
+  onDisplayCurrencyChange?: (code: DisplayCurrencyCode) => void;
+  onApplyUpdate?: () => void;
 };
 
 export function renderMainView(
@@ -137,6 +151,24 @@ export function renderMainView(
   mount.innerHTML = "";
   let cleanup = (): void => {};
 
+  if (state.view === "settings") {
+    mount.appendChild(
+      createSettingsView(
+        {
+          updateStatus: state.updateStatus,
+          donations: state.donations,
+          canApplyUpdate: state.canApplyUpdate,
+        },
+        {
+          onUpdateCheckChange: callbacks.onUpdateCheckChange,
+          onDisplayCurrencyChange: callbacks.onDisplayCurrencyChange,
+          onApplyUpdate: callbacks.onApplyUpdate,
+        },
+      ),
+    );
+    return cleanup;
+  }
+
   if (!state.dashboard) return cleanup;
 
   if (state.showInbox) {
@@ -145,7 +177,7 @@ export function renderMainView(
   }
 
   if (state.view === "glossary") {
-    const page = createTaGlossaryPage(() => callbacks.onCloseGlossary?.());
+    const page = createTaGlossaryPage(() => callbacks.onCloseGlossary?.(), state.glossaryFocusId);
     mount.appendChild(page.root);
     return page.cleanup;
   }
@@ -296,6 +328,8 @@ export function renderMainView(
         onStakeChange: callbacks.onFleetStakeChange,
         onFilterChange: callbacks.onFleetFilterChange,
         onLoadHistoryRun: callbacks.onLoadFleetHistoryRun,
+        onCreateBotFromResult: callbacks.onCreateBotFromFleetResult,
+        onOpenGlossaryStrategy: (strategyId) => callbacks.onOpenGlossary?.(strategyId),
       },
     );
     mount.appendChild(panel.root);
@@ -334,12 +368,21 @@ export function renderMainView(
       }),
     );
     if (state.showBillingSettlement && state.billingSettlement) {
+      const assets = (state.billingDashboard?.payment_assets ?? []).map((row) => ({
+        asset: String(row.asset ?? ""),
+        label: String(row.label ?? row.asset ?? ""),
+        chain: String(row.chain ?? ""),
+      }));
       mount.appendChild(
-        createSettlementPanel(
-          state.billingSettlement,
-          callbacks.onCopySettlement,
-          callbacks.onBillingLightning,
-        ),
+        createSettlementPanel(state.billingSettlement, {
+          onCopy: callbacks.onCopySettlement,
+          onLightning: callbacks.onBillingLightning,
+          onPoll: callbacks.onBillingPaymentPoll,
+          onConfirmed: callbacks.onBillingPaymentConfirmed,
+          assets,
+          selectedAsset: state.billingSettlementAsset ?? state.billingSettlement.asset,
+          onAssetChange: callbacks.onBillingAssetChange,
+        }),
       );
     }
     return cleanup;
@@ -356,27 +399,6 @@ export function renderMainView(
           onPin: callbacks.onPinPair,
           onSaveSettings: callbacks.onSaveScannerSettings,
         },
-      ),
-    );
-    return cleanup;
-  }
-  if (state.view === "risk") {
-    mount.appendChild(
-      createRiskPanel(state.dashboard.risk, {
-        onPause: callbacks.onPause,
-        onResume: callbacks.onResume,
-      }),
-    );
-    return cleanup;
-  }
-  if (state.view === "config") {
-    mount.appendChild(
-      createConfigForm(
-        state.dashboard.strategy_id,
-        state.strategyParams,
-        state.pairs,
-        { onSave: callbacks.onSaveConfig, onSaveExitRules: callbacks.onSaveExitRules },
-        state.exitRules ?? undefined,
       ),
     );
     return cleanup;

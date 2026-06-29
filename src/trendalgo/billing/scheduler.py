@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from trendalgo.billing.engine import process_journal_trades
+from trendalgo.billing.engine import poll_settlement_payments, process_journal_trades
 from trendalgo.billing.license_gate import advance_grace
 from trendalgo.billing.store import BillingStore
 from trendalgo.risk.journal import TradeJournal
@@ -56,3 +56,13 @@ def run_grace_reminders(
             on_log(f"grace reminder day {day}")
         return {"sent": 1, "grace_day": day}
     return {"sent": 0, "grace_day": day}
+
+
+def run_payment_watch_job(
+    billing: BillingStore,
+    on_log: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
+    result = poll_settlement_payments(billing)
+    if result.get("confirmed") and on_log:
+        on_log(f"on-chain payments confirmed: {result['confirmed']}")
+    return result

@@ -8,9 +8,24 @@ from typing import Any
 from trendalgo.billing.license_gate import (
     check_license_gate,
     clear_grace,
+    licensed_until_for_period,
     start_grace_period,
 )
+from trendalgo.billing.eligibility import (
+    billable_from_iso,
+    billing_is_active,
+    eligibility_snapshot,
+    sync_billing_eligibility,
+)
+from trendalgo.billing.schema import DEFAULT_LICENSE_RATE, GRACE_PERIOD_DAYS
 from trendalgo.billing.milestones import detect_milestones
+from trendalgo.billing.payment_verifier import (
+    create_payment_intent,
+    enrich_payment_response,
+    verify_pending_payment,
+    watch_pending_payments,
+)
+from trendalgo.billing.settlement import list_available_assets
 from trendalgo.billing.profit import rollup_period
 from trendalgo.billing.rules import apply_fee_rules
 from trendalgo.billing.statements import build_statement
@@ -54,8 +69,9 @@ def process_journal_trades(
     period: str | None = None,
 ) -> dict[str, Any]:
     period = period or _period_now()
+    sync_billing_eligibility(billing, journal)
     enrollment = billing.get_enrollment()
-    rate = float(enrollment.get("license_rate_pct", 0.12))
+    rate = float(enrollment.get("license_rate_pct", DEFAULT_LICENSE_RATE))
     credit = billing.get_carry_forward_credit()
     drawdown_paused = risk_manager.state.circuit_breaker_active
     trades = journal.list_trades()
@@ -70,12 +86,14 @@ def process_journal_trades(
                 "exchange_trade_id": t["exchange_trade_id"],
                 "exchange": t.get("exchange", ""),
                 "bot_id": t.get("bot_id"),
+                "created_at": t.get("created_at"),
             }
             for t in billable
         ],
         rate,
         carry_forward_credit_usd=credit,
         drawdown_paused=drawdown_paused,
+        billable_from=billable_from_iso(enrollment),
     )
     added = 0
     for item in items:
@@ -95,7 +113,11 @@ def process_journal_trades(
     rollup = rollup_period(items)
     statement = build_statement(period, rollup, items, carry_forward_credit_usd=remaining_credit)
     billing.upsert_statement(period, statement)
-    if enrollment.get("enrolled") and rollup["license_fee_usd"] > 0:
+    if (
+        enrollment.get("enrolled")
+        and billing_is_active(enrollment)
+        and rollup["license_fee_usd"] > 0
+    ):
         status = billing.get_license_status()
         billing.update_license_status(start_grace_period(status, period))
     return {
@@ -103,6 +125,7 @@ def process_journal_trades(
         "trades_processed": added,
         "rollup": rollup,
         "attribution_by_exchange": _attribution_by_exchange(items),
+        "billing_eligibility": eligibility_snapshot(enrollment),
     }
 
 
@@ -111,7 +134,10 @@ def build_dashboard(
     risk_manager: RiskManager,
     *,
     dry_run: bool,
+    journal: TradeJournal | None = None,
 ) -> dict[str, Any]:
+    if journal is not None:
+        sync_billing_eligibility(billing, journal)
     enrollment = billing.get_enrollment()
     status = billing.get_license_status()
     totals = billing.lifetime_totals()
@@ -124,7 +150,7 @@ def build_dashboard(
     )
     can_trade, gate_reason = check_license_gate(enrollment, status, dry_run=dry_run)
     milestones = detect_milestones(totals["lifetime_gross_profit_usd"], billing.list_milestones())
-    preview_rate = float(enrollment.get("license_rate_pct", 0.12))
+    preview_rate = float(enrollment.get("license_rate_pct", DEFAULT_LICENSE_RATE))
     return {
         "enrollment": enrollment,
         "license_status": status,
@@ -143,7 +169,45 @@ def build_dashboard(
             "sample_fee_usd": round(100 * preview_rate, 2),
         },
         "disclaimer": "Software license only. User initiates payment externally.",
+        "payment_auto_verify": True,
+        "grace_period_days": GRACE_PERIOD_DAYS,
+        "payment_assets": list_available_assets(),
+        "billing_eligibility": eligibility_snapshot(enrollment),
     }
+
+
+def start_settlement_payment(
+    billing: BillingStore,
+    *,
+    period: str,
+    amount_usd: float,
+    asset: str = "BTC",
+) -> dict[str, Any]:
+    install_uuid = billing.get_or_create_install_uuid()
+    asset_key = asset.strip().upper()
+    existing = billing.get_active_payment_for_period(period, install_uuid, asset=asset_key)
+    if existing:
+        return enrich_payment_response(existing)
+    return create_payment_intent(
+        billing,
+        period=period,
+        amount_usd=amount_usd,
+        install_uuid=install_uuid,
+        asset_id=asset_key,
+    )
+
+
+def check_settlement_payment(
+    billing: BillingStore,
+    payment_id: str,
+    *,
+    simulate_tx_hash: str | None = None,
+) -> dict[str, Any]:
+    return verify_pending_payment(billing, payment_id, simulate_tx_hash=simulate_tx_hash)
+
+
+def poll_settlement_payments(billing: BillingStore) -> dict[str, Any]:
+    return watch_pending_payments(billing)
 
 
 def reconcile_fees(billing: BillingStore, journal: TradeJournal) -> dict[str, Any]:
@@ -163,5 +227,8 @@ def reconcile_fees(billing: BillingStore, journal: TradeJournal) -> dict[str, An
 
 def mark_payment_received(billing: BillingStore) -> dict[str, Any]:
     status = billing.get_license_status()
-    billing.update_license_status(clear_grace(status))
+    period = str(status.get("unpaid_period") or _period_now())
+    cleared = clear_grace(status)
+    cleared["licensed_until"] = licensed_until_for_period(period)
+    billing.update_license_status(cleared)
     return billing.get_license_status()

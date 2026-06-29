@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-06-29 — Release v0.4.0 — Settings tab, fiat display, on-chain billing
+- **Status:** Accepted
+- **Context:** `/push` after Settings nav tab (theme + About + display currency), 5% license fee, BTC/Base stablecoin payment verification, billing trial after first profit, fleet backtest UX improvements, Risk/Config nav removal.
+- **Decision:** Release `0.4.0` with Frankfurter FX display conversion, payment intent polling UI, eligibility engine (`first_profitable_trade_at` + 1-month trial), and consolidated Settings view.
+- **Verification:** `pytest tests/test_billing/` (18 pass); vitest settings/displayCurrency; Playwright settings tab e2e.
+- **Consequences:** Header settings/about modals removed; values remain USD-backed with display-only conversion.
+
 ### 2026-06-26 — Release v0.3.0 — S27 fleet backtest + website fee sync
 - **Status:** Accepted
 - **Context:** `/ship` after S27 TA fleet backtest, exchange fee SQLite sync from public pages (no trading API), bot dashboard overhaul, backtest library removal.

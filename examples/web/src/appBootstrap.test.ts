@@ -61,7 +61,10 @@ describe("bootstrapApp", () => {
     });
     Object.defineProperty(navigator, "serviceWorker", {
       configurable: true,
-      value: { register: vi.fn(() => Promise.resolve()) },
+      value: {
+        register: vi.fn(() => Promise.resolve()),
+        getRegistrations: vi.fn(() => Promise.resolve([])),
+      },
     });
   });
 
@@ -95,7 +98,7 @@ describe("bootstrapApp", () => {
     bootstrapApp(root);
     await vi.waitFor(() => expect(handlers).toBeDefined());
     const callsBefore = mockedCreateAppShell.mock.calls.length;
-    requireHandlers().onState({ showAbout: true });
+    requireHandlers().onState({ view: "settings" });
     expect(mockedCreateAppShell.mock.calls.length).toBeGreaterThan(callsBefore);
   });
 
@@ -114,13 +117,22 @@ describe("bootstrapApp", () => {
     );
   });
 
-  it("registers service worker on load", async () => {
+  it("unregisters service workers on load in dev", async () => {
+    const unregister = vi.fn(() => Promise.resolve(true));
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: {
+        register: vi.fn(() => Promise.resolve()),
+        getRegistrations: vi.fn(() => Promise.resolve([{ unregister }])),
+      },
+    });
     const root = document.createElement("div");
     bootstrapApp(root);
     window.dispatchEvent(new Event("load"));
     await vi.waitFor(() => {
-      expect(navigator.serviceWorker.register).toHaveBeenCalledWith("/sw.js");
+      expect(unregister).toHaveBeenCalled();
     });
+    expect(navigator.serviceWorker.register).not.toHaveBeenCalled();
   });
 
   it("skips background update check when restart guard is active", async () => {
@@ -141,7 +153,7 @@ describe("bootstrapApp", () => {
     expect(mockedCheckForUpdates.mock.calls.length).toBe(callsBefore);
   });
 
-  it("re-renders about panel when background update completes while open", async () => {
+  it("re-renders settings view when background update completes while open", async () => {
     let resolveCheck: (value: string) => void = () => {};
     mockedCheckForUpdates.mockImplementation(
       () =>
@@ -152,7 +164,7 @@ describe("bootstrapApp", () => {
     const root = document.createElement("div");
     bootstrapApp(root);
     await vi.waitFor(() => expect(handlers).toBeDefined());
-    requireHandlers().onState({ showAbout: true });
+    requireHandlers().onState({ view: "settings" });
     const callsBefore = mockedCreateAppShell.mock.calls.length;
     resolveCheck(messages["about.update.available"]);
     await vi.waitFor(() =>

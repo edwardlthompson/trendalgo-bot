@@ -35,6 +35,41 @@ class BillingStore:
         if cols and "bot_id" not in cols:
             conn.execute("ALTER TABLE fee_ledger_entries ADD COLUMN bot_id INTEGER")
 
+        status_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(license_status)").fetchall()
+        }
+        if status_cols:
+            if "licensed_until" not in status_cols:
+                conn.execute("ALTER TABLE license_status ADD COLUMN licensed_until TEXT")
+            if "last_payment_id" not in status_cols:
+                conn.execute("ALTER TABLE license_status ADD COLUMN last_payment_id TEXT")
+            if "last_tx_hash" not in status_cols:
+                conn.execute("ALTER TABLE license_status ADD COLUMN last_tx_hash TEXT")
+
+        pay_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(settlement_payments)").fetchall()
+        }
+        enroll_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(license_enrollment)").fetchall()
+        }
+        if enroll_cols:
+            if "first_profitable_trade_at" not in enroll_cols:
+                conn.execute("ALTER TABLE license_enrollment ADD COLUMN first_profitable_trade_at TEXT")
+            if "billing_starts_at" not in enroll_cols:
+                conn.execute("ALTER TABLE license_enrollment ADD COLUMN billing_starts_at TEXT")
+        if pay_cols:
+            migrations = [
+                ("amount_atomic", "INTEGER NOT NULL DEFAULT 0"),
+                ("asset", "TEXT NOT NULL DEFAULT 'BTC'"),
+                ("chain", "TEXT NOT NULL DEFAULT 'bitcoin'"),
+                ("chain_id", "INTEGER"),
+                ("token_contract", "TEXT"),
+                ("watch_from_block", "INTEGER"),
+            ]
+            for col, ddl in migrations:
+                if col not in pay_cols:
+                    conn.execute(f"ALTER TABLE settlement_payments ADD COLUMN {col} {ddl}")
+
     def _init_schema(self) -> None:
         with self._connect() as conn:
             conn.executescript(BILLING_SCHEMA)
@@ -102,6 +137,17 @@ class BillingStore:
                 (new_uuid, _utc_now()),
             )
         return new_uuid
+
+    def set_billing_eligibility(self, first_profitable_trade_at: str, billing_starts_at: str) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE license_enrollment SET
+                    first_profitable_trade_at = ?, billing_starts_at = ?, updated_at = ?
+                WHERE id = 1
+                """,
+                (first_profitable_trade_at, billing_starts_at, _utc_now()),
+            )
 
     def append_ledger_entry(
         self,
@@ -218,7 +264,8 @@ class BillingStore:
                 """
                 UPDATE license_status SET
                     grace_started_at = ?, grace_day = ?, suspended = ?,
-                    unpaid_period = ?, updated_at = ?
+                    unpaid_period = ?, licensed_until = ?, last_payment_id = ?,
+                    last_tx_hash = ?, updated_at = ?
                 WHERE id = 1
                 """,
                 (
@@ -226,8 +273,151 @@ class BillingStore:
                     int(status.get("grace_day", 0)),
                     int(status.get("suspended", 0)),
                     status.get("unpaid_period"),
+                    status.get("licensed_until"),
+                    status.get("last_payment_id"),
+                    status.get("last_tx_hash"),
                     status.get("updated_at", _utc_now()),
                 ),
+            )
+
+    def create_settlement_payment(
+        self,
+        *,
+        payment_id: str,
+        period: str,
+        install_uuid: str,
+        amount_usd: float,
+        amount_sats: int,
+        amount_btc: float,
+        amount_atomic: int,
+        asset: str,
+        chain: str,
+        chain_id: int | None,
+        token_contract: str | None,
+        watch_from_block: int | None,
+        payment_reference: str,
+        receipt_id: str,
+        verification_hash: str,
+        address: str,
+        created_at: str,
+        expires_at: str,
+    ) -> dict[str, Any]:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO settlement_payments (
+                    id, period, install_uuid, amount_usd, amount_sats, amount_btc,
+                    amount_atomic, asset, chain, chain_id, token_contract, watch_from_block,
+                    payment_reference, receipt_id, verification_hash, address,
+                    status, created_at, expires_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+                """,
+                (
+                    payment_id,
+                    period,
+                    install_uuid,
+                    amount_usd,
+                    amount_sats,
+                    amount_btc,
+                    amount_atomic,
+                    asset,
+                    chain,
+                    chain_id,
+                    token_contract,
+                    watch_from_block,
+                    payment_reference,
+                    receipt_id,
+                    verification_hash,
+                    address,
+                    created_at,
+                    expires_at,
+                ),
+            )
+        row = self.get_settlement_payment(payment_id)
+        return row or {}
+
+    def get_settlement_payment(self, payment_id: str) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM settlement_payments WHERE id = ?", (payment_id,)
+            ).fetchone()
+            return dict(row) if row else None
+
+    def get_active_payment_for_period(
+        self,
+        period: str,
+        install_uuid: str,
+        *,
+        asset: str | None = None,
+    ) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            if asset:
+                row = conn.execute(
+                    """
+                    SELECT * FROM settlement_payments
+                    WHERE period = ? AND install_uuid = ? AND asset = ? AND status = 'pending'
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    (period, install_uuid, asset),
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    """
+                    SELECT * FROM settlement_payments
+                    WHERE period = ? AND install_uuid = ? AND status = 'pending'
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    (period, install_uuid),
+                ).fetchone()
+            return dict(row) if row else None
+
+    def list_pending_settlement_payments(self, limit: int = 50) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM settlement_payments
+                WHERE status = 'pending'
+                ORDER BY created_at ASC LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def supersede_pending_payments(self, period: str, install_uuid: str) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE settlement_payments SET status = 'superseded'
+                WHERE period = ? AND install_uuid = ? AND status = 'pending'
+                """,
+                (period, install_uuid),
+            )
+
+    def confirm_settlement_payment(
+        self,
+        payment_id: str,
+        *,
+        tx_hash: str,
+        confirmations: int,
+        licensed_until: str,
+        confirmed_at: str,
+    ) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE settlement_payments SET
+                    status = 'confirmed', tx_hash = ?, confirmations = ?,
+                    licensed_until = ?, confirmed_at = ?
+                WHERE id = ?
+                """,
+                (tx_hash, confirmations, licensed_until, confirmed_at, payment_id),
+            )
+
+    def expire_settlement_payment(self, payment_id: str) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE settlement_payments SET status = 'expired' WHERE id = ?",
+                (payment_id,),
             )
 
     def get_carry_forward_credit(self) -> float:

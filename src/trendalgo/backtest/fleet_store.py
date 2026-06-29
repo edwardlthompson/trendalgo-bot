@@ -159,10 +159,12 @@ class FleetStore:
                     "stake_usd": row["stake_usd"],
                     "created_at": row["created_at"],
                     "lookback_days": summary.get("lookback_days"),
+                    "timeframes_tested": summary.get("timeframes_tested") or [],
                     "best_strategy": best.get("strategy_id"),
                     "best_net_profit": best.get("net_profit"),
                     "best_timeframe": best.get("timeframe"),
                     "buy_hold_net": (summary.get("buy_and_hold") or {}).get("net_profit"),
+                    "top10_count": len(final),
                 }
             )
         return {"runs": runs, "total": total, "limit": limit, "offset": offset}

@@ -151,6 +151,7 @@ export type FleetResultRow = {
   gross_profit: number;
   fees_paid: number;
   trades: number;
+  tsl_hits?: number;
   bar_count: number;
   lookback_seconds?: number;
   win_rate?: number;
@@ -191,6 +192,8 @@ export type FleetHistoryEntry = {
   stake_usd: number;
   created_at: string;
   lookback_days?: number;
+  timeframes_tested?: string[];
+  top10_count?: number;
   best_strategy?: string;
   best_net_profit?: number;
   best_timeframe?: string;
@@ -774,7 +777,7 @@ export async function fetchBillingDashboard(): Promise<Record<string, unknown>> 
   return apiFetch("/billing/dashboard");
 }
 
-export async function enrollBilling(termsVersion: string, ratePct = 0.12): Promise<Record<string, unknown>> {
+export async function enrollBilling(termsVersion: string, ratePct = 0.05): Promise<Record<string, unknown>> {
   return apiFetch("/billing/enroll", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -789,6 +792,22 @@ export async function processBillingTrades(): Promise<Record<string, unknown>> {
 export async function fetchBillingSettlement(period?: string): Promise<Record<string, unknown>> {
   const q = period ? `?period=${encodeURIComponent(period)}` : "";
   return apiFetch(`/billing/settlement${q}`);
+}
+
+export async function fetchBillingPaymentAssets(): Promise<{ assets: Array<Record<string, unknown>> }> {
+  return apiFetch("/billing/payment/assets");
+}
+
+export async function startBillingPayment(period?: string, asset = "BTC"): Promise<Record<string, unknown>> {
+  return apiFetch("/billing/payment/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ period: period ?? null, asset }),
+  });
+}
+
+export async function checkBillingPayment(paymentId: string): Promise<Record<string, unknown>> {
+  return apiFetch(`/billing/payment/status/${encodeURIComponent(paymentId)}`);
 }
 
 export async function markBillingPaid(): Promise<Record<string, unknown>> {

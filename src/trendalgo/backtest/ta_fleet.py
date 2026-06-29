@@ -126,6 +126,31 @@ def merge_rank(results: list[dict[str, Any]], *, top_n: int = 100) -> list[dict[
     return ranked[:top_n]
 
 
+def filter_beats_buy_hold(
+    rows: list[dict[str, Any]],
+    buy_hold: dict[str, Any] | None,
+    *,
+    top_n: int | None = None,
+) -> list[dict[str, Any]]:
+    """Keep rows with positive net_profit that beat buy-and-hold when set."""
+    if not rows:
+        return []
+    bh_net: float | None = None
+    if buy_hold is not None and buy_hold.get("net_profit") is not None:
+        bh_net = float(buy_hold["net_profit"])
+    trimmed = [
+        dict(r)
+        for r in rows
+        if float(r.get("net_profit", float("-inf"))) > 0.0
+        and (bh_net is None or float(r.get("net_profit", float("-inf"))) > bh_net)
+    ]
+    if top_n is not None:
+        trimmed = trimmed[:top_n]
+    for i, row in enumerate(trimmed, start=1):
+        row["rank"] = i
+    return trimmed
+
+
 def all_strategies() -> tuple[str, ...]:
     return all_ta_names()
 
