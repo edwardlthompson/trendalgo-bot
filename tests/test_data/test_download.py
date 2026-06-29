@@ -12,9 +12,12 @@ def test_onchain_sentiment_stub_deterministic() -> None:
     a = onchain_sentiment_stub("btc")
     b = onchain_sentiment_stub("BTC")
     assert a["asset"] == "BTC"
-    assert a == b
+    assert b["asset"] == "BTC"
+    assert a["onchain_activity_score"] == b["onchain_activity_score"]
+    assert a["sentiment_score"] == b["sentiment_score"]
     assert a["paid_indexers"] is False
     assert 0 <= a["onchain_activity_score"] <= 1
+    assert a["generated_at"]
 
 
 def test_save_csv_writes_header_and_rows(tmp_path: Path) -> None:
