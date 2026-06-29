@@ -5,7 +5,7 @@ from __future__ import annotations
 from trendalgo.risk.strategy_mixins import RiskGuardMixin
 from trendalgo.strategies.runtime.base import BaseNativeStrategy
 from trendalgo.strategies.runtime.contract import Position, Signal, StrategyContext
-from trendalgo.strategies.runtime.indicators import rsi
+from trendalgo.strategies.runtime.indicators import close_series, rsi
 
 
 class GridTradingStrategy(BaseNativeStrategy, RiskGuardMixin):
@@ -19,8 +19,9 @@ class GridTradingStrategy(BaseNativeStrategy, RiskGuardMixin):
         df = ctx.dataframe.copy()
         if len(df) < 2:
             return
-        df["rsi"] = rsi(df["close"], 14)
-        df["grid_low"] = df["close"] * (1 - self.grid_spacing_pct)
+        close = close_series(df)
+        df["rsi"] = rsi(close, 14)
+        df["grid_low"] = close * (1 - self.grid_spacing_pct)
         ctx.dataframe = df
         self._rows = df.to_dict("records")
 

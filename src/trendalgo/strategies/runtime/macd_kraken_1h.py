@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from trendalgo.strategies.runtime.base import BaseNativeStrategy
 from trendalgo.strategies.runtime.contract import Position, Signal, StrategyContext
-from trendalgo.strategies.runtime.indicators import macd
+from trendalgo.strategies.runtime.indicators import close_series, macd
 
 
 class MacdKraken1hStrategy(BaseNativeStrategy):
@@ -20,7 +20,7 @@ class MacdKraken1hStrategy(BaseNativeStrategy):
         if len(df) < 2:
             return
         df = df.copy()
-        m, sig, hist = macd(df["close"], fastperiod=12, slowperiod=26, signalperiod=9)
+        m, sig, hist = macd(close_series(df), fastperiod=12, slowperiod=26, signalperiod=9)
         df["macd"] = m
         df["macd_signal"] = sig
         df["macd_hist"] = hist

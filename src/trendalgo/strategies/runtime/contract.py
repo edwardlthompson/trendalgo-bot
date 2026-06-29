@@ -48,6 +48,9 @@ class NativeStrategy(Protocol):
     strategy_id: str
     timeframe: str
 
+    @property
+    def dataframe(self) -> pd.DataFrame: ...
+
     def on_candle(self, candle: Candle, ctx: StrategyContext) -> None: ...
 
     def signal(self, ctx: StrategyContext) -> Signal | None: ...

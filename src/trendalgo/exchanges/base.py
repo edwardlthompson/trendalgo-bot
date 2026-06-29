@@ -11,8 +11,7 @@ from trendalgo.portfolio.db import HoldingRow, PortfolioStore
 class PortfolioAdapter(Protocol):
     exchange_id: str
 
-    def sync_balances(self, store: PortfolioStore, *, dry_run: bool = True) -> dict[str, Any]:
-        """Fetch read-only balances and persist a portfolio snapshot."""
+    def sync_balances(self, store: PortfolioStore, *, dry_run: bool = True) -> dict[str, Any]: ...
 
 
 def holdings_from_ccxt_balance(

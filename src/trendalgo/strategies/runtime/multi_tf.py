@@ -6,7 +6,7 @@ from trendalgo.lts.mixins import TrendSpotterMixin
 from trendalgo.risk.strategy_mixins import RiskGuardMixin, ScalePositionMixin
 from trendalgo.strategies.runtime.base import BaseNativeStrategy
 from trendalgo.strategies.runtime.contract import Position, Signal, StrategyContext
-from trendalgo.strategies.runtime.indicators import ema, rsi
+from trendalgo.strategies.runtime.indicators import close_series, ema, rsi
 
 
 class MultiTFExampleStrategy(
@@ -24,11 +24,12 @@ class MultiTFExampleStrategy(
         if len(df) < 2:
             return
         df = df.copy()
-        df["rsi"] = rsi(df["close"], 14)
-        df["ema20"] = ema(df["close"], 20)
+        close = close_series(df)
+        df["rsi"] = rsi(close, 14)
+        df["ema20"] = ema(close, 20)
         if ctx.informative_df is not None and len(ctx.informative_df) >= 14:
             inf = ctx.informative_df.copy()
-            inf["rsi_1h"] = rsi(inf["close"], 14)
+            inf["rsi_1h"] = rsi(close_series(inf), 14)
             df["rsi_1h"] = inf["rsi_1h"].iloc[-1]
         else:
             df["rsi_1h"] = df["rsi"]

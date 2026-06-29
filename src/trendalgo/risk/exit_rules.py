@@ -14,6 +14,10 @@ class ExitRules(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+def default_exit_rules() -> ExitRules:
+    return ExitRules.model_validate({})
+
+
 def scale_position_amount(
     current_stake: float,
     target_pct: float,

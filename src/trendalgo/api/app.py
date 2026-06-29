@@ -54,6 +54,12 @@ def _cors_origins() -> list[str]:
     return [part.strip() for part in raw.split(",") if part.strip()]
 
 
+def _shutdown_scheduler(scheduler: object | None) -> None:
+    shutdown = getattr(scheduler, "shutdown", None)
+    if callable(shutdown):
+        shutdown(wait=False)
+
+
 def create_app(state: AppState | None = None) -> FastAPI:
     app_state = state or default_state()
 
@@ -73,12 +79,9 @@ def create_app(state: AppState | None = None) -> FastAPI:
         fee_sched = start_fee_scheduler(fee_store, on_log=app_state.log)
         app_state.fee_scheduler = fee_sched
         yield
-        if scanner_sched is not None and hasattr(scanner_sched, "shutdown"):
-            scanner_sched.shutdown(wait=False)
-        if portfolio_sched is not None and hasattr(portfolio_sched, "shutdown"):
-            portfolio_sched.shutdown(wait=False)
-        if fee_sched is not None and hasattr(fee_sched, "shutdown"):
-            fee_sched.shutdown(wait=False)
+        _shutdown_scheduler(scanner_sched)
+        _shutdown_scheduler(portfolio_sched)
+        _shutdown_scheduler(fee_sched)
 
     app = FastAPI(title="TrendAlgo API", version="0.1.0", lifespan=lifespan)
     app.state.trendalgo = app_state

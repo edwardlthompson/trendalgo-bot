@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pandas as pd
 
 
+def close_series(df: pd.DataFrame) -> pd.Series:
+    """Return the close column as a Series (pyright-safe vs df['close'])."""
+    col = df["close"]
+    if isinstance(col, pd.DataFrame):
+        return col.iloc[:, 0]
+    return cast(pd.Series, col)
+
+
 def ema(series: pd.Series, period: int) -> pd.Series:
-    return series.ewm(span=period, adjust=False).mean()
+    return cast(pd.Series, series.ewm(span=period, adjust=False).mean())
 
 
 def sma(series: pd.Series, period: int) -> pd.Series:
-    return series.rolling(window=period, min_periods=period).mean()
+    return cast(pd.Series, series.rolling(window=period, min_periods=period).mean())
 
 
 def rsi(series: pd.Series, period: int = 14) -> pd.Series:
@@ -21,7 +31,7 @@ def rsi(series: pd.Series, period: int = 14) -> pd.Series:
     avg_gain = gain.ewm(alpha=1 / period, adjust=False).mean()
     avg_loss = loss.ewm(alpha=1 / period, adjust=False).mean()
     rs = avg_gain / avg_loss.replace(0, np.nan)
-    out = 100 - (100 / (1 + rs))
+    out = cast(pd.Series, 100 - (100 / (1 + rs)))
     return out.astype(float)
 
 

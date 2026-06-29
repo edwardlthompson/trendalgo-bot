@@ -5,14 +5,14 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import cast
 
-from trendalgo.scanner.config import ScannerSettings
+from trendalgo.scanner.config import ScannerSettings, default_scanner_settings
 from trendalgo.scanner.listings import verify_kraken_listings
 from trendalgo.scanner.pipeline import _sample_market
 
 
 def forage_pairs(settings: ScannerSettings | None = None, *, top_n: int = 8) -> dict[str, object]:
     """Rank tradable pairs by volume and momentum heuristics."""
-    settings = settings or ScannerSettings()
+    settings = settings or default_scanner_settings()
     listings = set(verify_kraken_listings())
     scored: list[dict[str, object]] = []
 

@@ -84,9 +84,7 @@ class DryRunRunner:
         ctx = StrategyContext(
             pair=self.pair,
             timeframe=self.strategy.timeframe,
-            dataframe=self.strategy.dataframe
-            if hasattr(self.strategy, "dataframe")
-            else pd.DataFrame(),
+            dataframe=self.strategy.dataframe,
             position=self._position,
             wallet_usd=self.wallet_usd,
             informative_df=informative_df,

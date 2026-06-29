@@ -15,8 +15,8 @@ from trendalgo.dex.control import DexVenueControlStore
 from trendalgo.dex.nonce import NonceStore
 from trendalgo.growth.store import GrowthStore
 from trendalgo.portfolio.db import PortfolioStore
-from trendalgo.risk.config import RiskLimits
-from trendalgo.risk.exit_rules import ExitRules
+from trendalgo.risk.config import default_risk_limits
+from trendalgo.risk.exit_rules import ExitRules, default_exit_rules
 from trendalgo.risk.journal import TradeJournal
 from trendalgo.risk.manager import RiskManager
 from trendalgo.scanner.store import ScannerStore
@@ -69,7 +69,7 @@ class AppState:
 
 
 def default_state() -> AppState:
-    limits = RiskLimits()
+    limits = default_risk_limits()
     wallet = 1000.0
     mgr = RiskManager(limits=limits, wallet_usd=wallet)
     return AppState(
@@ -94,7 +94,7 @@ def default_state() -> AppState:
         public_dashboard_store=PublicDashboardStore(_data_dir() / "public_dashboard.db"),
         billing_store=BillingStore(_data_dir() / "billing.db"),
         growth_store=GrowthStore(_data_dir() / "growth.db"),
-        exit_rules=ExitRules(),
+        exit_rules=default_exit_rules(),
         exchange_control=ExchangeControlStore(_data_dir() / "exchange_control.db"),
         dex_control=DexVenueControlStore(_data_dir() / "dex_control.db"),
         dex_nonce_store=NonceStore(_data_dir() / "dex_nonces.json"),

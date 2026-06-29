@@ -14,3 +14,7 @@ class ScannerSettings(BaseModel):
     trendspotter_boost: bool = True
 
     model_config = {"extra": "forbid"}
+
+
+def default_scanner_settings() -> ScannerSettings:
+    return ScannerSettings.model_validate({})

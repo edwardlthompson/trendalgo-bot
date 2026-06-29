@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from trendalgo.strategies.runtime.indicators import close_series
 from trendalgo.ta.catalog import TA_FUNCTION_NAMES
 from trendalgo.ta.engine import compute
 from trendalgo.ta.extended_catalog import CUSTOM_TA_NAMES
@@ -317,7 +318,7 @@ def signals_for_preset(df: pd.DataFrame, preset: dict[str, Any]) -> tuple[np.nda
     params = _pta_params(
         {k: v for k, v in preset.items() if k not in {"fn", "kind", "entry_level", "exit_level"}}
     )
-    close = df["close"]
+    close = close_series(df)
     n = len(df)
     entries = np.zeros(n, dtype=bool)
     exits = np.zeros(n, dtype=bool)

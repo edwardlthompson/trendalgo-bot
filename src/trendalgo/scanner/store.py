@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from trendalgo.db.rowid import require_row_id
-from trendalgo.scanner.config import ScannerSettings
+from trendalgo.scanner.config import ScannerSettings, default_scanner_settings
 from trendalgo.scanner.schema import SCANNER_SCHEMA
 from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
 
@@ -46,7 +46,7 @@ class ScannerStore:
         with self._connect() as conn:
             row = conn.execute("SELECT * FROM scanner_settings WHERE id = 1").fetchone()
             if row is None:
-                return ScannerSettings()
+                return default_scanner_settings()
             return ScannerSettings(
                 interval_minutes=int(row["interval_minutes"]),
                 min_volume_usd=float(row["min_volume_usd"]),

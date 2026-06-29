@@ -15,3 +15,7 @@ class RiskLimits(BaseModel):
     max_open_trades: int = Field(1, ge=1)
 
     model_config = {"extra": "forbid"}
+
+
+def default_risk_limits() -> RiskLimits:
+    return RiskLimits.model_validate({})

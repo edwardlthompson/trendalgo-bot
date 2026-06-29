@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from trendalgo.risk.config import RiskLimits
+from trendalgo.risk.config import RiskLimits, default_risk_limits
 from trendalgo.risk.manager import RiskManager
 
 
 class RiskGuardMixin:
     """Attach to native strategies; set `risk_manager` before signal evaluation."""
 
-    risk_limits: RiskLimits = RiskLimits()
+    risk_limits: RiskLimits = default_risk_limits()
     risk_manager: RiskManager | None = None
 
     def _ensure_risk_manager(self, wallet_usd: float = 1000.0) -> RiskManager:

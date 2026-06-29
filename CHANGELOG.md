@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ci:** mypy overrides for pandas/ccxt/apscheduler; `require_row_id()` helper for SQLite inserts; payment verifier sat guard (R-Audit-6.1)
 - **ci:** strict mypy green — `BaseNativeStrategy` signal/exit defaults, `require_row_id()` rolled to all insert sites, pydantic mypy plugin, portfolio snapshot typing, API route state narrowing (R-Audit-6.2)
 - **ci:** gitleaks allowlist for navigation localStorage key false positive; rename storage key with legacy migration (R-Audit-6.6)
+- **ci:** pyright green — Pydantic factories, `close_series()` helper, scheduler shutdown typing, optional import config (R-Audit-6.2 follow-up)
 
 ## [0.4.0] — 2026-06-29
 

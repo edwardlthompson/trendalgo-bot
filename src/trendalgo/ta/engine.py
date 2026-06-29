@@ -7,7 +7,7 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
-from trendalgo.strategies.runtime.indicators import ema, macd, rsi, sma
+from trendalgo.strategies.runtime.indicators import close_series, ema, macd, rsi, sma
 from trendalgo.ta.custom_indicators import compute_custom
 from trendalgo.ta.extended_catalog import CUSTOM_TA_NAMES
 from trendalgo.ta.indicator_cache import get_indicator_cache, signature_from_df
@@ -132,7 +132,7 @@ def compute_talib(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.nd
 def compute_pandas(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.ndarray]:
     """Pandas fallbacks for common indicators when TA-Lib is not installed."""
     _ensure_ohlcv(df)
-    c = df["close"]
+    c = close_series(df)
     upper = name.upper()
     if upper == "EMA":
         period = int(params.get("timeperiod", 14))
