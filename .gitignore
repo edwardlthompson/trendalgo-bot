@@ -80,6 +80,8 @@ examples/android/captures/
 # Local dev databases (never commit)
 data/
 !data/.gitkeep
+!src/trendalgo/data/
+!src/trendalgo/data/**
 !examples/web/src/data/
 !examples/web/public/data/
 
