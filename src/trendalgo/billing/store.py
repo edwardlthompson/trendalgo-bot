@@ -54,7 +54,9 @@ class BillingStore:
         }
         if enroll_cols:
             if "first_profitable_trade_at" not in enroll_cols:
-                conn.execute("ALTER TABLE license_enrollment ADD COLUMN first_profitable_trade_at TEXT")
+                conn.execute(
+                    "ALTER TABLE license_enrollment ADD COLUMN first_profitable_trade_at TEXT"
+                )
             if "billing_starts_at" not in enroll_cols:
                 conn.execute("ALTER TABLE license_enrollment ADD COLUMN billing_starts_at TEXT")
         if pay_cols:
@@ -138,7 +140,9 @@ class BillingStore:
             )
         return new_uuid
 
-    def set_billing_eligibility(self, first_profitable_trade_at: str, billing_starts_at: str) -> None:
+    def set_billing_eligibility(
+        self, first_profitable_trade_at: str, billing_starts_at: str
+    ) -> None:
         with self._connect() as conn:
             conn.execute(
                 """

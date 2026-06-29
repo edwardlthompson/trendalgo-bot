@@ -175,10 +175,7 @@ def main() -> int:
 
     summary = active.get("summary") or {}
     final_top10 = (
-        summary.get("final_top10")
-        or summary.get("optimized_top10")
-        or active.get("top10")
-        or []
+        summary.get("final_top10") or summary.get("optimized_top10") or active.get("top10") or []
     )
     bench.mark("verify_top10", count=len(final_top10))
     if len(final_top10) < 10:
@@ -204,9 +201,7 @@ def main() -> int:
         return 1
 
     best = final_top10[0]
-    ta_params = {
-        k: v for k, v in (best.get("params") or {}).items() if isinstance(v, (int, float))
-    }
+    ta_params = {k: v for k, v in (best.get("params") or {}).items() if isinstance(v, (int, float))}
     t_bot = time.monotonic()
     from trendalgo.bots.orchestrator import BotOrchestrator  # noqa: PLC0415
 
@@ -253,7 +248,9 @@ def main() -> int:
 
     print("\n=== Step timing summary ===")
     for row in bench.steps:
-        if row["step"].startswith(("phase_", "ohlcv_", "timeframe_", "fleet_", "verify_", "create_", "benchmark_")):
+        if row["step"].startswith(
+            ("phase_", "ohlcv_", "timeframe_", "fleet_", "verify_", "create_", "benchmark_")
+        ):
             print(f"  {row['step']}: {row.get('duration_s', row['elapsed_s'])}s")
 
     print(f"\nOK benchmark passed in {_fmt(bench.elapsed())}")

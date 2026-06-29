@@ -30,6 +30,7 @@ def main() -> int:
 
     from trendalgo.backtest.fleet_runner import get_fleet_runner
     from trendalgo.exchanges.fees import get_fee_store
+
     store = get_fee_store()
     if store.count() == 0:
         store.seed_from_json()
@@ -90,7 +91,9 @@ def main() -> int:
             print(f"DB: {path} ({path.stat().st_size:,} bytes)")
 
     history = runner.list_history(limit=1)
-    print(f"History runs: {history.get('total', 0)} · latest job: {history['runs'][0]['job_id'] if history.get('runs') else 'n/a'}")
+    print(
+        f"History runs: {history.get('total', 0)} · latest job: {history['runs'][0]['job_id'] if history.get('runs') else 'n/a'}"
+    )
     print("Review in app: Backtest tab -> history, or GET /api/v1/backtest/fleet/history")
     return 0 if len(final_top10) >= 1 else 1
 

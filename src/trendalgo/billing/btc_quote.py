@@ -16,7 +16,9 @@ def fetch_btc_usd(*, timeout_sec: float = 10.0) -> float:
             raise ValueError("TRENDALGO_BTC_USD_RATE must be positive")
         return rate
     url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
-    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "TrendAlgo/1.0"})
+    req = urllib.request.Request(
+        url, headers={"Accept": "application/json", "User-Agent": "TrendAlgo/1.0"}
+    )
     try:
         with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
             payload = json.loads(resp.read().decode())

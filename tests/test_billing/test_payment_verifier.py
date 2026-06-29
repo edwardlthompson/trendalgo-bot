@@ -33,7 +33,11 @@ def test_find_matching_tx() -> None:
     txs = [
         {
             "txid": "abc123",
-            "status": {"confirmed": True, "block_time": int(datetime.now(UTC).timestamp()), "confirmations": 2},
+            "status": {
+                "confirmed": True,
+                "block_time": int(datetime.now(UTC).timestamp()),
+                "confirmations": 2,
+            },
             "vout": [{"scriptpubkey_address": "bc1q-test", "value": 25050}],
         }
     ]

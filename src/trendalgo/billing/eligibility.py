@@ -45,7 +45,9 @@ def billable_from_iso(enrollment: dict[str, Any]) -> str | None:
     return str(starts) if starts else None
 
 
-def eligibility_snapshot(enrollment: dict[str, Any], *, now: datetime | None = None) -> dict[str, Any]:
+def eligibility_snapshot(
+    enrollment: dict[str, Any], *, now: datetime | None = None
+) -> dict[str, Any]:
     now = now or _utc_now()
     first_at = enrollment.get("first_profitable_trade_at")
     starts_at = enrollment.get("billing_starts_at")

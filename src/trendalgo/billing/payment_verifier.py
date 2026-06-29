@@ -42,10 +42,14 @@ def _iso(dt: datetime) -> str:
 
 
 def _payment_digest(install_uuid: str, period: str, amount_usd: float, asset_id: str) -> str:
-    return hashlib.sha256(f"{install_uuid}:{period}:{amount_usd:.2f}:{asset_id}".encode()).hexdigest()
+    return hashlib.sha256(
+        f"{install_uuid}:{period}:{amount_usd:.2f}:{asset_id}".encode()
+    ).hexdigest()
 
 
-def compute_payment_sats(amount_usd: float, install_uuid: str, period: str, btc_usd: float) -> tuple[int, float, str, str]:
+def compute_payment_sats(
+    amount_usd: float, install_uuid: str, period: str, btc_usd: float
+) -> tuple[int, float, str, str]:
     if amount_usd <= 0:
         raise ValueError("amount_usd must be positive")
     digest = _payment_digest(install_uuid, period, amount_usd, "BTC")
@@ -56,7 +60,9 @@ def compute_payment_sats(amount_usd: float, install_uuid: str, period: str, btc_
     return amount_sats, amount_btc, digest[:12], f"rcpt-{digest[:16]}"
 
 
-def compute_stablecoin_atomic(amount_usd: float, install_uuid: str, period: str, asset_id: str) -> tuple[int, float, str, str]:
+def compute_stablecoin_atomic(
+    amount_usd: float, install_uuid: str, period: str, asset_id: str
+) -> tuple[int, float, str, str]:
     if amount_usd <= 0:
         raise ValueError("amount_usd must be positive")
     digest = _payment_digest(install_uuid, period, amount_usd, asset_id)
@@ -73,7 +79,9 @@ def esplora_base_url() -> str:
 
 def fetch_address_txs(address: str, *, limit: int = 25) -> list[dict[str, Any]]:
     url = f"{esplora_base_url()}/address/{address}/txs"
-    req = request.Request(url, headers={"Accept": "application/json", "User-Agent": "TrendAlgo/1.0"})
+    req = request.Request(
+        url, headers={"Accept": "application/json", "User-Agent": "TrendAlgo/1.0"}
+    )
     try:
         with request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode())
@@ -119,7 +127,9 @@ def find_matching_btc_tx(
     return None
 
 
-def build_btc_qr_payload(address: str, amount_btc: float, period: str, payment_reference: str) -> str:
+def build_btc_qr_payload(
+    address: str, amount_btc: float, period: str, payment_reference: str
+) -> str:
     label = f"TrendAlgo-{period}-{payment_reference}"
     return f"bitcoin:{address}?amount={amount_btc:.8f}&label={label}"
 
@@ -185,7 +195,9 @@ def enrich_payment_response(payment: dict[str, Any]) -> dict[str, Any]:
         "amount_to_send": to_send,
         "asset": asset_id,
         "chain": str(payment.get("chain") or asset.chain),
-        "chain_id": payment.get("chain_id") if payment.get("chain_id") is not None else asset.chain_id,
+        "chain_id": payment.get("chain_id")
+        if payment.get("chain_id") is not None
+        else asset.chain_id,
         "qr_payload": qr,
         "payment_instructions": instructions,
         "auto_verify": True,
@@ -270,7 +282,9 @@ def create_payment_intent(
     return enriched
 
 
-def activate_license(billing: BillingStore, payment: dict[str, Any], tx_hash: str, confirmations: int) -> dict[str, Any]:
+def activate_license(
+    billing: BillingStore, payment: dict[str, Any], tx_hash: str, confirmations: int
+) -> dict[str, Any]:
     licensed_until = licensed_until_for_period(str(payment["period"]))
     confirmed_at = _iso(_utc_now())
     billing.confirm_settlement_payment(
@@ -323,15 +337,27 @@ def verify_pending_payment(
     if payment is None:
         raise ValueError("payment not found")
     if payment["status"] == "confirmed":
-        return {"payment": enrich_payment_response(payment), "verified": True, "status": "confirmed"}
+        return {
+            "payment": enrich_payment_response(payment),
+            "verified": True,
+            "status": "confirmed",
+        }
     if payment["status"] != "pending":
-        return {"payment": enrich_payment_response(payment), "verified": False, "status": payment["status"]}
+        return {
+            "payment": enrich_payment_response(payment),
+            "verified": False,
+            "status": payment["status"],
+        }
 
     expires = datetime.fromisoformat(str(payment["expires_at"]))
     if _utc_now() > expires:
         billing.expire_settlement_payment(payment_id)
         expired = billing.get_settlement_payment(payment_id)
-        return {"payment": enrich_payment_response(expired or payment), "verified": False, "status": "expired"}
+        return {
+            "payment": enrich_payment_response(expired or payment),
+            "verified": False,
+            "status": "expired",
+        }
 
     if simulate_tx_hash or os.environ.get("TRENDALGO_PAYMENT_SIMULATE") == "1":
         tx_hash = simulate_tx_hash or f"sim-{payment_id}"
