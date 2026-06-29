@@ -39,12 +39,12 @@ Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigat
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
 | R-Audit-6.1 | Mypy: third-party overrides + `require_row_id` in journal/store + payment_verifier guard (F-061) | AGENT | ✅ |
-| R-Audit-6.2 | Mypy debt triage — NativeStrategy protocol, portfolio/db `lastrowid`, heatmap types (F-061) | AGENT | 🔲 |
+| R-Audit-6.2 | Mypy debt triage — NativeStrategy protocol, portfolio/db `lastrowid`, heatmap types (F-061) | AGENT | ✅ |
 | R-Audit-6.3 | Merge Release Please PR #7 after CI green (F-062) | HUMAN | 🔲 |
 | R-Audit-6.4 | Legal review packet for H-006 public beta (F-063) | HUMAN | 🔲 |
 | R-Audit-6.5 | Sync BUILD_PLAN test count + v0.4.0 CI status (F-064) | AGENT | ✅ |
-| R-Audit-6.6 | Triage Security Scan intermittent failure (F-065) | AGENT | 🔲 |
-| R-Audit-6.7 | Triage Dependabot actions/checkout bump PR #3 (F-066) | AGENT | 🔲 |
+| R-Audit-6.6 | Triage Security Scan intermittent failure (F-065) | AGENT | ✅ |
+| R-Audit-6.7 | Triage Dependabot actions/checkout bump PR #3 (F-066) | AGENT | ✅ |
 
 Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md).
 
@@ -56,7 +56,7 @@ Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [
 | Go-live per venue (H-010, H-028) | HUMAN | 🔲 |
 | Exchange live worldwide (H-032) | HUMAN | 🔲 |
 | DEX live (H-035, H-036) | HUMAN | 🔲 |
-| CI green + v0.4.x tag | AGENT/HUMAN | 🔲 mypy debt (R-Audit-6); merge PR #7 |
+| CI green + v0.4.x tag | AGENT/HUMAN | 🔲 merge PR #7 (R-Audit-6.3) |
 | Risk Register Zero | AUTO | ✅ |
 | Scope preflights H-013–H-025 | AGENT | ✅ |
 

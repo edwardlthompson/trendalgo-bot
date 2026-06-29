@@ -1,6 +1,7 @@
 import type { AppView } from "../shell/MobileNav";
 
-const KEY = "trendalgo.navigation.v1";
+const KEY = "main-view-state";
+const LEGACY_KEY = "trendalgo.navigation.v1";
 
 const VALID_VIEWS: AppView[] = [
   "portfolio",
@@ -31,7 +32,14 @@ function normalizeView(raw: unknown): AppView {
 
 export function loadNavigation(): PersistedNavigation {
   try {
-    const raw = localStorage.getItem(KEY);
+    let raw = localStorage.getItem(KEY);
+    if (!raw) {
+      raw = localStorage.getItem(LEGACY_KEY);
+      if (raw) {
+        localStorage.setItem(KEY, raw);
+        localStorage.removeItem(LEGACY_KEY);
+      }
+    }
     if (!raw) return defaultNavigation();
     const parsed = JSON.parse(raw) as Partial<PersistedNavigation>;
     const view = normalizeView(parsed.view);

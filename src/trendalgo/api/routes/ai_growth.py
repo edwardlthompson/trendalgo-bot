@@ -13,6 +13,7 @@ from trendalgo.ai.recommender import recommend_strategies
 from trendalgo.ai.scanner_pipeline import pipeline_suggestions
 from trendalgo.api.risk import get_risk_status
 from trendalgo.billing.boost import disable_boost_mode, enable_boost_mode
+from trendalgo.api.state import AppState
 from trendalgo.growth.store import GrowthStore
 
 router = APIRouter()
@@ -31,10 +32,11 @@ class LeaderboardBody(BaseModel):
 
 
 def _growth_store(request: Request) -> GrowthStore:
-    return request.app.state.trendalgo.growth_store
+    state: AppState = request.app.state.trendalgo
+    return state.growth_store
 
 
-def _install_uuid(state: Any) -> str:
+def _install_uuid(state: AppState) -> str:
     return state.billing_store.get_or_create_install_uuid()
 
 
@@ -88,7 +90,7 @@ def growth_leaderboard_opt_in(body: LeaderboardBody, request: Request) -> dict[s
 
 
 @router.post("/growth/leaderboard/opt-out")
-def growth_leaderboard_opt_out(request: Request) -> dict[str, str]:
+def growth_leaderboard_opt_out(request: Request) -> dict[str, Any]:
     state = request.app.state.trendalgo
     uuid = _install_uuid(state)
     _growth_store(request).opt_out_leaderboard(uuid)

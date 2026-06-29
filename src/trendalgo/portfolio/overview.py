@@ -57,9 +57,13 @@ def build_portfolio_overview(state: AppState) -> dict[str, Any]:
     dd = max_drawdown(curve)
     health = health_score(allocation, dd, daily_pnl_pct)
     perf_default = build_performance_payload(store, primary_id, "1y", dry_run=state.bot.dry_run)
-    equity = perf_default["points"]  # type: ignore[assignment]
+    equity = perf_default["points"]
     top10_comparison = perf_default.get("comparison", {})
+    if not isinstance(top10_comparison, dict):
+        top10_comparison = {}
     top10_index = perf_default.get("top10_index", [])
+    if not isinstance(top10_index, list):
+        top10_index = []
     benchmarks = {
         "top10_index": top10_index,
         **benchmark_curves(curve),
@@ -68,7 +72,9 @@ def build_portfolio_overview(state: AppState) -> dict[str, Any]:
     daily_aggs = store.list_daily_aggregates(primary_id, limit=365)
     comparisons = yoy_mom_comparison(daily_aggs, curve)
     comparison_payload = perf_default.get("comparison", {})
-    alpha_pct = float(comparison_payload.get("alpha_pct", 0)) / 100.0 if comparison_payload else 0.0
+    alpha_pct = 0.0
+    if isinstance(comparison_payload, dict):
+        alpha_pct = float(comparison_payload.get("alpha_pct", 0)) / 100.0
     goal = goal_progress(
         net_worth,
         store.get_performance_goal(),

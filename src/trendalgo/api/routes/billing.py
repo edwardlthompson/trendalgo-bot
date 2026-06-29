@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
+from trendalgo.api.state import AppState
 from trendalgo.billing.engine import (
     build_dashboard,
     check_settlement_payment,
@@ -134,7 +135,8 @@ def billing_terms_accept(body: TermsBody, request: Request) -> dict[str, Any]:
 
 @router.get("/billing/statement/{period}")
 def billing_statement(period: str, request: Request) -> dict[str, Any]:
-    stmt = request.app.state.trendalgo.billing_store.get_statement(period)
+    state: AppState = request.app.state.trendalgo
+    stmt = state.billing_store.get_statement(period)
     if stmt is None:
         raise HTTPException(status_code=404, detail="statement not found")
     return stmt

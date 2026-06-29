@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Any, cast
 
 from trendalgo.exchanges.fee_store import FeeStore
 from trendalgo.exchanges.fee_sync import sync_exchange_fees
@@ -12,7 +13,7 @@ def run_scheduled_fee_check(
     store: FeeStore,
     *,
     on_log: Callable[[str], None] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     on_log and on_log("exchange fees: monthly public fee-page verification starting")
     return sync_exchange_fees(store, on_log=on_log)
 
@@ -36,4 +37,4 @@ def start_fee_scheduler(
         replace_existing=True,
     )
     scheduler.start()
-    return scheduler
+    return cast(object, scheduler)

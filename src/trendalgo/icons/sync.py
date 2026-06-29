@@ -160,20 +160,23 @@ def sync_coins(store: IconStore, *, limit: int = 1000, refresh: bool = False) ->
                     continue
                 time.sleep(0.15)
             local_path = f"/icons/coins/{dest.name}"
+            name = str(row.get("name", symbol))
+            coingecko_id = str(row.get("id", symbol.lower()))
+            rank = int(row.get("market_cap_rank") or 0)
             entry = {
-                "name": str(row.get("name", symbol)),
-                "coingecko_id": str(row.get("id", symbol.lower())),
+                "name": name,
+                "coingecko_id": coingecko_id,
                 "icon": local_path,
                 "source_url": remote,
-                "rank": int(row.get("market_cap_rank") or 0),
+                "rank": rank,
             }
             coins[symbol] = entry
             store.upsert_coin(
                 symbol,
-                entry["name"],
-                entry["coingecko_id"],
+                name,
+                coingecko_id,
                 local_path,
-                entry["rank"] or None,
+                rank or None,
             )
         if len(rows) < per_page:
             break

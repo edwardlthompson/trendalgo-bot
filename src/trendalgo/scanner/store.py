@@ -7,6 +7,7 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
+from trendalgo.db.rowid import require_row_id
 from trendalgo.scanner.config import ScannerSettings
 from trendalgo.scanner.schema import SCANNER_SCHEMA
 from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
@@ -82,7 +83,7 @@ class ScannerStore:
                 "INSERT INTO scanner_snapshots (generated_at, version) VALUES (?, ?)",
                 (snapshot.generated_at.isoformat(), snapshot.version),
             )
-            snap_id = int(cur.lastrowid)
+            snap_id = require_row_id(cur)
             for opp in snapshot.opportunities:
                 conn.execute(
                     """

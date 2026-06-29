@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-06-29 — R-Audit-6.2 — Strict mypy green (Approach A)
+- **Status:** Accepted
+- **Context:** R-Audit-6.1 left ~85 mypy errors; user approved Approach A (protocol + rowid + Pydantic plugin + targeted typing fixes, no gate relaxation).
+- **Decision:** Add default `signal()`/`exit()` on `BaseNativeStrategy`; roll `require_row_id()` to portfolio/scanner/fleet/bots stores; enable `pydantic.mypy` plugin; tighten portfolio snapshot typing, API `AppState` narrowing, sim-trades overloads, and misc `no-any-return` fixes across 39 files.
+- **Verification:** `uv run mypy src/trendalgo` (287 files, 0 errors); `uv run pytest tests/test_strategies/ --no-cov` (4 pass).
+- **Consequences:** CI `python-type-mypy` should pass; R-Audit-6.3 (merge Release Please PR #7) unblocked for human.
+
 ### 2026-06-29 — R-Audit-6.1 — Mypy CI triage (partial)
 - **Status:** Accepted
 - **Context:** `/audit` after v0.4.0 push; CI fails on strict mypy (~85 errors remaining).

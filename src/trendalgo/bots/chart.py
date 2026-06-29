@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from trendalgo.bots.limits import chart_lookback_seconds
 from trendalgo.constants.timeframes import timeframe_for_fetch
@@ -35,4 +35,5 @@ def bot_chart_payload(bot: dict[str, Any], data_dir: Path) -> dict[str, Any]:
 
 
 def bot_close_chart(bot: dict[str, Any], data_dir: Path) -> list[dict[str, int | float]]:
-    return bot_chart_payload(bot, data_dir)["chart"]
+    payload = bot_chart_payload(bot, data_dir)
+    return cast(list[dict[str, int | float]], payload["chart"])

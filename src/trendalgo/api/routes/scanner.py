@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
+from trendalgo.api.state import AppState
 from trendalgo.scanner.config import ScannerSettings
 from trendalgo.scanner.pipeline import run_pipeline
 from trendalgo.scanner.scheduler import run_scheduled_scan
@@ -19,8 +20,8 @@ class PinPairBody(BaseModel):
 
 @router.get("/scanner/snapshot")
 def scanner_snapshot(request: Request) -> dict[str, Any]:
-    store = request.app.state.trendalgo.scanner_store
-    snap = store.latest_snapshot()
+    state: AppState = request.app.state.trendalgo
+    snap = state.scanner_store.latest_snapshot()
     if snap is None:
         return {"version": "1", "generated_at": None, "scan_id": 0, "opportunities": []}
     return snap.to_contract_dict()
@@ -28,7 +29,7 @@ def scanner_snapshot(request: Request) -> dict[str, Any]:
 
 @router.post("/scanner/run")
 def scanner_run(request: Request) -> dict[str, Any]:
-    state = request.app.state.trendalgo
+    state: AppState = request.app.state.trendalgo
     scan_id = run_scheduled_scan(state.scanner_store, state.log)
     snap = state.scanner_store.latest_snapshot()
     body = snap.to_contract_dict() if snap else {"scan_id": scan_id, "opportunities": []}
@@ -38,14 +39,15 @@ def scanner_run(request: Request) -> dict[str, Any]:
 
 @router.get("/scanner/settings")
 def scanner_get_settings(request: Request) -> dict[str, Any]:
-    settings = request.app.state.trendalgo.scanner_store.get_settings()
+    state: AppState = request.app.state.trendalgo
+    settings = state.scanner_store.get_settings()
     return settings.model_dump()
 
 
 @router.put("/scanner/settings")
 def scanner_put_settings(body: ScannerSettings, request: Request) -> dict[str, Any]:
-    store = request.app.state.trendalgo.scanner_store
-    saved = store.save_settings(body)
+    state: AppState = request.app.state.trendalgo
+    saved = state.scanner_store.save_settings(body)
     return saved.model_dump()
 
 

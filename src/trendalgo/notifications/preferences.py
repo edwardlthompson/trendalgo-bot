@@ -19,6 +19,10 @@ class NotificationPreferences(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+def _optional_str(value: object) -> str | None:
+    return value if isinstance(value, str) else None
+
+
 def load_preferences(store: PortfolioStore) -> NotificationPreferences:
     row = store.get_notification_preferences()
     if not row:
@@ -29,8 +33,8 @@ def load_preferences(store: PortfolioStore) -> NotificationPreferences:
         fees=bool(row.get("fees")),
         scanner=bool(row.get("scanner")),
         push_enabled=bool(row.get("push_enabled")),
-        quiet_hours_start=row.get("quiet_hours_start"),
-        quiet_hours_end=row.get("quiet_hours_end"),
+        quiet_hours_start=_optional_str(row.get("quiet_hours_start")),
+        quiet_hours_end=_optional_str(row.get("quiet_hours_end")),
     )
 
 

@@ -2,11 +2,31 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, overload
 
 from trendalgo.constants.timeframes import timeframe_for_fetch
 from trendalgo.ta.cache import CacheMeta, get_ta_signal_cache, ohlcv_list_to_df
 from trendalgo.ta.sweep import trades_from_signals
+
+
+@overload
+def simulated_trades_for_bot(
+    bot: dict[str, Any],
+    ohlcv: list[dict[str, Any]],
+    *,
+    chart: list[dict[str, int | float]] | None = None,
+    return_meta: Literal[False] = False,
+) -> list[dict[str, Any]]: ...
+
+
+@overload
+def simulated_trades_for_bot(
+    bot: dict[str, Any],
+    ohlcv: list[dict[str, Any]],
+    *,
+    chart: list[dict[str, int | float]] | None = None,
+    return_meta: Literal[True],
+) -> tuple[list[dict[str, Any]], CacheMeta]: ...
 
 
 def simulated_trades_for_bot(

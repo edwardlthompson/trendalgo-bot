@@ -91,13 +91,16 @@ def sync_exchange_fees(
             )
             continue
 
-        prev_taker = float(prev["taker_pct"]) if prev else None
-        prev_maker = float(prev["maker_pct"]) if prev else None
-        changed = (
-            prev is None
-            or fees_differ(prev_taker, live.taker_pct)
-            or fees_differ(prev_maker, live.maker_pct)
-        )
+        if prev is None:
+            prev_taker = float(seed["taker_pct"])
+            prev_maker = float(seed["maker_pct"])
+            changed = True
+        else:
+            prev_taker = float(prev["taker_pct"])
+            prev_maker = float(prev["maker_pct"])
+            changed = fees_differ(prev_taker, live.taker_pct) or fees_differ(
+                prev_maker, live.maker_pct
+            )
 
         if live.source == "documented" and not live.verified:
             store.record_check(

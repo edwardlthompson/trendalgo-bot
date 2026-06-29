@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 class NonceStore:
@@ -15,7 +15,8 @@ class NonceStore:
             self.path.write_text("{}", encoding="utf-8")
 
     def _load(self) -> dict[str, int]:
-        return json.loads(self.path.read_text(encoding="utf-8"))
+        raw = json.loads(self.path.read_text(encoding="utf-8"))
+        return cast(dict[str, int], raw)
 
     def _save(self, data: dict[str, int]) -> None:
         self.path.write_text(json.dumps(data, indent=0), encoding="utf-8")

@@ -10,6 +10,9 @@ from pathlib import Path
 from typing import Any
 
 
+from trendalgo.db.rowid import require_row_id
+
+
 def _utc_now() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()
 
@@ -144,7 +147,7 @@ class BotOrchestrator:
                     params_json,
                 ),
             )
-            return int(cur.lastrowid)
+            return require_row_id(cur)
 
     def set_enabled(self, bot_id: int, enabled: bool) -> None:
         with sqlite3.connect(self.db_path) as conn:

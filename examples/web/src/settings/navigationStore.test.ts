@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { loadNavigation, saveNavigation } from "./navigationStore";
 
-const KEY = "trendalgo.navigation.v1";
+const KEY = "main-view-state";
 
 describe("navigationStore", () => {
   beforeEach(() => {

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from trendalgo.dex.control import DexVenueControlStore
+from trendalgo.dex.nonce import NonceStore
 from trendalgo.dex.gates import validate_dex_swap_access
 from trendalgo.dex.signer import signer_configured
 from trendalgo.venues.registry import (
@@ -75,7 +76,7 @@ def live_dex_swap(
     sell_amount: float,
     *,
     control: DexVenueControlStore,
-    nonce_store,
+    nonce_store: NonceStore,
     slippage_bps: int = 50,
 ) -> dict[str, Any]:
     from trendalgo.dex.runner.live import LiveSwapRunner

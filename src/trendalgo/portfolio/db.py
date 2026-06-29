@@ -8,9 +8,28 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
+from trendalgo.db.rowid import require_row_id
 from trendalgo.portfolio.schema import PORTFOLIO_SCHEMA
+
+
+class PortfolioSnapshot(TypedDict):
+    snapshot_id: int
+    captured_at: str
+    total_usd: float
+    source: str
+    holdings: list[dict[str, float | str]]
+
+
+def _pref_int(value: object, default: int) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return default
 
 
 def _utc_now() -> str:
@@ -90,7 +109,7 @@ class PortfolioStore:
                 "INSERT INTO portfolio_accounts (exchange, label, created_at) VALUES (?, ?, ?)",
                 (exchange, label, _utc_now()),
             )
-            return int(cur.lastrowid)
+            return require_row_id(cur)
 
     def insert_snapshot(
         self,
@@ -125,7 +144,7 @@ class PortfolioStore:
                 """,
                 (account_id, captured_at, total_usd, source),
             )
-            snapshot_id = int(cur.lastrowid)
+            snapshot_id = require_row_id(cur)
             for h in holdings:
                 conn.execute(
                     """
@@ -165,7 +184,7 @@ class PortfolioStore:
             for r in rows
         ]
 
-    def latest_snapshot(self, account_id: int) -> dict[str, object] | None:
+    def latest_snapshot(self, account_id: int) -> PortfolioSnapshot | None:
         with self._connect() as conn:
             snap = conn.execute(
                 """
@@ -326,7 +345,7 @@ class PortfolioStore:
                 """,
                 (category, title, body, _utc_now()),
             )
-            return int(cur.lastrowid)
+            return require_row_id(cur)
 
     def list_notifications(self, limit: int = 50) -> list[dict[str, object]]:
         with self._connect() as conn:
@@ -379,11 +398,11 @@ class PortfolioStore:
                 WHERE id = 1
                 """,
                 (
-                    int(prefs.get("trades", 1)),
-                    int(prefs.get("pnl_swings", 1)),
-                    int(prefs.get("fees", 1)),
-                    int(prefs.get("scanner", 0)),
-                    int(prefs.get("push_enabled", 0)),
+                    _pref_int(prefs.get("trades"), 1),
+                    _pref_int(prefs.get("pnl_swings"), 1),
+                    _pref_int(prefs.get("fees"), 1),
+                    _pref_int(prefs.get("scanner"), 0),
+                    _pref_int(prefs.get("push_enabled"), 0),
                     prefs.get("quiet_hours_start"),
                     prefs.get("quiet_hours_end"),
                     _utc_now(),

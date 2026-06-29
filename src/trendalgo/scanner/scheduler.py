@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 
 from trendalgo.scanner.alerts import emit_alerts_for_snapshot
 from trendalgo.scanner.pipeline import run_pipeline
@@ -37,4 +38,4 @@ def start_scheduler(
         replace_existing=True,
     )
     scheduler.start()
-    return scheduler
+    return cast(object, scheduler)

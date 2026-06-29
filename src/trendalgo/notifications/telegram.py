@@ -48,7 +48,7 @@ class TelegramCommands:
         try:
             req = request.Request(url, data=data, method="POST")
             with request.urlopen(req, timeout=15) as resp:
-                return resp.status == 200
+                return int(resp.status) == 200
         except (error.URLError, TimeoutError):
             return False
 

@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 
-from trendalgo.strategies.runtime.contract import Candle, StrategyContext
+from trendalgo.strategies.runtime.contract import Candle, Position, Signal, StrategyContext
 
 
 class BaseNativeStrategy:
@@ -30,6 +30,14 @@ class BaseNativeStrategy:
 
     def populate_indicators(self, ctx: StrategyContext) -> None:
         """Override to compute indicators on ctx.dataframe."""
+
+    def signal(self, ctx: StrategyContext) -> Signal | None:
+        """Override to emit entry signals after indicators are populated."""
+        return None
+
+    def exit(self, ctx: StrategyContext, position: Position) -> bool:
+        """Override to request exit for an open position."""
+        return False
 
     def _append_candle(self, candle: Candle) -> None:
         self._rows.append(

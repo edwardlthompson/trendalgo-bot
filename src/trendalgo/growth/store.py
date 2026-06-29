@@ -45,7 +45,7 @@ class GrowthStore:
         with sqlite3.connect(self.db_path) as conn:
             conn.executescript(GROWTH_SCHEMA)
 
-    def get_or_create_referral(self, install_uuid: str) -> dict[str, str]:
+    def get_or_create_referral(self, install_uuid: str) -> dict[str, str | bool]:
         code = pseudonymous_code(install_uuid)
         with sqlite3.connect(self.db_path) as conn:
             row = conn.execute(

@@ -1,0 +1,14 @@
+title = "trendalgo-bot gitleaks"
+
+[extend]
+useDefault = true
+
+# localStorage key name false-positive (not a secret)
+[[rules]]
+id = "generic-api-key"
+
+[rules.allowlist]
+paths = [
+  '''examples/web/src/settings/navigationStore\.ts''',
+  '''examples/web/src/settings/navigationStore\.test\.ts''',
+]

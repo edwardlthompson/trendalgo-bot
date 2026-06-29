@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -21,9 +21,9 @@ def _ensure_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
 
 def _series_to_array(value: Any) -> np.ndarray:
     if isinstance(value, pd.Series):
-        return value.to_numpy(dtype=float)
+        return cast(np.ndarray, value.to_numpy(dtype=float))
     if isinstance(value, pd.DataFrame):
-        return value.iloc[:, 0].to_numpy(dtype=float)
+        return cast(np.ndarray, value.iloc[:, 0].to_numpy(dtype=float))
     return np.asarray(value, dtype=float)
 
 

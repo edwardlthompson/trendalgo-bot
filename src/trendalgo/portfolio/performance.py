@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from trendalgo.market.portfolio_curves import btc_portfolio_curve, token_closes_for_range
 from trendalgo.market.service import HOURLY_RANGES
@@ -94,7 +94,7 @@ def build_performance_payload(
     range_key: str,
     *,
     dry_run: bool = True,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     if dry_run:
         ensure_btc_dry_run_fixture(store, account_id)
     points = performance_curve(store, account_id, range_key)

@@ -1,8 +1,9 @@
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
+from trendalgo.api.state import AppState
 from trendalgo.risk.exit_rules import ExitRules
 from trendalgo.templates.import_export import export_json, import_json, list_param_specs
 from trendalgo.templates.registry import get, list_templates
@@ -15,9 +16,9 @@ class StrategyParams(BaseModel):
 
 
 class TemplateImportBody(BaseModel):
-    json: str
+    template_json: str = Field(..., alias="json")
 
-    model_config = {"extra": "forbid"}
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 @router.get("/strategies")
@@ -67,7 +68,7 @@ def export_template(strategy_id: str, request: Request) -> dict[str, str]:
 
 @router.post("/strategies/import")
 def import_template(body: TemplateImportBody, request: Request) -> dict[str, Any]:
-    tpl = import_json(body.json)
+    tpl = import_json(body.template_json)
     if get(tpl.id) is None:
         raise HTTPException(status_code=400, detail="template id not registered")
     state = request.app.state.trendalgo
@@ -78,7 +79,8 @@ def import_template(body: TemplateImportBody, request: Request) -> dict[str, Any
 
 @router.get("/strategies/exit-rules")
 def get_exit_rules(request: Request) -> dict[str, Any]:
-    return request.app.state.trendalgo.exit_rules.model_dump()
+    state: AppState = request.app.state.trendalgo
+    return state.exit_rules.model_dump()
 
 
 @router.put("/strategies/exit-rules")

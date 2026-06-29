@@ -6,7 +6,7 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from trendalgo.exchanges.fee_parsers import fees_verified_on_page, parse_fees_from_html
 
@@ -36,7 +36,8 @@ def fetch_fee_page(url: str, *, timeout: int | None = None) -> str:
         },
     )
     with urllib.request.urlopen(req, timeout=seconds) as resp:
-        return resp.read(1_500_000).decode("utf-8", errors="ignore")
+        body: str = resp.read(1_500_000).decode("utf-8", errors="ignore")
+        return body
 
 
 def _fee_page_urls(seed: dict[str, Any]) -> list[str]:

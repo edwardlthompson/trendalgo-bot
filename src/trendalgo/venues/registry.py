@@ -9,7 +9,22 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from trendalgo.dex.plugins.base import SwapPlugin
 from trendalgo.venues.base import LpReadPlugin, VenueEntry, WalletReadPlugin
+
+__all__ = [
+    "VenueEntry",
+    "VenueRegistry",
+    "get_lp_plugin",
+    "get_swap_plugin",
+    "get_venue",
+    "get_wallet_plugin",
+    "list_evm_wallet_venues",
+    "list_swap_venues",
+    "list_wallet_venues",
+    "load_venue_registry",
+    "venue_public_dict",
+]
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_REGISTRY = _REPO_ROOT / "config" / "venues.registry.json"
@@ -124,7 +139,7 @@ def get_lp_plugin(venue_id: str, protocol: str = "uniswap_v3") -> LpReadPlugin:
     raise KeyError(f"unsupported portfolio plugin: {protocol}")
 
 
-def get_swap_plugin(venue_id: str, protocol: str | None = None):
+def get_swap_plugin(venue_id: str, protocol: str | None = None) -> SwapPlugin:
     from trendalgo.dex.plugins.jupiter import JupiterSwapPlugin
     from trendalgo.dex.plugins.uniswap_v3_swap import UniswapV3SwapPlugin
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from typing import cast
+
 from trendalgo.scanner.config import ScannerSettings
 from trendalgo.scanner.listings import verify_kraken_listings
 from trendalgo.scanner.pipeline import _sample_market
@@ -38,7 +40,7 @@ def forage_pairs(settings: ScannerSettings | None = None, *, top_n: int = 8) -> 
             }
         )
 
-    scored.sort(key=lambda r: float(r["forager_score"]), reverse=True)
+    scored.sort(key=lambda r: float(cast(float | int | str, r.get("forager_score", 0))), reverse=True)
     picks = scored[:top_n]
     return {
         "generated_at": datetime.now(UTC).isoformat(),

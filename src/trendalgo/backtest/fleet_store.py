@@ -8,6 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from trendalgo.db.rowid import require_row_id
+
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS ta_fleet_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +66,7 @@ class FleetStore:
                 """,
                 (job_id, exchange_id, pair, stake_usd, json.dumps(summary), _utc_now()),
             )
-            run_id = int(cur.lastrowid)
+            run_id = require_row_id(cur)
             rows = [
                 (
                     run_id,

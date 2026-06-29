@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -50,7 +52,7 @@ _CUSTOM = {
 }
 
 
-def compute_custom(name: str, df: pd.DataFrame, **params: object) -> dict[str, np.ndarray]:
+def compute_custom(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.ndarray]:
     fn = _CUSTOM.get(name.upper())
     if fn is None:
         raise KeyError(f"unknown custom indicator: {name}")

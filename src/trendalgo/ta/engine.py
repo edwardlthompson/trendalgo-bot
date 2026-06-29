@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,7 @@ def _ensure_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _arr(df: pd.DataFrame, col: str) -> np.ndarray:
-    return df[col].to_numpy(dtype=float)
+    return cast(np.ndarray, df[col].to_numpy(dtype=float))
 
 
 def compute_talib(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.ndarray]:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 from trendalgo.notifications.daily_summary import format_daily_summary, send_daily_notification
 from trendalgo.portfolio.alerts import check_portfolio_alerts
@@ -99,4 +99,4 @@ def start_portfolio_scheduler(
         replace_existing=True,
     )
     scheduler.start()
-    return scheduler
+    return cast(object, scheduler)

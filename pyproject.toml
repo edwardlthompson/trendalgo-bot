@@ -56,6 +56,12 @@ ignore = ["E501"]
 strict = true
 python_version = "3.12"
 packages = ["trendalgo"]
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [[tool.mypy.overrides]]
 module = ["pandas_ta_classic.*", "pandas_ta.*", "talib.*"]

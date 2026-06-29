@@ -58,8 +58,8 @@ def detect_arbitrage_opportunities(
         if len(prices) < 2:
             continue
 
-        buy_on = min(prices, key=prices.get)
-        sell_on = max(prices, key=prices.get)
+        buy_on = min(prices, key=lambda k: prices[k])
+        sell_on = max(prices, key=lambda k: prices[k])
         low = prices[buy_on]
         high = prices[sell_on]
         spread_pct = (high - low) / low if low else 0.0

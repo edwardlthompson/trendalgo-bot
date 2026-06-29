@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from trendalgo.ai.insights import expanded_insights
 from trendalgo.analytics.metrics import compute_metrics, equity_curve
 from trendalgo.api.backtest_runner import run_native_backtest_for_strategy, run_sample_backtest
+from trendalgo.api.state import AppState
 from trendalgo.backtest.attribution import attribute_signals
 from trendalgo.backtest.fleet_config import (
     FLEET_LOOKBACK_DAYS,
@@ -211,7 +212,7 @@ def trigger_backtest(body: BacktestRequest, request: Request) -> dict[str, Any]:
 
 @router.get("/backtest/latest")
 def latest_backtest(request: Request) -> dict[str, Any]:
-    state = request.app.state.trendalgo
+    state: AppState = request.app.state.trendalgo
     if state.last_backtest is None:
         return {"result": None, "metrics": None, "equity_curve": []}
     return state.last_backtest

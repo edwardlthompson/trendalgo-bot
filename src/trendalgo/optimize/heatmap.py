@@ -19,7 +19,7 @@ def hyperopt_heatmap_grid(
     for x in xs:
         for y in ys:
             score = (x / 40) * 10 + abs(y) * 50
-            cell = {"x": x, "y": y, "score": round(score, 2)}
+            cell: dict[str, float | str] = {"x": x, "y": y, "score": round(score, 2)}
             cells.append(cell)
             if score > best:
                 best = score
