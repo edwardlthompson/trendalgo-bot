@@ -1,12 +1,13 @@
 /** Full-page searchable TA strategy glossary. */
 
-import { appendLinkifiedText, glossaryAnchorId, parseGlossaryHash } from "../data/glossaryLinkify";
+import { glossaryAnchorId, parseGlossaryHash } from "../data/glossaryLinkify";
 import {
   allTaGlossaryEntries,
   glossaryCategoriesWithCounts,
   taGlossaryEntry,
   type TaGlossaryEntry,
 } from "../data/taGlossary";
+import { renderGlossaryCard } from "./TaGlossaryCards";
 import { t } from "../i18n";
 
 const HIGHLIGHT_MS = 2200;
@@ -156,91 +157,6 @@ export function createTaGlossaryPage(
     });
   }
 
-  function textBlock(className: string, text: string): HTMLElement {
-    const block = document.createElement("p");
-    block.className = className;
-    appendLinkifiedText(block, text, navigateToEntry);
-    return block;
-  }
-
-  function relatedBlock(entry: TaGlossaryEntry): HTMLElement | null {
-    const related = entry.related?.filter(Boolean) ?? [];
-    if (!related.length) return null;
-
-    const block = document.createElement("p");
-    block.className = "gp-ta-glossary-related";
-    const label = document.createElement("strong");
-    label.textContent = t("bots.glossary.see_also");
-    block.append(label, " ");
-    related.forEach((id: string, idx: number) => {
-      if (idx > 0) block.append(", ");
-      const link = document.createElement("a");
-      link.href = `#${glossaryAnchorId(id)}`;
-      link.className = "gp-ta-glossary-link";
-      link.dataset.glossaryTarget = id.toUpperCase();
-      link.textContent = taGlossaryEntry(id).title;
-      link.addEventListener("click", (event) => {
-        event.preventDefault();
-        navigateToEntry(id);
-      });
-      block.appendChild(link);
-    });
-    return block;
-  }
-
-  function renderCard(entry: TaGlossaryEntry): HTMLElement {
-    const card = document.createElement("article");
-    card.className = "gp-ta-glossary-card";
-    card.id = glossaryAnchorId(entry.id);
-    card.dataset.testid = `ta-glossary-${entry.id}`;
-
-    const heading = document.createElement("h3");
-    const permalink = document.createElement("a");
-    permalink.href = `#${glossaryAnchorId(entry.id)}`;
-    permalink.className = "gp-ta-glossary-permalink";
-    permalink.title = t("bots.glossary.permalink");
-    permalink.setAttribute("aria-label", t("bots.glossary.permalink"));
-    permalink.textContent = "#";
-    permalink.addEventListener("click", (event) => {
-      event.preventDefault();
-      navigateToEntry(entry.id);
-    });
-    heading.append(permalink, document.createTextNode(` ${entry.title} `));
-    const idSpan = document.createElement("span");
-    idSpan.className = "gp-ta-glossary-id";
-    idSpan.textContent = entry.id;
-    heading.appendChild(idSpan);
-
-    const category = document.createElement("p");
-    category.className = "gp-ta-glossary-category";
-    const badge = document.createElement("button");
-    badge.type = "button";
-    badge.className = "gp-ta-glossary-category-badge";
-    badge.textContent = entry.category ?? t("bots.glossary.category_unknown");
-    badge.addEventListener("click", () => {
-      const cat = entry.category ?? t("bots.glossary.category_unknown");
-      setCategory(cat);
-    });
-    category.appendChild(badge);
-
-    const formula = document.createElement("p");
-    formula.className = "gp-ta-glossary-formula";
-    const formulaLabel = document.createElement("strong");
-    formulaLabel.textContent = t("bots.glossary.formula");
-    formula.append(formulaLabel, " ", entry.formula);
-
-    card.append(
-      heading,
-      category,
-      textBlock("gp-ta-glossary-short", entry.short),
-      textBlock("gp-ta-glossary-long", entry.long),
-      formula,
-    );
-    const related = relatedBlock(entry);
-    if (related) card.appendChild(related);
-    return card;
-  }
-
   function matchesSearch(entry: TaGlossaryEntry, q: string): boolean {
     if (!q) return true;
     const relatedText = (entry.related ?? []).map((id: string) => taGlossaryEntry(id).title).join(" ");
@@ -287,7 +203,7 @@ export function createTaGlossaryPage(
       return;
     }
     for (const entry of entries) {
-      list.appendChild(renderCard(entry));
+      list.appendChild(renderGlossaryCard(entry, navigateToEntry, (cat) => setCategory(cat)));
     }
     if (target) {
       requestAnimationFrame(() => {

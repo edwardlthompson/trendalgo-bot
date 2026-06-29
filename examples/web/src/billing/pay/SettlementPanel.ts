@@ -1,62 +1,13 @@
 import { t } from "../../i18n";
+import {
+  amountDecimals,
+  renderSettlementStatus,
+  sendAmount,
+  SETTLEMENT_POLL_MS,
+} from "./settlementPanelHelpers";
+import type { SettlementCallbacks, SettlementData } from "./settlementPanelTypes";
 
-export type SettlementAssetOption = {
-  asset: string;
-  label: string;
-  chain: string;
-};
-
-export type SettlementData = {
-  period: string;
-  amount_usd: number;
-  address: string;
-  asset: string;
-  chain?: string;
-  amount_btc?: number;
-  amount_sats?: number;
-  amount_to_send?: number;
-  payment_id?: string;
-  payment_reference?: string;
-  status?: string;
-  licensed_until?: string;
-  qr_payload: string;
-  disclaimer: string;
-  user_initiated_only: boolean;
-  auto_verify?: boolean;
-  payment_instructions?: string;
-  min_confirmations?: number;
-  grace_period_days?: number;
-  watching?: boolean;
-};
-
-export type SettlementCallbacks = {
-  onCopy: (text: string) => void;
-  onLightning: () => void;
-  onPoll?: (paymentId: string) => Promise<SettlementData | null>;
-  onConfirmed?: (data: SettlementData) => void;
-  assets?: SettlementAssetOption[];
-  selectedAsset?: string;
-  onAssetChange?: (asset: string) => void;
-};
-
-const POLL_MS = 12_000;
-
-function formatLicensedUntil(iso: string | undefined): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-}
-
-function sendAmount(data: SettlementData): number | null {
-  if (data.amount_to_send != null) return data.amount_to_send;
-  if (data.amount_btc != null && data.asset === "BTC") return data.amount_btc;
-  return null;
-}
-
-function amountDecimals(asset: string): number {
-  return asset === "BTC" ? 8 : 6;
-}
+export type { SettlementAssetOption, SettlementCallbacks, SettlementData } from "./settlementPanelTypes";
 
 export function createSettlementPanel(
   data: SettlementData,
@@ -68,26 +19,14 @@ export function createSettlementPanel(
 
   const statusEl = document.createElement("p");
   statusEl.dataset.testid = "settlement-status";
-  statusEl.className = "gp-body";
 
-  const renderStatus = (payload: SettlementData) => {
-    if (payload.status === "confirmed") {
-      statusEl.textContent = t("billing.payment_confirmed", {
-        until: formatLicensedUntil(payload.licensed_until),
-      });
-      statusEl.className = "gp-body gp-text-success";
-      return;
-    }
-    if (payload.status === "expired") {
-      statusEl.textContent = t("billing.payment_expired");
-      statusEl.className = "gp-body gp-text-error";
-      return;
-    }
-    statusEl.textContent = t("billing.payment_watching");
-    statusEl.className = "gp-body";
+  const applyStatus = (payload: SettlementData) => {
+    const status = renderSettlementStatus(payload);
+    statusEl.textContent = status.text;
+    statusEl.className = status.className;
   };
 
-  renderStatus(data);
+  applyStatus(data);
 
   const toSend = sendAmount(data);
   const chainLabel = data.chain ? data.chain.charAt(0).toUpperCase() + data.chain.slice(1) : "";
@@ -162,7 +101,7 @@ export function createSettlementPanel(
     const tick = () => {
       void callbacks.onPoll?.(paymentId).then((next) => {
         if (!next) return;
-        renderStatus(next);
+        applyStatus(next);
         if (next.status === "confirmed") {
           if (pollTimer != null) window.clearInterval(pollTimer);
           callbacks.onConfirmed?.(next);
@@ -170,7 +109,7 @@ export function createSettlementPanel(
       });
     };
     tick();
-    pollTimer = window.setInterval(tick, POLL_MS);
+    pollTimer = window.setInterval(tick, SETTLEMENT_POLL_MS);
   }
 
   const observer = new MutationObserver(() => {

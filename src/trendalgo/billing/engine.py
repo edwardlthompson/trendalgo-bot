@@ -5,19 +5,18 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from trendalgo.billing.license_gate import (
-    check_license_gate,
-    clear_grace,
-    licensed_until_for_period,
-    start_grace_period,
-)
 from trendalgo.billing.eligibility import (
     billable_from_iso,
     billing_is_active,
     eligibility_snapshot,
     sync_billing_eligibility,
 )
-from trendalgo.billing.schema import DEFAULT_LICENSE_RATE, GRACE_PERIOD_DAYS
+from trendalgo.billing.license_gate import (
+    check_license_gate,
+    clear_grace,
+    licensed_until_for_period,
+    start_grace_period,
+)
 from trendalgo.billing.milestones import detect_milestones
 from trendalgo.billing.payment_verifier import (
     create_payment_intent,
@@ -25,9 +24,10 @@ from trendalgo.billing.payment_verifier import (
     verify_pending_payment,
     watch_pending_payments,
 )
-from trendalgo.billing.settlement import list_available_assets
 from trendalgo.billing.profit import rollup_period
 from trendalgo.billing.rules import apply_fee_rules
+from trendalgo.billing.schema import DEFAULT_LICENSE_RATE, GRACE_PERIOD_DAYS
+from trendalgo.billing.settlement import list_available_assets
 from trendalgo.billing.statements import build_statement
 from trendalgo.billing.store import BillingStore
 from trendalgo.risk.journal import TradeJournal, TradeRecord
