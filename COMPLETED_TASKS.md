@@ -2,6 +2,14 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint S27 — TA fleet backtest + v0.4.0 (2026-06-29)
+
+- S27.1 ✅ Exchange fees config + fee-aware `ta_simulator.py`
+- S27.2 ✅ CCXT multi-exchange OHLCV
+- S27.3 ✅ `ta_fleet.py` + fleet runner/store + API routes
+- S27.4 ✅ Backtest tab UI (history, filters, beat-B&H) + tests
+- v0.4.0 ✅ Settings tab, fiat display, on-chain billing (5%), post-profit trial
+
 ## Sprint S26 — Gate alignment (2026-06-26)
 
 - **Critique:** View cap bump is for UI/DOM adapters only — do not raise Python logic limit; split any file still over 300 in a follow-up row.

@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-06-29 — R-Audit-6.1 — Mypy CI triage (partial)
+- **Status:** Accepted
+- **Context:** `/audit` after v0.4.0 push; CI fails on strict mypy (~85 errors remaining).
+- **Decision:** Add third-party mypy overrides (pandas/ccxt/apscheduler), `require_row_id()` helper for journal/billing store, payment verifier null guard; BUILD_PLAN R-Audit-6 sprint opened.
+- **Verification:** `pytest tests/test_billing/ tests/test_risk/` (29 pass); mypy on touched files clean; error count 117→85.
+- **Consequences:** R-Audit-6.2 remains open for NativeStrategy protocol and portfolio/db typing.
+
 ### 2026-06-29 — Release v0.4.0 — Settings tab, fiat display, on-chain billing
 - **Status:** Accepted
 - **Context:** `/push` after Settings nav tab (theme + About + display currency), 5% license fee, BTC/Base stablecoin payment verification, billing trial after first profit, fleet backtest UX improvements, Risk/Config nav removal.

@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **ci:** mypy overrides for pandas/ccxt/apscheduler; `require_row_id()` helper for SQLite inserts; payment verifier sat guard (R-Audit-6.1)
+
 ## [0.4.0] — 2026-06-29
 
 ### Added

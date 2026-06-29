@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.billing.schema import BILLING_SCHEMA, CURRENT_TERMS_VERSION, DEFAULT_LICENSE_RATE
+from trendalgo.db.rowid import require_row_id
 
 
 def _utc_now() -> str:
@@ -126,7 +127,7 @@ class BillingStore:
                 """,
                 (terms_version, install_uuid, _utc_now()),
             )
-            return int(cur.lastrowid)
+            return require_row_id(cur)
 
     def get_or_create_install_uuid(self) -> str:
         enrollment = self.get_enrollment()

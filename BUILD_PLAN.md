@@ -3,18 +3,20 @@
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-## Current sprint: **Post-Delivery / maintenance**
+## Current sprint: **R-Audit-6 — CI green + v0.4.0 sign-off**
 
 | Marker | State |
 |--------|-------|
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-**170 tests** · **~86%** coverage · Risk Register Zero ✅
+**263 tests** · **~86%** coverage · Risk Register Zero ✅
 
 **Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix`
 
 **Human gates** (H-030–H-036, go-live, legal): [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) — not duplicated here.
+
+**Audit:** `CODE_REVIEW.md` (ephemeral, gitignored) · 2026-06-29
 
 ---
 
@@ -25,21 +27,24 @@
 | Core (S0–S12) | Setup → platform, Risk Register Zero | ✅ | H-001–H-029 backlog |
 | Exchange | S13–S20 · 9 venues · ADR-0010 | ✅ | **H-032** worldwide live |
 | DEX | S21–S24 · Base Phase 1 · ADR-0011 | ✅ | **H-035** scope · **H-036** live |
-| Reviews | R-Audit … R-Audit-5 | ✅ | — |
+| Reviews | R-Audit … R-Audit-5 | ✅ | R-Audit-6 open |
 Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigations CM-1–CM-11: closed in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md).
 
 ---
 
 ## Open work
 
-### S27 — TA Fleet Backtest (307 strategies × 16 timeframes)
+### R-Audit-6 — Post v0.4.0 CI + release (2026-06-29)
 
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
-| S27.1 | Exchange fees config + `fees.py` + fee-aware `ta_simulator.py` | AGENT | ✅ |
-| S27.2 | CCXT multi-exchange OHLCV + `PriceHistoryService.get_ohlcv(exchange_id)` | AGENT | ✅ |
-| S27.3 | `ta_fleet.py` + `fleet_runner.py` + `fleet_store.py` + fleet API routes | AGENT | ✅ |
-| S27.4 | Backtest tab UI (exchange/pair, fleet poll, results filters) + tests | AGENT | ✅ |
+| R-Audit-6.1 | Mypy: third-party overrides + `require_row_id` in journal/store + payment_verifier guard (F-061) | AGENT | ✅ |
+| R-Audit-6.2 | Mypy debt triage — NativeStrategy protocol, portfolio/db `lastrowid`, heatmap types (F-061) | AGENT | 🔲 |
+| R-Audit-6.3 | Merge Release Please PR #7 after CI green (F-062) | HUMAN | 🔲 |
+| R-Audit-6.4 | Legal review packet for H-006 public beta (F-063) | HUMAN | 🔲 |
+| R-Audit-6.5 | Sync BUILD_PLAN test count + v0.4.0 CI status (F-064) | AGENT | ✅ |
+| R-Audit-6.6 | Triage Security Scan intermittent failure (F-065) | AGENT | 🔲 |
+| R-Audit-6.7 | Triage Dependabot actions/checkout bump PR #3 (F-066) | AGENT | 🔲 |
 
 Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md).
 
@@ -51,9 +56,10 @@ Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [
 | Go-live per venue (H-010, H-028) | HUMAN | 🔲 |
 | Exchange live worldwide (H-032) | HUMAN | 🔲 |
 | DEX live (H-035, H-036) | HUMAN | 🔲 |
-| CI green + v0.3.0 tag | AGENT/HUMAN | 🔲 push + poll CI (KB-013) |
+| CI green + v0.4.x tag | AGENT/HUMAN | 🔲 mypy debt (R-Audit-6); merge PR #7 |
 | Risk Register Zero | AUTO | ✅ |
 | Scope preflights H-013–H-025 | AGENT | ✅ |
+
 ### Maintenance cadence
 
 | Cadence | Owner | Item |
@@ -61,6 +67,7 @@ Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [
 | Weekly | AUTO | `check_risk_mitigations.py` · CI/CodeQL on `main` · Dependabot triage |
 | Monthly | AUTO | portfolio integrity · production cost · backup dry-run (R-020) |
 | Pre-live | AUTO/HUMAN | `go-live-gate.sh --check-only` → `--approve` (H-010/H-028) |
+
 Local preview (S13+ UI/API): [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md) · `scripts/dev-local.ps1`
 
 Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python scripts/founder_gate.py status`
@@ -74,6 +81,7 @@ Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python sc
 | `AGENT` | Code, docs, tests |
 | `HUMAN` | Credentials, legal, go-live |
 | `AUTO` | CI / gate scripts |
+
 **Hard gates (never AUTO):** H-006, H-008, H-010, H-011, H-023, H-028, H-031, H-032, H-036
 
 ---
@@ -84,9 +92,11 @@ Full task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 
 | Sprint | Closed | Archive |
 |--------|--------|---------|
+| S27 | 2026-06-29 | TA fleet backtest + v0.4.0 Settings/billing (see COMPLETED_TASKS) |
 | S25–S26 | 2026-06-26 | TA cache epic + file-limit gate alignment (see COMPLETED_TASKS) |
 | DEX S21–S24 | 2026-06-26 | Plugin engine → dry-run → Base live (see COMPLETED_TASKS) |
 | Exchange S13–S20 | 2026-06-26 | Native CCXT → worldwide Phase 2 → ops |
+| R-Audit-6 | 🔲 open | Post v0.4.0 CI mypy + release sign-off |
 | R-Audit-5 | 2026-06-26 | CI axe + offline e2e + KB-013 |
 | R-Audit-4 | 2026-06-26 | Doc sync post DEX S21–S24 |
 | R-Audit … R-Audit-3 | 2026-06-25 | Post-program doc sync |

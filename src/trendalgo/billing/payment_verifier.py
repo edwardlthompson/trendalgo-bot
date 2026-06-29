@@ -96,6 +96,8 @@ def _output_sats(vout: dict[str, Any]) -> int:
     value = vout.get("value")
     if isinstance(value, int):
         return value
+    if value is None:
+        return 0
     return int(round(float(value) * 100_000_000))
 
 

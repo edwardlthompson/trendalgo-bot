@@ -9,6 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from trendalgo.db.rowid import require_row_id
+
 
 def _utc_now() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()
@@ -96,7 +98,7 @@ class TradeJournal:
                     ts,
                 ),
             )
-            return int(cur.lastrowid)
+            return require_row_id(cur)
 
     def first_profitable_trade(self) -> dict[str, Any] | None:
         with self._connect() as conn:
