@@ -82,6 +82,7 @@ data/
 !data/.gitkeep
 !src/trendalgo/data/
 !src/trendalgo/data/**
+src/trendalgo/data/**/__pycache__/
 !examples/web/src/data/
 !examples/web/public/data/
 
