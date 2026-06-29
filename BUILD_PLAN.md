@@ -10,7 +10,7 @@
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-**285 tests** · **~86%** coverage · Risk Register Zero ✅
+**285 tests** · **~80%** coverage · Risk Register Zero ✅
 
 **Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix`
 

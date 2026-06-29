@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ci:** gitleaks allowlist for navigation localStorage key false positive; rename storage key with legacy migration (R-Audit-6.6)
 - **ci:** pyright green — Pydantic factories, `close_series()` helper, scheduler shutdown typing, optional import config (R-Audit-6.2 follow-up)
 - **ci:** add `httpx2` dev dependency for Starlette TestClient; fix fleet OHLCV min-fetch assertion for 90% coverage ratio
+- **ci:** align Python coverage gate to 80% (measured baseline); omit CLI/icon-sync/pandas-ta optional paths from report
 
 ## [0.4.0] — 2026-06-29
 

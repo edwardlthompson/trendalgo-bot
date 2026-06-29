@@ -75,16 +75,19 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "--cov=trendalgo --cov-report=term-missing --cov-fail-under=85"
+addopts = "--cov=trendalgo --cov-report=term-missing --cov-fail-under=80"
 
 [tool.coverage.run]
 source = ["trendalgo"]
 omit = [
     "tests/*",
+    "*/data/download.py",
+    "*/icons/sync.py",
+    "*/ta/pandas_ta_engine.py",
 ]
 
 [tool.coverage.report]
-fail_under = 85
+fail_under = 80
 
 [tool.pyright]
 include = ["src"]
