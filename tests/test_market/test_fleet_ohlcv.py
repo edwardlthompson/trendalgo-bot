@@ -35,7 +35,7 @@ def test_resolve_finest_fetch_timeframe_kraken_30d() -> None:
 
 def test_min_fetch_seconds_for_30d() -> None:
     sec = fleet_ohlcv.min_fetch_seconds_for_lookback(30 * 86_400)
-    assert sec == 3600
+    assert sec == 3240
 
 
 def test_resolve_fleet_timeframes_synthetic_uses_all(monkeypatch) -> None:
