@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 
 def _exchange(exchange_id: str = "kraken") -> Any:

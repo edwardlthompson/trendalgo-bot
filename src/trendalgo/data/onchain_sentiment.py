@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -19,6 +19,6 @@ def onchain_sentiment_stub(asset: str) -> dict[str, Any]:
         "sentiment_score": sentiment_score,
         "sources": ["stub"],
         "paid_indexers": False,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "prototype": True,
     }
