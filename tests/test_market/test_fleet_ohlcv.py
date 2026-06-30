@@ -38,6 +38,37 @@ def test_min_fetch_seconds_for_30d() -> None:
     assert sec == 3240
 
 
+def test_ohlcv_covers_lookback_and_min_bars() -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from trendalgo.market.types import OhlcvPoint
+
+    since = datetime(2026, 1, 1, tzinfo=UTC)
+    until = since + timedelta(days=7)
+    step = 3600
+    points = [
+        OhlcvPoint(
+            time=int((since + timedelta(hours=i)).timestamp()),
+            open=1.0,
+            high=1.0,
+            low=1.0,
+            close=1.0,
+            volume=1.0,
+        )
+        for i in range(0, 24 * 7, step // 3600)
+    ]
+    min_bars = fleet_ohlcv.min_bars_for_fetch_timeframe("1h", since, until)
+    assert min_bars >= 2
+    assert fleet_ohlcv.ohlcv_covers_lookback(points, since, until, fetch_tf="1h") is True
+
+
+def test_market_uses_synthetic_env(monkeypatch) -> None:
+    monkeypatch.setenv("TRENDALGO_MARKET_SOURCE", "synthetic")
+    assert fleet_ohlcv.market_uses_synthetic() is True
+    monkeypatch.setenv("TRENDALGO_MARKET_SOURCE", "kraken")
+    assert fleet_ohlcv.market_uses_synthetic() is False
+
+
 def test_resolve_fleet_timeframes_synthetic_uses_all(monkeypatch) -> None:
     monkeypatch.setenv("TRENDALGO_MARKET_SOURCE", "synthetic")
     from datetime import UTC, datetime, timedelta

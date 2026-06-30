@@ -24,6 +24,15 @@ def test_validate_portfolio_pct_cap() -> None:
         validate_equity_input(_PaperState(), "BTC/USD", "portfolio_pct", 101, paper=True)
 
 
+def test_bot_equity_limits_paper_mode() -> None:
+    from trendalgo.bots.equity_limits import bot_equity_limits, resolve_equity_usd
+
+    limits = bot_equity_limits(_PaperState(), "BTC/USD", paper=True)
+    assert limits["paper"] is True
+    assert limits["base"]["max"] == 10.0
+    assert resolve_equity_usd(_PaperState(), "BTC/USD", "portfolio_pct", 10.0, 1000.0) == 10_000.0
+
+
 def test_trade_highlight_regions_pairs_buy_sell() -> None:
     candles = [
         {"time": 1, "close": 100.0},

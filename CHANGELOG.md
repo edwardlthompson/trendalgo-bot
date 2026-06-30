@@ -67,6 +67,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ci:** add `httpx2` dev dependency for Starlette TestClient; fix fleet OHLCV min-fetch assertion for 90% coverage ratio
 - **ci:** align Python coverage gate to 80% (measured baseline); omit CLI/icon-sync/pandas-ta optional paths from report
 
+### Added
+
+- **tests:** expand pytest coverage to ~87% (332 tests) — API OpenAPI sweep, payment verifier branches, market CCXT/Kraken mocks, portfolio snapshots/alerts, TA engine fallbacks, EVM token watcher, download CLI
+
+### Changed
+
+- **ci:** raise Python coverage gate to 86% (measured baseline)
+
 ## [0.4.0] — 2026-06-29
 
 ### Added
