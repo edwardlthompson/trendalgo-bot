@@ -21,7 +21,9 @@ def test_fetch_ohlcv_maps_rows(monkeypatch: pytest.MonkeyPatch) -> None:
     t0 = int(since.timestamp()) * 1000
 
     class FakeKraken:
-        def fetch_ohlcv(self, _pair: str, _tf: str, since: int | None = None, limit: int = 720) -> list[list[float]]:
+        def fetch_ohlcv(
+            self, _pair: str, _tf: str, since: int | None = None, limit: int = 720
+        ) -> list[list[float]]:
             del since, limit
             return [[t0, 1.0, 2.0, 0.5, 1.5, 10.0]]
 

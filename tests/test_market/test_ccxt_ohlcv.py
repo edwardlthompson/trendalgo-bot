@@ -23,7 +23,9 @@ def test_rows_to_points_filters_and_deduplicates() -> None:
     ]
     points = ccxt_ohlcv._rows_to_points(rows, since, until)
     assert len(points) == 2
-    assert points[0] == OhlcvPoint(time=int(since.timestamp()), open=1.0, high=2.0, low=0.5, close=1.5, volume=10.0)
+    assert points[0] == OhlcvPoint(
+        time=int(since.timestamp()), open=1.0, high=2.0, low=0.5, close=1.5, volume=10.0
+    )
 
 
 def test_fetch_exchange_ohlcv_paginates(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -39,7 +41,9 @@ def test_fetch_exchange_ohlcv_paginates(monkeypatch: pytest.MonkeyPatch) -> None
     )
 
     class FakeExchange:
-        def fetch_ohlcv(self, _pair: str, _tf: str, since: int | None = None, limit: int = 720) -> list[list[float]]:
+        def fetch_ohlcv(
+            self, _pair: str, _tf: str, since: int | None = None, limit: int = 720
+        ) -> list[list[float]]:
             del since, limit
             return next(batches)
 
