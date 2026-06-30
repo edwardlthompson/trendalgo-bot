@@ -32,6 +32,21 @@ def api_client() -> TestClient:
 def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TRENDALGO_BTC_USD_RATE", "100000")
     monkeypatch.setenv("TRENDALGO_PAYMENT_SIMULATE", "1")
+
+    def _noop_fee_sync(_store, *, on_log=None):
+        return {
+            "checked": 0,
+            "updated": [],
+            "unchanged": [],
+            "fallback": [],
+            "failed": [],
+            "last_check": None,
+        }
+
+    monkeypatch.setattr(
+        "trendalgo.api.routes.exchanges.sync_exchange_fees",
+        _noop_fee_sync,
+    )
     c = api_client
 
     assert c.get("/").status_code == 200

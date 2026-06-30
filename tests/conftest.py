@@ -41,3 +41,9 @@ def isolate_exchange_fee_db(monkeypatch: pytest.MonkeyPatch) -> None:
     yield
     reset_fee_store()
     fees.clear_fee_cache()
+
+
+@pytest.fixture(autouse=True)
+def fast_fee_fetch_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cap live fee-page fetches so accidental sync calls cannot stall CI."""
+    monkeypatch.setenv("TRENDALGO_FEE_FETCH_TIMEOUT", "3")
