@@ -135,10 +135,9 @@ def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyP
     share = c.post("/api/v1/portfolio/public-share").json()
     c.get(f"/api/v1/public/dashboard/{share['token']}")
 
-    c.post(
-        "/api/v1/backtest/fleet",
-        json={"exchange_id": "kraken", "pair": "BTC/USD", "stake_usd": 500},
-    )
+    # Fleet start/poll covered by test_fleet_start_and_complete; only hit read routes here.
+    c.get("/api/v1/backtest/fleet/active")
+    c.get("/api/v1/backtest/fleet/latest")
     history = c.get("/api/v1/backtest/fleet/history").json()
     if history.get("runs"):
         job_id = history["runs"][0]["job_id"]
