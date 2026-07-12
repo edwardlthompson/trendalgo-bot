@@ -14,7 +14,8 @@
 - R-Audit-8.6 ✅ Bot scheduler + TV env docs (F-006)
 - R-Audit-8.7 ✅ `runner_bridge` unit tests (F-007)
 - R-Audit-8.8 ✅ Track `.python-version`; rename `smoke_recommendations.py` (F-008)
-- Product-rec P0–P3 slice (More menu, live scanner, bot scheduler, Telegram/TV/hyperopt) remains in working tree pending commit
+- R-Audit-8.10 ✅ Closed PR #12 (TS 7 defer); merged PR #13 → **v0.5.0**; uv.lock sync
+- Product-rec P0–P3 shipped in v0.5.0
 
 ## Sprint R-Audit-7 — Post-audit hygiene (2026-07-12)
 
