@@ -58,7 +58,7 @@
 | H-002 | S0 | Pick Cursor mode | optional | ✅ | — |
 | H-004 | S0 | VPS hosting (Oracle / Hetzner) | soft | ✅ | S4 deploy |
 | H-005 | S0 | Founder defaults | soft | ✅ | — |
-| H-006 | S0 | Attorney + ADR-0008 | **hard** | ⚠️ legal packet | Public beta |
+| H-006 | S0 | Attorney + ADR-0008 | **hard** | ⚠️ packet ready — awaiting counsel | Public beta |
 | H-007 | S1 | ADR-0001 / S1 scope | soft | ✅ | Pre-Sprint-1 |
 | H-008 | S2 | Telegram token | **hard** | ⚠️ `.env` | Alerts |
 | H-009 | S3 | Playwright smoke | soft | ✅ | — |

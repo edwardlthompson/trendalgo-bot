@@ -45,8 +45,8 @@ Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigat
 | R-Audit-7.5 | Generate `docs/legal-review-packet.md` for H-006 preflight (F-007) | AGENT | ✅ |
 | R-Audit-7.6 | Add root pip Dependabot ecosystem for pyproject/uv.lock (F-006) | AGENT | ✅ |
 | R-Audit-7.7 | Gitignore ephemeral `.cursor-*.png` / `mypy-errors.txt`; rename web package (F-008/F-009) | AGENT | ✅ |
-| R-Audit-7.8 | Enable Dependency graph + Dependabot alerts (F-002) | HUMAN | 🔲 |
-| R-Audit-7.9 | Merge Release Please PR #7 → v0.4.1 tag (F-011 / was R-Audit-6.3) | HUMAN | 🔲 |
+| R-Audit-7.8 | Enable Dependency graph + Dependabot alerts (F-002) | HUMAN | ✅ |
+| R-Audit-7.9 | Merge Release Please PR #7 → v0.4.1 tag (F-011 / was R-Audit-6.3) | HUMAN | ✅ |
 | R-Audit-7.10 | Attorney review of legal packet (F-012 / was R-Audit-6.4) | HUMAN | 🔲 |
 
 ### Carry-forward (HUMAN)
@@ -59,7 +59,7 @@ Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigat
 | Go-live per venue (H-010, H-028) | HUMAN | 🔲 |
 | Exchange live worldwide (H-032) | HUMAN | 🔲 |
 | DEX live (H-035, H-036) | HUMAN | 🔲 |
-| CI green + v0.4.x tag | AGENT/HUMAN | 🔲 merge PR #7 (R-Audit-7.9) |
+| CI green + v0.4.x tag | AGENT/HUMAN | ✅ v0.4.1 tagged 2026-07-12 |
 | Risk Register Zero | AUTO | ✅ |
 | Scope preflights H-013–H-025 | AGENT | ✅ |
 
