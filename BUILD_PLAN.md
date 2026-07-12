@@ -27,7 +27,7 @@
 | Core (S0–S12) | Setup → platform, Risk Register Zero | ✅ | H-001–H-029 backlog |
 | Exchange | S13–S20 · 9 venues · ADR-0010 | ✅ | **H-032** worldwide live |
 | DEX | S21–S24 · Base Phase 1 · ADR-0011 | ✅ | **H-035** scope · **H-036** live |
-| Reviews | R-Audit … R-Audit-7 AGENT | ✅ | R-Audit-8 open · H-006 · PR #13 |
+| Reviews | R-Audit … R-Audit-8 AGENT | ✅ | H-006 · R-Audit-8.9 attorney |
 Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigations CM-1–CM-11: closed in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md).
 
 ---
@@ -41,7 +41,7 @@ AGENT 8.1–8.8 ✅ (see [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md)). Remaining:
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
 | R-Audit-8.9 | Attorney review of legal packet (F-010 / R-Audit-7.10) | HUMAN | 🔲 |
-| R-Audit-8.10 | Triage PR #13 release + PR #12 web deps after CI green (F-011) | AGENT | 🔲 |
+| R-Audit-8.10 | Triage PR #13 release + PR #12 web deps after CI green (F-011) | AGENT | ✅ |
 
 ### Carry-forward (HUMAN)
 
@@ -95,7 +95,7 @@ Full task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 | S25–S26 | 2026-06-26 | TA cache epic + file-limit gate alignment (see COMPLETED_TASKS) |
 | DEX S21–S24 | 2026-06-26 | Plugin engine → dry-run → Base live (see COMPLETED_TASKS) |
 | Exchange S13–S20 | 2026-06-26 | Native CCXT → worldwide Phase 2 → ops |
-| R-Audit-8 | 🔲 open | Post product-rec · Lightning 501 · e2e More-nav · CI lock |
+| R-Audit-8 | 2026-07-12 | Post product-rec · Lightning 501 · e2e · **v0.5.0** |
 | R-Audit-7 | 2026-07-12 | Post-audit hygiene · charts pin · version sync · PR #7 → 0.4.1 |
 | R-Audit-6 | 2026-07-11 | Post v0.4.0 CI mypy (AGENT ✅; HUMAN → R-Audit-7.9/7.10) |
 | R-Audit-5 | 2026-06-26 | CI axe + offline e2e + KB-013 |

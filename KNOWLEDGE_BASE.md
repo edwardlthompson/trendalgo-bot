@@ -80,6 +80,12 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-014 — v0.5.0 ship (2026-07-12)
+
+**Symptom:** `/ship` after product-rec + R-Audit-8; CI red on (1) `uv.lock` version drift after Release Please, (2) More menu always visible (`display:flex` overriding `[hidden]`), (3) e2e update tests using `page.route("**/*")` that bypassed API mocks.
+
+**Fix:** After every Release Please merge run `uv lock` and commit; add `.gp-nav-more-menu[hidden]{display:none}`; narrow update mocks to `app-update.json` + GitHub releases only. Close Dependabot group bumps that include TypeScript majors. Pages deploy 404 until GitHub Pages is enabled (HUMAN). Local WSL1 breaks `feature-gate`/`check-license-compliance` — use CI + Windows `npx tsc` / `uv run pytest`.
+
 ## Template KB entries
 
 Legacy template entries (KB-007+) remain in git history; TrendAlgo-specific entries start at KB-001 above.

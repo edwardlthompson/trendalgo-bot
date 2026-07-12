@@ -39,15 +39,22 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** R-Audit-8 — Post product-rec audit (BUILD_PLAN); human gates H-006, H-032, H-035, H-036, R-Audit-8.9–8.10 open.
+**Current sprint:** R-Audit-8 — attorney H-006 open; AGENT 8.10 ✅ (PR #12 closed TS7 defer; PR #13 → **v0.5.0**).
 
-**Tests:** 347 pass · ~86% coverage (2026-07-12 audit; pyproject cov-fail-under=86%).
+**Tests:** 347 pass · ~86% coverage (2026-07-12; pyproject cov-fail-under=86%).
 
-**Recent:** Product-rec P0–P3 (More menu, live scanner, bot scheduler, Telegram/TV/hyperopt); R-Audit-8 — Lightning 501, e2e More-nav, uv.lock 0.4.1, smoke CI ignore.
+**Recent:** Shipped v0.5.0 — product-rec P0–P3, Lightning 501, More-menu CSS/e2e fixes, uv.lock sync.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### Ship v0.5.0 (2026-07-12)
+
+- Merged Release Please PR #13 → tag v0.5.0; SBOM assets on GitHub Release
+- Closed Dependabot PR #12 (TypeScript 7 major deferred)
+- CI green after uv.lock 0.5.0 sync; Pages still 404 (Pages not enabled — HUMAN)
+- Local `pre-release-gate` / license still WSL1-blocked; CI is source of truth
 
 ### R-Audit-8 (2026-07-12)
 
