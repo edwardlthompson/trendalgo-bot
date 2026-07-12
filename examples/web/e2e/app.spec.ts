@@ -2,6 +2,27 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mockTrendAlgoApi } from "./apiMock";
 import { openNavView } from "./navHelpers";
+import type { Page } from "@playwright/test";
+
+async function mockUpdateEndpoints(page: Page): Promise<void> {
+  await page.route("**/app-update.json", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        release_repo: "test-owner/test-repo",
+        installed_artifact_format: "pwa",
+      }),
+    });
+  });
+  await page.route("**/repos/test-owner/test-repo/releases/latest", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ tag_name: "v99.0.0" }),
+    });
+  });
+}
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -89,29 +110,7 @@ test.describe("update status", () => {
   test.use({ serviceWorkers: "block" });
 
   test("shows update status in about after enabling update check", async ({ page }) => {
-  await page.route("**/*", async (route) => {
-    const url = route.request().url();
-    if (url.includes("/app-update.json")) {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          release_repo: "test-owner/test-repo",
-          installed_artifact_format: "pwa",
-        }),
-      });
-      return;
-    }
-    if (url.includes("api.github.com/repos/test-owner/test-repo/releases/latest")) {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ tag_name: "v99.0.0" }),
-      });
-      return;
-    }
-    await route.continue();
-  });
+  await mockUpdateEndpoints(page);
 
   await page.goto("/");
   await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
@@ -132,29 +131,7 @@ test.describe("PWA apply update", () => {
   test.use({ serviceWorkers: "block" });
 
   test("shows apply button when update is available", async ({ page }) => {
-    await page.route("**/*", async (route) => {
-      const url = route.request().url();
-      if (url.includes("/app-update.json")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            release_repo: "test-owner/test-repo",
-            installed_artifact_format: "pwa",
-          }),
-        });
-        return;
-      }
-      if (url.includes("api.github.com/repos/test-owner/test-repo/releases/latest")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ tag_name: "v99.0.0" }),
-        });
-        return;
-      }
-      await route.continue();
-    });
+    await mockUpdateEndpoints(page);
 
     await page.goto("/");
     await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
@@ -181,29 +158,7 @@ test.describe("home update banner", () => {
   test.use({ serviceWorkers: "block" });
 
   test("shows update status on home when check finds newer version", async ({ page }) => {
-    await page.route("**/*", async (route) => {
-      const url = route.request().url();
-      if (url.includes("/app-update.json")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            release_repo: "test-owner/test-repo",
-            installed_artifact_format: "pwa",
-          }),
-        });
-        return;
-      }
-      if (url.includes("api.github.com/repos/test-owner/test-repo/releases/latest")) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ tag_name: "v99.0.0" }),
-        });
-        return;
-      }
-      await route.continue();
-    });
+    await mockUpdateEndpoints(page);
 
     await page.goto("/");
     await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
