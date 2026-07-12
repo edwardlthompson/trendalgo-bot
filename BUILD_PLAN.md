@@ -3,7 +3,7 @@
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-## Current sprint: **R-Audit-6 — CI green + v0.4.0 sign-off**
+## Current sprint: **R-Audit-7 — Post-audit hygiene (2026-07-11)**
 
 | Marker | State |
 |--------|-------|
@@ -12,11 +12,11 @@
 | ❌ | Blocked |
 **332 tests** · **~87%** coverage · Risk Register Zero ✅
 
-**Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix`
+**Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix --step none`
 
 **Human gates** (H-030–H-036, go-live, legal): [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) — not duplicated here.
 
-**Audit:** `CODE_REVIEW.md` (ephemeral, gitignored) · 2026-06-29
+**Audit:** `CODE_REVIEW.md` (ephemeral, gitignored) · 2026-07-11
 
 ---
 
@@ -27,26 +27,29 @@
 | Core (S0–S12) | Setup → platform, Risk Register Zero | ✅ | H-001–H-029 backlog |
 | Exchange | S13–S20 · 9 venues · ADR-0010 | ✅ | **H-032** worldwide live |
 | DEX | S21–S24 · Base Phase 1 · ADR-0011 | ✅ | **H-035** scope · **H-036** live |
-| Reviews | R-Audit … R-Audit-5 | ✅ | R-Audit-6 open |
+| Reviews | R-Audit … R-Audit-6 AGENT | ✅ | R-Audit-7 open · PR #7 · H-006 |
 Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigations CM-1–CM-11: closed in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md).
 
 ---
 
 ## Open work
 
-### R-Audit-6 — Post v0.4.0 CI + release (2026-06-29)
+### R-Audit-7 — Post-audit hygiene (2026-07-11)
 
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
-| R-Audit-6.1 | Mypy: third-party overrides + `require_row_id` in journal/store + payment_verifier guard (F-061) | AGENT | ✅ |
-| R-Audit-6.2 | Mypy debt triage — NativeStrategy protocol, portfolio/db `lastrowid`, heatmap types (F-061) | AGENT | ✅ |
-| R-Audit-6.3 | Merge Release Please PR #7 after CI green (F-062) | HUMAN | 🔲 |
-| R-Audit-6.4 | Legal review packet for H-006 public beta (F-063) | HUMAN | 🔲 |
-| R-Audit-6.5 | Sync BUILD_PLAN test count + v0.4.0 CI status (F-064) | AGENT | ✅ |
-| R-Audit-6.6 | Triage Security Scan intermittent failure (F-065) | AGENT | ✅ |
-| R-Audit-6.7 | Triage Dependabot actions/checkout bump PR #3 (F-066) | AGENT | ✅ |
+| R-Audit-7.1 | Pin lightweight-charts to 4.x + Dependabot ignore majors; triage PR #10 (F-001) | AGENT | ✅ |
+| R-Audit-7.2 | Exclude `.venv*` / site-packages from file-limits; gitignore `.venv*/` (F-004) | AGENT | ✅ |
+| R-Audit-7.3 | Sync pyproject + `__init__.py` to 0.4.0; Release Please extra-files (F-003) | AGENT | ✅ |
+| R-Audit-7.4 | Sync AGENT_MEMORY / POST_DELIVERY / testing.mdc coverage (F-005) | AGENT | ✅ |
+| R-Audit-7.5 | Generate `docs/legal-review-packet.md` for H-006 preflight (F-007) | AGENT | ✅ |
+| R-Audit-7.6 | Add root pip Dependabot ecosystem for pyproject/uv.lock (F-006) | AGENT | ✅ |
+| R-Audit-7.7 | Gitignore ephemeral `.cursor-*.png` / `mypy-errors.txt`; rename web package (F-008/F-009) | AGENT | ✅ |
+| R-Audit-7.8 | Enable Dependency graph + Dependabot alerts (F-002) | HUMAN | 🔲 |
+| R-Audit-7.9 | Merge Release Please PR #7 → v0.4.1 tag (F-011 / was R-Audit-6.3) | HUMAN | 🔲 |
+| R-Audit-7.10 | Attorney review of legal packet (F-012 / was R-Audit-6.4) | HUMAN | 🔲 |
 
-Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md).
+### Carry-forward (HUMAN)
 
 | Track | Owner | Status |
 |-------|-------|--------|
@@ -56,9 +59,11 @@ Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [
 | Go-live per venue (H-010, H-028) | HUMAN | 🔲 |
 | Exchange live worldwide (H-032) | HUMAN | 🔲 |
 | DEX live (H-035, H-036) | HUMAN | 🔲 |
-| CI green + v0.4.x tag | AGENT/HUMAN | 🔲 merge PR #7 (R-Audit-6.3) |
+| CI green + v0.4.x tag | AGENT/HUMAN | 🔲 merge PR #7 (R-Audit-7.9) |
 | Risk Register Zero | AUTO | ✅ |
 | Scope preflights H-013–H-025 | AGENT | ✅ |
+
+Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md).
 
 ### Maintenance cadence
 
@@ -96,7 +101,8 @@ Full task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 | S25–S26 | 2026-06-26 | TA cache epic + file-limit gate alignment (see COMPLETED_TASKS) |
 | DEX S21–S24 | 2026-06-26 | Plugin engine → dry-run → Base live (see COMPLETED_TASKS) |
 | Exchange S13–S20 | 2026-06-26 | Native CCXT → worldwide Phase 2 → ops |
-| R-Audit-6 | 🔲 open | Post v0.4.0 CI mypy + release sign-off |
+| R-Audit-7 | 🔲 open | Post-audit hygiene · charts pin · version sync |
+| R-Audit-6 | 2026-07-11 | Post v0.4.0 CI mypy (AGENT ✅; HUMAN → R-Audit-7.9/7.10) |
 | R-Audit-5 | 2026-06-26 | CI axe + offline e2e + KB-013 |
 | R-Audit-4 | 2026-06-26 | Doc sync post DEX S21–S24 |
 | R-Audit … R-Audit-3 | 2026-06-25 | Post-program doc sync |

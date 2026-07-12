@@ -39,15 +39,22 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Post-Delivery / maintenance (BUILD_PLAN); human gates H-032, H-035, H-036 open.
+**Current sprint:** R-Audit-7 — Post-audit hygiene (BUILD_PLAN); human gates H-032, H-035, H-036, R-Audit-7.8–7.10 open.
 
-**Tests:** 170+ pass · ~86% coverage (2026-06-29 v0.4.0 release).
+**Tests:** 332 pass · ~87% coverage (2026-07-11 audit; pyproject cov-fail-under=86%).
 
-**Recent:** v0.4.0 — Settings tab, fiat display currency, on-chain billing (BTC + Base stables), 5% fee, post-profit trial month.
+**Recent:** R-Audit-7 — charts pin (lightweight-charts 4.x), version sync to 0.4.0, legal packet generate, root pip Dependabot.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### R-Audit-7 (2026-07-11)
+
+- 332 tests, ~87% coverage; main CI/CodeQL/Security Scan green; 0 vuln alerts
+- AGENT: charts pin (block LC v5), file-limits `.venv*`, version sync 0.4.0, legal packet, root pip Dependabot, hygiene gitignore
+- HUMAN open: enable dependency graph/alerts (F-002), merge PR #7, attorney H-006
+- Local `feature-gate` web-lint still fails under WSL1 Node; Windows `npx tsc --noEmit` passes
 
 ### R-Audit-5 (2026-06-26)
 

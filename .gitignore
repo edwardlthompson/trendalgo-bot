@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 .venv/
+.venv*/
+mypy-errors.txt
+.cursor-*.png
+.cursor-*.jpg
+scripts/_probe-*.py
 __pycache__/
 *.py[cod]
 .uv/

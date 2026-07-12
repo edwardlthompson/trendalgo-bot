@@ -15,6 +15,10 @@ updates:
     groups:
       web-dependencies:
         patterns: ["*"]
+    ignore:
+      # v5 removes addCandlestickSeries / addLineSeries / setMarkers (R-Audit-7.1 / F-001)
+      - dependency-name: "lightweight-charts"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
     directory: /examples/node
@@ -22,6 +26,14 @@ updates:
       interval: weekly
     groups:
       node-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      root-python-dependencies:
         patterns: ["*"]
 
   - package-ecosystem: pip

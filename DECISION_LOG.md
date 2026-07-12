@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-07-11 — R-Audit-7 — Post-audit hygiene
+- **Status:** Accepted (AGENT complete; HUMAN open)
+- **Context:** `/audit` found Dependabot PR #10 breaking charts (LC 4→5), version drift (pyproject 0.2.0 / `__init__` 0.0.0-dev vs 0.4.0), local feature-gate false-fail on `.venv312`, missing legal packet, root pip not in Dependabot, doc count drift.
+- **Decision:** Pin `lightweight-charts` to `~4.2.3` + Dependabot ignore majors (defer v5 migration); exclude `.venv*`/site-packages from file-limits; sync versions + Release Please extra-files; generate `docs/legal-review-packet.md`; add root pip Dependabot; gitignore ephemeral agent artifacts; rename web package to `trendalgo-web@0.4.0`.
+- **Alternatives considered:** Full LC v5 `addSeries` + markers plugin migration (deferred — larger surface than audit scope).
+- **Consequences:** PR #10 should be closed; H-006 preflight now SKIP/HUMAN (artifacts present); HUMAN still must enable dependency graph/alerts and merge Release Please PR #7.
+
 ### 2026-06-29 — R-Audit-6.2 — Strict mypy green (Approach A)
 - **Status:** Accepted
 - **Context:** R-Audit-6.1 left ~85 mypy errors; user approved Approach A (protocol + rowid + Pydantic plugin + targeted typing fixes, no gate relaxation).

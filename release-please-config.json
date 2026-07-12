@@ -6,7 +6,16 @@
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
         ".template-version",
-        "TEMPLATE_INDEX.json"
+        "TEMPLATE_INDEX.json",
+        {
+          "type": "toml",
+          "path": "pyproject.toml",
+          "jsonpath": "$.project.version"
+        },
+        {
+          "type": "generic",
+          "path": "src/trendalgo/__init__.py"
+        }
       ],
       "include-component-in-tag": false,
       "include-v-in-tag": true

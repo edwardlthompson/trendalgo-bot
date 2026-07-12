@@ -1,3 +1,3 @@
 """TrendAlgo Bot — self-hosted crypto trading platform."""
 
-__version__ = "0.0.0-dev"
+__version__ = "0.4.0"  # x-release-please-version

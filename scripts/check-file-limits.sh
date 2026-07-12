@@ -43,7 +43,8 @@ build_web_view_find() {
     "${expr[@]}" \
     -o -path "*/examples/android/app/src/main/java/*/ui/*/*.kt" \
     -o -path "*/examples/android/app/src/main/java/*/ui/GoldenPath*.kt" \
-    \) ! -path "*/node_modules/*" ! -path "*/.venv/*" ! -path "*/.git/*" ! -path "*/dist/*" -print0 2>/dev/null
+    \) ! -path "*/node_modules/*" ! -path "*/.venv/*" ! -path "*/.venv*/*" \
+      ! -path "*/site-packages/*" ! -path "*/.git/*" ! -path "*/dist/*" -print0 2>/dev/null
 }
 
 echo "Checking view file limits (max $VIEW_LIMIT lines)..."
@@ -62,7 +63,8 @@ while IFS= read -r -d '' file; do
   fi
 done < <(find "$ROOT/examples" -type f \( -name "*.ts" -o -name "*.py" -o -name "*.kt" \) \
   ! -name "*.test.*" ! -name "*.spec.*" \
-  ! -path "*/node_modules/*" ! -path "*/.venv/*" ! -path "*/.git/*" \
+  ! -path "*/node_modules/*" ! -path "*/.venv/*" ! -path "*/.venv*/*" \
+  ! -path "*/site-packages/*" ! -path "*/.git/*" \
   ! -path "*/examples/web/e2e/*" \
   ! -path "*/examples/web/src/api/*" \
   ! -path "*/examples/web/src/appBootstrap.ts" \

@@ -2,6 +2,30 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint R-Audit-6 — Post v0.4.0 CI mypy (2026-07-11)
+
+- **Exit:** AGENT rows green; HUMAN merge PR #7 + attorney review carried to R-Audit-7.9/7.10.
+
+- R-Audit-6.1 ✅ Mypy third-party overrides + `require_row_id` (F-061)
+- R-Audit-6.2 ✅ Mypy debt triage — NativeStrategy, portfolio/db, heatmap (F-061)
+- R-Audit-6.5 ✅ Sync BUILD_PLAN test count + v0.4.0 CI status (F-064)
+- R-Audit-6.6 ✅ Triage Security Scan intermittent failure (F-065)
+- R-Audit-6.7 ✅ Triage Dependabot actions/checkout bump PR #3 (F-066)
+- R-Audit-6.3 → R-Audit-7.9 HUMAN (merge Release Please PR #7)
+- R-Audit-6.4 → R-Audit-7.10 HUMAN (attorney legal packet)
+
+## Sprint R-Audit-7 AGENT — Post-audit hygiene (2026-07-11)
+
+- **Exit:** AGENT 7.1–7.7 ✅; HUMAN 7.8–7.10 open (dependency graph, PR #7, attorney).
+
+- R-Audit-7.1 ✅ Pin lightweight-charts ~4.2.3 + Dependabot ignore majors; PR #10 triage (F-001)
+- R-Audit-7.2 ✅ Exclude `.venv*` / site-packages from file-limits (F-004)
+- R-Audit-7.3 ✅ Sync pyproject + `__init__.py` to 0.4.0; Release Please extra-files (F-003)
+- R-Audit-7.4 ✅ Sync AGENT_MEMORY / POST_DELIVERY / testing.mdc (F-005)
+- R-Audit-7.5 ✅ Generate `docs/legal-review-packet.md` (F-007)
+- R-Audit-7.6 ✅ Root pip Dependabot ecosystem (F-006)
+- R-Audit-7.7 ✅ Gitignore ephemeral artifacts; rename `trendalgo-web@0.4.0` (F-008/F-009)
+
 ## Sprint S27 — TA fleet backtest + v0.4.0 (2026-06-29)
 
 - S27.1 ✅ Exchange fees config + fee-aware `ta_simulator.py`

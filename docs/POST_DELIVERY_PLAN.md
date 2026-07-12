@@ -2,7 +2,7 @@
 
 > After S0–S12 + Risk Register Zero. **BUILD_PLAN** active board: Post-Delivery Operations.
 
-## Status snapshot (2026-06-26)
+## Status snapshot (2026-07-11)
 
 | Area | State |
 |------|-------|
@@ -11,7 +11,7 @@
 | DEX program | S21–S24 ✅ AGENT · H-035/H-036 open for live DEX |
 | Risk Register Zero | ✅ 0 active risks; 9 ongoing controls |
 | Critiques C-001–C-021 | ✅ all closed in catalog |
-| Tests | 170 pass · ~85% `trendalgo` coverage |
+| Tests | 332 pass · ~87% `trendalgo` coverage (cov-fail-under=86%) |
 | Founder gates H-001–H-036 | 🔲 backlog — preflights mostly runnable |
 | Public beta | ❌ blocked on H-006, H-023 |
 | Live trading | ❌ blocked on H-010, H-028, H-031, H-032, H-036, secrets |
