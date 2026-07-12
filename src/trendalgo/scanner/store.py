@@ -31,6 +31,13 @@ class ScannerStore:
     def _init_schema(self) -> None:
         with self._connect() as conn:
             conn.executescript(SCANNER_SCHEMA)
+            columns = {str(row["name"]) for row in conn.execute("PRAGMA table_info(scanner_snapshots)")}
+            if "as_of" not in columns:
+                conn.execute("ALTER TABLE scanner_snapshots ADD COLUMN as_of TEXT")
+            if "degraded" not in columns:
+                conn.execute(
+                    "ALTER TABLE scanner_snapshots ADD COLUMN degraded INTEGER NOT NULL DEFAULT 0"
+                )
             if conn.execute("SELECT 1 FROM scanner_settings WHERE id = 1").fetchone() is None:
                 conn.execute(
                     """
@@ -80,8 +87,16 @@ class ScannerStore:
     def save_snapshot(self, snapshot: QualifiedSnapshot) -> int:
         with self._connect() as conn:
             cur = conn.execute(
-                "INSERT INTO scanner_snapshots (generated_at, version) VALUES (?, ?)",
-                (snapshot.generated_at.isoformat(), snapshot.version),
+                """
+                INSERT INTO scanner_snapshots (generated_at, as_of, degraded, version)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    snapshot.generated_at.isoformat(),
+                    snapshot.as_of.isoformat(),
+                    int(snapshot.degraded),
+                    snapshot.version,
+                ),
             )
             snap_id = require_row_id(cur)
             for opp in snapshot.opportunities:
@@ -106,9 +121,19 @@ class ScannerStore:
             return snap_id
 
     def latest_snapshot(self) -> QualifiedSnapshot | None:
+        return self._latest_snapshot(successful_only=False)
+
+    def latest_successful_snapshot(self) -> QualifiedSnapshot | None:
+        return self._latest_snapshot(successful_only=True)
+
+    def _latest_snapshot(self, *, successful_only: bool) -> QualifiedSnapshot | None:
         with self._connect() as conn:
+            where = "WHERE degraded = 0" if successful_only else ""
             snap = conn.execute(
-                "SELECT id, generated_at, version FROM scanner_snapshots ORDER BY id DESC LIMIT 1"
+                f"""
+                SELECT id, generated_at, as_of, degraded, version
+                FROM scanner_snapshots {where} ORDER BY id DESC LIMIT 1
+                """
             ).fetchone()
             if snap is None:
                 return None
@@ -131,10 +156,13 @@ class ScannerStore:
                 )
                 for r in rows
             ]
+            generated_at = datetime.fromisoformat(snap["generated_at"])
             return QualifiedSnapshot(
                 version=str(snap["version"]),
-                generated_at=datetime.fromisoformat(snap["generated_at"]),
+                generated_at=generated_at,
+                as_of=datetime.fromisoformat(snap["as_of"]) if snap["as_of"] else generated_at,
                 scan_id=int(snap["id"]),
+                degraded=bool(snap["degraded"]),
                 opportunities=opps,
             )
 

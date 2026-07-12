@@ -4,6 +4,7 @@
  */
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { openNavView } from "./navHelpers";
 
 const VIEWS = [
   { label: "Portfolio", testId: "portfolio-panel" },
@@ -40,7 +41,7 @@ test.describe("live dev smoke", () => {
     await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
 
     for (const view of VIEWS) {
-      await page.getByRole("button", { name: view.label, exact: true }).click();
+      await openNavView(page, view.label);
       await expect(page.getByTestId("mobile-nav")).toBeVisible();
       if (view.testId) {
         await expect(page.getByTestId(view.testId)).toBeVisible({ timeout: 10_000 });
@@ -49,7 +50,7 @@ test.describe("live dev smoke", () => {
   });
 
   test("settings tab shows theme and about section", async ({ page }) => {
-    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await openNavView(page, "Settings");
     await expect(page.getByTestId("settings-view")).toBeVisible();
     await expect(page.getByTestId("settings-panel")).toBeVisible();
     await expect(page.getByTestId("about-panel")).toBeVisible();
@@ -60,7 +61,7 @@ test.describe("live dev smoke", () => {
   });
 
   test("backtest run produces metrics", async ({ page }) => {
-    await page.getByRole("button", { name: "Backtest" }).click();
+    await openNavView(page, "Backtest");
     await page.getByTestId("backtest-run").click();
     await expect(page.getByTestId("backtest-metrics")).toBeVisible({ timeout: 30_000 });
   });

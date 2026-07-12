@@ -40,7 +40,12 @@ export function createPlatformPanel(data: PlatformData | null): HTMLElement {
 
   const pg = document.createElement("p");
   pg.className = "gp-muted";
-  pg.textContent = `${t("platform.postgres")}: ${data.postgres.dual_write_enabled ? "dual-write" : "sqlite-mvp"}`;
+  pg.dataset.testid = "platform-postgres";
+  if (data.postgres.experimental || data.postgres.status_note === "experimental") {
+    pg.textContent = `${t("platform.postgres")}: ${t("platform.postgres_experimental")}`;
+  } else {
+    pg.textContent = `${t("platform.postgres")}: ${data.postgres.dual_write_enabled ? "dual-write" : "sqlite-mvp"}`;
+  }
 
   panel.append(forager, funding, pg);
   return panel;

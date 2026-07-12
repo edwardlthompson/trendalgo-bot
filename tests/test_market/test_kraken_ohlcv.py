@@ -27,7 +27,7 @@ def test_fetch_ohlcv_maps_rows(monkeypatch: pytest.MonkeyPatch) -> None:
             del since, limit
             return [[t0, 1.0, 2.0, 0.5, 1.5, 10.0]]
 
-    monkeypatch.setattr(kraken_market, "_client", lambda: FakeKraken())
+    monkeypatch.setattr(kraken_market, "_client", lambda _timeout_ms=10_000: FakeKraken())
     points = kraken_market.fetch_ohlcv("BTC", "1h", since, until)
     assert len(points) == 1
     assert points[0].close == 1.5
@@ -42,7 +42,7 @@ def test_fetch_closes_returns_price_points(monkeypatch: pytest.MonkeyPatch) -> N
         def fetch_ohlcv(self, *_args, **_kwargs) -> list[list[float]]:
             return [[t0, 1.0, 2.0, 0.5, 42.0, 10.0]]
 
-    monkeypatch.setattr(kraken_market, "_client", lambda: FakeKraken())
+    monkeypatch.setattr(kraken_market, "_client", lambda _timeout_ms=10_000: FakeKraken())
     closes = kraken_market.fetch_closes("ETH", "1d", since, until)
     assert len(closes) == 1
     assert closes[0].close == 42.0

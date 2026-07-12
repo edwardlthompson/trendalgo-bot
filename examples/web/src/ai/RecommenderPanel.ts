@@ -8,7 +8,7 @@ export type Recommendation = {
 };
 
 export function createRecommenderPanel(
-  recommendations: Recommendation[],
+  recommendations: Recommendation[] | null,
   disclaimer: string,
   onDeploy: (id: string) => void,
 ): HTMLElement {
@@ -16,6 +16,16 @@ export function createRecommenderPanel(
   section.className = "gp-panel";
   section.dataset.testid = "ai-recommender";
   section.innerHTML = `<h3>${t("ai.recommender")}</h3><p class="gp-disclaimer">${disclaimer}</p>`;
+
+  if (!recommendations?.length) {
+    const empty = document.createElement("p");
+    empty.className = "gp-empty";
+    empty.dataset.testid = "ai-recommender-empty";
+    empty.textContent = t("empty.ai_recommender");
+    section.appendChild(empty);
+    return section;
+  }
+
   const list = document.createElement("ul");
   for (const rec of recommendations.slice(0, 5)) {
     const li = document.createElement("li");

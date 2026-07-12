@@ -38,7 +38,6 @@ import {
   startBillingPayment,
   checkBillingPayment,
   markBillingPaid,
-  createBillingLightningInvoice,
   fetchPlatformForager,
   fetchPlatformFunding,
   fetchPlatformPostgres,
@@ -71,6 +70,12 @@ import {
   fetchStrategyParams,
   setBotEnabled,
   updateBot,
+  fetchAiRecommendations,
+  fetchCuratedLibrary,
+  fetchGrowthReferral,
+  fetchGrowthLeaderboard,
+  optInLeaderboard,
+  enableBoostMode,
   type BacktestRanking,
   type DashboardData,
   type FleetActiveSnapshot,
@@ -79,6 +84,7 @@ import {
   type ScannerSettingsPayload,
 } from "./api/client";
 import { createAppShell, type AppShellState } from "./AppShell";
+import { showAppToast } from "./shell/shellChrome";
 import {
   buildLocalBotDetail,
   isPaperTrading,
@@ -159,7 +165,7 @@ async function loadPortfolioBundle(): Promise<Partial<AppShellState>> {
 
 async function loadApiData(): Promise<Partial<AppShellState>> {
   const dashboard = await fetchDashboard();
-  const [pairs, paramsResp, backtest, logs, scannerSnap, scannerSettings, watchlist, portfolio, exportHub, diversification, exitRules, billingDash, forager, funding, postgres, taLibrary, botLimits, fleetLatest, exchangeFees, fleetActive, fleetHistory] =
+  const [pairs, paramsResp, backtest, logs, scannerSnap, scannerSettings, watchlist, portfolio, exportHub, diversification, exitRules, billingDash, forager, funding, postgres, taLibrary, botLimits, fleetLatest, exchangeFees, fleetActive, fleetHistory, aiRecs, curated, referral, leaderboard] =
     await Promise.all([
       fetchPairs(),
       fetchStrategyParams(dashboard.strategy_id),
@@ -182,6 +188,10 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
       fetchExchangeFees().catch(() => ({ tier: "retail_default", exchanges: [] })),
       fetchFleetActive().catch(() => ({ status: "idle" as const })),
       fetchFleetHistory().catch(() => ({ runs: [], total: 0 })),
+      fetchAiRecommendations().catch(() => ({ recommendations: [], disclaimer: "" })),
+      fetchCuratedLibrary().catch(() => ({ version: "1", presets: [] })),
+      fetchGrowthReferral().catch(() => ({ code: "" })),
+      fetchGrowthLeaderboard().catch(() => ({ rows: [] })),
     ]);
   const taCategories =
     taLibrary.categories.length > 0 ? taLibrary.categories : loadCachedTaLibrary();
@@ -232,12 +242,37 @@ async function loadApiData(): Promise<Partial<AppShellState>> {
   billingSettlement: null,
   showBillingSettlement: false,
   billingSettlementAsset: "BTC",
-    portfolioPlatform: { forager, funding, postgres },
+    portfolioPlatform: {
+      forager,
+      funding,
+      postgres: {
+        ...postgres,
+        experimental: true,
+        available: Boolean((postgres as { dual_write_enabled?: boolean }).dual_write_enabled),
+        status_note: "experimental",
+      },
+    },
     botLimits: syncBotLimits(
       botLimits,
       dashboard.bots ?? [],
       dashboard.dry_run ?? botLimits.paper,
     ),
+    aiRecommendations: (aiRecs.recommendations ?? []).map((row) => ({
+      strategy_id: String(row.strategy_id ?? ""),
+      score: Number(row.score ?? 0),
+      reasons: Array.isArray(row.reasons) ? row.reasons.map(String) : [],
+      requires_backtest: Boolean(row.requires_backtest),
+    })),
+    aiDisclaimer: aiRecs.disclaimer || undefined,
+    curatedPresets: (curated.presets ?? []).map((row) => ({
+      id: String(row.id ?? row.strategy_id ?? ""),
+      label: String(row.label ?? row.strategy_id ?? ""),
+      strategy_id: String(row.strategy_id ?? ""),
+      version: String(row.version ?? curated.version ?? "1"),
+    })),
+    curatedVersion: curated.version ?? "1",
+    referralCode: referral.code ?? "",
+    leaderboard: leaderboard.rows ?? [],
     ...portfolio,
     apiOnline: true,
   };
@@ -306,6 +341,12 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
     botLimits: DEFAULT_BOT_LIMITS,
     glossaryReturnView: null,
     glossaryFocusId: null,
+    aiRecommendations: null,
+    aiDisclaimer: undefined,
+    curatedPresets: null,
+    curatedVersion: "1",
+    referralCode: "",
+    leaderboard: null,
   };
 
   function botDetailContext(): BotDetailContext {
@@ -594,8 +635,9 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       if ((state.dashboard?.bots?.length ?? 0) > 0) {
         void runOhlcvWarmupWithUi({ silentIfCached: true });
       }
-    } catch {
+    } catch (err) {
       state = { ...state, apiOnline: false };
+      showAppToast(err instanceof Error ? err.message : t("app.status.api_offline"), "error");
     }
     render();
     if (state.view === "billing") {
@@ -808,8 +850,9 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
             state = { ...state, scannerSnapshot: snap, scannerLoading: false };
             render();
           })
-          .catch(() => {
+          .catch((err) => {
             state = { ...state, scannerLoading: false };
+            showAppToast(err instanceof Error ? err.message : t("empty.scanner"), "error");
             render();
           });
       },
@@ -1168,28 +1211,60 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
         window.open(path, "_blank");
       },
       onWalkForward: () => {
-        void runWalkForward().then((r) => {
-          state = { ...state, researchResults: { walk_forward: r } };
-          render();
-        });
+        state = { ...state, researchResults: { loading: true } };
+        render();
+        void runWalkForward()
+          .then((r) => {
+            state = { ...state, researchResults: { walk_forward: r } };
+            render();
+          })
+          .catch((err) => {
+            state = { ...state, researchResults: { error: String(err) } };
+            showAppToast(String(err), "error");
+            render();
+          });
       },
       onMonteCarlo: () => {
-        void runMonteCarloResearch().then((r) => {
-          state = { ...state, researchResults: { ...state.researchResults, monte_carlo: r } };
-          render();
-        });
+        state = { ...state, researchResults: { loading: true } };
+        render();
+        void runMonteCarloResearch()
+          .then((r) => {
+            state = { ...state, researchResults: { ...state.researchResults, loading: false, monte_carlo: r } };
+            render();
+          })
+          .catch((err) => {
+            state = { ...state, researchResults: { error: String(err) } };
+            showAppToast(String(err), "error");
+            render();
+          });
       },
       onPortfolioMc: () => {
-        void runPortfolioMonteCarlo().then((r) => {
-          state = { ...state, researchResults: { ...state.researchResults, portfolio_mc: r } };
-          render();
-        });
+        state = { ...state, researchResults: { loading: true } };
+        render();
+        void runPortfolioMonteCarlo()
+          .then((r) => {
+            state = { ...state, researchResults: { ...state.researchResults, loading: false, portfolio_mc: r } };
+            render();
+          })
+          .catch((err) => {
+            state = { ...state, researchResults: { error: String(err) } };
+            showAppToast(String(err), "error");
+            render();
+          });
       },
       onHeatmap: () => {
-        void fetchHyperoptHeatmap().then((r) => {
-          state = { ...state, researchResults: { ...state.researchResults, heatmap: r } };
-          render();
-        });
+        state = { ...state, researchResults: { loading: true } };
+        render();
+        void fetchHyperoptHeatmap()
+          .then((r) => {
+            state = { ...state, researchResults: { heatmap: r } };
+            render();
+          })
+          .catch((err) => {
+            state = { ...state, researchResults: { error: String(err) } };
+            showAppToast(String(err), "error");
+            render();
+          });
       },
       onBillingEnroll: () => {
         void enrollBilling("2026-06-draft-1", 0.05).then(() => refreshDashboard());
@@ -1209,11 +1284,6 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       onCopySettlement: (text) => {
         void navigator.clipboard?.writeText(text);
       },
-      onBillingLightning: () => {
-        const period = state.billingDashboard?.current_period ?? "current";
-        const amount = state.billingDashboard?.period_rollup.license_fee_usd ?? 0;
-        void createBillingLightningInvoice(period, amount);
-      },
       onBillingPaymentPoll: async (paymentId) => {
         try {
           const result = await checkBillingPayment(paymentId);
@@ -1229,6 +1299,24 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       onBillingPaymentConfirmed: () => {
         void refreshDashboard();
       },
+      onDeployStrategy: (strategyId) => {
+        state = { ...state, view: "dashboard" };
+        render();
+        void createNewBot().then(() => {
+          showAppToast(t("ai.deployed").replace("{id}", strategyId), "info");
+        });
+      },
+      onGrowthOptIn: () => {
+        const score = Number(state.portfolioOverview?.net_worth_usd ?? 0);
+        void optInLeaderboard(score)
+          .then(() => refreshDashboard())
+          .catch((err) => showAppToast(String(err), "error"));
+      },
+      onGrowthBoost: () => {
+        void enableBoostMode()
+          .then(() => refreshDashboard())
+          .catch((err) => showAppToast(String(err), "error"));
+      },
     });
   }
 
@@ -1243,6 +1331,16 @@ export function bootstrapApp(appRoot: HTMLDivElement): void {
       void refreshBacktestView();
     }
   });
+
+  window.addEventListener("trendalgo:nav", ((ev: CustomEvent<string>) => {
+    const view = ev.detail as AppShellState["view"];
+    if (view) {
+      state = { ...state, view, selectedBotId: null, botDetail: null };
+      render();
+    }
+  }) as EventListener);
+
+  window.addEventListener("trendalgo:onboarding-dismiss", () => render());
 
   const ws = connectLiveSocket((msg) => {
     if (!state.dashboard || msg.type !== "snapshot") return;

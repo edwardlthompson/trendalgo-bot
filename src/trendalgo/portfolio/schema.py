@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS notification_inbox (
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    read INTEGER NOT NULL DEFAULT 0
+    read INTEGER NOT NULL DEFAULT 0,
+    delivery_error TEXT
 );
 
 CREATE TABLE IF NOT EXISTS webhook_audit (

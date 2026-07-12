@@ -30,10 +30,10 @@ def kraken_pair(symbol: str) -> str:
     return kraken_ccxt_pair(sym)
 
 
-def _client() -> Any:
+def _client(timeout_ms: int = 10_000) -> Any:
     import ccxt
 
-    return ccxt.kraken({"enableRateLimit": True})
+    return ccxt.kraken({"enableRateLimit": True, "timeout": timeout_ms})
 
 
 def _fetch_ohlcv_rows(
@@ -43,6 +43,7 @@ def _fetch_ohlcv_rows(
     until: datetime,
     *,
     on_batch: Callable[[int, int], None] | None = None,
+    timeout_ms: int = 10_000,
 ) -> list[list[float]]:
     if since.tzinfo is None:
         since = since.replace(tzinfo=UTC)
@@ -51,7 +52,7 @@ def _fetch_ohlcv_rows(
     pair = kraken_pair(symbol)
     since_ms = int(since.timestamp() * 1000)
     until_ms = int(until.timestamp() * 1000)
-    exchange = _client()
+    exchange = _client(timeout_ms)
     rows: list[list[float]] = []
     cursor = since_ms
     while cursor <= until_ms:
@@ -77,13 +78,16 @@ def fetch_ohlcv(
     until: datetime,
     *,
     on_batch: Callable[[int, int], None] | None = None,
+    timeout_ms: int = 10_000,
 ) -> list[OhlcvPoint]:
     """Fetch OHLCV candles from Kraken between since and until (UTC)."""
     if since.tzinfo is None:
         since = since.replace(tzinfo=UTC)
     if until.tzinfo is None:
         until = until.replace(tzinfo=UTC)
-    rows = _fetch_ohlcv_rows(symbol, timeframe, since, until, on_batch=on_batch)
+    rows = _fetch_ohlcv_rows(
+        symbol, timeframe, since, until, on_batch=on_batch, timeout_ms=timeout_ms
+    )
     points: list[OhlcvPoint] = []
     seen: set[int] = set()
     for row in rows:

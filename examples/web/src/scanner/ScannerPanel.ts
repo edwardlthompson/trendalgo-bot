@@ -15,6 +15,8 @@ export type ScannerSnapshot = {
   generated_at: string | null;
   scan_id: number;
   opportunities: ScannerOpportunity[];
+  degraded?: boolean;
+  as_of?: string | null;
 };
 
 export type ScannerSettings = {
@@ -64,6 +66,18 @@ export function createScannerPanel(
   title.className = "gp-panel-title";
   title.textContent = t("scanner.title");
   section.appendChild(title);
+
+  if (snapshot?.degraded) {
+    const banner = document.createElement("p");
+    banner.className = "gp-degraded-banner";
+    banner.dataset.testid = "scanner-degraded";
+    banner.setAttribute("role", "status");
+    const asOf = snapshot.as_of ?? snapshot.generated_at ?? "";
+    banner.textContent = asOf
+      ? t("scanner.degraded_as_of").replace("{as_of}", asOf)
+      : t("scanner.degraded");
+    section.appendChild(banner);
+  }
 
   const actions = document.createElement("div");
   actions.className = "gp-panel-actions";

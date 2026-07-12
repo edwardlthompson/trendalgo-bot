@@ -13,7 +13,7 @@ export type ConfigFormCallbacks = {
 };
 
 export function createConfigForm(
-  strategyId: string,
+  strategyId: string | null,
   params: Record<string, number>,
   pairs: string[],
   callbacks: ConfigFormCallbacks,
@@ -24,16 +24,34 @@ export function createConfigForm(
   form.dataset.testid = "config-form";
   form.innerHTML = `<h2 class="gp-panel-title">${t("config.title")}</h2>`;
 
+  if (!strategyId) {
+    const empty = document.createElement("p");
+    empty.className = "gp-empty";
+    empty.dataset.testid = "config-empty";
+    empty.textContent = t("empty.config");
+    form.appendChild(empty);
+    return form;
+  }
+
   const pairField = document.createElement("label");
   pairField.className = "gp-field";
   pairField.innerHTML = `<span>${t("config.pair")}</span>`;
   const pairSelect = document.createElement("select");
   pairSelect.dataset.testid = "config-pair";
-  for (const pair of pairs) {
+  const pairOptions = pairs.length ? pairs : [];
+  if (!pairOptions.length) {
     const opt = document.createElement("option");
-    opt.value = pair;
-    opt.textContent = pair;
+    opt.value = "";
+    opt.textContent = t("empty.config_pairs");
     pairSelect.appendChild(opt);
+    pairSelect.disabled = true;
+  } else {
+    for (const pair of pairOptions) {
+      const opt = document.createElement("option");
+      opt.value = pair;
+      opt.textContent = pair;
+      pairSelect.appendChild(opt);
+    }
   }
   pairField.appendChild(pairSelect);
   form.appendChild(pairField);

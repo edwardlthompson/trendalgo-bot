@@ -4,7 +4,9 @@ export function createTimelineScrubber(
   dates: string[],
   selected: string | null,
   onSelect: (date: string) => void,
-): HTMLElement {
+): HTMLElement | null {
+  if (!dates.length) return null;
+
   const section = document.createElement("section");
   section.className = "gp-panel";
   section.dataset.testid = "timeline-scrubber";
@@ -13,7 +15,7 @@ export function createTimelineScrubber(
   input.type = "range";
   input.min = "0";
   input.max = String(Math.max(dates.length - 1, 0));
-  input.value = String(selected ? dates.indexOf(selected) : 0);
+  input.value = String(selected ? Math.max(0, dates.indexOf(selected)) : 0);
   input.className = "gp-timeline-range";
   input.setAttribute("aria-label", t("portfolio.timeline_scrub"));
   const label = document.createElement("p");

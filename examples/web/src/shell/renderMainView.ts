@@ -24,6 +24,10 @@ import type { AppView } from "./MobileNav";
 import { t } from "../i18n";
 import { DEFAULT_BOT_LIMITS, syncBotLimits } from "../bots/botGuardrails";
 import { listBotTemplates } from "../bots/botTemplatesStore";
+import { createBootSkeleton } from "./shellChrome";
+import type { Recommendation } from "../ai/RecommenderPanel";
+import type { CuratedPreset } from "../ai/CuratedLibraryPanel";
+import { createOnboardingChecklist } from "../onboarding/OnboardingChecklist";
 
 export type MainViewState = {
   view: AppView;
@@ -82,6 +86,12 @@ export type MainViewState = {
   updateStatus: string;
   donations: DonationConfig;
   canApplyUpdate?: boolean;
+  aiRecommendations?: Recommendation[] | null;
+  aiDisclaimer?: string;
+  curatedPresets?: CuratedPreset[] | null;
+  curatedVersion?: string;
+  referralCode?: string;
+  leaderboard?: Array<{ pseudonym: string; score_usd: number }> | null;
 };
 
 export type MainViewCallbacks = {
@@ -118,7 +128,6 @@ export type MainViewCallbacks = {
   onBillingSettlement: () => void;
   onBillingMarkPaid: () => void;
   onCopySettlement: (text: string) => void;
-  onBillingLightning: () => void;
   onBillingPaymentPoll: (paymentId: string) => Promise<SettlementData | null>;
   onBillingPaymentConfirmed: (data: SettlementData) => void;
   onBillingAssetChange: (asset: string) => void;
@@ -141,6 +150,9 @@ export type MainViewCallbacks = {
   onUpdateCheckChange?: (enabled: boolean) => void;
   onDisplayCurrencyChange?: (code: DisplayCurrencyCode) => void;
   onApplyUpdate?: () => void;
+  onDeployStrategy?: (strategyId: string) => void;
+  onGrowthOptIn?: () => void;
+  onGrowthBoost?: () => void;
 };
 
 export function renderMainView(
@@ -158,18 +170,40 @@ export function renderMainView(
           updateStatus: state.updateStatus,
           donations: state.donations,
           canApplyUpdate: state.canApplyUpdate,
+          risk: state.dashboard?.risk ?? null,
+          strategyId: state.dashboard?.strategy_id ?? null,
+          strategyParams: state.strategyParams,
+          pairs: state.pairs,
+          exitRules: state.exitRules,
+          recommendations: state.aiRecommendations ?? null,
+          aiDisclaimer: state.aiDisclaimer,
+          curatedPresets: state.curatedPresets ?? null,
+          curatedVersion: state.curatedVersion,
+          referralCode: state.referralCode,
+          leaderboard: state.leaderboard ?? null,
+          dryRun: state.dashboard?.dry_run ?? true,
         },
         {
           onUpdateCheckChange: callbacks.onUpdateCheckChange,
           onDisplayCurrencyChange: callbacks.onDisplayCurrencyChange,
           onApplyUpdate: callbacks.onApplyUpdate,
+          onPause: callbacks.onPause,
+          onResume: callbacks.onResume,
+          onSaveConfig: callbacks.onSaveConfig,
+          onSaveExitRules: callbacks.onSaveExitRules,
+          onDeployStrategy: callbacks.onDeployStrategy,
+          onGrowthOptIn: callbacks.onGrowthOptIn,
+          onGrowthBoost: callbacks.onGrowthBoost,
         },
       ),
     );
     return cleanup;
   }
 
-  if (!state.dashboard) return cleanup;
+  if (!state.dashboard) {
+    mount.appendChild(createBootSkeleton());
+    return cleanup;
+  }
 
   if (state.showInbox) {
     mount.appendChild(createNotificationInbox(state.inboxItems, callbacks.onCloseInbox));
@@ -185,6 +219,20 @@ export function renderMainView(
   if (state.view === "portfolio") {
     const risk = state.dashboard.risk ?? {};
     const overview = state.portfolioOverview;
+    const onboard = createOnboardingChecklist({
+      hasPortfolio: Boolean(overview?.holdings?.length),
+      hasBots: Boolean(state.dashboard.bots?.length),
+      onGoScanner: () => {
+        /* parent navigates via callback patch — use window event */
+        window.dispatchEvent(new CustomEvent("trendalgo:nav", { detail: "scanner" }));
+      },
+      onGoBots: () => window.dispatchEvent(new CustomEvent("trendalgo:nav", { detail: "dashboard" })),
+      onGoBacktest: () => window.dispatchEvent(new CustomEvent("trendalgo:nav", { detail: "backtest" })),
+      onDismiss: () => {
+        window.dispatchEvent(new CustomEvent("trendalgo:onboarding-dismiss"));
+      },
+    });
+    if (onboard) mount.appendChild(onboard);
     const panel = createPortfolioPanel(
       {
         overview,
@@ -216,6 +264,8 @@ export function renderMainView(
           max_drawdown_pct: overview?.max_drawdown_pct,
           health_score: overview?.health_score,
         },
+        snapshotDates: state.portfolioSnapshotDates,
+        selectedSnapshotDate: state.portfolioSelectedDate,
       },
       {
         onSync: callbacks.onPortfolioSync,
@@ -345,9 +395,17 @@ export function renderMainView(
     return cleanup;
   }
   if (state.view === "export") {
-    mount.appendChild(
-      createExportHub(state.exportItems, (path, id) => callbacks.onExportDownload(path, id)),
-    );
+    if (!state.exportItems.length) {
+      const empty = document.createElement("section");
+      empty.className = "gp-panel";
+      empty.dataset.testid = "export-empty";
+      empty.innerHTML = `<h2 class="gp-panel-title">${t("export.title")}</h2><p class="gp-empty">${t("empty.export")}</p>`;
+      mount.appendChild(empty);
+    } else {
+      mount.appendChild(
+        createExportHub(state.exportItems, (path, id) => callbacks.onExportDownload(path, id)),
+      );
+    }
     if (state.diversification) {
       mount.appendChild(
         createDiversificationPanel(
@@ -358,7 +416,15 @@ export function renderMainView(
     }
     return cleanup;
   }
-  if (state.view === "billing" && state.billingDashboard) {
+  if (state.view === "billing") {
+    if (!state.billingDashboard) {
+      const empty = document.createElement("section");
+      empty.className = "gp-panel";
+      empty.dataset.testid = "billing-empty";
+      empty.innerHTML = `<h2 class="gp-panel-title">${t("nav.billing")}</h2><p class="gp-empty">${t("empty.billing")}</p>`;
+      mount.appendChild(empty);
+      return cleanup;
+    }
     mount.appendChild(
       createBillingDashboard(state.billingDashboard, {
         onEnroll: callbacks.onBillingEnroll,
@@ -376,7 +442,6 @@ export function renderMainView(
       mount.appendChild(
         createSettlementPanel(state.billingSettlement, {
           onCopy: callbacks.onCopySettlement,
-          onLightning: callbacks.onBillingLightning,
           onPoll: callbacks.onBillingPaymentPoll,
           onConfirmed: callbacks.onBillingPaymentConfirmed,
           assets,
@@ -387,7 +452,15 @@ export function renderMainView(
     }
     return cleanup;
   }
-  if (state.view === "scanner" && state.scannerSettings) {
+  if (state.view === "scanner") {
+    if (!state.scannerSettings) {
+      const empty = document.createElement("section");
+      empty.className = "gp-panel";
+      empty.dataset.testid = "scanner-empty";
+      empty.innerHTML = `<h2 class="gp-panel-title">${t("nav.scanner")}</h2><p class="gp-empty">${t("empty.scanner")}</p>`;
+      mount.appendChild(empty);
+      return cleanup;
+    }
     mount.appendChild(
       createScannerPanel(
         state.scannerSnapshot,

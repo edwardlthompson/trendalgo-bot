@@ -8,8 +8,10 @@ import type { BillingDashboardData } from "./billing/BillingDashboard";
 import type { SettlementData } from "./billing/pay/SettlementPanel";
 import type { ExitRulesState } from "./config/ConfigForm";
 import type { DisplayCurrencyCode } from "./settings/displayCurrency";
+import { createThemeToggle } from "./components/ThemeToggle";
 import { createMobileNav, type AppView } from "./shell/MobileNav";
 import { renderMainView } from "./shell/renderMainView";
+import { createRiskBadge } from "./shell/shellChrome";
 
 let viewCleanup: (() => void) | undefined;
 
@@ -73,6 +75,13 @@ export type AppShellState = {
   botLimits: import("./bots/botGuardrails").BotLimits | null;
   glossaryReturnView: AppView | null;
   glossaryFocusId: string | null;
+  aiRecommendations?: import("./ai/RecommenderPanel").Recommendation[] | null;
+  aiDisclaimer?: string;
+  curatedPresets?: import("./ai/CuratedLibraryPanel").CuratedPreset[] | null;
+  curatedVersion?: string;
+  referralCode?: string;
+  leaderboard?: Array<{ pseudonym: string; score_usd: number }> | null;
+  toastMessage?: string | null;
 };
 
 export type AppShellCallbacks = {
@@ -130,10 +139,12 @@ export type AppShellCallbacks = {
   onBillingSettlement?: () => void;
   onBillingMarkPaid?: () => void;
   onCopySettlement?: (text: string) => void;
-  onBillingLightning?: () => void;
   onBillingPaymentPoll?: (paymentId: string) => Promise<import("./billing/pay/SettlementPanel").SettlementData | null>;
   onBillingPaymentConfirmed?: (data: import("./billing/pay/SettlementPanel").SettlementData) => void;
   onBillingAssetChange?: (asset: string) => void;
+  onDeployStrategy?: (strategyId: string) => void;
+  onGrowthOptIn?: () => void;
+  onGrowthBoost?: () => void;
 };
 
 export function createAppShell(
@@ -155,11 +166,13 @@ export function createAppShell(
       <div class="gp-sticky-top">
         <div class="gp-header">
           <h1 class="gp-title">${t("app.title")}</h1>
+          <div class="gp-header-actions" data-header-actions></div>
         </div>
         <div data-nav-mount></div>
       </div>
       <div class="gp-scroll-body">
       <p class="gp-body" data-testid="status">${t(statusKey)}</p>
+      <div data-risk-badge-mount></div>
       ${state.botDetailError ? `<p class="gp-error-banner" data-testid="bot-detail-error" role="alert">${state.botDetailError}</p>` : ""}
       ${
         showHomeUpdate
@@ -170,6 +183,23 @@ export function createAppShell(
       </div>
     </main>
   `;
+
+  const headerActions = root.querySelector("[data-header-actions]");
+  if (headerActions) {
+    headerActions.appendChild(createThemeToggle());
+  }
+
+  const riskMount = root.querySelector("[data-risk-badge-mount]");
+  if (riskMount && state.dashboard) {
+    const risk = state.dashboard.risk ?? {};
+    riskMount.appendChild(
+      createRiskBadge({
+        dryRun: Boolean(state.dashboard.dry_run ?? true),
+        paused: Boolean(risk.paused),
+        canTrade: Boolean(risk.can_trade),
+      }),
+    );
+  }
 
   const navMount = root.querySelector("[data-nav-mount]");
   if (navMount) {
@@ -241,10 +271,12 @@ export function createAppShell(
       onBillingSettlement: () => callbacks.onBillingSettlement?.(),
       onBillingMarkPaid: () => callbacks.onBillingMarkPaid?.(),
       onCopySettlement: (text) => callbacks.onCopySettlement?.(text),
-      onBillingLightning: () => callbacks.onBillingLightning?.(),
       onBillingPaymentPoll: (paymentId) => callbacks.onBillingPaymentPoll?.(paymentId) ?? Promise.resolve(null),
       onBillingPaymentConfirmed: (data) => callbacks.onBillingPaymentConfirmed?.(data),
       onBillingAssetChange: (asset) => callbacks.onBillingAssetChange?.(asset),
+      onDeployStrategy: (id) => callbacks.onDeployStrategy?.(id),
+      onGrowthOptIn: () => callbacks.onGrowthOptIn?.(),
+      onGrowthBoost: () => callbacks.onGrowthBoost?.(),
       onUpdateCheckChange: callbacks.onUpdateCheckChange,
       onDisplayCurrencyChange: callbacks.onDisplayCurrencyChange,
       onApplyUpdate: callbacks.onApplyUpdate,

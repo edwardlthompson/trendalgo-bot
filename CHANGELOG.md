@@ -20,6 +20,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [Unreleased]
+
+### Added
+
+- **Product recommendations P0–P3:** Settings wiring for Risk/Config/Timeline/AI/Growth; live scanner OHLCV; More-menu shell (toast, skeleton, risk badge, theme); bot tick scheduler + alert delivery; onboarding/go-live wizard; Telegram webhook ingress; hyperopt jobs; TradingView execution bridge (`TV_EXECUTION_ACK`); live arbitrage quotes
+- **Docs:** `docs/P2_BACKEND_INTEGRATIONS.md`; bot scheduler / TV / Telegram vars in `.env.example` and `LOCAL_DEV.md`
+- **Tests:** bot scheduler, notification delivery, P2 integrations, `runner_bridge` unit coverage
+
+### Fixed
+
+- **billing:** Lightning invoice endpoint returns **501** (no fake `lnbc` stub); settlement UI keeps Lightning disabled
+- **ci:** sync `uv.lock` package version to 0.4.1 so `uv sync --locked` passes
+- **e2e:** More-menu navigation helpers for Settings/Billing/Export/Debug; ignore `smoke-*.spec.ts` in default Playwright CI
+- **market:** Kraken OHLCV client timeout wiring; test mocks accept `timeout_ms`
+
+### Changed
+
+- **honesty:** Demote Lightning / Postgres / Push stubs in UI and TERMS copy until real backends ship
+
 ## [0.4.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.4.0...v0.4.1) (2026-06-30)
 
 
@@ -112,27 +131,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * **build-plan:** slim active board to summary tables ([33a7f8d](https://github.com/edwardlthompson/trendalgo-bot/commit/33a7f8dc49d229157689d13074c648118ea7096f))
 * **kb:** KB-012 v0.2.0 ship CI follow-ups ([dbf6c11](https://github.com/edwardlthompson/trendalgo-bot/commit/dbf6c11173074198b11d8ed47927c1fb0586ab32))
-
-## [Unreleased]
-
-### Fixed
-
-- **ci:** mypy overrides for pandas/ccxt/apscheduler; `require_row_id()` helper for SQLite inserts; payment verifier sat guard (R-Audit-6.1)
-- **ci:** strict mypy green — `BaseNativeStrategy` signal/exit defaults, `require_row_id()` rolled to all insert sites, pydantic mypy plugin, portfolio snapshot typing, API route state narrowing (R-Audit-6.2)
-- **ci:** gitleaks allowlist for navigation localStorage key false positive; rename storage key with legacy migration (R-Audit-6.6)
-- **ci:** pyright green — Pydantic factories, `close_series()` helper, scheduler shutdown typing, optional import config (R-Audit-6.2 follow-up)
-- **ci:** add `httpx2` dev dependency for Starlette TestClient; fix fleet OHLCV min-fetch assertion for 90% coverage ratio
-- **ci:** align Python coverage gate to 80% (measured baseline); omit CLI/icon-sync/pandas-ta optional paths from report
-- **ci:** openapi sweep skips fleet POST (covered elsewhere); fix Release Please PR sync when `pr` output empty
-- **ci:** cap fee-page fetch timeout in tests; mock fees sync in OpenAPI sweep
-
-### Added
-
-- **tests:** expand pytest coverage to ~87% (332 tests) — API OpenAPI sweep, payment verifier branches, market CCXT/Kraken mocks, portfolio snapshots/alerts, TA engine fallbacks, EVM token watcher, download CLI
-
-### Changed
-
-- **ci:** raise Python coverage gate to 86% (measured baseline)
 
 ## [0.4.0] — 2026-06-29
 

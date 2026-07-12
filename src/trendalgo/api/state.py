@@ -14,6 +14,7 @@ from trendalgo.bots.orchestrator import BotOrchestrator
 from trendalgo.dex.control import DexVenueControlStore
 from trendalgo.dex.nonce import NonceStore
 from trendalgo.growth.store import GrowthStore
+from trendalgo.notifications.telegram_ingress import TelegramIngress
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.risk.config import default_risk_limits
 from trendalgo.risk.exit_rules import ExitRules, default_exit_rules
@@ -56,6 +57,7 @@ class AppState:
     exchange_control: ExchangeControlStore
     dex_control: DexVenueControlStore
     dex_nonce_store: NonceStore
+    telegram_ingress: TelegramIngress = field(default_factory=TelegramIngress)
     debug_logs: deque[str] = field(default_factory=lambda: deque(maxlen=500))
     last_backtest: dict[str, Any] | None = None
     last_ta_sweep: dict[str, Any] | None = None
@@ -63,6 +65,7 @@ class AppState:
     scanner_scheduler: Any = None
     portfolio_scheduler: Any = None
     fee_scheduler: Any = None
+    bot_scheduler: Any = None
 
     def log(self, message: str) -> None:
         self.debug_logs.appendleft(message)

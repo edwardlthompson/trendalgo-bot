@@ -2,7 +2,7 @@ import { t } from "../i18n";
 
 export function createGrowthPanel(
   referralCode: string,
-  leaderboard: Array<{ pseudonym: string; score_usd: number }>,
+  leaderboard: Array<{ pseudonym: string; score_usd: number }> | null,
   onOptIn: () => void,
   onBoost: () => void,
 ): HTMLElement {
@@ -11,7 +11,7 @@ export function createGrowthPanel(
   section.dataset.testid = "growth-panel";
   section.innerHTML = `
     <h3>${t("growth.title")}</h3>
-    <p data-testid="referral-code">${t("growth.referral")}: <code>${referralCode}</code></p>
+    <p data-testid="referral-code">${t("growth.referral")}: <code>${referralCode || t("empty.growth_code")}</code></p>
   `;
   const optIn = document.createElement("button");
   optIn.type = "button";
@@ -28,11 +28,19 @@ export function createGrowthPanel(
   section.append(optIn, boost);
   const list = document.createElement("ul");
   list.dataset.testid = "leaderboard-list";
-  for (const row of leaderboard) {
-    const li = document.createElement("li");
-    li.textContent = `${row.pseudonym}: $${row.score_usd.toFixed(2)}`;
-    list.appendChild(li);
+  if (!leaderboard?.length) {
+    const empty = document.createElement("p");
+    empty.className = "gp-empty";
+    empty.dataset.testid = "growth-leaderboard-empty";
+    empty.textContent = t("empty.growth_leaderboard");
+    section.appendChild(empty);
+  } else {
+    for (const row of leaderboard) {
+      const li = document.createElement("li");
+      li.textContent = `${row.pseudonym}: $${row.score_usd.toFixed(2)}`;
+      list.appendChild(li);
+    }
+    section.appendChild(list);
   }
-  section.appendChild(list);
   return section;
 }

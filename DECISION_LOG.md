@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-07-12 — R-Audit-8 + product-rec ship
+- **Status:** Accepted (AGENT complete; HUMAN attorney + Pages verify open)
+- **Context:** `/audit` found main CI red (`uv.lock` still 0.2.0), Lightning stub still HTTP 200, Playwright More-menu regressions, smoke specs unsafe for default CI; large product-rec slice uncommitted.
+- **Decision:** Demote Lightning to 501; fix e2e More-nav + smoke `testIgnore`; sync lockfile; formalize R-Audit-8; ship product-rec P0–P3; close Dependabot PR #12 (TypeScript 7 major in group bump — defer); merge Release Please after CI green.
+- **Alternatives considered:** Merge PR #12 as-is (rejected — TS 6→7 is a major with no dedicated migration); keep Lightning 200 stub for UX demos (rejected — honesty conflict with UI/docs).
+- **Consequences:** Next Release Please tag absorbs feat commits; attorney H-006 still blocks public beta.
+
 ### 2026-07-11 — R-Audit-7 — Post-audit hygiene
 - **Status:** Accepted (AGENT complete; HUMAN open)
 - **Context:** `/audit` found Dependabot PR #10 breaking charts (LC 4→5), version drift (pyproject 0.2.0 / `__init__` 0.0.0-dev vs 0.4.0), local feature-gate false-fail on `.venv312`, missing legal packet, root pip not in Dependabot, doc count drift.

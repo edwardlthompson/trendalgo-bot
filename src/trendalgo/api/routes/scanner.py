@@ -23,7 +23,14 @@ def scanner_snapshot(request: Request) -> dict[str, Any]:
     state: AppState = request.app.state.trendalgo
     snap = state.scanner_store.latest_snapshot()
     if snap is None:
-        return {"version": "1", "generated_at": None, "scan_id": 0, "opportunities": []}
+        return {
+            "version": "2",
+            "generated_at": None,
+            "as_of": None,
+            "scan_id": 0,
+            "degraded": True,
+            "opportunities": [],
+        }
     return snap.to_contract_dict()
 
 
@@ -75,5 +82,5 @@ def scanner_preview(request: Request) -> dict[str, Any]:
     """Dry-run pipeline without persisting (settings form preview)."""
     store = request.app.state.trendalgo.scanner_store
     settings = store.get_settings()
-    snap = run_pipeline(settings)
+    snap = run_pipeline(settings, sample=True)
     return snap.to_contract_dict()

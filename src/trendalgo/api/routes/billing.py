@@ -19,7 +19,7 @@ from trendalgo.billing.engine import (
     seed_sample_trades,
     start_settlement_payment,
 )
-from trendalgo.billing.lightning import create_lightning_invoice
+from trendalgo.billing.lightning import LightningUnavailableError, create_lightning_invoice
 from trendalgo.billing.schema import DEFAULT_LICENSE_RATE
 from trendalgo.billing.settlement import list_available_assets
 from trendalgo.billing.statements import export_statement_json
@@ -207,7 +207,11 @@ def billing_payment_watch(request: Request) -> dict[str, Any]:
 
 @router.post("/billing/lightning-invoice")
 def billing_lightning(body: LightningBody, request: Request) -> dict[str, Any]:
-    return create_lightning_invoice(body.amount_usd, body.period)
+    del request
+    try:
+        return create_lightning_invoice(body.amount_usd, body.period)
+    except LightningUnavailableError as exc:
+        raise HTTPException(status_code=501, detail=str(exc)) from exc
 
 
 @router.post("/billing/process-trades")

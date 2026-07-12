@@ -65,6 +65,10 @@ class PortfolioStore:
                 )
             except sqlite3.OperationalError:
                 pass
+            try:
+                conn.execute("ALTER TABLE notification_inbox ADD COLUMN delivery_error TEXT")
+            except sqlite3.OperationalError:
+                pass
             row = conn.execute("SELECT 1 FROM notification_preferences WHERE id = 1").fetchone()
             if row is None:
                 conn.execute(
@@ -351,7 +355,7 @@ class PortfolioStore:
         with self._connect() as conn:
             rows = conn.execute(
                 """
-                SELECT id, category, title, body, created_at, read
+                SELECT id, category, title, body, created_at, read, delivery_error
                 FROM notification_inbox ORDER BY id DESC LIMIT ?
                 """,
                 (limit,),
@@ -364,9 +368,17 @@ class PortfolioStore:
                     "body": r["body"],
                     "created_at": r["created_at"],
                     "read": bool(r["read"]),
+                    "delivery_error": r["delivery_error"],
                 }
                 for r in rows
             ]
+
+    def set_notification_delivery_error(self, notification_id: int, error: str) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE notification_inbox SET delivery_error = ? WHERE id = ?",
+                (error, notification_id),
+            )
 
     def export_holdings_csv(self, account_id: int) -> str:
         snap = self.latest_snapshot(account_id)

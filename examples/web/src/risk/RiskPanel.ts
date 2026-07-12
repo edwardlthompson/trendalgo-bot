@@ -1,17 +1,31 @@
 import { t } from "../i18n";
 
+/** Confirm destructive risk actions before invoking API callbacks. */
+export function confirmRiskAction(message: string): boolean {
+  return window.confirm(message);
+}
+
 export type RiskPanelCallbacks = {
   onPause: () => void;
   onResume: () => void;
 };
 
 export function createRiskPanel(
-  risk: Record<string, string | number | boolean>,
+  risk: Record<string, string | number | boolean> | null,
   callbacks: RiskPanelCallbacks,
 ): HTMLElement {
   const section = document.createElement("section");
   section.className = "gp-panel";
   section.dataset.testid = "risk-panel";
+
+  if (!risk) {
+    section.innerHTML = `
+      <h2 class="gp-panel-title">${t("risk.title")}</h2>
+      <p class="gp-empty" data-testid="risk-empty">${t("empty.risk")}</p>
+    `;
+    return section;
+  }
+
   const paused = Boolean(risk.paused);
   section.innerHTML = `
     <h2 class="gp-panel-title">${t("risk.title")}</h2>
@@ -30,14 +44,18 @@ export function createRiskPanel(
   pauseBtn.textContent = t("risk.pause_all");
   pauseBtn.dataset.testid = "pause-all";
   pauseBtn.disabled = paused;
-  pauseBtn.addEventListener("click", () => callbacks.onPause());
+  pauseBtn.addEventListener("click", () => {
+    if (confirmRiskAction(t("risk.confirm_pause"))) callbacks.onPause();
+  });
   const resumeBtn = document.createElement("button");
   resumeBtn.type = "button";
   resumeBtn.className = "gp-btn-primary";
   resumeBtn.textContent = t("risk.resume");
   resumeBtn.dataset.testid = "resume-trading";
   resumeBtn.disabled = !paused;
-  resumeBtn.addEventListener("click", () => callbacks.onResume());
+  resumeBtn.addEventListener("click", () => {
+    if (confirmRiskAction(t("risk.confirm_resume"))) callbacks.onResume();
+  });
   actions.append(pauseBtn, resumeBtn);
   section.appendChild(actions);
   return section;

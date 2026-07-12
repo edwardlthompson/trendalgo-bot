@@ -97,6 +97,8 @@ class TradingViewWebhook:
             "pair": str(data.get("pair", data.get("ticker", ""))),
             "action": str(data.get("action", data.get("signal", ""))).lower(),
             "source": "tradingview",
+            "exchange_id": str(data.get("exchange_id", "")),
+            "amount_usd": data.get("amount_usd"),
         }
         self._audit(client_ip, payload, True, "accepted")
         return WebhookResult(True, "accepted", signal=signal)

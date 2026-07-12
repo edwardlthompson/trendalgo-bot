@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-from trendalgo.billing.lightning import create_lightning_invoice
+import pytest
+
+from trendalgo.billing.lightning import LightningUnavailableError, create_lightning_invoice
 from trendalgo.billing.milestones import detect_milestones
 from trendalgo.billing.scheduler import run_grace_reminders, run_monthly_statement_job
 from trendalgo.billing.settlement import settlement_info
@@ -18,8 +20,8 @@ from trendalgo.risk.manager import RiskManager
 def test_settlement_and_lightning() -> None:
     info = settlement_info(12.5, "2026-06")
     assert info["user_initiated_only"] and not info["auto_withdraw"]
-    invoice = create_lightning_invoice(10.0, "2026-06")
-    assert invoice["invoice"].startswith("lnbc")
+    with pytest.raises(LightningUnavailableError, match="not available"):
+        create_lightning_invoice(10.0, "2026-06")
 
 
 def test_milestones_and_retention(tmp_path: Path) -> None:

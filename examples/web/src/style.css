@@ -380,6 +380,105 @@ main {
   background: transparent;
 }
 
+.gp-nav-more {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.gp-nav-more-menu {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 100%;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  padding: var(--gp-space-xs);
+  border-radius: var(--gp-radius-md);
+  background: var(--gp-color-surface);
+  border: 1px solid var(--gp-color-outline-variant);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--gp-color-on-surface) 16%, transparent);
+}
+
+.gp-nav-more-menu .gp-nav-btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.gp-risk-badge {
+  display: inline-block;
+  margin-block-end: var(--gp-space-sm);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--gp-radius-sm);
+  font-size: var(--gp-text-label-large-size);
+  font-weight: 600;
+  background: var(--gp-color-secondary-container);
+  color: var(--gp-color-on-secondary-container);
+}
+
+.gp-risk-badge[data-mode="paused"] {
+  background: var(--gp-color-error-container);
+  color: var(--gp-color-on-error-container);
+}
+
+.gp-risk-badge[data-mode="live"] {
+  background: var(--gp-color-tertiary-container);
+  color: var(--gp-color-on-tertiary-container);
+}
+
+.gp-boot-skeleton {
+  padding: var(--gp-space-lg);
+  text-align: start;
+}
+
+.gp-skeleton-block {
+  height: 3rem;
+  margin-block: var(--gp-space-sm);
+  border-radius: var(--gp-radius-md);
+  background: color-mix(in srgb, var(--gp-color-on-surface) 8%, transparent);
+  animation: gp-pulse 1.2s ease-in-out infinite;
+}
+
+.gp-skeleton-short { width: 60%; }
+
+@keyframes gp-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.gp-app-toast {
+  position: fixed;
+  inset-block-end: 1rem;
+  inset-inline: 1rem;
+  z-index: 100;
+  padding: var(--gp-space-md);
+  border-radius: var(--gp-radius-md);
+  background: var(--gp-color-error-container);
+  color: var(--gp-color-on-error-container);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--gp-color-on-surface) 20%, transparent);
+}
+
+.gp-app-toast[data-kind="info"] {
+  background: var(--gp-color-secondary-container);
+  color: var(--gp-color-on-secondary-container);
+}
+
+.gp-degraded-banner {
+  padding: var(--gp-space-sm) var(--gp-space-md);
+  margin-block-end: var(--gp-space-sm);
+  border-radius: var(--gp-radius-md);
+  background: var(--gp-color-secondary-container);
+  color: var(--gp-color-on-secondary-container);
+}
+
+.gp-empty {
+  color: var(--gp-color-on-surface-variant);
+}
+
+.gp-app {
+  text-align: start;
+}
+
 .gp-nav-btn {
   flex: 1 1 auto;
   min-height: 2.75rem;

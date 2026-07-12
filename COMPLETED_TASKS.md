@@ -2,6 +2,35 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint R-Audit-8 AGENT — Post product-rec audit (2026-07-12)
+
+- **Exit:** AGENT 8.1–8.8 ✅; HUMAN 8.9–8.10 open (attorney H-006, PR #13/#12).
+
+- R-Audit-8.1 ✅ Sync `uv.lock` package version to 0.4.1 (F-001)
+- R-Audit-8.2 ✅ Lightning API → 501; drop stub client path (F-002)
+- R-Audit-8.3 ✅ Playwright More-menu nav helpers for Settings/Billing/… (F-003)
+- R-Audit-8.4 ✅ Ignore `smoke-*.spec.ts` in default Playwright CI (F-004)
+- R-Audit-8.5 ✅ BUILD_PLAN / AGENT_MEMORY formalize product-rec (F-005)
+- R-Audit-8.6 ✅ Bot scheduler + TV env docs (F-006)
+- R-Audit-8.7 ✅ `runner_bridge` unit tests (F-007)
+- R-Audit-8.8 ✅ Track `.python-version`; rename `smoke_recommendations.py` (F-008)
+- Product-rec P0–P3 slice (More menu, live scanner, bot scheduler, Telegram/TV/hyperopt) remains in working tree pending commit
+
+## Sprint R-Audit-7 — Post-audit hygiene (2026-07-12)
+
+- **Exit:** AGENT 7.1–7.7 ✅; HUMAN 7.8–7.9 ✅ (dependency graph, PR #7 → v0.4.1); attorney → R-Audit-8.9.
+
+- R-Audit-7.1 ✅ Pin lightweight-charts ~4.2.3 + Dependabot ignore majors; PR #10 triage (F-001)
+- R-Audit-7.2 ✅ Exclude `.venv*` / site-packages from file-limits (F-004)
+- R-Audit-7.3 ✅ Sync pyproject + `__init__.py` to 0.4.0; Release Please extra-files (F-003)
+- R-Audit-7.4 ✅ Sync AGENT_MEMORY / POST_DELIVERY / testing.mdc (F-005)
+- R-Audit-7.5 ✅ Generate `docs/legal-review-packet.md` (F-007)
+- R-Audit-7.6 ✅ Root pip Dependabot ecosystem (F-006)
+- R-Audit-7.7 ✅ Gitignore ephemeral artifacts; rename `trendalgo-web@0.4.0` (F-008/F-009)
+- R-Audit-7.8 ✅ Enable Dependency graph + Dependabot alerts (F-002)
+- R-Audit-7.9 ✅ Merge Release Please PR #7 → v0.4.1 (F-011)
+- R-Audit-7.10 → R-Audit-8.9 HUMAN (attorney legal packet)
+
 ## Sprint R-Audit-6 — Post v0.4.0 CI mypy (2026-07-11)
 
 - **Exit:** AGENT rows green; HUMAN merge PR #7 + attorney review carried to R-Audit-7.9/7.10.
@@ -13,18 +42,6 @@
 - R-Audit-6.7 ✅ Triage Dependabot actions/checkout bump PR #3 (F-066)
 - R-Audit-6.3 → R-Audit-7.9 HUMAN (merge Release Please PR #7)
 - R-Audit-6.4 → R-Audit-7.10 HUMAN (attorney legal packet)
-
-## Sprint R-Audit-7 AGENT — Post-audit hygiene (2026-07-11)
-
-- **Exit:** AGENT 7.1–7.7 ✅; HUMAN 7.8–7.10 open (dependency graph, PR #7, attorney).
-
-- R-Audit-7.1 ✅ Pin lightweight-charts ~4.2.3 + Dependabot ignore majors; PR #10 triage (F-001)
-- R-Audit-7.2 ✅ Exclude `.venv*` / site-packages from file-limits (F-004)
-- R-Audit-7.3 ✅ Sync pyproject + `__init__.py` to 0.4.0; Release Please extra-files (F-003)
-- R-Audit-7.4 ✅ Sync AGENT_MEMORY / POST_DELIVERY / testing.mdc (F-005)
-- R-Audit-7.5 ✅ Generate `docs/legal-review-packet.md` (F-007)
-- R-Audit-7.6 ✅ Root pip Dependabot ecosystem (F-006)
-- R-Audit-7.7 ✅ Gitignore ephemeral artifacts; rename `trendalgo-web@0.4.0` (F-008/F-009)
 
 ## Sprint S27 — TA fleet backtest + v0.4.0 (2026-06-29)
 

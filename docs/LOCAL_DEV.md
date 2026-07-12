@@ -84,9 +84,12 @@ API is exposed on **8000** (aligned with Vite proxy). Native CCXT API only — n
 | `TRENDALGO_DATA_DIR` | `./data/dev` | Isolated SQLite + fixtures |
 | `TRENDALGO_API_PORT` | `8000` | API listen port |
 | `DATABASE_URL` | `sqlite:///./data/dev/trendalgo.db` | Override via `.env` |
+| `TRENDALGO_BOT_SCHEDULER_ENABLED` | `1` | Background bot candle ticks |
+| `TRENDALGO_BOT_TICK_SECONDS` | `60` | Interval between bot ticks |
+| `TV_EXECUTION_ACK` | unset/`0` | Opt-in TradingView order bridge |
 Copy [`.env.example`](../.env.example) → `.env`. **Never commit `.env`.**
 
-Exchange keys are optional for L1 — portfolio sync returns dry-run sample data when keys are absent.
+Exchange keys are optional for L1 — portfolio sync returns dry-run sample data when keys are absent. Telegram ingress needs `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` (returns 503 when unset).
 
 ## Manual verification checklist
 

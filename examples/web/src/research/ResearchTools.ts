@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { renderHeatmapChart } from "./researchHeatmap";
 
 export type ResearchCallbacks = {
   onWalkForward: () => void;
@@ -79,13 +80,42 @@ export function createResearchToolsPanel(
   }
   section.appendChild(actions);
 
-  const hasResults = Object.keys(results).length > 0;
-  if (hasResults) {
-    const pre = document.createElement("pre");
-    pre.className = "gp-research-output";
-    pre.dataset.testid = "research-output";
-    pre.textContent = JSON.stringify(results, null, 2);
-    section.appendChild(pre);
+  if (results.error) {
+    const err = document.createElement("p");
+    err.className = "gp-error-banner";
+    err.dataset.testid = "research-error";
+    err.setAttribute("role", "alert");
+    err.textContent = String(results.error);
+    section.appendChild(err);
+    return section;
   }
+
+  const keys = Object.keys(results).filter((k) => k !== "loading");
+  if (!keys.length) {
+    if (results.loading) {
+      const loading = document.createElement("p");
+      loading.dataset.testid = "research-loading";
+      loading.textContent = t("research.running");
+      section.appendChild(loading);
+    } else {
+      const empty = document.createElement("p");
+      empty.className = "gp-empty";
+      empty.dataset.testid = "research-empty";
+      empty.textContent = t("empty.research");
+      section.appendChild(empty);
+    }
+    return section;
+  }
+
+  const heatmap = results.heatmap as { matrix?: number[][]; assets?: string[] } | undefined;
+  if (heatmap?.matrix?.length && heatmap.assets?.length) {
+    section.appendChild(renderHeatmapChart(heatmap.matrix, heatmap.assets));
+  }
+
+  const pre = document.createElement("pre");
+  pre.className = "gp-research-output";
+  pre.dataset.testid = "research-output";
+  pre.textContent = JSON.stringify(results, null, 2);
+  section.appendChild(pre);
   return section;
 }

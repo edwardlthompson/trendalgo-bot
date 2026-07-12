@@ -38,9 +38,11 @@ from trendalgo.api.routes import (
     ws,
 )
 from trendalgo.api.state import AppState, default_state
+from trendalgo.bots.scheduler import start_bot_tick_scheduler
 from trendalgo.exchanges.fee_scheduler import start_fee_scheduler
 from trendalgo.exchanges.fee_store import get_fee_store
 from trendalgo.exchanges.fee_sync import startup_fee_sync
+from trendalgo.notifications.delivery import AlertDelivery
 from trendalgo.portfolio.overview import build_portfolio_overview
 from trendalgo.portfolio.snapshots import start_portfolio_scheduler
 from trendalgo.scanner.scheduler import start_scheduler
@@ -65,7 +67,12 @@ def create_app(state: AppState | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-        scanner_sched = start_scheduler(app_state.scanner_store, app_state.log)
+        delivery = AlertDelivery(app_state.portfolio_store, on_log=app_state.log)
+        scanner_sched = start_scheduler(
+            app_state.scanner_store,
+            app_state.log,
+            delivery.deliver,
+        )
         app_state.scanner_scheduler = scanner_sched
         portfolio_sched = start_portfolio_scheduler(
             app_state.portfolio_store,
@@ -78,7 +85,11 @@ def create_app(state: AppState | None = None) -> FastAPI:
         startup_fee_sync(fee_store, on_log=app_state.log)
         fee_sched = start_fee_scheduler(fee_store, on_log=app_state.log)
         app_state.fee_scheduler = fee_sched
+        bot_sched = start_bot_tick_scheduler(app_state)
+        app_state.bot_scheduler = bot_sched
         yield
+        if bot_sched is not None:
+            await bot_sched.stop()
         _shutdown_scheduler(scanner_sched)
         _shutdown_scheduler(portfolio_sched)
         _shutdown_scheduler(fee_sched)

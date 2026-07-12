@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import os
+from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Any
 
-from trendalgo.exchanges.registry import list_trading_exchanges
+import ccxt
+
+from trendalgo.exchanges.registry import ExchangeEntry, list_trading_exchanges
 
 DISCLAIMER = "Informational only. Not a trade signal. TrendAlgo does not execute arbitrage trades."
 
@@ -22,21 +26,55 @@ _DRY_RUN_MATRIX: dict[str, dict[str, float]] = {
     "okx": {"BTC/USD": 50030.0, "ETH/USD": 3001.0, "SOL/USD": 150.1},
 }
 
-_LIVE_MATRIX: dict[str, dict[str, float]] = {
-    "kraken": {"BTC/USD": 50000.0, "ETH/USD": 3000.0},
-    "binanceus": {"BTC/USD": 50050.0, "ETH/USD": 3002.0},
-    "coinbaseadvanced": {"BTC/USD": 50025.0, "ETH/USD": 3001.0},
-    "gemini": {"BTC/USD": 50010.0, "ETH/USD": 2999.0},
-    "bitstamp": {"BTC/USD": 50020.0, "ETH/USD": 3000.5},
-    "cryptocom": {"BTC/USD": 50035.0, "ETH/USD": 3001.5},
-    "binance": {"BTC/USD": 50045.0, "ETH/USD": 3003.0},
-    "bybit": {"BTC/USD": 50015.0, "ETH/USD": 2998.5},
-    "okx": {"BTC/USD": 50030.0, "ETH/USD": 3000.0},
-}
+
+def _ticker_price(ticker: dict[str, Any]) -> float | None:
+    for field in ("last", "close", "bid", "ask"):
+        value = ticker.get(field)
+        if isinstance(value, (int, float)) and value > 0:
+            return float(value)
+    return None
 
 
-def _price_matrix(*, dry_run: bool) -> dict[str, dict[str, float]]:
-    return _DRY_RUN_MATRIX if dry_run else _LIVE_MATRIX
+def _fetch_venue(entry: ExchangeEntry, timeout_ms: int) -> dict[str, float]:
+    exchange_class = getattr(ccxt, entry.ccxt_id, None)
+    if exchange_class is None:
+        raise ValueError(f"ccxt has no exchange class: {entry.ccxt_id}")
+    client = exchange_class({"enableRateLimit": True, "timeout": timeout_ms})
+    tickers = client.fetch_tickers(list(_PAIRS))
+    return {
+        pair: price
+        for pair in _PAIRS
+        if isinstance((ticker := tickers.get(pair)), dict)
+        and (price := _ticker_price(ticker)) is not None
+    }
+
+
+def _live_price_matrix(
+    entries: list[ExchangeEntry],
+) -> tuple[dict[str, dict[str, float]], list[str], dict[str, str]]:
+    budget = max(0.01, float(os.environ.get("ARBITRAGE_TIMEOUT_SECONDS", "8")))
+    executor = ThreadPoolExecutor(max_workers=len(entries), thread_name_prefix="arb-price")
+    future_to_id = {
+        executor.submit(_fetch_venue, entry, int(budget * 1000)): entry.id for entry in entries
+    }
+    done, pending = wait(future_to_id, timeout=budget)
+    timed_out = sorted(future_to_id[future] for future in pending)
+    for future in pending:
+        future.cancel()
+    matrix: dict[str, dict[str, float]] = {}
+    failures: dict[str, str] = {}
+    for future in done:
+        venue = future_to_id[future]
+        try:
+            prices = future.result()
+            if prices:
+                matrix[venue] = prices
+            else:
+                failures[venue] = "no supported ticker prices"
+        except Exception as exc:
+            failures[venue] = str(exc)
+    executor.shutdown(wait=False, cancel_futures=True)
+    return matrix, timed_out, failures
 
 
 def detect_arbitrage_opportunities(
@@ -45,8 +83,18 @@ def detect_arbitrage_opportunities(
     min_spread_pct: float = 0.002,
 ) -> dict[str, Any]:
     """Compare sample prices across all registry trading venues for major pairs."""
-    trading_ids = {entry.id for entry in list_trading_exchanges()}
-    matrix = _price_matrix(dry_run=dry_run)
+    entries = list_trading_exchanges()
+    trading_ids = {entry.id for entry in entries}
+    timed_out: list[str] = []
+    failures: dict[str, str] = {}
+    matrix = _DRY_RUN_MATRIX
+    source = "dry_run"
+    if not dry_run:
+        matrix, timed_out, failures = _live_price_matrix(entries)
+        source = "live"
+        if not matrix:
+            matrix = _DRY_RUN_MATRIX
+            source = "dry_run_fallback"
     alerts: list[dict[str, Any]] = []
 
     for pair in _PAIRS:
@@ -85,4 +133,7 @@ def detect_arbitrage_opportunities(
         "auto_trade": False,
         "count": len(alerts),
         "venues": sorted(trading_ids),
+        "pricing_source": source,
+        "timed_out_venues": timed_out,
+        "failed_venues": failures,
     }

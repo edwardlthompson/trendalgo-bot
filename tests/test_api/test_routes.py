@@ -332,8 +332,9 @@ def test_sprint10_billing(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "ok" in recon
     lightning = c.post(
         "/api/v1/billing/lightning-invoice", json={"period": "2026-06", "amount_usd": 10}
-    ).json()
-    assert lightning["invoice"].startswith("lnbc")
+    )
+    assert lightning.status_code == 501
+    assert "not available" in lightning.json()["detail"].lower()
 
 
 def test_sprint11_ai_growth() -> None:

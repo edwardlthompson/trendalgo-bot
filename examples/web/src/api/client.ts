@@ -814,17 +814,6 @@ export async function markBillingPaid(): Promise<Record<string, unknown>> {
   return apiFetch("/billing/mark-paid", { method: "POST" });
 }
 
-export async function createBillingLightningInvoice(
-  period: string,
-  amountUsd: number,
-): Promise<Record<string, unknown>> {
-  return apiFetch("/billing/lightning-invoice", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ period, amount_usd: amountUsd }),
-  });
-}
-
 export async function fetchAiRecommendations(): Promise<{
   recommendations: Array<Record<string, unknown>>;
   disclaimer: string;

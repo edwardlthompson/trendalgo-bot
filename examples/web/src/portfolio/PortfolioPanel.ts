@@ -15,6 +15,7 @@ import { createGoalsPanel, type GoalSavePayload } from "./GoalsPanel";
 import { createRebalancePanel } from "./RebalancePanel";
 import { createPlatformPanel, type PlatformData } from "../platform/PlatformPanel";
 import { createHealthWidget, type HealthSnapshot } from "../shell/HealthWidget";
+import { createTimelineScrubber } from "./TimelineScrubber";
 
 export type PortfolioPanelState = {
   overview: PortfolioOverviewData | null;
@@ -35,6 +36,8 @@ export type PortfolioPanelState = {
   platform: PlatformData | null;
   exchangeRegistry?: ExchangeRegistryEntry[];
   healthSnapshot?: HealthSnapshot;
+  snapshotDates?: string[];
+  selectedSnapshotDate?: string | null;
 };
 
 export function createPortfolioPanel(
@@ -53,12 +56,20 @@ export function createPortfolioPanel(
   let chartCleanup = (): void => {};
 
   if (!state.overview) {
-    root.innerHTML = `<p>${t("portfolio.loading")}</p>`;
+    root.innerHTML = `<p class="gp-empty" data-testid="portfolio-empty">${t("empty.portfolio")}</p>
+      <p class="gp-body">${t("empty.portfolio_hint")}</p>`;
     return { root, cleanup: () => chartCleanup() };
   }
 
   root.appendChild(createPortfolioHero(state.overview));
   root.appendChild(createQuickActions({ ...callbacks, onSync: callbacks.onSyncAll }));
+
+  const scrubber = createTimelineScrubber(
+    state.snapshotDates ?? [],
+    state.selectedSnapshotDate ?? null,
+    callbacks.onSelectDate,
+  );
+  if (scrubber) root.appendChild(scrubber);
 
   if (state.overview.accounts?.length) {
     const accountsMount = document.createElement("div");

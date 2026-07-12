@@ -8,14 +8,24 @@ export type CuratedPreset = {
 };
 
 export function createCuratedLibraryPanel(
-  presets: CuratedPreset[],
+  presets: CuratedPreset[] | null,
   version: string,
   onDeploy: (strategyId: string) => void,
 ): HTMLElement {
   const section = document.createElement("section");
   section.className = "gp-panel";
   section.dataset.testid = "curated-library";
-  section.innerHTML = `<h3>${t("ai.curated")}</h3><p class="gp-body">v${version} — operator-maintained only</p>`;
+  section.innerHTML = `<h3>${t("ai.curated")}</h3><p class="gp-body">v${version} — ${t("ai.curated_hint")}</p>`;
+
+  if (!presets?.length) {
+    const empty = document.createElement("p");
+    empty.className = "gp-empty";
+    empty.dataset.testid = "curated-library-empty";
+    empty.textContent = t("empty.ai_curated");
+    section.appendChild(empty);
+    return section;
+  }
+
   const list = document.createElement("ul");
   for (const p of presets) {
     const li = document.createElement("li");

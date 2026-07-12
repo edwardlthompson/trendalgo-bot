@@ -39,15 +39,22 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** R-Audit-7 — Post-audit hygiene (BUILD_PLAN); human gates H-032, H-035, H-036, R-Audit-7.8–7.10 open.
+**Current sprint:** R-Audit-8 — Post product-rec audit (BUILD_PLAN); human gates H-006, H-032, H-035, H-036, R-Audit-8.9–8.10 open.
 
-**Tests:** 332 pass · ~87% coverage (2026-07-11 audit; pyproject cov-fail-under=86%).
+**Tests:** 347 pass · ~86% coverage (2026-07-12 audit; pyproject cov-fail-under=86%).
 
-**Recent:** R-Audit-7 — charts pin (lightweight-charts 4.x), version sync to 0.4.0, legal packet generate, root pip Dependabot.
+**Recent:** Product-rec P0–P3 (More menu, live scanner, bot scheduler, Telegram/TV/hyperopt); R-Audit-8 — Lightning 501, e2e More-nav, uv.lock 0.4.1, smoke CI ignore.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### R-Audit-8 (2026-07-12)
+
+- Main CI red on `uv sync --locked` (lock version drift 0.2.0→0.4.1); 0 Dependabot alerts; CodeQL green
+- AGENT: Lightning demote 501, Playwright More-menu e2e, smoke `testIgnore`, env docs, runner_bridge tests
+- HUMAN open: attorney H-006 (R-Audit-8.9), PR #13 / #12 after CI green (R-Audit-8.10)
+- Local `feature-gate` web-lint still fails under WSL1 Node; Windows `npx tsc --noEmit` preferred
 
 ### R-Audit-7 (2026-07-11)
 

@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS scanner_settings (
 CREATE TABLE IF NOT EXISTS scanner_snapshots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     generated_at TEXT NOT NULL,
+    as_of TEXT,
+    degraded INTEGER NOT NULL DEFAULT 0,
     version TEXT NOT NULL DEFAULT '1'
 );
 

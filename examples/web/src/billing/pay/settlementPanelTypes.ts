@@ -29,7 +29,6 @@ export type SettlementData = {
 
 export type SettlementCallbacks = {
   onCopy: (text: string) => void;
-  onLightning: () => void;
   onPoll?: (paymentId: string) => Promise<SettlementData | null>;
   onConfirmed?: (data: SettlementData) => void;
   assets?: SettlementAssetOption[];

@@ -19,7 +19,7 @@ Signals, backtests, and AI commentary are informational. You are solely responsi
 
 ## 4. No auto-collection
 
-TrendAlgo never holds withdrawal keys, auto-withdraws, or routes subaccount fees. Settlement is user-initiated (copy address / optional Lightning stub).
+TrendAlgo never holds withdrawal keys, auto-withdraws, or routes subaccount fees. Settlement is user-initiated (copy address / QR). Lightning invoicing is not available.
 
 ## 5. Grace period
 

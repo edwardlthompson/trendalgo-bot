@@ -86,7 +86,9 @@ export function createSettlementPanel(
   ln.type = "button";
   ln.className = "gp-btn-secondary";
   ln.textContent = t("billing.lightning");
-  ln.addEventListener("click", () => callbacks.onLightning());
+  ln.disabled = true;
+  ln.title = t("billing.lightning");
+  ln.dataset.testid = "billing-lightning-disabled";
   actions.append(copy, copyAmt, ln);
   section.appendChild(actions);
 

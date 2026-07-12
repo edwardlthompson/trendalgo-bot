@@ -21,9 +21,11 @@ class OpportunityRow(BaseModel):
 
 
 class QualifiedSnapshot(BaseModel):
-    version: str = "1"
+    version: str = "2"
     generated_at: datetime
+    as_of: datetime
     scan_id: int
+    degraded: bool = False
     opportunities: list[OpportunityRow] = Field(default_factory=list)
 
     model_config = {"extra": "forbid"}
@@ -32,6 +34,8 @@ class QualifiedSnapshot(BaseModel):
         return {
             "version": self.version,
             "generated_at": self.generated_at.isoformat(),
+            "as_of": self.as_of.isoformat(),
             "scan_id": self.scan_id,
+            "degraded": self.degraded,
             "opportunities": [o.model_dump() for o in self.opportunities],
         }

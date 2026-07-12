@@ -191,7 +191,7 @@ bash scripts/deploy-vps.sh
 | **Telegram alerts** | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | **Daily P/L hour** | `NOTIFICATION_DAILY_HOUR` (UTC; separate from midnight sync) |
 | **On-chain / DEX read** | `ETH_RPC_URL`, `BASE_RPC_URL`, `ONCHAIN_SYNC_ENABLED=1` — see [DEX roadmap](docs/DEX_ROADMAP.md) |
-| **Postgres dual-write** | Platform tab + `DATABASE_URL` postgres URI |
+| **Postgres dual-write** | Experimental — Platform tab shows status; not production-default |
 | **License / billing** | Default calculation-only; see [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md) |
 ### 10. Troubleshooting
 
@@ -219,13 +219,13 @@ bash scripts/deploy-vps.sh
 |------------|-------------|
 | **Portfolio tracking** | Read-only sync across **9 CEX venues** — [exchange roadmap](docs/EXCHANGE_ROADMAP.md) |
 | **Performance charts** | 1Y/6M/3M/1M/14D/7D/24H views vs equal-weight **top-10 crypto index** |
-| **Algo trading** | Native [CCXT runner](docs/NATIVE_TRADING.md), strategy templates, risk limits, multi-bot |
-| **Opportunity scanner** | LTS pipeline and pair forager |
+| **Algo trading** | Native [CCXT runner](docs/NATIVE_TRADING.md) (dry-run default), strategy templates, risk limits, multi-bot |
+| **Opportunity scanner** | LTS pipeline with live OHLCV (cached/degraded fallback); pair forager prototype |
 | **Research** | Backtest library, walk-forward, Monte Carlo, TA catalog |
-| **Web dashboard** | Offline-capable PWA — portfolio, bots, billing, scanner, ops |
-| **Billing** | Performance-based license; user-initiated settlement only |
-| **Alerts** | Telegram for trades, risk events, daily P/L |
-| **Platform extensions** | On-chain wallet read, Uniswap V3 LP, DEX dry-run/live — [DEX roadmap](docs/DEX_ROADMAP.md) |
+| **Web dashboard** | Offline-capable PWA shell — portfolio, bots, billing, scanner, ops (live data needs API) |
+| **Billing** | Performance-based license; user-initiated on-chain settlement; TERMS draft pending attorney (H-006) |
+| **Alerts** | Telegram for trades, risk events, daily P/L (requires H-008 tokens) |
+| **Platform extensions** | On-chain wallet read; Uniswap V3 LP; DEX dry-run; **DEX live = Base Phase 1 + human gates** — [DEX roadmap](docs/DEX_ROADMAP.md) |
 </details>
 
 <details>
@@ -252,7 +252,7 @@ flowchart LR
 | Domain logic | Python 3.12+ — `src/trendalgo/` |
 | API | FastAPI + WebSocket |
 | Web UI | Vite + TypeScript PWA — `examples/web/` |
-| Data | SQLite on VPS; optional Postgres dual-write |
+| Data | SQLite on VPS; Postgres dual-write experimental (not default) |
 | Exchanges | CCXT — 9 CEX venues; DEX via ADR-0011 plugins |
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · ADRs: [`docs/adr/`](docs/adr/) · [`DECISION_LOG.md`](DECISION_LOG.md)
 

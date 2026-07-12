@@ -1,19 +1,17 @@
-"""Optional Lightning invoice stub — user-initiated only (M7)."""
+"""Lightning invoices — unavailable until a real node is wired."""
 
 from __future__ import annotations
 
-import hashlib
 from typing import Any
 
 
+class LightningUnavailableError(RuntimeError):
+    """Raised when Lightning settlement is requested but not implemented."""
+
+
 def create_lightning_invoice(amount_usd: float, period: str) -> dict[str, Any]:
-    seed = f"{period}:{amount_usd}:lightning"
-    token = hashlib.sha256(seed.encode()).hexdigest()[:24]
-    return {
-        "invoice": f"lnbc{int(amount_usd * 100)}n1p{token}",
-        "amount_usd": round(amount_usd, 2),
-        "period": period,
-        "user_initiated_only": True,
-        "expires_in_seconds": 3600,
-        "note": "Stub invoice for UX testing — not a live Lightning node.",
-    }
+    """Refuse stub invoices — callers must surface HTTP 501."""
+    del amount_usd, period
+    raise LightningUnavailableError(
+        "Lightning invoicing is not available until a real node is wired."
+    )

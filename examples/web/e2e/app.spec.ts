@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mockTrendAlgoApi } from "./apiMock";
+import { openNavView } from "./navHelpers";
 
 test.beforeEach(async ({ page }) => {
   await mockTrendAlgoApi(page);
@@ -23,7 +24,7 @@ test("passes accessibility audit", async ({ page }) => {
 test("passes accessibility audit on settings tab", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("portfolio-panel")).toBeVisible({ timeout: 15_000 });
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await openNavView(page, "Settings");
   await expect(page.getByTestId("settings-view")).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
@@ -38,7 +39,7 @@ test("homepage visual snapshot", async ({ page }) => {
 
 test("settings tab shows preferences, theme, and about", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await openNavView(page, "Settings");
   await expect(page.getByTestId("settings-view")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(page.getByTestId("settings-panel")).toBeVisible();
@@ -50,7 +51,7 @@ test("settings tab shows preferences, theme, and about", async ({ page }) => {
 
 test("persists dark theme after reload", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await openNavView(page, "Settings");
   await page.locator("[data-settings-theme]").selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.reload();
@@ -59,7 +60,7 @@ test("persists dark theme after reload", async ({ page }) => {
 
 test("toggles update check in settings", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await openNavView(page, "Settings");
   const toggle = page.locator("[data-settings-update]");
   await expect(toggle).not.toBeChecked();
   await toggle.check();
@@ -68,11 +69,11 @@ test("toggles update check in settings", async ({ page }) => {
 
 test("changes display currency preference", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await openNavView(page, "Settings");
   await page.locator("[data-settings-currency]").selectOption("EUR");
   await expect(page.locator("[data-settings-currency]")).toHaveValue("EUR");
   await page.reload();
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await openNavView(page, "Settings");
   await expect(page.locator("[data-settings-currency]")).toHaveValue("EUR");
 });
 
@@ -105,7 +106,7 @@ test.describe("update status", () => {
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await openNavView(page, "Settings");
   await expect(page.getByTestId("about-status")).toContainText("latest version");
 
   await page.locator("[data-settings-update]").check();
@@ -147,7 +148,7 @@ test.describe("PWA apply update", () => {
     });
 
     await page.goto("/");
-    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await openNavView(page, "Settings");
     await page.locator("[data-settings-update]").check();
     await page.waitForResponse(/releases\/latest/);
     await expect(page.getByTestId("about-apply")).toBeVisible();
@@ -195,7 +196,7 @@ test.describe("home update banner", () => {
     });
 
     await page.goto("/");
-    await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await openNavView(page, "Settings");
     await page.locator("[data-settings-update]").check();
     await page.waitForResponse(/releases\/latest/);
     await expect(page.getByTestId("home-update-status")).toContainText("Update available");
