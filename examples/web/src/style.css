@@ -400,6 +400,10 @@ main {
   box-shadow: 0 4px 16px color-mix(in srgb, var(--gp-color-on-surface) 16%, transparent);
 }
 
+.gp-nav-more-menu[hidden] {
+  display: none;
+}
+
 .gp-nav-more-menu .gp-nav-btn {
   width: 100%;
   justify-content: flex-start;

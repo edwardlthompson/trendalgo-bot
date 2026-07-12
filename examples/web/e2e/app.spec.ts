@@ -42,6 +42,7 @@ test("homepage visual snapshot", async ({ page }) => {
 
 test("settings tab shows preferences, theme, and about", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
   await openNavView(page, "Settings");
   await expect(page.getByTestId("settings-view")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
@@ -54,6 +55,7 @@ test("settings tab shows preferences, theme, and about", async ({ page }) => {
 
 test("persists dark theme after reload", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
   await openNavView(page, "Settings");
   await page.locator("[data-settings-theme]").selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -63,6 +65,7 @@ test("persists dark theme after reload", async ({ page }) => {
 
 test("toggles update check in settings", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
   await openNavView(page, "Settings");
   const toggle = page.locator("[data-settings-update]");
   await expect(toggle).not.toBeChecked();
@@ -72,10 +75,12 @@ test("toggles update check in settings", async ({ page }) => {
 
 test("changes display currency preference", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
   await openNavView(page, "Settings");
   await page.locator("[data-settings-currency]").selectOption("EUR");
   await expect(page.locator("[data-settings-currency]")).toHaveValue("EUR");
   await page.reload();
+  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
   await openNavView(page, "Settings");
   await expect(page.locator("[data-settings-currency]")).toHaveValue("EUR");
 });
@@ -109,6 +114,7 @@ test.describe("update status", () => {
   });
 
   await page.goto("/");
+  await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
   await openNavView(page, "Settings");
   await expect(page.getByTestId("about-status")).toContainText("latest version");
 
@@ -151,6 +157,7 @@ test.describe("PWA apply update", () => {
     });
 
     await page.goto("/");
+    await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
     await openNavView(page, "Settings");
     await page.locator("[data-settings-update]").check();
     await page.waitForResponse(/releases\/latest/);
@@ -199,6 +206,7 @@ test.describe("home update banner", () => {
     });
 
     await page.goto("/");
+    await expect(page.getByTestId("status")).toContainText("API connected", { timeout: 15_000 });
     await openNavView(page, "Settings");
     await page.locator("[data-settings-update]").check();
     await page.waitForResponse(/releases\/latest/);
