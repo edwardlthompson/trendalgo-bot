@@ -4,6 +4,9 @@ import { mockTrendAlgoApi } from "./apiMock";
 import { openNavView } from "./navHelpers";
 
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("trendalgo.onboarding.dismissed", "1");
+  });
   await mockTrendAlgoApi(page);
 });
 
