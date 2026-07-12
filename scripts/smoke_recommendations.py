@@ -51,7 +51,9 @@ def main() -> int:
     st, _ = req("POST", "/risk/pause")
     check("risk.pause", st == 200, str(st))
     st, dash2 = req("GET", "/dashboard")
-    check("risk.paused_flag", bool(dash2.get("risk", {}).get("paused")), str(dash2.get("risk"))[:120])
+    check(
+        "risk.paused_flag", bool(dash2.get("risk", {}).get("paused")), str(dash2.get("risk"))[:120]
+    )
     st, _ = req("POST", "/risk/resume")
     check("risk.resume", st == 200, str(st))
 
@@ -71,9 +73,15 @@ def main() -> int:
     check("scanner.settings", st == 200 and "interval_minutes" in settings, str(settings)[:100])
 
     st, ai = req("GET", "/ai/recommendations")
-    check("ai.recommendations", st == 200 and "recommendations" in ai, f"n={len(ai.get('recommendations') or [])}")
+    check(
+        "ai.recommendations",
+        st == 200 and "recommendations" in ai,
+        f"n={len(ai.get('recommendations') or [])}",
+    )
     st, curated = req("GET", "/ai/curated-library")
-    check("ai.curated", st == 200 and "presets" in curated, f"n={len(curated.get('presets') or [])}")
+    check(
+        "ai.curated", st == 200 and "presets" in curated, f"n={len(curated.get('presets') or [])}"
+    )
     st, ref = req("GET", "/growth/referral")
     check("growth.referral", st == 200 and "code" in ref, str(ref)[:80])
     st, lb = req("GET", "/growth/leaderboard")
@@ -84,7 +92,9 @@ def main() -> int:
     st, hm = req("GET", "/research/hyperopt-heatmap")
     check("research.heatmap", st == 200, f"keys={list(hm)[:8] if isinstance(hm, dict) else hm}")
 
-    st, job = req("POST", "/hyperopt", {"strategy": "multi-tf-example", "pair": "BTC/USD", "epochs": 10})
+    st, job = req(
+        "POST", "/hyperopt", {"strategy": "multi-tf-example", "pair": "BTC/USD", "epochs": 10}
+    )
     job_id = job.get("job_id") or job.get("id")
     check("hyperopt.create", st in (200, 201) and bool(job_id or job.get("status")), str(job)[:140])
     if job_id:
@@ -92,7 +102,8 @@ def main() -> int:
         st, j2 = req("GET", f"/hyperopt/{job_id}")
         check(
             "hyperopt.status",
-            st == 200 and str(j2.get("status")) in {"queued", "running", "failed", "done", "complete"},
+            st == 200
+            and str(j2.get("status")) in {"queued", "running", "failed", "done", "complete"},
             str(j2)[:140],
         )
     else:
@@ -108,10 +119,16 @@ def main() -> int:
     st, arb = req("GET", "/portfolio/arbitrage")
     if st == 404:
         st, arb = req("GET", "/portfolio-advanced/arbitrage")
-    check("arbitrage", st == 200, f"status={st} keys={list(arb)[:8] if isinstance(arb, dict) else arb}")
+    check(
+        "arbitrage",
+        st == 200,
+        f"status={st} keys={list(arb)[:8] if isinstance(arb, dict) else arb}",
+    )
 
     st, bill = req("GET", "/billing/dashboard")
-    check("billing.dashboard", st == 200, f"keys={list(bill)[:8] if isinstance(bill, dict) else bill}")
+    check(
+        "billing.dashboard", st == 200, f"keys={list(bill)[:8] if isinstance(bill, dict) else bill}"
+    )
     st, ln = req("POST", "/billing/lightning-invoice", {"period": "current", "amount_usd": 1})
     check("billing.lightning", st == 501, f"status={st} body={str(ln)[:120]}")
     st, pg = req("GET", "/platform/postgres/status")
@@ -123,7 +140,11 @@ def main() -> int:
         dates = ov.get("snapshot_dates") or []
     if dates:
         st, hist = req("GET", f"/portfolio/history/{dates[0]}")
-        check("portfolio.history", st == 200, f"date={dates[0]} keys={list(hist)[:8] if isinstance(hist, dict) else hist}")
+        check(
+            "portfolio.history",
+            st == 200,
+            f"date={dates[0]} keys={list(hist)[:8] if isinstance(hist, dict) else hist}",
+        )
     else:
         st, hist = req("GET", "/portfolio/history/1970-01-01")
         check(
@@ -142,7 +163,12 @@ def main() -> int:
     try:
         with urllib.request.urlopen("http://127.0.0.1:5173/", timeout=15) as resp:
             html = resp.read().decode("utf-8", errors="replace")
-        check("vite.shell", resp.status == 200 and ("app" in html.lower() or "root" in html.lower() or "<!doctype" in html.lower()), f"len={len(html)}")
+        check(
+            "vite.shell",
+            resp.status == 200
+            and ("app" in html.lower() or "root" in html.lower() or "<!doctype" in html.lower()),
+            f"len={len(html)}",
+        )
     except Exception as exc:  # noqa: BLE001
         check("vite.shell", False, str(exc))
 

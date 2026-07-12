@@ -134,6 +134,13 @@ vi.mock("./api/client", () => ({
   fetchPlatformForager: vi.fn(() => Promise.resolve({ pairs: [] })),
   fetchPlatformFunding: vi.fn(() => Promise.resolve({ rates: [] })),
   fetchPlatformPostgres: vi.fn(() => Promise.resolve({ enabled: false })),
+  fetchAiRecommendations: vi.fn(() =>
+    Promise.resolve({ recommendations: [], disclaimer: "test" }),
+  ),
+  fetchCuratedLibrary: vi.fn(() => Promise.resolve({ version: "1", presets: [] })),
+  fetchGrowthReferral: vi.fn(() => Promise.resolve({ code: "TEST" })),
+  fetchGrowthLeaderboard: vi.fn(() => Promise.resolve({ rows: [] })),
+  fetchHyperoptHeatmap: vi.fn(() => Promise.resolve({ cells: [] })),
 }));
 
 vi.mock("./about/aboutSession", () => ({

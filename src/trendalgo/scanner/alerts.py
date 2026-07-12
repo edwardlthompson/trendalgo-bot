@@ -26,9 +26,7 @@ def emit_alerts_for_snapshot(
 ) -> None:
     for opp in snapshot.opportunities[:5]:
         tier = tier_for_opportunity(opp.uniformity, opp.gain_pct)
-        message = (
-            f"{opp.pair} uniformity={opp.uniformity:.2f} gain={opp.gain_pct * 100:.1f}%"
-        )
+        message = f"{opp.pair} uniformity={opp.uniformity:.2f} gain={opp.gain_pct * 100:.1f}%"
         store.log_alert(
             tier,
             opp.pair,

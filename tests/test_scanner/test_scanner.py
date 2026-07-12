@@ -32,9 +32,7 @@ def test_pipeline_serves_last_successful_snapshot_when_live_fetch_fails(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     store = ScannerStore(tmp_path / "scanner.db")
-    successful = run_pipeline(ScannerSettings(), sample=True).model_copy(
-        update={"degraded": False}
-    )
+    successful = run_pipeline(ScannerSettings(), sample=True).model_copy(update={"degraded": False})
     saved_id = store.save_snapshot(successful)
     monkeypatch.delenv("TRENDALGO_MARKET_SOURCE", raising=False)
 
@@ -75,7 +73,9 @@ def test_live_fetch_retries_with_ten_second_request_deadline(
         if len(attempts) < 3:
             raise TimeoutError("temporary timeout")
         return [
-            OhlcvPoint(time=1_700_000_000 + i * 300, open=100, high=102, low=99, close=101, volume=10)
+            OhlcvPoint(
+                time=1_700_000_000 + i * 300, open=100, high=102, low=99, close=101, volume=10
+            )
             for i in range(25)
         ]
 

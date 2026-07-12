@@ -31,7 +31,9 @@ class ScannerStore:
     def _init_schema(self) -> None:
         with self._connect() as conn:
             conn.executescript(SCANNER_SCHEMA)
-            columns = {str(row["name"]) for row in conn.execute("PRAGMA table_info(scanner_snapshots)")}
+            columns = {
+                str(row["name"]) for row in conn.execute("PRAGMA table_info(scanner_snapshots)")
+            }
             if "as_of" not in columns:
                 conn.execute("ALTER TABLE scanner_snapshots ADD COLUMN as_of TEXT")
             if "degraded" not in columns:
