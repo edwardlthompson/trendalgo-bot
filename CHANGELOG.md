@@ -20,6 +20,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.5.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.4.1...v0.5.0) (2026-07-12)
+
+
+### Added
+
+* product recommendations P0-P3 and R-Audit-8 hygiene ([d308468](https://github.com/edwardlthompson/trendalgo-bot/commit/d308468b6735ff2e39fd8453ae7046f21290e923))
+
+
+### Fixed
+
+* **ci:** mock AI/growth APIs in bootstrap tests; ruff format ([7253371](https://github.com/edwardlthompson/trendalgo-bot/commit/72533719e2484a37a1ad3c90b56029b8aaa2bf26))
+* **e2e:** harden fleet backtest click and dismiss onboarding ([98af29d](https://github.com/edwardlthompson/trendalgo-bot/commit/98af29d43a3cfd4051204667653f0d5faac8a73e))
+* **e2e:** narrow update mocks so API routes stay mocked ([db0bb1f](https://github.com/edwardlthompson/trendalgo-bot/commit/db0bb1fe4dfc55d5f285036a45a369a770deb9bf))
+* **web:** hide More menu when [hidden] so nav does not block clicks ([3cb19c4](https://github.com/edwardlthompson/trendalgo-bot/commit/3cb19c48457b2bbae03732fa0cf49f7e8098765c))
+
+
+### Changed
+
+* **deps:** Bump actions/stale in the github-actions group ([#14](https://github.com/edwardlthompson/trendalgo-bot/issues/14)) ([041c7f5](https://github.com/edwardlthompson/trendalgo-bot/commit/041c7f51925c095f7333f0ac1034ed823873f6ef))
+* **release:** align package-lock version to 0.4.1 ([45b8625](https://github.com/edwardlthompson/trendalgo-bot/commit/45b8625e788ee0bcfc91b1443c554dc575297547))
+* **release:** sync package versions to v0.4.1 after PR [#7](https://github.com/edwardlthompson/trendalgo-bot/issues/7) ([cebd8f4](https://github.com/edwardlthompson/trendalgo-bot/commit/cebd8f4b6df2f2e48c7e0b3cb07e3e87afc6cb6c))
+
 ## [Unreleased]
 
 ### Added
