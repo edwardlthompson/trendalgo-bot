@@ -1,10 +1,10 @@
 """Manage HUMAN_BACKLOG.md for failed /build automation attempts."""
+
 from __future__ import annotations
 
 import json
-import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 HEADER = """# Human Backlog
@@ -40,7 +40,7 @@ def add_item(root: Path, owner: str, task: str, sprint: str, reason: str) -> boo
     for row in read_rows(text):
         if f"{row[1]}|{row[3]}" == key:
             return False
-    ts = datetime.now(timezone.utc).replace(microsecond=0).date().isoformat()
+    ts = datetime.now(UTC).replace(microsecond=0).date().isoformat()
     task_cell = task.replace("|", "\\|")
     reason_cell = reason.replace("|", "\\|")[:200]
     line = f"| {ts} | {sprint} | {owner} | {task_cell} | {reason_cell} |\n"

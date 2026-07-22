@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run independent bash check scripts in parallel (local CPU). Fail if any fail."""
+
 from __future__ import annotations
 
 import os

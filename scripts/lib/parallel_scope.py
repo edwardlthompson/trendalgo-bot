@@ -1,4 +1,5 @@
 """Parse BUILD_PLAN Parallel tables, detect scope overlaps, build dispatch manifests."""
+
 from __future__ import annotations
 
 import json
@@ -25,12 +26,8 @@ TABLE_ROW = re.compile(r"^\|([^|]+)\|([^|]+)\|([^|]+)\|")
 OPEN_AGENT_SEQ = re.compile(
     r"^(?:\d+[a-z]?\.)\s+(?:🔲|⬜|\[ \])\s+\[AGENT\]\s+",
 )
-AGENT_COUNT_TARGET = re.compile(
-    r"<!--\s*agent_count_target:\s*(\d+)", re.I
-)
-PARALLEL_EXCEPTION = re.compile(
-    r"<!--\s*parallel_exception:\s*(.+?)\s*-->", re.I
-)
+AGENT_COUNT_TARGET = re.compile(r"<!--\s*agent_count_target:\s*(\d+)", re.I)
+PARALLEL_EXCEPTION = re.compile(r"<!--\s*parallel_exception:\s*(.+?)\s*-->", re.I)
 
 
 @dataclass
@@ -74,11 +71,11 @@ def find_overlaps(scopes: list[str]) -> list[str]:
 
 def slugify(text: str) -> str:
     text = text.lower().strip()
-    allowed = string.ascii_lowercase + string.digits + "-"
+    allowed = set(string.ascii_lowercase + string.digits + "-")
     out: list[str] = []
     for ch in text.replace("/", "-").replace("_", "-"):
-        if ch.isalnum():
-            out.append(ch.lower())
+        if ch in allowed:
+            out.append(ch)
         elif ch in " -":
             if out and out[-1] != "-":
                 out.append("-")
@@ -187,10 +184,7 @@ def parse_sprint_blocks(text: str) -> list[SprintBlock]:
             i += 1
             while i < len(lines) and not (
                 SPRINT_HEADER.match(lines[i])
-                or (
-                    lines[i].startswith("## ")
-                    and not lines[i].startswith("### ")
-                )
+                or (lines[i].startswith("## ") and not lines[i].startswith("### "))
             ):
                 block_lines.append(lines[i])
                 i += 1
@@ -317,9 +311,7 @@ def build_manifest(
     if require_sequential_clear:
         open_seq = sequential_agent_open(text)
         if open_seq:
-            blockers.append(
-                f"{len(open_seq)} open [AGENT] Sequential item(s) before Parallel lane"
-            )
+            blockers.append(f"{len(open_seq)} open [AGENT] Sequential item(s) before Parallel lane")
 
     agents: list[dict] = []
     labels = "ABCDEFGH"
@@ -354,9 +346,7 @@ def build_manifest(
                 scope = substitute_placeholders(row.scope, ctx)
             except ValueError:
                 scope = row.scope.replace("{feature}", "*")
-            suggestions.append(
-                {"task": row.task, "owner": row.owner, "scope": scope}
-            )
+            suggestions.append({"task": row.task, "owner": row.owner, "scope": scope})
 
     scopes = [a["scope"] for a in agents]
     overlaps = find_overlaps(scopes)
@@ -367,8 +357,7 @@ def build_manifest(
     split_hint: str | None = None
     if agent_count > MAX_AGENTS:
         split_hint = (
-            f"Split sprint into sub-sprints; table implies {agent_count} agents "
-            f"(max {MAX_AGENTS})"
+            f"Split sprint into sub-sprints; table implies {agent_count} agents (max {MAX_AGENTS})"
         )
         blockers.append(split_hint)
         agents = agents[:MAX_AGENTS]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run repo scripts without putting .sh paths in agent shell command strings."""
+
 from __future__ import annotations
 
 import argparse

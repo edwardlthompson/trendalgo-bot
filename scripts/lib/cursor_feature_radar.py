@@ -1,4 +1,5 @@
 """Weekly Cursor feature radar — soft-fail doc diff vs registry."""
+
 from __future__ import annotations
 
 import hashlib
@@ -7,7 +8,7 @@ import re
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 LLMS_URL = "https://cursor.com/llms.txt"
@@ -16,7 +17,9 @@ URL_RE = re.compile(r"https://cursor\.com/docs/[^\s)]+")
 
 def fetch_llms() -> tuple[str | None, str | None]:
     try:
-        req = urllib.request.Request(LLMS_URL, headers={"User-Agent": "agent-project-bootstrap-radar/1.0"})
+        req = urllib.request.Request(
+            LLMS_URL, headers={"User-Agent": "agent-project-bootstrap-radar/1.0"}
+        )
         with urllib.request.urlopen(req, timeout=30) as resp:
             text = resp.read().decode("utf-8", errors="replace")
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -62,7 +65,7 @@ def read_backlog(root: Path) -> set[str]:
 
 def append_backlog(root: Path, url: str, score: int) -> None:
     path = root / "CURSOR_RADAR_BACKLOG.md"
-    line = f"- [{score}] {url} ({datetime.now(timezone.utc).date().isoformat()})\n"
+    line = f"- [{score}] {url} ({datetime.now(UTC).date().isoformat()})\n"
     if path.is_file() and url in path.read_text(encoding="utf-8"):
         return
     with path.open("a", encoding="utf-8") as fh:
@@ -72,7 +75,7 @@ def append_backlog(root: Path, url: str, score: int) -> None:
 
 
 def run(root: Path) -> int:
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     tier = "foss"
     sel = root / ".cursor/stack-selection.json"
     if sel.is_file():
@@ -89,14 +92,18 @@ def run(root: Path) -> int:
     report_lines = [
         "# Cursor Feature Radar Report",
         "",
-        f"Generated: {datetime.now(timezone.utc).replace(microsecond=0).isoformat()}",
+        f"Generated: {datetime.now(UTC).replace(microsecond=0).isoformat()}",
         f"Distribution tier: {tier}",
         "",
     ]
 
     if text is None:
-        report_lines.extend(["status: fetch_failed", "", "Network or parse failure — CI continues."])
-        (root / "CURSOR_RADAR_REPORT.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
+        report_lines.extend(
+            ["status: fetch_failed", "", "Network or parse failure — CI continues."]
+        )
+        (root / "CURSOR_RADAR_REPORT.md").write_text(
+            "\n".join(report_lines) + "\n", encoding="utf-8"
+        )
         print("Cursor feature radar: fetch_failed (exit 0)")
         return 0
 
@@ -133,7 +140,11 @@ def run(root: Path) -> int:
         if url in backlog_urls:
             continue
         entry_status = next(
-            (e.get("template_status") for e in registry.get("entries", []) if e.get("doc_url") == url),
+            (
+                e.get("template_status")
+                for e in registry.get("entries", [])
+                if e.get("doc_url") == url
+            ),
             None,
         )
         if entry_status in ("shipped", "rejected"):
@@ -143,7 +154,7 @@ def run(root: Path) -> int:
         if s >= 7:
             append_backlog(root, url, s)
 
-    report_lines.append(f"status: ok")
+    report_lines.append("status: ok")
     report_lines.append(f"live_doc_urls: {len(live_urls)}")
     report_lines.append(f"new_urls: {len(new_urls)}")
     report_lines.append(f"removed_urls: {len(removed)}")

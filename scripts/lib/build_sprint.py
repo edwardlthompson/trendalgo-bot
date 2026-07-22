@@ -1,4 +1,5 @@
 """Parse BUILD_PLAN for autonomous /build sprint execution."""
+
 from __future__ import annotations
 
 import json
@@ -12,17 +13,13 @@ OPEN = r"(?:🔲|⬜|\[ \])"
 ROW_NUMBERED = re.compile(
     rf"^(?P<num>\d+[a-z]?)\.\s+{OPEN}\s+\[(?P<owner>AGENT|AUTO|HUMAN|ADB)\]\s+(?P<task>.+)$"
 )
-ROW_BULLET = re.compile(
-    rf"^- {OPEN} \[(?P<owner>AGENT|AUTO|HUMAN|ADB)\]\s+(?P<task>.+)$"
-)
+ROW_BULLET = re.compile(rf"^- {OPEN} \[(?P<owner>AGENT|AUTO|HUMAN|ADB)\]\s+(?P<task>.+)$")
 SPRINT_HEADER = re.compile(r"^###\s+Sprint\s+", re.I)
 PARALLEL_HEADER = re.compile(r"^#{3,4}\s+.*Parallel", re.I)
 SEQUENTIAL_HEADER = re.compile(r"^#{3,4}\s+.*Sequential", re.I)
 HUMAN_GROUP_HEADER = re.compile(r"^#{3,4}\s+.*Human.*after automation", re.I)
 TABLE_ROW = re.compile(r"^\|([^|]+)\|([^|]+)\|([^|]+)\|")
-PARALLEL_EXCEPTION = re.compile(
-    r"<!--\s*parallel_exception:\s*(.+?)\s*-->", re.I
-)
+PARALLEL_EXCEPTION = re.compile(r"<!--\s*parallel_exception:\s*(.+?)\s*-->", re.I)
 
 
 @dataclass
@@ -169,10 +166,7 @@ def parse_sprint_blocks(text: str) -> list[tuple[str, list[str]]]:
             i += 1
             while i < len(lines) and not (
                 SPRINT_HEADER.match(lines[i])
-                or (
-                    lines[i].startswith("## ")
-                    and not lines[i].startswith("### ")
-                )
+                or (lines[i].startswith("## ") and not lines[i].startswith("### "))
             ):
                 block_lines.append(lines[i])
                 i += 1
@@ -291,26 +285,16 @@ def resolve_sprint(
 
     open_aa = len(open_aa_pre) + len(open_aa_post)
     parallel_pending = (
-        not parallel_skipped
-        and not parallel_done
-        and count_parallel_agents(block_lines) > 0
+        not parallel_skipped and not parallel_done and count_parallel_agents(block_lines) > 0
     )
     if parallel_pending and not open_aa_pre:
         open_aa += 1
 
-    pending_ha = [
-        r for r in open_ha if f"{r.sprint}|{r.task}" not in backlog_keys
-    ]
+    pending_ha = [r for r in open_ha if f"{r.sprint}|{r.task}" not in backlog_keys]
 
-    agent_auto_complete = (
-        open_aa == 0
-        and not parallel_pending
-        and not pending_ha
-    )
+    agent_auto_complete = open_aa == 0 and not parallel_pending and not pending_ha
 
-    backlogged_ha = [
-        r for r in open_ha if f"{r.sprint}|{r.task}" in backlog_keys
-    ]
+    backlogged_ha = [r for r in open_ha if f"{r.sprint}|{r.task}" in backlog_keys]
 
     return {
         "sprint": title,
@@ -323,8 +307,7 @@ def resolve_sprint(
         "next_row": next_row,
         "action": action,
         "backlogged_human_adb": [
-            {"owner": r.owner, "task": r.task, "sprint": r.sprint}
-            for r in backlogged_ha
+            {"owner": r.owner, "task": r.task, "sprint": r.sprint} for r in backlogged_ha
         ],
     }
 
@@ -343,11 +326,8 @@ def build_status(root: Path, *, lane: str = "auto") -> dict:
             return child_status
 
     maint_auto, maint_human = parse_maintenance_rows(text)
-    maint_open = maint_auto + maint_human
     maint_aa_next = next_actionable_row(maint_auto, backlog_keys)
-    maint_human_next = (
-        next_actionable_row(maint_human, backlog_keys) if not maint_aa_next else None
-    )
+    maint_human_next = next_actionable_row(maint_human, backlog_keys) if not maint_aa_next else None
     maint_next = maint_aa_next or maint_human_next
     if maint_next:
         act = row_action(maint_next.owner) if maint_next.owner in ("HUMAN", "ADB") else "execute"

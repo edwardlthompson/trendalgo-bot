@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Sync Cursor feature manifest, tier-filtered help, and compliance rule activation."""
+
 from __future__ import annotations
 
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 FOSS_ENABLED = [
@@ -167,9 +168,7 @@ def sync(root: Path, tier: str, copy_commercial: bool, patch_init: bool = False)
     stack_sel.setdefault("stack", stack_sel.get("stack", "multi"))
     stack_sel["cursor_features_enabled"] = enabled
     stack_sel["cursor_features_hidden"] = hidden
-    stack_sel["cursor_features_synced_at"] = (
-        datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    )
+    stack_sel["cursor_features_synced_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
     write_json(cursor_dir / "stack-selection.json", stack_sel)
 
     manifest = {
@@ -204,7 +203,11 @@ def main() -> int:
     parser.add_argument("--root", default=".")
     parser.add_argument("--tier", default="foss", choices=("foss", "commercial"))
     parser.add_argument("--copy-commercial", action="store_true")
-    parser.add_argument("--patch-init", action="store_true", help="Rewrite INITIALIZATION_PROMPT Distribution section")
+    parser.add_argument(
+        "--patch-init",
+        action="store_true",
+        help="Rewrite INITIALIZATION_PROMPT Distribution section",
+    )
     args = parser.parse_args()
     root = Path(args.root).resolve()
     sync(root, args.tier, args.copy_commercial, patch_init=args.patch_init)

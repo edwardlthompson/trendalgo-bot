@@ -1,4 +1,5 @@
 """Attempt BUILD_PLAN HUMAN/ADB rows via scripts and automation."""
+
 from __future__ import annotations
 
 import json
@@ -7,7 +8,7 @@ import re
 import shutil
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -147,7 +148,7 @@ def append_decision_log(root: Path, note: str) -> None:
     path = root / "DECISION_LOG.md"
     if not path.exists():
         path.write_text("# Decision Log\n\n", encoding="utf-8")
-    ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    ts = datetime.now(UTC).replace(microsecond=0).isoformat()
     text = path.read_text(encoding="utf-8")
     entry = f"\n## Autonomous /build approval ({ts})\n\n- {note}\n"
     path.write_text(text.rstrip() + entry + "\n", encoding="utf-8")
@@ -181,7 +182,9 @@ def automate_init_placeholders(root: Path, cfg: dict) -> AttemptResult:
     ]
     code, tail = run_cmd(root, cmd)
     if code == 0:
-        return AttemptResult(0, "init-project", "Filled INITIALIZATION_PROMPT via init-project", False)
+        return AttemptResult(
+            0, "init-project", "Filled INITIALIZATION_PROMPT via init-project", False
+        )
     return AttemptResult(1, "init-project", tail or f"init-project exit {code}", True)
 
 
@@ -207,7 +210,9 @@ def automate_stack_config(root: Path, cfg: dict) -> AttemptResult:
         ["python3", str(sync), str(root), repo, donation],
     )
     if code == 0:
-        return AttemptResult(0, "sync-stack-config", "Stack-local config synced from examples", False)
+        return AttemptResult(
+            0, "sync-stack-config", "Stack-local config synced from examples", False
+        )
     return AttemptResult(1, "sync-stack-config", tail or f"exit {code}", True)
 
 
@@ -238,7 +243,9 @@ def automate_product_smoke(root: Path, cfg: dict) -> AttemptResult:
 def automate_release_tag(root: Path, _cfg: dict) -> AttemptResult:
     code, out = run_cmd(root, ["gh", "release", "list", "--limit", "1"])
     if code != 0:
-        return AttemptResult(1, "release-tag", "gh release list failed; product judgment required", True)
+        return AttemptResult(
+            1, "release-tag", "gh release list failed; product judgment required", True
+        )
     if out.strip():
         return AttemptResult(0, "release-tag", "Release exists; autonomous ack only", False)
     return AttemptResult(1, "release-tag", "No release; human product approval required", True)
@@ -250,7 +257,9 @@ def automate_adb_instrumented(root: Path, _cfg: dict) -> AttemptResult:
         if verify.is_file():
             code, tail = run_cmd(root, ["bash", str(verify)])
             if code == 0:
-                return AttemptResult(0, "verify-android-insets", "ADB instrumented tests passed", False)
+                return AttemptResult(
+                    0, "verify-android-insets", "ADB instrumented tests passed", False
+                )
             return AttemptResult(1, "verify-android-insets", tail or f"exit {code}", True)
         gradle = root / "examples/android/gradlew"
         if gradle.is_file():
@@ -260,7 +269,9 @@ def automate_adb_instrumented(root: Path, _cfg: dict) -> AttemptResult:
                 cwd=root / "examples/android",
             )
             if code == 0:
-                return AttemptResult(0, "connectedDebugAndroidTest", "connectedDebugAndroidTest passed", False)
+                return AttemptResult(
+                    0, "connectedDebugAndroidTest", "connectedDebugAndroidTest passed", False
+                )
             return AttemptResult(1, "connectedDebugAndroidTest", tail or f"exit {code}", True)
     gradle = root / "examples/android/gradlew"
     if gradle.is_file():
@@ -445,20 +456,44 @@ def automate_automerge_token(root: Path, _cfg: dict) -> AttemptResult:
 
 HUMAN_RULES: list[tuple[re.Pattern[str], str, object]] = [
     (re.compile(r"Use this template", re.I), "human", automate_use_template),
-    (re.compile(r"Fill placeholders.*INITIALIZATION_PROMPT", re.I), "human", automate_init_placeholders),
-    (re.compile(r"Pick Cursor mode", re.I), "human", lambda r, c: automate_informational(r, c, "cursor-mode")),
-    (re.compile(r"Bookmark.*BATCH_COMMANDS", re.I), "human", lambda r, c: automate_informational(r, c, "bookmark-commands")),
+    (
+        re.compile(r"Fill placeholders.*INITIALIZATION_PROMPT", re.I),
+        "human",
+        automate_init_placeholders,
+    ),
+    (
+        re.compile(r"Pick Cursor mode", re.I),
+        "human",
+        lambda r, c: automate_informational(r, c, "cursor-mode"),
+    ),
+    (
+        re.compile(r"Bookmark.*BATCH_COMMANDS", re.I),
+        "human",
+        lambda r, c: automate_informational(r, c, "bookmark-commands"),
+    ),
     (re.compile(r"Fill stack-local config|app-update\.json", re.I), "human", automate_stack_config),
     (re.compile(r"Approve ADR|Approve.*BUILD_PLAN", re.I), "human", automate_approve_adr),
     (re.compile(r"Optional product smoke", re.I), "human", automate_product_smoke),
     (re.compile(r"Approve release tag", re.I), "human", automate_release_tag),
-    (re.compile(r"required status checks|branch protection|setup-github-repo", re.I), "human", automate_branch_protection),
-    (re.compile(r"Dependabot PR|Review/merge Dependabot|TypeScript \d+ major", re.I), "human", automate_dependabot_major_merge),
+    (
+        re.compile(r"required status checks|branch protection|setup-github-repo", re.I),
+        "human",
+        automate_branch_protection,
+    ),
+    (
+        re.compile(r"Dependabot PR|Review/merge Dependabot|TypeScript \d+ major", re.I),
+        "human",
+        automate_dependabot_major_merge,
+    ),
     (re.compile(r"AUTOMERGE_TOKEN", re.I), "human", automate_automerge_token),
 ]
 
 ADB_RULES: list[tuple[re.Pattern[str], str, object]] = [
-    (re.compile(r"instrumented|connectedDebugAndroidTest|\badb\b", re.I), "adb", automate_adb_instrumented),
+    (
+        re.compile(r"instrumented|connectedDebugAndroidTest|\badb\b", re.I),
+        "adb",
+        automate_adb_instrumented,
+    ),
     (re.compile(r"F-Droid|device dry-run", re.I), "adb", automate_fdroid_dry_run),
     (re.compile(r"emulator|Android SDK", re.I), "adb", automate_android_sdk_smoke),
 ]

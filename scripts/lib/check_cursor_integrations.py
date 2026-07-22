@@ -1,4 +1,5 @@
 """Validate Cursor FOSS integration artifacts and tier compliance."""
+
 from __future__ import annotations
 
 import json
@@ -117,7 +118,9 @@ def validate_tier(root: Path, tier: str) -> list[str]:
     if tier == "commercial":
         for rel in (".cursor/BUGBOT.md", ".cursor/environment.json"):
             if not (root / rel).is_file():
-                warnings.append(f"commercial tier: {rel} not activated (copy from *.commercial.example)")
+                warnings.append(
+                    f"commercial tier: {rel} not activated (copy from *.commercial.example)"
+                )
 
     sel = root / ".cursor/stack-selection.json"
     manifest = root / ".cursor/cursor-features.json"

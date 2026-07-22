@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """CLI for parallel scope checks and dispatch manifests."""
+
 from __future__ import annotations
 
 import argparse
@@ -11,11 +12,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
 from parallel_scope import (  # noqa: E402
+    agent_rows,
     build_manifest,
     check_build_plan_parallel,
     find_overlaps,
     parse_parallel_rows,
-    agent_rows,
 )
 
 
@@ -60,9 +61,7 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     else:
         n = manifest["agent_count"]
         if manifest["agents"]:
-            parts = ", ".join(
-                f"{a['id']}: {a['task']}" for a in manifest["agents"]
-            )
+            parts = ", ".join(f"{a['id']}: {a['task']}" for a in manifest["agents"])
             print(f"Parallel dispatch: {n} agent(s) ({parts})")
         else:
             print("Parallel dispatch: 0 agents")
