@@ -3,7 +3,7 @@
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-## Current sprint: **R-Audit-8 — Post product-rec audit (2026-07-12)**
+## Current sprint: **Post-alignment carry-forward (2026-07-21)**
 
 | Marker | State |
 |--------|-------|
@@ -16,7 +16,15 @@
 
 **Human gates** (H-030–H-036, go-live, legal): [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) — not duplicated here.
 
-**Audit:** `CODE_REVIEW.md` (ephemeral, gitignored) · 2026-07-12
+> **R-Bootstrap-Align** archived in COMPLETED_TASKS.md (FOSS surface → upstream v0.15.1).
+
+**Alignment:** [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) · product audit history: R-Audit-8 (2026-07-12)
+
+### Human & device (after automation)
+
+| ID | Task | Owner | Status |
+|----|------|-------|--------|
+| R-BA.H1 | Review alignment doc (`docs/BOOTSTRAP_ALIGNMENT.md`) | `[HUMAN]` | 🔲 |
 
 ---
 
@@ -91,6 +99,7 @@ Full task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 
 | Sprint | Closed | Archive |
 |--------|--------|---------|
+| R-Bootstrap-Align | 2026-07-21 | FOSS agent surface → upstream v0.15.1 (see COMPLETED_TASKS) |
 | S27 | 2026-06-29 | TA fleet backtest + v0.4.0 Settings/billing (see COMPLETED_TASKS) |
 | S25–S26 | 2026-06-26 | TA cache epic + file-limit gate alignment (see COMPLETED_TASKS) |
 | DEX S21–S24 | 2026-06-26 | Plugin engine → dry-run → Base live (see COMPLETED_TASKS) |

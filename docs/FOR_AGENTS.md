@@ -26,6 +26,8 @@ Do not debug in Plan Mode. Do not edit in Ask Mode.
 5. Sequential before Parallel in BUILD_PLAN
 6. Respect `.cursorignore` — do not read `node_modules/`, `dist/`, or other ephemeral paths
 
+File size budgets (TrendAlgo): **250 lines** views, **300 lines** web UI adapters, **150 lines** logic — enforced by scripts/check-file-limits.sh. Template guide: [docs/FILE_SIZE_GUIDE.md](FILE_SIZE_GUIDE.md).
+
 ## BUILD_PLAN status markers
 
 Every task row in `BUILD_PLAN.md` and checklist in module docs, PR template, and feature specs uses emoji status (readable in source and Preview):
@@ -33,7 +35,7 @@ Every task row in `BUILD_PLAN.md` and checklist in module docs, PR template, and
 | Marker | State |
 |--------|-------|
 | 🔲 | Open — default for new tasks |
-| ✅ | Done — swap 🔲 when complete; run `/cleanup` or `python scripts/archive-build-plan-sprint.py` |
+| ✅ | Done — swap 🔲 when complete; archive sprint to `COMPLETED_TASKS.md` |
 | ❌ | Blocked — swap 🔲 and append reason |
 
 **Format:** `🔲 Description` (or `🔲 [OWNER] Description` on BUILD_PLAN) · do not use `- [ ]` GitHub checkboxes.
@@ -45,12 +47,43 @@ Every task row in `BUILD_PLAN.md` and checklist in module docs, PR template, and
 - Reclaim disk: `bash scripts/purge-ephemeral.sh` (dry-run); `--apply` removes gitignored untracked files only
 - Stage explicit paths; avoid blind `git add -A`
 
-## Parallel Guardrails
+## Parallel-first planning and dispatch
 
-- Branch: `feature/agent-[task-name]` per agent, separate worktree
-- No overlapping file scopes (run `scripts/check-parallel-scope.sh` before dispatch)
+**Planning (Plan Mode):** Include `### Parallelization` with decomposition table and `agent_count_target`. Run `check-build-plan-parallel.sh` before human approval. See BUILD_PLAN decomposition checklist.
+
+**Execution (orchestrator):**
+
+```bash
+bash scripts/plan-parallel-dispatch.sh --require-sequential-clear --json
+bash scripts/check-parallel-scope.sh
+```
+
+Write manifest to `.cursor/parallel-scope-lock.json`. Run `/scope` for auto Task dispatch when `agent_count >= 2`.
+
+- Branch: `feature/agent-[task-name]` per agent; optional `scripts/setup-agent-worktrees.sh`
 - Shared schema/types: sequential agent only first
+- Parallel agents **never** edit `BUILD_PLAN.md` or composition roots
+- Subagents report: `bash scripts/agent-progress.sh set-step --name tests|view|e2e`
 - Scope map: `docs/PARALLEL_AGENT_SCOPES.md`
+
+## Autonomous `/build` — HUMAN/ADB automation
+
+`/build` runs all `[AGENT]`/`[AUTO]` and Parallel work first, then attempts the grouped **Human & device (after automation)** section via `scripts/attempt-build-plan-row.sh`. Never halts on human labels.
+
+| Phase | Action |
+|-------|--------|
+| Sequential + Parallel + post-merge AGENT | `execute` or `parallel_dispatch` |
+| Human & device (after automation) | `automate_human` / `automate_adb` |
+| Automation exit 0 | Mark row ✅ in BUILD_PLAN |
+| Automation exit 1 | `scripts/build-backlog.sh add` → continue (row stays open in human group) |
+
+Place `[HUMAN]`/`[ADB]` rows only under `#### Human & device (after automation)` (or `### Human (after automation)` in maintenance) so humans can address them as one block after automation.
+
+Config env vars (optional): `BUILD_STACK`, `BUILD_PROJECT_NAME`, `BUILD_PURPOSE`, `GITHUB_REPO`, `BUILD_DONATION_URL`. Fallback: `.cursor/stack-selection.json`, `gh repo view`, folder name.
+
+Status: `bash scripts/build-sprint-status.sh --json --lane child` → `next_row.action` is `automate_human`, `automate_adb`, `execute`, or `parallel_dispatch`. Rows already in `HUMAN_BACKLOG.md` are skipped until a human clears them.
+
+Disable autonomous ADR approval in child repos: add `<!-- no-auto-approve -->` to BUILD_PLAN.
 
 ## 3-Strike Rule
 

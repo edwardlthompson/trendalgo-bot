@@ -10,16 +10,25 @@ For template-only usage, see upstream [agent-project-bootstrap](https://github.c
 
 ## Which repo mode are you in?
 
+- **Child / product (this repo):** TrendAlgo Bot — Python + Web PWA. Read `docs/CURSOR_MODES.md`, then `AGENTS.md` + `BUILD_PLAN.md` Sequential. Template alignment: [`BOOTSTRAP_ALIGNMENT.md`](BOOTSTRAP_ALIGNMENT.md).
 - **Bootstrap:** New project from **Use this template** → read `docs/CURSOR_MODES.md`, then `docs/INITIALIZATION_PROMPT.md`
 - **Reference:** Existing project using this repo as rules reference → read `docs/CURSOR_MODES.md`, then `docs/FOR_AGENTS.md`
+
+## How agents should work in this repo
+
+1. Read this file → pick Cursor mode (`docs/CURSOR_MODES.md`) → open `BUILD_PLAN.md` **Sequential** first
+2. Prefer local compute (`.cursor/rules/local-compute.mdc`) over Cloud Agents
+3. After each `[AGENT]` feature step: `bash scripts/watch-agent-gates.sh --once --autofix`
+4. Human/legal/go-live gates live in [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) / root pointer — never fake-approve hard gates
+5. Conventional Commits; no push without `[HUMAN]` / `/push` / `/ship`
 
 ## Cursor modes (Plan / Agent / Debug / Ask)
 
 See [`docs/CURSOR_MODES.md`](CURSOR_MODES.md) — pick the Cursor mode before editing code.
 
-## Agent shortcuts (Bootstrap)
+## Agent shortcuts
 
-Type **`/`** in Cursor Agent chat for shortcut workflows. Start with **[docs/help/BATCH_COMMANDS.md](help/BATCH_COMMANDS.md)** — try `/bootstrap` on a new project or `/verify` before merge.
+Type **`/`** in Cursor Agent chat for shortcut workflows. Start with **[docs/help/BATCH_COMMANDS.md](help/BATCH_COMMANDS.md)** — try `/verify` before merge or `/maintain` for weekly hygiene.
 
 ## Bootstrap Read Order
 

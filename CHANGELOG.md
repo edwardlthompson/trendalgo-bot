@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [Unreleased]
+
+### Added
+
+- **bootstrap:** Align FOSS agent surface with agent-project-bootstrap v0.15.1 — Cursor hooks/skills/agents, local-compute, parallel/backlog helpers, Cursor integration docs (docs/BOOTSTRAP_ALIGNMENT.md)
+- **docs:** Root HUMAN_BACKLOG.md pointer; agent how-to in README/START_HERE; upstream_aligned_version tracking for child products
+
+### Changed
+
+- **agents:** Refresh AGENTS.md, CURSOR_MODES, batch commands, FOR_AGENTS; INIT prompt uses native CCXT (not Freqtrade)
+- **validate-bootstrap:** Parallel FOSS checks + cursor integrations; skip founder gates when gh missing from Git Bash PATH
+- **template-updates:** Prefer .template-update.json upstream_aligned_version over product .template-version
+
 ## [0.5.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.4.1...v0.5.0) (2026-07-12)
 
 
@@ -42,24 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **release:** align package-lock version to 0.4.1 ([45b8625](https://github.com/edwardlthompson/trendalgo-bot/commit/45b8625e788ee0bcfc91b1443c554dc575297547))
 * **release:** sync package versions to v0.4.1 after PR [#7](https://github.com/edwardlthompson/trendalgo-bot/issues/7) ([cebd8f4](https://github.com/edwardlthompson/trendalgo-bot/commit/cebd8f4b6df2f2e48c7e0b3cb07e3e87afc6cb6c))
 
-## [Unreleased]
-
-### Added
-
-- **Product recommendations P0–P3:** Settings wiring for Risk/Config/Timeline/AI/Growth; live scanner OHLCV; More-menu shell (toast, skeleton, risk badge, theme); bot tick scheduler + alert delivery; onboarding/go-live wizard; Telegram webhook ingress; hyperopt jobs; TradingView execution bridge (`TV_EXECUTION_ACK`); live arbitrage quotes
-- **Docs:** `docs/P2_BACKEND_INTEGRATIONS.md`; bot scheduler / TV / Telegram vars in `.env.example` and `LOCAL_DEV.md`
-- **Tests:** bot scheduler, notification delivery, P2 integrations, `runner_bridge` unit coverage
-
-### Fixed
-
-- **billing:** Lightning invoice endpoint returns **501** (no fake `lnbc` stub); settlement UI keeps Lightning disabled
-- **ci:** sync `uv.lock` package version to 0.4.1 so `uv sync --locked` passes
-- **e2e:** More-menu navigation helpers for Settings/Billing/Export/Debug; ignore `smoke-*.spec.ts` in default Playwright CI
-- **market:** Kraken OHLCV client timeout wiring; test mocks accept `timeout_ms`
-
-### Changed
-
-- **honesty:** Demote Lightning / Postgres / Push stubs in UI and TERMS copy until real backends ship
 
 ## [0.4.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.4.0...v0.4.1) (2026-06-30)
 

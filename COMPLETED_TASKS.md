@@ -2,6 +2,17 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint R-Bootstrap-Align — template FOSS surface v0.15.1 (2026-07-21)
+
+- **Exit:** AGENT R-BA.0–R-BA.5 ✅; HUMAN R-BA.H1 open (review docs/BOOTSTRAP_ALIGNMENT.md).
+
+- R-BA.0 ✅ [AGENT] Gap analysis docs/BOOTSTRAP_ALIGNMENT.md + decision log
+- R-BA.1 ✅ [AGENT] Core agent surface (AGENTS, INIT, HUMAN_BACKLOG pointer, session-state, START_HERE)
+- R-BA.2 ✅ [AGENT] FOSS Cursor hooks/skills/agents/local-compute + integration docs
+- R-BA.3 ✅ [AGENT] Port missing scripts; refresh TEMPLATE_INDEX; upstream_aligned_version 0.15.1
+- R-BA.4 ✅ [AGENT] CI: no matrix rewrite (skipped per plan default)
+- R-BA.5 ✅ [AGENT]/[AUTO] Validate bootstrap/hygiene/encoding/batch/hooks + memory
+
 ## Sprint R-Audit-8 AGENT — Post product-rec audit (2026-07-12)
 
 - **Exit:** AGENT 8.1–8.8 ✅; HUMAN 8.9–8.10 open (attorney H-006, PR #13/#12).

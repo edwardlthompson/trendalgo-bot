@@ -1,6 +1,9 @@
 {
   "upstream": "edwardlthompson/agent-project-bootstrap",
   "check_interval": "weekly",
-  "last_checked": null,
-  "notify_method": "stdout"
+  "last_checked": "2026-07-21",
+  "notify_method": "stdout",
+  "aligned_notes": "Product .template-version stays on release-please (0.5.0). Upstream FOSS surface aligned to v0.15.1 \u2014 see docs/BOOTSTRAP_ALIGNMENT.md",
+  "upstream_aligned_version": "0.15.1",
+  "product_version_file": ".template-version"
 }

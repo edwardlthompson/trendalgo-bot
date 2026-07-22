@@ -1,21 +1,23 @@
 {
   "$comment": "Copy to .cursor-session-state.json to restore agent context after clearing chat.",
   "version": 1,
-  "saved_at": "2026-06-13T12:00:00Z",
-  "mode": "bootstrap",
+  "saved_at": "2026-07-21T00:00:00Z",
+  "mode": "reference",
   "$comment_mode": "Repo mode (bootstrap|reference) — not Cursor Ask/Plan/Agent/Debug; see docs/CURSOR_MODES.md",
-  "stack": "web",
-  "active_sprint": "0",
-  "sequential_step": 8,
+  "stack": "multi",
+  "active_modules": ["python", "web"],
+  "active_sprint": "R-Bootstrap-Align",
+  "sequential_step": 1,
   "parallel_tasks_in_flight": [],
   "last_files_touched": [
-    "BUILD_PLAN.md",
-    "examples/web/src/main.ts"
+    "docs/BOOTSTRAP_ALIGNMENT.md",
+    "AGENTS.md",
+    "BUILD_PLAN.md"
   ],
   "build_plan_lane": "sequential",
   "autonomous_mode": true,
   "current_feature": null,
   "last_gate_exit": null,
   "strikes": 0,
-  "notes": "Optional free-text checkpoint. Mirror .cursor/agent-progress.json when running watch-agent-gates."
+  "notes": "Child product: TrendAlgo Bot. Template alignment 0.5.0→0.15.1. Mirror .cursor/agent-progress.json when running watch-agent-gates."
 }

@@ -39,15 +39,22 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** R-Audit-8 — attorney H-006 open; AGENT 8.10 ✅ (PR #12 closed TS7 defer; PR #13 → **v0.5.0**).
+**Current sprint:** R-Bootstrap-Align — AGENT ✅ FOSS surface to upstream v0.15.1; HUMAN R-BA.H1 + attorney H-006 open.
 
 **Tests:** 347 pass · ~86% coverage (2026-07-12; pyproject cov-fail-under=86%).
 
-**Recent:** Shipped v0.5.0 — product-rec P0–P3, Lightning 501, More-menu CSS/e2e fixes, uv.lock sync.
+**Recent:** Bootstrap alignment (2026-07-21) — FOSS hooks/skills/agents/local-compute, agent routers, `upstream_aligned_version` 0.15.1 (product `.template-version` remains 0.5.0). See `docs/BOOTSTRAP_ALIGNMENT.md`. Prior: shipped v0.5.0 product-rec.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### Bootstrap align to upstream v0.15.1 (2026-07-21)
+
+- Adopted FOSS Cursor hooks, 7 skills, 3 agents, local-compute, parallel/backlog scripts
+- Kept product CI matrix; did not bump `.template-version` (release-please 0.5.0) — use `upstream_aligned_version`
+- `validate-bootstrap.sh --quick` green; founder gates skipped in Git Bash when `gh` not on PATH
+- HUMAN: review `docs/BOOTSTRAP_ALIGNMENT.md`; attorney H-006 still open
 
 ### Ship v0.5.0 (2026-07-12)
 

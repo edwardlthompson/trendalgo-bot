@@ -6,7 +6,7 @@ You are a Senior Software Architect and Expert AI Coding Agent. Follow this temp
 
 **Platform/Tech Stack:** multi
 
-**Purpose & Goals:** Self-hosted Kraken spot algo bot: Freqtrade, LTS Scanner, CoinStats portfolio, AI-recommended strategies.
+**Purpose & Goals:** Self-hosted Kraken spot algo bot: native CCXT engine (ADR-0010), LTS Scanner, CoinStats portfolio, AI-recommended strategies.
 
 **Stakeholders:** Primary users, operators, and maintainers. Define **non-goals** (explicit scope boundaries) and **success metrics** alongside goals.
 

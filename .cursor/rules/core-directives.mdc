@@ -33,4 +33,8 @@ Update only at session start, milestone boundary, or architectural pivot.
 
 ## Token Economy
 
-Max 250 lines views, 150 lines logic. Read active module/example only.
+Max 250 lines views (300 web UI adapters), 150 lines logic per check-file-limits.sh. Read active module/example only.
+
+## Local Compute
+
+On This Computer, prefer parallel Task/worktrees/`/best-of-n` and multi-core local gates over Cloud Agents — see `local-compute.mdc`.

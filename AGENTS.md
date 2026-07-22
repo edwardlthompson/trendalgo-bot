@@ -5,7 +5,9 @@
 3. **Bootstrap mode:** `docs/INITIALIZATION_PROMPT.md`
 4. **Reference mode:** `docs/FOR_AGENTS.md` + `TEMPLATE_INDEX.json`
 5. **Task board:** `BUILD_PLAN.md` (Sequential before Parallel) — status: 🔲 open · ✅ done · ❌ blocked
-6. **Living memory:** update `AGENT_MEMORY.md` only at milestone boundaries
+6. **Parallel dispatch:** parallel-first when Sequential clear; `/build` automates HUMAN/ADB first, backlogs failures to `HUMAN_BACKLOG.md` / `docs/HUMAN_BACKLOG.md`, never halts on human labels — `scripts/build-sprint-status.sh --lane child`
+7. **Living memory:** update `AGENT_MEMORY.md` only at milestone boundaries
+8. **Alignment:** `docs/BOOTSTRAP_ALIGNMENT.md` (upstream FOSS surface v0.15.1; product `.template-version` stays on release-please; CI non-parity)
 
 > Legacy `.cursorrules` is deprecated. Use `.cursor/rules/*.mdc` and this file instead.
 
@@ -37,11 +39,29 @@
 
 ## Module Activation
 
-Activate only the modules matching your stack. See `modules/*/MODULE.md`.
+Activate only the modules matching this product stack:
+
+- ✅ Python — `modules/python/MODULE.md` · `src/trendalgo/`
+- ✅ Web / PWA — `modules/web/MODULE.md` · `examples/web/`
+
+Do not re-add pruned Android/Node/Rust/Go/Lightroom modules unless the human explicitly expands scope.
+
+## Cursor FOSS integrations
+
+Shipped (see `docs/CURSOR_INTEGRATIONS.md`):
+
+- **Hooks** — `.cursor/hooks.json` enforces destructive-ops + UTF-8 (fail-open; `/push` session override)
+- **Skills (7)** — `.cursor/skills/` progressive-load companions for `/gates`, `/scope`, `/fix`, hygiene, Sprint 0, features, canvas status
+- **Subagents (3)** — `.cursor/agents/` verifier, gate-fixer, explorer
+- **Local compute first** — `.cursor/rules/local-compute.mdc`: This Computer + parallel Task/worktrees/`/best-of-n` before Cloud; multi-core bootstrap checks
+- **Worktrees** — `.cursor/worktrees.json` + fail-soft OS setup (`/worktree`, `/best-of-n`)
+- **Auto-review** — `.cursor/permissions.json` dual layer with hooks
+
+Validate: `python3 scripts/agent-run.py check-cursor-hooks -- --smoke`, `python3 scripts/agent-run.py check-cursor-integrations -- --tier foss`
+
+Commercial Cursor integrations are out of scope for this FOSS product (`distribution_tier: foss`).
 
 ## Ecosystem-Specific Rules
 
-- **Android:** FOSS only; reproducible builds with `SOURCE_DATE_EPOCH`
 - **Web/PWA:** Offline-first service workers; Lighthouse budget gates
-- **Python:** Strict typing (mypy), ruff lint/format, locked dependencies
-- **Lightroom:** Adobe SDK Lua API only (`Lr*` namespaces)
+- **Python:** Strict typing (mypy), ruff lint/format, locked dependencies (uv)

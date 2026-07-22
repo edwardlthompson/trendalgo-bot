@@ -348,6 +348,20 @@ MIT — see [`LICENSE`](LICENSE). Performance license terms: [`docs/LICENSE_MODE
 </details>
 
 <details>
+<summary><strong>How agents should work</strong></summary>
+
+1. Read [`docs/START_HERE.md`](docs/START_HERE.md) → pick Cursor mode via [`docs/CURSOR_MODES.md`](docs/CURSOR_MODES.md)
+2. Open [`BUILD_PLAN.md`](BUILD_PLAN.md) **Sequential** lane first (`[AGENT]` / `[HUMAN]` / `[AUTO]`; status 🔲 ✅ ❌)
+3. Active stacks only: Python (`src/trendalgo/`) + Web (`examples/web/`)
+4. After each agent feature step: `bash scripts/watch-agent-gates.sh --once --autofix`
+5. Human/legal/go-live: [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) (root [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) is a pointer)
+6. Template alignment notes: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md)
+
+Router: [`AGENTS.md`](AGENTS.md) · Batch commands: [`docs/help/BATCH_COMMANDS.md`](docs/help/BATCH_COMMANDS.md)
+
+</details>
+
+<details>
 <summary><strong>Contributing</strong></summary>
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). AGPL applies to combined work; billing module licensing per ADR-0005.

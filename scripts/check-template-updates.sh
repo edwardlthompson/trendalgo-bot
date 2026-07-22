@@ -87,7 +87,23 @@ if [ -z "$RESPONSE" ]; then
 fi
 
 LATEST=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tag_name','').lstrip('v'))")
-CURRENT=$(cat "$VERSION_FILE" | tr -d '[:space:]')
+# Child products: .template-version tracks release-please product version.
+# Prefer upstream_aligned_version from .template-update.json when set.
+CURRENT=$(python3 - "$CONFIG" "$VERSION_FILE" << 'PY'
+import json, sys
+from pathlib import Path
+cfg_path, ver_path = sys.argv[1], sys.argv[2]
+aligned = ""
+try:
+    aligned = str(json.load(open(cfg_path)).get("upstream_aligned_version") or "").strip()
+except Exception:
+    aligned = ""
+if aligned:
+    print(aligned)
+else:
+    print(Path(ver_path).read_text(encoding="utf-8").strip())
+PY
+)
 HTML_URL=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('html_url',''))")
 
 python3 - "$CONFIG" << 'PY'

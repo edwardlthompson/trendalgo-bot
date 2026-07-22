@@ -46,6 +46,13 @@ Read the upstream release notes at `github.com/edwardlthompson/agent-project-boo
 | 0.1.x → 0.2.0 | Check CHANGELOG for new files/schema changes |
 | 0.x → 1.0.0 | Full review; init prompt structure may have changed |
 
+## Child product note (TrendAlgo)
+
+- `.template-version` tracks the **product** release (release-please), not upstream bootstrap.
+- After aligning FOSS agent surface, set `upstream_aligned_version` in `.template-update.json`.
+- `scripts/check-template-updates.sh` prefers that field so product `0.5.x` is not compared to template `0.15.x`.
+- See [`docs/BOOTSTRAP_ALIGNMENT.md`](BOOTSTRAP_ALIGNMENT.md).
+
 ## Decision Points
 
 - `[HUMAN]` Approve which upstream changes to adopt

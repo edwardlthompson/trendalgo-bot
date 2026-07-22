@@ -1,5 +1,7 @@
 # Full repo review and BUILD_PLAN execution
 
+> Skill: `.cursor/skills/check-repo-hygiene/`
+
 Framework: use AGENT/HUMAN/ADB/AUTO labels; Sequential before Parallel; gates after AGENT steps; update memory files at milestones.
 
 ## Step 1 — Review
@@ -7,11 +9,12 @@ Framework: use AGENT/HUMAN/ADB/AUTO labels; Sequential before Parallel; gates af
 Explore via targeted reads (active stack only — @docs/FOR_AGENTS.md token economy). Run when available:
 
 ```bash
-bash scripts/validate-bootstrap.sh --quick
-bash scripts/feature-gate.sh --stack multi
-bash scripts/check-repo-hygiene.sh
-bash scripts/check-readme-health.sh
+python3 scripts/agent-run.py validate-bootstrap --quick
+python3 scripts/agent-run.py feature-gate --stack multi
+python3 scripts/agent-run.py check-repo-hygiene
+python3 scripts/agent-run.py check-readme-health
 ```
+
 
 Check Dependabot/CodeQL via `gh` if authenticated. Write @CODE_REVIEW.md from @CODE_REVIEW.md.example (severity: Critical / High / Medium / Low / Deferred).
 
@@ -24,11 +27,11 @@ Add a review sprint at the top of @BUILD_PLAN.md active board. Link findings to 
 Work Sequential [AGENT] items top-to-bottom. After each step:
 
 ```bash
-bash scripts/watch-agent-gates.sh --once --autofix --step none
+python3 scripts/agent-run.py watch-agent-gates --once --autofix --step none
 ```
 
 ## Step 4 — Cleanup
 
-Run @.cursor/commands/cleanup.md — archive completed sprint to @COMPLETED_TASKS.md; slim active board; update Archived Sprints row.
+Read @.cursor/commands/cleanup.md — execute fully.
 
 Begin now.

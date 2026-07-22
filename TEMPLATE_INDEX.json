@@ -6,7 +6,9 @@
     "initialization_prompt": "docs/INITIALIZATION_PROMPT.md",
     "cursor_modes": "docs/CURSOR_MODES.md",
     "batch_commands_help": "docs/help/BATCH_COMMANDS.md",
-    "batch_commands_catalog": "docs/BATCH_COMMANDS.md"
+    "batch_commands_catalog": "docs/BATCH_COMMANDS.md",
+    "bootstrap_alignment": "docs/BOOTSTRAP_ALIGNMENT.md",
+    "cursor_integrations": "docs/CURSOR_INTEGRATIONS.md"
   },
   "files": [
     {
@@ -1247,6 +1249,209 @@
       "read_when": "release",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
+    },
+    {
+      "path": "docs/CURSOR_INTEGRATIONS.md",
+      "purpose": "Cursor FOSS vs Commercial feature matrix and activation",
+      "read_when": "cursor_setup",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".cursor/rules/local-compute.mdc",
+      "purpose": "Prefer local parallel Agent/worktrees over Cloud on This Computer",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/lib/run_checks_parallel.py",
+      "purpose": "Multi-core runner for independent bootstrap checks",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".cursor/worktrees.json",
+      "purpose": "Cursor native worktree setup manifest",
+      "read_when": "cursor_setup",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".cursor/permissions.json",
+      "purpose": "Auto-review allow/block instructions (dual layer with hooks)",
+      "read_when": "cursor_setup",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".cursor-plugin/plugin.json",
+      "purpose": "FOSS Cursor plugin manifest for pack/local install",
+      "read_when": "cursor_setup",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/pack-cursor-plugin.sh",
+      "purpose": "Pack FOSS Cursor components to dist/cursor-plugin",
+      "read_when": "cursor_setup",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "docs/CURSOR_CLI.md",
+      "purpose": "Cursor CLI and opt-in GHA headless recipe",
+      "read_when": "cursor_setup",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "docs/CURSOR_FEATURE_REGISTRY.json",
+      "purpose": "Cursor feature inventory for weekly radar",
+      "read_when": "maintainer",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "docs/CURSOR_FEATURE_RADAR.md",
+      "purpose": "Feature radar scoring rubric",
+      "read_when": "maintainer",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".cursor/hooks.json",
+      "purpose": "Cursor project hooks (enforcement layer)",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-cursor-hooks.sh",
+      "purpose": "Validate hooks.json schema and optional smoke tests",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-cursor-integrations.sh",
+      "purpose": "Validate skills, subagents, hooks, tier compliance",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/sync-cursor-features.py",
+      "purpose": "Sync distribution tier manifest and tier-filtered help",
+      "read_when": "init",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/cursor-feature-radar.sh",
+      "purpose": "Weekly Cursor docs diff vs registry (soft-fail)",
+      "read_when": "maintainer",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/build-sprint-status.sh",
+      "purpose": "Next BUILD_PLAN row for autonomous /build sprint loop",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/lib/build_sprint.py",
+      "purpose": "BUILD_PLAN sprint phase parser for build-sprint-status",
+      "read_when": "reference",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/attempt-build-plan-row.sh",
+      "purpose": "Attempt HUMAN/ADB BUILD_PLAN rows via automation catalog during /build",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/lib/human_task_automation.py",
+      "purpose": "Pattern registry and handlers for HUMAN/ADB build automation",
+      "read_when": "reference",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/build-backlog.sh",
+      "purpose": "Append failed HUMAN/ADB automation to HUMAN_BACKLOG.md",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/lib/build_backlog.py",
+      "purpose": "HUMAN_BACKLOG.md dedupe and list helpers",
+      "read_when": "reference",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "HUMAN_BACKLOG.md.example",
+      "purpose": "Template for /build failure backlog (child repos copy to HUMAN_BACKLOG.md)",
+      "read_when": "bootstrap_session_start",
+      "update_when": "never",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/plan-parallel-dispatch.sh",
+      "purpose": "Build parallel agent manifest and agent_count from BUILD_PLAN",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-build-plan-parallel.sh",
+      "purpose": "Gate: every sprint has Parallel table with >= 2 AGENT rows or exception",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/setup-agent-worktrees.sh",
+      "purpose": "Optional git worktrees for parallel agent branches",
+      "read_when": "reference",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/lib/parallel_scope.py",
+      "purpose": "Shared BUILD_PLAN Parallel table parser and overlap detection",
+      "read_when": "reference",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-python-pytest-workflow.sh",
+      "purpose": "Require pytest in deps, pyproject config, CI, and feature-gate when Python example present",
+      "read_when": "milestone_boundary",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "docs/BOOTSTRAP_ALIGNMENT.md",
+      "purpose": "Gap analysis and migration notes for template alignment",
+      "read_when": "session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "HUMAN_BACKLOG.md",
+      "purpose": "Root pointer to docs/HUMAN_BACKLOG.md for template compatibility",
+      "read_when": "human_gate",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
     }
   ],
   "modules": {
@@ -1296,5 +1501,11 @@
       "examples/web/src/appBootstrap.ts",
       "examples/web/public/sw.js"
     ]
+  },
+  "upstream_bootstrap": {
+    "repo": "edwardlthompson/agent-project-bootstrap",
+    "aligned_version": "0.15.1",
+    "aligned_at": "2026-07-21",
+    "notes": "FOSS agent surface aligned; .template-version tracks product release (release-please), not upstream template"
   }
 }

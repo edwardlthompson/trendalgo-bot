@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-07-21 — Bootstrap alignment 0.5.0 → 0.15.1
+- **Status:** Accepted
+- **Context:** Child repo stale at template 0.5.0 vs upstream agent-project-bootstrap v0.15.1; product Python+Web code mature.
+- **Decision:** Standard FOSS alignment — adopt local-compute, FOSS hooks/skills/agents, missing gate scripts, agent-surface refresh; keep product CI matrix (no inactive-stack jobs); root `HUMAN_BACKLOG.md` points to `docs/HUMAN_BACKLOG.md`. Keep `.template-version` on product release-please **0.5.0**; record upstream FOSS alignment as `upstream_aligned_version: 0.15.1` in `.template-update.json` (and teach `check-template-updates.sh` to prefer that field). See `docs/BOOTSTRAP_ALIGNMENT.md`.
+- **Alternatives considered:** Aggressive full CI parity (rejected — risk to required checks); skip hooks (rejected — high-value FOSS surface); bump `.template-version` to 0.15.1 (rejected — would desync release-please / product version).
+- **Consequences:** Agents gain parallel-dispatch/local-compute tooling; product business logic untouched; HUMAN still owns attorney H-006 and Pages.
+
 ### 2026-07-12 — R-Audit-8 + product-rec ship
 - **Status:** Accepted (AGENT complete; HUMAN attorney + Pages verify open)
 - **Context:** `/audit` found main CI red (`uv.lock` still 0.2.0), Lightning stub still HTTP 200, Playwright More-menu regressions, smoke specs unsafe for default CI; large product-rec slice uncommitted.
