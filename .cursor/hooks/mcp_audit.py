@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -19,7 +19,7 @@ def main() -> None:
 
     log = ROOT / ".cursor/mcp-audit.log"
     log.parent.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    ts = datetime.now(UTC).replace(microsecond=0).isoformat()
     tool = data.get("tool_name") or data.get("name") or "unknown"
     server = data.get("server") or data.get("mcp_server") or "unknown"
     line = f"{ts} server={server} tool={tool}\n"
