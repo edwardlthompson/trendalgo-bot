@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """afterFileEdit: UTF-8 encoding check on edited text files. Fail-open."""
+
 from __future__ import annotations
 
 import json
@@ -60,7 +61,9 @@ def main() -> None:
         )
         if proc.returncode != 0:
             msg = (proc.stderr or proc.stdout or "encoding check failed").strip()[:200]
-            print(json.dumps({"additional_context": f"Encoding check failed for {path_str}: {msg}"}))
+            print(
+                json.dumps({"additional_context": f"Encoding check failed for {path_str}: {msg}"})
+            )
     except Exception:
         pass
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """sessionStart: one-line stack / distribution context. Fail-open."""
+
 from __future__ import annotations
 
 import json

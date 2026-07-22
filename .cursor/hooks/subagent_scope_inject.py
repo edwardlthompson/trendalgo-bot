@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """subagentStart: inject parallel scope lock when present. Fail-open."""
+
 from __future__ import annotations
 
 import json
@@ -17,9 +18,8 @@ def main() -> None:
         agents = data.get("agents") or []
         scopes = [f"{a.get('id', '?')}: {a.get('scope', '')}" for a in agents[:8]]
         if scopes:
-            msg = (
-                "Parallel scope lock active. Stay inside assigned scope only. "
-                + "; ".join(scopes)
+            msg = "Parallel scope lock active. Stay inside assigned scope only. " + "; ".join(
+                scopes
             )
             print(json.dumps({"user_message": msg}))
     except Exception:

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """beforeShellExecution: deny destructive commands unless session approved. Fail-open."""
+
 from __future__ import annotations
 
 import json

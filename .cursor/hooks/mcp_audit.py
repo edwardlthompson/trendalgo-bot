@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """beforeMCPExecution: audit-only log. Never block. Fail-open."""
+
 from __future__ import annotations
 
 import json
