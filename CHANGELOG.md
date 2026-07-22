@@ -20,6 +20,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.5.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.1...v0.5.2) (2026-07-22)
+
+
+### Fixed
+
+* **security:** override js-yaml and brace-expansion High alerts ([b251300](https://github.com/edwardlthompson/trendalgo-bot/commit/b251300ba34caad833d271626f52ebeb17ac00c5))
+
+
+### Changed
+
+* **release:** sync uv.lock package version to 0.5.1 ([e90ab11](https://github.com/edwardlthompson/trendalgo-bot/commit/e90ab11ab4ef78dc38f37d6cce15ef90ea941e15))
+
+
+### Documentation
+
+* **ship:** record v0.5.1 release milestone in memory logs ([467f64f](https://github.com/edwardlthompson/trendalgo-bot/commit/467f64ff464655aa4c249c907bd2ef68e88afc75))
+
 ## [0.5.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.0...v0.5.1) (2026-07-22)
 
 
