@@ -39,21 +39,26 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** R-Bootstrap-Align — AGENT ✅ FOSS surface to upstream v0.15.1; HUMAN R-BA.H1 + attorney H-006 open.
+**Current sprint:** Post-alignment carry-forward — HUMAN R-BA.H1 + attorney H-006 open.
 
 **Tests:** 347 pass · ~86% coverage (2026-07-12; pyproject cov-fail-under=86%).
 
-**Recent:** Bootstrap alignment (2026-07-21) — FOSS hooks/skills/agents/local-compute, agent routers, `upstream_aligned_version` 0.15.1 (product `.template-version` remains 0.5.0). See `docs/BOOTSTRAP_ALIGNMENT.md`. Prior: shipped v0.5.0 product-rec.
+**Recent:** Shipped **v0.5.1** (2026-07-22) — bootstrap FOSS alignment + ruff/lock/security follow-ups. Product `.template-version` = 0.5.1; `upstream_aligned_version` = 0.15.1. See `docs/BOOTSTRAP_ALIGNMENT.md`.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
 
+### Ship v0.5.1 (2026-07-22)
+
+- Merged Release Please PR #15 → tag v0.5.1; synced `uv.lock`; cleared Dependabot High (js-yaml / brace-expansion overrides)
+- CI/Security Scan/CodeQL green on `b251300`
+- HUMAN still open: R-BA.H1 alignment review, attorney H-006, Pages enable
+
 ### Bootstrap align to upstream v0.15.1 (2026-07-21)
 
 - Adopted FOSS Cursor hooks, 7 skills, 3 agents, local-compute, parallel/backlog scripts
-- Kept product CI matrix; did not bump `.template-version` (release-please 0.5.0) — use `upstream_aligned_version`
-- `validate-bootstrap.sh --quick` green; founder gates skipped in Git Bash when `gh` not on PATH
+- Kept product CI matrix; product version via release-please; `upstream_aligned_version` for template drift checks
 - HUMAN: review `docs/BOOTSTRAP_ALIGNMENT.md`; attorney H-006 still open
 
 ### Ship v0.5.0 (2026-07-12)

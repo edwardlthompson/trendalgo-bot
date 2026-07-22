@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-07-22 — Ship v0.5.1 after bootstrap FOSS alignment
+- **Status:** Accepted
+- **Context:** `/push` after R-Bootstrap-Align; Release Please opened PR #15; post-merge CI failed on stale `uv.lock`; Dependabot High on js-yaml / brace-expansion.
+- **Decision:** Merge PR #15 → v0.5.1; sync `uv.lock` to 0.5.1; npm overrides `js-yaml >=4.3.0` and `brace-expansion >=1.1.16 <2`; confirm CI/Security/CodeQL green.
+- **Alternatives considered:** Defer release until all Dependabot PRs merged (rejected — High alerts cleared via overrides; open Dependabot PRs #16/#17 remain non-blocking chores).
+- **Consequences:** Release https://github.com/edwardlthompson/trendalgo-bot/releases/tag/v0.5.1 published; HUMAN R-BA.H1 + H-006 still open.
+
 ### 2026-07-21 — Bootstrap alignment 0.5.0 → 0.15.1
 - **Status:** Accepted
 - **Context:** Child repo stale at template 0.5.0 vs upstream agent-project-bootstrap v0.15.1; product Python+Web code mature.
