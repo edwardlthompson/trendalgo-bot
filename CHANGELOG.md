@@ -20,6 +20,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.5.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.0...v0.5.1) (2026-07-22)
+
+
+### Fixed
+
+* **ci:** ruff format Cursor FOSS hook scripts ([4d404bf](https://github.com/edwardlthompson/trendalgo-bot/commit/4d404bf6bac51a4a5cd3b8e3afe6a38e5e1837b0))
+* **ci:** ruff-clean bootstrap scripts/lib for CI gates ([32f7627](https://github.com/edwardlthompson/trendalgo-bot/commit/32f76276eadc91a6909625526b87a27f4c8819f5))
+* **ci:** ruff-clean Cursor FOSS hooks under .cursor/hooks ([e8916e3](https://github.com/edwardlthompson/trendalgo-bot/commit/e8916e391301d4f2f4f289ec4aaf55e8658e9bef))
+
+
+### Changed
+
+* **release:** prepare bootstrap FOSS alignment for next release ([3e4a4b7](https://github.com/edwardlthompson/trendalgo-bot/commit/3e4a4b793d90a42c54e9f3d7cd4298c4987d6af1))
+* **release:** sync uv.lock package version to 0.5.0 ([c79a095](https://github.com/edwardlthompson/trendalgo-bot/commit/c79a09518bcc1fafdc99430e1647ec1c1c9522ca))
+
+
+### Documentation
+
+* note R-Audit-8.10 completion in archive ([c54e8e9](https://github.com/edwardlthompson/trendalgo-bot/commit/c54e8e93d4a0d11cf8c0be4c2d9069b651193d0e))
+* **ship:** mark R-Audit-8.10 done and record v0.5.0 regress notes ([f57425e](https://github.com/edwardlthompson/trendalgo-bot/commit/f57425eddf0146c0d57e9310eb02fc15f1bbe22f))
+
 ## [Unreleased]
 
 ### Added
