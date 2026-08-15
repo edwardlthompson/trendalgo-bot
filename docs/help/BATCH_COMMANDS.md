@@ -35,7 +35,7 @@ Grouped by life moment (not every command — use `/` menu for the full list).
 
 **Publishing:** `/prerelease` (checks before publish) · `/push` (commit + push + release) · `/regress` (after release)
 
-**Maintenance:** `/triage` · `/dependabot` · `/audit` (full repo review)
+**Maintenance:** `/triage` · `/dependabot` · `/audit` (full repo review) · `/codex-review` (opt-in third-party review)
 
 **Long sessions:** `/compact` (save checkpoint before clearing chat) · `/restore` (load checkpoint)
 

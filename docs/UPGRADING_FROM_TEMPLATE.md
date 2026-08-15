@@ -50,7 +50,7 @@ Read the upstream release notes at `github.com/edwardlthompson/agent-project-boo
 
 - `.template-version` tracks the **product** release (release-please), not upstream bootstrap.
 - After aligning FOSS agent surface, set `upstream_aligned_version` in `.template-update.json`.
-- `scripts/check-template-updates.sh` prefers that field so product `0.5.x` is not compared to template `0.15.x`.
+- `scripts/check-template-updates.sh` prefers that field so product `0.5.x` is not compared to template `0.17.x`.
 - See [`docs/BOOTSTRAP_ALIGNMENT.md`](BOOTSTRAP_ALIGNMENT.md).
 
 ## Decision Points

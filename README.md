@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="branding/assets/readme-hero.svg" alt="TrendAlgo Bot" width="960" />
+</p>
+
 # TrendAlgo Bot
 
 ![MIT](https://img.shields.io/badge/license-MIT-2ea043?style=flat-square)
@@ -356,6 +360,7 @@ MIT — see [`LICENSE`](LICENSE). Performance license terms: [`docs/LICENSE_MODE
 4. After each agent feature step: `bash scripts/watch-agent-gates.sh --once --autofix`
 5. Human/legal/go-live: [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) (root [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) is a pointer)
 6. Template alignment notes: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md)
+7. Branding / pitch preview: [`branding/BRANDING.md`](branding/BRANDING.md)
 
 Router: [`AGENTS.md`](AGENTS.md) · Batch commands: [`docs/help/BATCH_COMMANDS.md`](docs/help/BATCH_COMMANDS.md)
 

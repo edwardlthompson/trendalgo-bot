@@ -1,62 +1,59 @@
 # Bootstrap Alignment - TrendAlgo Bot
 
 > Gap analysis and migration notes for aligning this child repo with
-> [agent-project-bootstrap](https://github.com/edwardlthompson/agent-project-bootstrap) **v0.15.1**.
-> Written 2026-07-21. Update only at alignment milestones.
+> [agent-project-bootstrap](https://github.com/edwardlthompson/agent-project-bootstrap) **v0.17.0**.
+> First written 2026-07-21 (v0.15.1). Updated 2026-08-14. Update only at alignment milestones.
 
 ## Summary
 
-TrendAlgo was already bootstrapped at template **0.5.0** with a mature Python + Web product.
-The gap vs upstream **0.15.1** is staleness of agent/Cursor FOSS tooling and scripts - not missing product entrypoints.
-Alignment is **additive and surgical**. Product code under `src/trendalgo/` and `examples/web/` is preserved.
+TrendAlgo is a live Python + Web product. Alignment is **additive and surgical**.
+Product code under `src/trendalgo/` and `examples/web/` is preserved.
+Product `.template-version` tracks release-please (currently **0.5.1**).
+Upstream FOSS surface is recorded as `upstream_aligned_version` in `.template-update.json`.
 
-| Item | Local (pre-align) | Upstream | Action |
-|------|-------------------|----------|--------|
-| `.template-version` | 0.5.0 (product / release-please) | 0.15.1 (template) | **Keep product version**; record `upstream_aligned_version` in `.template-update.json` |
+| Item | Local | Upstream v0.17.0 | Action |
+|------|-------|------------------|--------|
+| `.template-version` | 0.5.1 (product) | 0.17.0 (template) | Keep product version |
+| `upstream_aligned_version` | 0.15.1 → **0.17.0** | — | Bump after FOSS surface green |
 | Stack | Python + Web (pruned) | Multi-example | Keep python+web only |
-| Agent routers | Present | Parallel dispatch + Cursor FOSS section | Refresh |
-| `.cursor/rules` | 13 FOSS | + local-compute | Add FOSS-only |
-| Hooks / skills / agents | Missing | Present | Adopt FOSS |
-| CI matrix | Product-tuned | Full multi-stack | **Keep product CI** (intentional non-parity) |
-| HUMAN_BACKLOG | `docs/HUMAN_BACKLOG.md` | Root file | Root pointer to docs |
-| BUILD_PLAN | Product R-Audit-8 | Template sprints | Add alignment lane only |
+| CI matrix | Product-tuned | Full multi-stack | **Keep product CI** |
+| Codex / expanded `/prerelease` | Missing (pre-0.16) | Present | Adopt FOSS opt-in |
+| Branding kit | Adopted (`mode: template`) | `branding/` + generator | Preview only; live README kept |
 
-## Already matched
+## Already matched (since 0.15.1)
 
-- `AGENTS.md`, `docs/START_HERE.md`, `docs/CURSOR_MODES.md`, `docs/FOR_AGENTS.md`
-- Batch commands (26) + registry + help cheat sheet
-- Memory: `AGENT_MEMORY.md`, `DECISION_LOG.md`, `KNOWLEDGE_BASE.md`, `COMPLETED_TASKS.md`
-- Security: `SECURITY.md`, `docs/SECURITY_TRIAGE.md`, `docs/THREAT_MODEL.md`, `docs/PRIVACY.md`
-- Hygiene/gates scripts and core workflows (encoding, feature-gate, validate-bootstrap, CodeQL, Scorecard, Dependabot)
-- Stack selection: `.cursor/stack-selection.json` = web + python
-- Emoji BUILD_PLAN status markers; no legacy `.cursorrules`
+- Agent routers, batch commands, emoji BUILD_PLAN, `HUMAN_BACKLOG` pointer
+- FOSS Cursor hooks, 7 original skills, 3 agents, local-compute, worktrees, permissions
+- Security surface + product CI (encoding, feature-gate, CodeQL, Scorecard, Dependabot)
+- High npm pins: `js-yaml >=4.3.0`, `brace-expansion >=1.1.16 <2`
 
-## Adopted in this alignment
+## Adopted 2026-08-14 (0.15.1 → 0.17.0)
 
-- `.cursor/rules/local-compute.mdc`
-- FOSS Cursor stack: hooks, 7 skills, 3 agents, `permissions.json`, `worktrees.json`, setup-worktree scripts
-- Docs: `CURSOR_INTEGRATIONS.md`, `CURSOR_CLI.md`, `CURSOR_FEATURE_RADAR.md`, `CURSOR_FEATURE_REGISTRY.json`, `FILE_SIZE_GUIDE.md`, help Cursor features
-- Scripts: `agent-run.py`, parallel/backlog helpers, cursor-hooks/integrations checkers, related lib modules
-- Root `HUMAN_BACKLOG.md` pointer + example
-- Upstream FOSS surface aligned to **v0.15.1** via `.template-update.json` -> `upstream_aligned_version` (product `.template-version` stays on release-please **0.5.0**)
-- CI matrix intentional non-parity (python+web only)
+- Plan `### Critique` as Issue → Resolution (`core-directives`, `CURSOR_MODES`, `/plan`, `AGENTS.md`)
+- Opt-in Codex: `/codex-review`, skill, `docs/CODEX_REVIEW.md`, `.github/codex/*`, workflow **example** (not a required check)
+- Expanded `/prerelease` / `/ship`: autofix → optional Codex → hard gate
+- Scripts: `prerelease-autofix`, `apply-suggested-gate-fixes`, `run-codex-review`, `codex-findings-to-markdown.py`
+- `feature-autofix.sh` runs ruff on root `src/` + `scripts/` (TrendAlgo has no `examples/python`)
+- npm overrides: `undici >=7.29.0`, `ip-address >=10.3.1`, `nanoid >=3.3.17`, `postcss >=8.5.23`; `js-yaml >=5.2.2` (lhci already on 5.x); `brace-expansion >=1.1.18 <2`
+- Branding kit: `branding/` + `scripts/generate-project-readme.py`; `product.json` seeded for TrendAlgo; `"mode": "template"` so the generator writes `branding/generated/README.preview.md` only
 
 ## Intentionally skipped
 
-- Commercial-only: `commercial-compliance.mdc`, commercial Automations/Bugbot/mcp examples
-- Upstream multi-stack CI jobs (android / node / rust / go / lightroom)
-- Blind overwrite of `docs/INITIALIZATION_PROMPT.md`, product `BUILD_PLAN.md`, or `examples/`
-- Mass conversion of historical `- [ ]` checklists in product docs
-- Setting `.template-version` to upstream 0.15.1 (would break release-please product sync)
+- Commercial Cursor / Bugbot
+- Upstream multi-stack CI jobs and inactive examples
+- `generate-project-readme.py` **product mode** (would overwrite the live self-hosted README)
+- Biome / fast-check / TypeScript 7 on `examples/web`
+- `js-yaml` 5.x and `brace-expansion` 5.x (5.x brace pin broke Vitest)
+- Blind overwrite of `INITIALIZATION_PROMPT.md`, product `BUILD_PLAN.md`, or app code
 
 ## Conflicts resolved
 
 | Conflict | Resolution |
 |----------|------------|
-| Freqtrade in INIT prompt | Corrected to native CCXT (ADR-0010) |
-| File limits vs upstream 300/150 | Keep TrendAlgo `check-file-limits` (250 views / 300 web adapters / 150 logic) |
-| HUMAN_BACKLOG location | Root stub -> canonical `docs/HUMAN_BACKLOG.md` |
-| Template version claim | `.template-version` = product 0.5.0; `upstream_aligned_version` = 0.15.1; product CI matrix retained |
+| File limits vs upstream 300/150 | Keep TrendAlgo `check-file-limits` (250 / 300 / 150) |
+| HUMAN_BACKLOG location | Root stub → `docs/HUMAN_BACKLOG.md` |
+| Template version | Product 0.5.1; `upstream_aligned_version` 0.17.0 |
+| npm High overrides | Adopt undici/ip-address/nanoid; keep 4.x/1.x yaml/brace pins |
 
 ## Recommended stack
 
@@ -64,32 +61,30 @@ Alignment is **additive and surgical**. Product code under `src/trendalgo/` and 
 
 ## Risk areas
 
-1. Cursor hooks shell-deny - FOSS fail-open; validate with `check-cursor-hooks`
-2. CI required-check renames - avoided; no workflow matrix rewrite
-3. `validate-bootstrap` new required files - index + scripts updated together
-4. Secrets - merge `.env.example` only; never touch `.env`
-5. Version files - do not set `.template-version` to upstream 0.15.1 (breaks release-please sync); use `upstream_aligned_version` instead
+1. Codex CLI / `OPENAI_API_KEY` — `/prerelease` must skip (exit 3), never block release
+2. CI required-check names — not changed
+3. `validate-bootstrap` new required files — `docs/CODEX_REVIEW.md` + `/codex-review` indexed together
+4. Secrets — never commit `.env` or API keys
+5. Do not set `.template-version` to 0.17.0
 
 ## Migration notes (human)
 
 ### Done by AGENT
 
-- Gap analysis (this file)
-- FOSS Cursor integrations + local-compute
-- Agent surface refresh + INIT prompt Freqtrade fix
-- Missing gate/parallel scripts + `upstream_aligned_version: 0.15.1` (product version unchanged)
-- Validation: `bash scripts/validate-bootstrap.sh --quick` passed (2026-07-21)
-- CI workflows: **not modified** (product matrix retained; no inactive-stack jobs imported)
+- 2026-07-21: FOSS Cursor surface to v0.15.1
+- 2026-08-14: critique hardening, Codex opt-in, expanded `/prerelease`, extra npm overrides
+- 2026-08-14: branding kit + pitch README generator in **template** mode (preview only)
+- CI workflows: **not modified** (product matrix retained)
 
 ### Still needs HUMAN
 
-- Attorney review H-006 / R-Audit-8.9 (legal packet)
-- GitHub Pages enable if public docs hosting desired
-- Review branch protection if any workflow pins change later
-- Weekly Dependabot / security triage cadence (`docs/SECURITY_TRIAGE.md`)
+- R-BA.H1 review this file
+- Attorney review H-006 / R-Audit-8.9
+- GitHub Pages enable if desired
+- Optional: copy `.github/workflow-examples/codex-review.yml` → workflows + set `OPENAI_API_KEY` secret
 
 ### Do not
 
 - Force-push or rewrite history for alignment
-- Import inactive-stack CI jobs from upstream
-- Overwrite product business logic for template parity
+- Import inactive-stack CI jobs
+- Overwrite product business logic or switch `branding/product.json` to `"mode": "product"` without `[HUMAN]` approval

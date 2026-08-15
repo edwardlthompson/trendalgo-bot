@@ -9,9 +9,9 @@ After `scripts/init-project.sh --distribution-tier foss`:
 | Layer | Artifact | Status |
 |-------|----------|--------|
 | Rules | `.cursor/rules/*.mdc` | Shipped (15) |
-| Commands | `.cursor/commands/*.md` | Shipped (26) |
+| Commands | `.cursor/commands/*.md` | Shipped (27) |
 | Hooks | `.cursor/hooks.json` + `.cursor/hooks/` | Shipped |
-| Skills | `.cursor/skills/` (7) | Shipped |
+| Skills | `.cursor/skills/` (8) | Shipped |
 | Subagents | `.cursor/agents/` (3) | Shipped |
 | Modes | `docs/CURSOR_MODES.md` | Shipped |
 | Worktrees | `.cursor/worktrees.json` + OS setup scripts | Shipped |
@@ -22,6 +22,7 @@ After `scripts/init-project.sh --distribution-tier foss`:
 | Agent script runner | `scripts/agent-run.py` | Shipped |
 | Plugin pack | `.cursor-plugin/plugin.json` + `scripts/pack-cursor-plugin.*` | Example |
 | CLI (opt-in) | `.github/workflow-examples/cursor-agent.yml` + `docs/CURSOR_CLI.md` | Example |
+| Codex review (opt-in) | `/codex-review` + `docs/CODEX_REVIEW.md` + `.github/workflow-examples/codex-review.yml` | Example (not a required CI check) |
 | GitHub MCP (optional) | Copy `.cursor/mcp.foss.example` → `.cursor/mcp.json` | Example |
 
 Validation: `python3 scripts/agent-run.py check-cursor-integrations -- --tier foss`

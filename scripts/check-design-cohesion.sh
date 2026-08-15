@@ -16,6 +16,22 @@ if [ ! -f design-tokens/design-tokens.json ]; then
   fail "missing design-tokens/design-tokens.json"
 fi
 
+# Branding kit required
+for brand_file in \
+  branding/BRANDING.md \
+  branding/product.json \
+  branding/product.schema.json \
+  branding/voice.md \
+  branding/assets/logo-mark.svg \
+  branding/official-colors.css \
+  branding/generated/README.preview.md \
+  branding/templates/README.product.md
+do
+  if [ ! -f "$brand_file" ]; then
+    fail "missing $brand_file (run scripts/sync-design-tokens.py and scripts/generate-project-readme.py)"
+  fi
+done
+
 # Hex literals in web UI (allow generated design-tokens.css only)
 if [ -d examples/web/src ]; then
   while IFS= read -r -d '' file; do
@@ -96,7 +112,7 @@ if [ -d examples/web/src ]; then
 fi
 
 # Generated outputs should exist when tokens present and stack is active
-REQUIRED_OUTPUTS=()
+REQUIRED_OUTPUTS=(branding/official-colors.css)
 if [ -d examples/web ]; then
   REQUIRED_OUTPUTS+=(examples/web/src/design-tokens.css examples/web/src/theme-meta.json)
 fi

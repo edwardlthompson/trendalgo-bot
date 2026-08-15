@@ -17,6 +17,20 @@
 
 ## Entries
 
+### 2026-08-14 — Adopt branding kit (template mode)
+- **Status:** Accepted
+- **Context:** Upstream v0.17.0 ships `branding/` + `generate-project-readme.py`. First 0.17 alignment skipped the kit because product mode overwrites the live self-hosted README.
+- **Decision:** Adopt the kit with TrendAlgo-seeded `product.json` and `"mode": "template"`. Generator writes `branding/generated/README.preview.md` only. Add a hero banner to the existing README; do not replace the setup guide.
+- **Alternatives considered:** `"mode": "product"` (rejected — would destroy the collapsible setup/ops README); skip kit (superseded by this request).
+- **Consequences:** Pitch copy and logos have a single source of truth. Switching to product mode still requires `[HUMAN]` approval.
+
+### 2026-08-14 — Bootstrap alignment 0.15.1 → 0.17.0
+- **Status:** Accepted
+- **Context:** Upstream agent-project-bootstrap released 0.15.2 / 0.16.0 / 0.17.0 (Codex review, expanded /prerelease, branding kit, extra npm overrides). Child product still at `upstream_aligned_version` 0.15.1.
+- **Decision:** Surgical FOSS alignment — adopt critique hardening, opt-in Codex (workflow stays under `workflow-examples/`), prerelease-autofix scoped to python+web, and `undici`/`ip-address`/`nanoid` overrides. Keep `js-yaml >=4.3.0` and `brace-expansion >=1.1.16 <2` (5.x broke Vitest). Skip branding kit wholesale and Biome/fast-check/TS 7. Product `.template-version` stays on release-please; set `upstream_aligned_version` to 0.17.0.
+- **Alternatives considered:** Full branding + pitch README generator in product mode (rejected — would overwrite live README); Biome/fast-check toolchain (rejected — new web stack, out of scope).
+- **Consequences:** Agents get `/codex-review` and expanded `/prerelease`; CI matrix unchanged; HUMAN still owns R-BA.H1 and attorney H-006.
+
 ### 2026-07-22 — Ship v0.5.1 after bootstrap FOSS alignment
 - **Status:** Accepted
 - **Context:** `/push` after R-Bootstrap-Align; Release Please opened PR #15; post-merge CI failed on stale `uv.lock`; Dependabot High on js-yaml / brace-expansion.

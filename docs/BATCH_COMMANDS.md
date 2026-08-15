@@ -2,7 +2,7 @@
 
 > Technical catalog for agents and maintainers. **Humans:** start with [docs/help/BATCH_COMMANDS.md](help/BATCH_COMMANDS.md).
 
-26 slash commands: **21 atomic** workflows + **5 super** orchestrators. Bare-word triggers: `.cursor/rules/batch-commands.mdc`.
+27 slash commands: **22 atomic** workflows + **5 super** orchestrators. Bare-word triggers: `.cursor/rules/batch-commands.mdc`.
 
 ## Super commands
 
@@ -11,7 +11,7 @@
 | `/bootstrap` | init → prune → setup → gates | Agent | 42 | No |
 | `/verify` | docs → gates → ci | Agent | 43 | No |
 | `/build` | Autonomous BUILD_PLAN sprint chain — automates HUMAN/ADB first, backlog on failure | Agent | 44 | No |
-| `/ship` | prerelease → push → regress | Agent | 45 | **Yes** |
+| `/ship` | prerelease (autofix + optional Codex + hard gate) → push → regress | Agent | 45 | **Yes** |
 | `/maintain` | triage → dependabot → audit | Agent | 46 | No |
 
 ## Atomic commands
@@ -19,6 +19,7 @@
 | Command | Workflow | Super parent | PROMPT_LIBRARY |
 |---------|----------|--------------|----------------|
 | `/audit` | Full repo review → BUILD_PLAN → execute → cleanup | maintain | 22 |
+| `/codex-review` | Optional Codex read-only review → CODE_REVIEW.md → BUILD_PLAN + `/fix` | prerelease, ship | — |
 | `/cleanup` | Archive ✅ BUILD_PLAN rows → COMPLETED_TASKS.md | build, audit, push, init | — |
 | `/debug` | Defect investigation | — | 20 |
 | `/gates` | Local validation suite | bootstrap, verify, build | 4/5 |
@@ -35,7 +36,7 @@
 | `/docs` | README health + markdown tables + encoding | verify | 5 |
 | `/upgrade` | Template upgrade sim | maintain | 16 |
 | `/setup` | GitHub repo settings | bootstrap | 11 |
-| `/plan` | Feature/ADR plan + Critique | build | 19 |
+| `/plan` | Feature/ADR plan + resolved Critique (Issue→Resolution) | build | 19 |
 | `/restore` | Restore from `.cursor-session-state.json` | — | 13 |
 | `/compact` | Save session state before clearing chat | — | 13 |
 | `/scope` | Parallel manifest + auto Task dispatch | — | 14 |

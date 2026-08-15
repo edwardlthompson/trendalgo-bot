@@ -39,15 +39,23 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Post-alignment carry-forward — HUMAN R-BA.H1 + attorney H-006 open.
+**Current sprint:** R-BA-17 AGENT ✅ — FOSS surface → upstream v0.17.0; HUMAN R-BA.H1 + attorney H-006 open.
 
 **Tests:** 347 pass · ~86% coverage (2026-07-12; pyproject cov-fail-under=86%).
 
-**Recent:** Shipped **v0.5.1** (2026-07-22) — bootstrap FOSS alignment + ruff/lock/security follow-ups. Product `.template-version` = 0.5.1; `upstream_aligned_version` = 0.15.1. See `docs/BOOTSTRAP_ALIGNMENT.md`.
+**Recent:** Aligned to template **v0.17.0** (2026-08-14) — Codex opt-in, expanded `/prerelease`, critique hardening, extra npm overrides, branding kit (`mode: template`). Product `.template-version` = 0.5.1. See `docs/BOOTSTRAP_ALIGNMENT.md`.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### Bootstrap align to upstream v0.17.0 (2026-08-14)
+
+- Adopted Issue→Resolution critique, `/codex-review` (opt-in), expanded `/prerelease`
+- npm overrides: undici / ip-address / nanoid / postcss; js-yaml 5.2.2+; brace 1.x 1.1.18+
+- Adopted branding kit + pitch README generator in **template** mode (live README preserved)
+- Still skipped: Biome/fast-check/TS 7, multi-stack CI, product-mode README overwrite
+- `validate-bootstrap.sh --quick` green; HUMAN R-BA.H1 + H-006 still open
 
 ### Ship v0.5.1 (2026-07-22)
 

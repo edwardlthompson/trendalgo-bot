@@ -8,7 +8,8 @@
     "batch_commands_help": "docs/help/BATCH_COMMANDS.md",
     "batch_commands_catalog": "docs/BATCH_COMMANDS.md",
     "bootstrap_alignment": "docs/BOOTSTRAP_ALIGNMENT.md",
-    "cursor_integrations": "docs/CURSOR_INTEGRATIONS.md"
+    "cursor_integrations": "docs/CURSOR_INTEGRATIONS.md",
+    "codex_review": "docs/CODEX_REVIEW.md"
   },
   "files": [
     {
@@ -566,7 +567,35 @@
     },
     {
       "path": "scripts/sync-design-tokens.py",
-      "purpose": "Generate web CSS and Android theme Kotlin from tokens",
+      "purpose": "Generate web CSS, Android theme Kotlin, branding official-colors.css, and distribute brand assets",
+      "read_when": "design_change",
+      "update_when": "design_change",
+      "owner": "maintainer"
+    },
+    {
+      "path": "branding/BRANDING.md",
+      "purpose": "Branding kit guide: logos, official colors, rebrand checklist, README modes",
+      "read_when": "ui_work",
+      "update_when": "design_change",
+      "owner": "agent+human"
+    },
+    {
+      "path": "branding/product.json",
+      "purpose": "Product identity and pitch copy for README generation (mode template|product)",
+      "read_when": "ui_work",
+      "update_when": "design_change",
+      "owner": "agent+human"
+    },
+    {
+      "path": "branding/product.schema.json",
+      "purpose": "JSON Schema for branding/product.json",
+      "read_when": "design_change",
+      "update_when": "design_change",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/generate-project-readme.py",
+      "purpose": "Generate pitch README preview; write root README.md only in product mode",
       "read_when": "design_change",
       "update_when": "design_change",
       "owner": "maintainer"
@@ -1452,6 +1481,55 @@
       "read_when": "human_gate",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
+    },
+    {
+      "path": "docs/CODEX_REVIEW.md",
+      "purpose": "Opt-in Codex third-party review contract",
+      "read_when": "prerelease",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".cursor/commands/codex-review.md",
+      "purpose": "Slash command for local Codex review",
+      "read_when": "prerelease",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".cursor/skills/codex-review/SKILL.md",
+      "purpose": "Skill companion for /codex-review",
+      "read_when": "prerelease",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/prerelease-autofix.sh",
+      "purpose": "Mechanical autofix + one gate pass for /prerelease",
+      "read_when": "prerelease",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/run-codex-review.sh",
+      "purpose": "Local Codex CLI review to CODE_REVIEW.md",
+      "read_when": "prerelease",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/apply-suggested-gate-fixes.sh",
+      "purpose": "Allowlisted mechanical fixes from feature-gate failed_stage",
+      "read_when": "prerelease",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/codex-findings-to-markdown.py",
+      "purpose": "Render Codex findings JSON to CODE_REVIEW.md",
+      "read_when": "prerelease",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
     }
   ],
   "modules": {
@@ -1504,8 +1582,8 @@
   },
   "upstream_bootstrap": {
     "repo": "edwardlthompson/agent-project-bootstrap",
-    "aligned_version": "0.15.1",
-    "aligned_at": "2026-07-21",
-    "notes": "FOSS agent surface aligned; .template-version tracks product release (release-please), not upstream template"
+    "aligned_version": "0.17.0",
+    "aligned_at": "2026-08-14",
+    "notes": "FOSS agent surface aligned; .template-version tracks product release (release-please)"
   }
 }

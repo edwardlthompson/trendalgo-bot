@@ -100,7 +100,7 @@
 | C — Gates/CI | `scripts/feature-gate.sh`, `scripts/feature-autofix.sh`, `scripts/run-maintainer-gates.sh`, `scripts/pre-release-gate.sh`, `scripts/check-security-triage.sh`, `.github/workflows/release.yml`, `.github/workflows/ci.yml` |
 | D — Docs | `docs/**`, `.cursor/rules/**`, `TEMPLATE_INDEX.json`, `modules/**` |
 
-**Sequential-only (no Parallel):** `BUILD_PLAN.md`, `scripts/agent-progress.sh`, `scripts/watch-agent-gates.sh`, shared `design-tokens/`
+**Sequential-only (no Parallel):** `BUILD_PLAN.md`, `scripts/agent-progress.sh`, `scripts/watch-agent-gates.sh`, shared `design-tokens/`, shared `branding/`
 
 ## Sprint M1 (template maintainer) — archived
 

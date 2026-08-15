@@ -51,6 +51,10 @@ Encourage `template_improvement` issues. Triage labels:
 
 Template CI must pass before every release. The template eats its own dogfood.
 
+## Branding / pitch README
+
+Child product identity lives under [`branding/`](../branding/). TrendAlgo keeps `branding/product.json` `"mode": "template"` so `scripts/generate-project-readme.py` writes only `branding/generated/README.preview.md`. Do not set `"mode": "product"` without `[HUMAN]` approval — that overwrites the live self-hosted [README.md](../README.md). After token or asset edits: `python3 scripts/sync-design-tokens.py`. See [`branding/BRANDING.md`](../branding/BRANDING.md).
+
 ## README Badges
 
 The [README.md](../README.md) uses [shields.io](https://shields.io/) static badges (`style=flat-square`) for BUILD_PLAN owner labels and supported stacks. Badges are external images with `alt` text; no tracking scripts.

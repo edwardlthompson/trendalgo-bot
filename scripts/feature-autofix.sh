@@ -52,6 +52,18 @@ if should_run python && [ -f examples/python/pyproject.toml ] && command -v uv >
   (cd examples/python && run_fix ruff-format uv run ruff format .) || true
 fi
 
+# Child product: root Python package (TrendAlgo) — ruff on src/ + scripts/
+if should_run python && [ -f pyproject.toml ] && grep -q 'name = "trendalgo-bot"' pyproject.toml && command -v uv >/dev/null 2>&1; then
+  run_fix ruff-check-fix-root uv run ruff check --fix src scripts || true
+  run_fix ruff-format-root uv run ruff format src scripts || true
+fi
+
+if should_run web && [ -f examples/web/package.json ] && command -v npm >/dev/null 2>&1; then
+  if grep -q '"format"' examples/web/package.json 2>/dev/null; then
+    (cd examples/web && run_fix web-format npm run format) || true
+  fi
+fi
+
 if command -v pre-commit >/dev/null 2>&1; then
   FILES=""
   if [ -n "$PATHS" ]; then

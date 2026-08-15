@@ -3,7 +3,7 @@
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-## Current sprint: **Post-alignment carry-forward (2026-07-21)**
+## Current sprint: **R-BA-17 — template FOSS surface 0.15.1 → 0.17.0 (2026-08-14)**
 
 | Marker | State |
 |--------|-------|
@@ -19,6 +19,17 @@
 > **R-Bootstrap-Align** archived in COMPLETED_TASKS.md (FOSS surface → upstream v0.15.1).
 
 **Alignment:** [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) · product audit history: R-Audit-8 (2026-07-12)
+
+## Sequential — R-BA-17
+
+| ID | Task | Owner | Status |
+|----|------|-------|--------|
+| R-BA-17.0 | Gap scan 0.15.1 → 0.17.0 + alignment doc | `[AGENT]` | ✅ |
+| R-BA-17.1 | npm overrides: undici / ip-address / nanoid / postcss; js-yaml 5.2.2+; brace 1.1.18+ | `[AGENT]` | ✅ |
+| R-BA-17.2 | Issue→Resolution critique in rules/docs/`/plan` | `[AGENT]` | ✅ |
+| R-BA-17.3 | Opt-in Codex + expanded `/prerelease` + python+web autofix | `[AGENT]` | ✅ |
+| R-BA-17.4 | `upstream_aligned_version` 0.17.0 + validate-bootstrap | `[AGENT]` / `[AUTO]` | ✅ |
+| R-BA-17.5 | Branding kit + pitch README generator (`mode: template`) | `[AGENT]` | ✅ |
 
 ### Human & device (after automation)
 

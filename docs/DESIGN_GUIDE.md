@@ -1,6 +1,6 @@
 # Design Guide
 
-> Cross-stack visual contract for Golden Path UI. Read after your active `modules/{stack}/MODULE.md`. For website folder roles and GitHub Pages hosting, see [`docs/WEB_PROJECT_LAYOUT.md`](WEB_PROJECT_LAYOUT.md).
+> Cross-stack visual contract for TrendAlgo UI. Read after your active `modules/{stack}/MODULE.md`. For logos and pitch copy, see [`branding/BRANDING.md`](../branding/BRANDING.md). For website folder roles and GitHub Pages hosting, see [`docs/WEB_PROJECT_LAYOUT.md`](WEB_PROJECT_LAYOUT.md).
 
 ## Principles
 
@@ -22,9 +22,11 @@ Generated outputs (do not hand-edit):
 |--------|-------|
 | `examples/web/src/design-tokens.css` | Web |
 | `examples/web/src/theme-meta.json` | Web PWA meta |
-| `examples/android/.../ui/theme/Color.kt` | Android |
-| `examples/android/.../ui/theme/Type.kt` | Android |
-| `examples/android/.../ui/theme/Dimens.kt` | Android |
+| `branding/official-colors.css` | Brand aliases (`--brand-*`) |
+| `examples/web/public/{icon,logo,favicon,readme-hero,social-preview}.svg` | Web public icons |
+| `examples/android/.../ui/theme/Color.kt` | Android (if module present) |
+| `examples/android/.../ui/theme/Type.kt` | Android (if module present) |
+| `examples/android/.../ui/theme/Dimens.kt` | Android (if module present) |
 
 ## Theme modes (system / light / dark)
 
@@ -92,7 +94,8 @@ theme.toggle.label, theme.mode.system, theme.mode.light, theme.mode.dark
 ## Agent checklist (before UI PR)
 
 - 🔲 Tokens changed only in `design-tokens/design-tokens.json` with sync run
-- 🔲 No `#RRGGBB` literals in UI source (except generated files)
+- 🔲 Branding assets updated under `branding/assets/` when the mark changes; sync run
+- 🔲 No `#RRGGBB` literals in UI source (except generated files and `branding/assets/*.svg`)
 - 🔲 No string literals in composables or `main.ts` markup
 - 🔲 Theme toggle still cycles system → light → dark
 - 🔲 `scripts/check-design-cohesion.sh` passes
@@ -100,6 +103,20 @@ theme.toggle.label, theme.mode.system, theme.mode.light, theme.mode.dark
 ## Extending the system
 
 Add new semantic colors to `design-tokens.json` under `color`, re-run sync, then reference via `MaterialTheme` or CSS vars. For new components, copy patterns from `GoldenPathScreen` (Android) or `main.ts` + `style.css` (web) — do not introduce one-off styles.
+
+## Branding kit
+
+Product identity (logos, pitch copy, official color sheet) lives under [`branding/`](../branding/). See [`branding/BRANDING.md`](../branding/BRANDING.md).
+
+| Edit | Then run |
+|------|----------|
+| Colors / type / spacing in `design-tokens.json` | `python3 scripts/sync-design-tokens.py` |
+| Logos / favicon / heroes in `branding/assets/` | `python3 scripts/sync-design-tokens.py` |
+| Name, tagline, pitch in `branding/product.json` | `python3 scripts/generate-project-readme.py` |
+
+Sync also writes `branding/official-colors.css` and copies web public icons. Android drawable sync is skipped while `examples/android/` is pruned.
+
+**README modes:** `"mode": "template"` (TrendAlgo default) writes only `branding/generated/README.preview.md` so the live self-hosted setup README is preserved. `"mode": "product"` overwrites root `README.md` — do not enable without `[HUMAN]` approval.
 
 
 ## About screen

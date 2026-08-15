@@ -36,11 +36,17 @@ REQUIRED=(
   docs/RUNBOOK.md
   docs/FEATURE_MODULES.md
   docs/CURSOR_INTEGRATIONS.md
+  docs/CODEX_REVIEW.md
   .github/dependabot.yml
   .github/CODEOWNERS
   THIRD_PARTY_LICENSES.md
   .env.example
   design-tokens/design-tokens.json
+  branding/BRANDING.md
+  branding/product.json
+  branding/assets/logo-mark.svg
+  branding/official-colors.css
+  branding/generated/README.preview.md
   docs/help/BATCH_COMMANDS.md
   docs/BATCH_COMMANDS.md
   .cursor/rules/batch-commands.mdc
@@ -51,6 +57,7 @@ REQUIRED=(
 BATCH_COMMANDS=(
   audit cleanup debug gates triage dependabot push prerelease regress
   feature fix init prune ci docs upgrade setup plan restore compact scope
+  codex-review
   bootstrap verify build ship maintain
 )
 
