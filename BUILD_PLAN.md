@@ -3,41 +3,42 @@
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-## Current sprint: **R-BA-17 — template FOSS surface 0.15.1 → 0.17.0 (2026-08-14)**
+## Current sprint: **GP-Template-1.9 — Golden Path adoption (2026-10-08)**
 
 | Marker | State |
 |--------|-------|
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-**~347 tests** · **~86%** coverage · Risk Register Zero ✅
 
-**Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix --step none`
+**Source:** Template upgrade catch-up to agent-project-bootstrap **v1.9.0**. Port patterns into existing feature folders; never copy `examples/` over the app. One feature per `/feature` task. Thin wiring ≤10 lines.
 
-**Human gates** (H-030–H-036, go-live, legal): [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) — not duplicated here.
+**Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix`
 
-> **R-Bootstrap-Align** archived in COMPLETED_TASKS.md (FOSS surface → upstream v0.15.1).
+> **R-BA-17** / template FOSS surface archived context in COMPLETED_TASKS / prior sections. Alignment: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) (`upstream_aligned_version` 1.9.0).
 
-**Alignment:** [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) · product audit history: R-Audit-8 (2026-07-12)
-
-## Sequential — R-BA-17
+## Sequential — GP-Template-1.9
 
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
-| R-BA-17.0 | Gap scan 0.15.1 → 0.17.0 + alignment doc | `[AGENT]` | ✅ |
-| R-BA-17.1 | npm overrides: undici / ip-address / nanoid / postcss; js-yaml 5.2.2+; brace 1.1.18+ | `[AGENT]` | ✅ |
-| R-BA-17.2 | Issue→Resolution critique in rules/docs/`/plan` | `[AGENT]` | ✅ |
-| R-BA-17.3 | Opt-in Codex + expanded `/prerelease` + python+web autofix | `[AGENT]` | ✅ |
-| R-BA-17.4 | `upstream_aligned_version` 0.17.0 + validate-bootstrap | `[AGENT]` / `[AUTO]` | ✅ |
-| R-BA-17.5 | Branding kit + pitch README generator (`mode: template`) | `[AGENT]` | ✅ |
+| GP-1 | Port crash-capture vertical slice into examples/web (ref stub; no overwrite) · [`docs/features/crash-capture.md`](docs/features/crash-capture.md) | `[AGENT]` | 🔲 |
+| GP-2 | Port feedback clipboard/inbox slice into examples/web · [`docs/features/feedback.md`](docs/features/feedback.md) | `[AGENT]` | 🔲 |
+| GP-3 | Port GitHub feedback bridge into examples/web · [`docs/features/github-feedback.md`](docs/features/github-feedback.md) | `[AGENT]` | 🔲 |
+| GP-4 | Port privacy-report sanitize/fingerprint slice into examples/web · [`docs/features/privacy-report.md`](docs/features/privacy-report.md) | `[AGENT]` | 🔲 |
+| GP-5 | Adopt Settings-only header chrome (tour/coach pattern) without ripping product ThemeToggle blindly — Plan first · [`docs/features/settings-chrome.md`](docs/features/settings-chrome.md) | `[AGENT]` | 🔲 |
+| GP-6 | Harden About/donations + update-check patterns vs template stub · [`docs/features/donations-updates.md`](docs/features/donations-updates.md) | `[AGENT]` | 🔲 |
+| GP-7 | Port deep-link feedback entry into examples/web · [`docs/features/deep-link-feedback.md`](docs/features/deep-link-feedback.md) | `[AGENT]` | 🔲 |
+| GP-8 | Adopt crash-inbox ops docs/scripts for local review queue · [`docs/features/crash-inbox.md`](docs/features/crash-inbox.md) | `[AGENT]` | 🔲 |
 
-### Human & device (after automation)
+### Human & device
 
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
 | R-BA.H1 | Review alignment doc (`docs/BOOTSTRAP_ALIGNMENT.md`) | `[HUMAN]` | 🔲 |
+| GP-H1 | Approve Settings-only chrome change vs current ThemeToggle (GP-5) before AGENT implements | `[HUMAN]` | 🔲 |
 
 ---
+
 
 ## Program status (summary)
 
@@ -46,7 +47,7 @@
 | Core (S0–S12) | Setup → platform, Risk Register Zero | ✅ | H-001–H-029 backlog |
 | Exchange | S13–S20 · 9 venues · ADR-0010 | ✅ | **H-032** worldwide live |
 | DEX | S21–S24 · Base Phase 1 · ADR-0011 | ✅ | **H-035** scope · **H-036** live |
-| Reviews | R-Audit … R-Audit-8 AGENT | ✅ | H-006 · R-Audit-8.9 attorney |
+| Reviews | R-Audit … R-Audit-8 · GP-Template-1.9 open | 🔲 | H-006 · GP-H1 · R-BA.H1 |
 Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigations CM-1–CM-11: closed in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md).
 
 ---
