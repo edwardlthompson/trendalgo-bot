@@ -48,10 +48,15 @@ REQUIRED=(
   branding/official-colors.css
   branding/generated/README.preview.md
   docs/help/BATCH_COMMANDS.md
+  docs/help/UPGRADE.md
   docs/BATCH_COMMANDS.md
   .cursor/rules/batch-commands.mdc
   CODE_REVIEW.md.example
   RELEASE_NOTES.md.example
+  scratchpad.md.example
+  docs/features/_handoff.md
+  bootstrap.config.json
+  bootstrap.config.json.example
 )
 
 BATCH_COMMANDS=(

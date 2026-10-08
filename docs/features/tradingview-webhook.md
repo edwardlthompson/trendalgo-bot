@@ -30,5 +30,5 @@
 
 ## Notes
 
-- Freqtrade execution wiring deferred to Sprint 5+; MVP logs signal to debug log
+- Native runner execution wiring deferred to Sprint 5+; MVP logs signal to debug log
 - After each AGENT step: `bash scripts/watch-agent-gates.sh --once --autofix`

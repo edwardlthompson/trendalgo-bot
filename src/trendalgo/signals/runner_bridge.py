@@ -63,7 +63,8 @@ def bridge_tradingview_signal(signal: dict[str, Any], state: BridgeState) -> dic
         reason = str(exc)
         _execution_audit(state.portfolio_store, signal, accepted=False, reason=reason)
         state.log(f"tradingview execution failed: {reason}")
-        return {"status": "failed", "executed": False, "error": reason}
+        # Opaque client error — do not echo exception text (CodeQL py/stack-trace-exposure).
+        return {"status": "failed", "executed": False, "error": "invalid_signal"}
 
     tick = {
         "pair": result["pair"],

@@ -1,0 +1,14 @@
+{
+  "required_status_checks": [
+    "CI",
+    "Security Scan",
+    "CodeQL",
+    "Repo Hygiene",
+    "Feature Gate"
+  ],
+  "informational_status_checks": [
+    "OpenSSF Scorecard",
+    "pages build and deployment"
+  ],
+  "map_doc": "docs/CI_GAPS.md"
+}

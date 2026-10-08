@@ -7,9 +7,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROGRESS="$ROOT/.cursor/agent-progress.json"
 mkdir -p "$ROOT/.cursor"
 
-if command -v python3 >/dev/null 2>&1; then PY=python3
-elif command -v python >/dev/null 2>&1; then PY=python
-else PY=python3; fi
+# shellcheck source=lib/resolve-python.sh
+. "$(cd "$(dirname "$0")" && pwd)/lib/resolve-python.sh"
 
 $PY - "$ROOT" "$PROGRESS" "$@" << 'PY'
 import json, re, sys
@@ -32,6 +31,8 @@ def load():
         "stack": stack,
         "current_feature": None,
         "build_plan_step": None,
+        "parallel_steps_completed": [],
+        "parallel_sprint_done": [],
         "last_gate": None,
         "strikes": 0,
         "autofix_attempts": 0,
@@ -86,11 +87,25 @@ def parse_record_args(a):
     return out
 
 if not args:
-    print("Usage: agent-progress.sh status|record|next|set-feature [--json]", file=sys.stderr)
+    print("Usage: agent-progress.sh status|record|next|set-feature|set-step|set-parallel-sprint-done|reset-strikes [--json]", file=sys.stderr)
     sys.exit(1)
 
 cmd = args[0]
 json_out = "--json" in args
+
+if cmd == "reset-strikes":
+    # After an environment fix (pre-commit install, PATH/JDK/SDK), clear halt state
+    # so /build can continue without waiting for a successful feature-gate record.
+    data = load()
+    data["strikes"] = 0
+    data["autofix_attempts"] = 0
+    data["next_action"] = "proceed after env fix (strikes reset)"
+    save(data)
+    if json_out:
+        print(json.dumps({"strikes": 0, "autofix_attempts": 0}, indent=2))
+    else:
+        print("strikes=0 autofix_attempts=0")
+    sys.exit(0)
 
 if cmd == "status":
     data = load()
@@ -116,6 +131,45 @@ if cmd == "set-feature":
     data = load()
     data["current_feature"] = name or None
     save(data)
+    sys.exit(0)
+
+if cmd == "set-step":
+    step_name = ""
+    i = 1
+    while i < len(args):
+        if args[i] == "--name" and i + 1 < len(args):
+            step_name = args[i + 1]
+            i += 2
+        else:
+            i += 1
+    data = load()
+    completed = data.get("parallel_steps_completed") or []
+    if step_name and step_name not in completed:
+        completed.append(step_name)
+    data["parallel_steps_completed"] = completed
+    data["build_plan_step"] = step_name or data.get("build_plan_step")
+    save(data)
+    if json_out:
+        print(json.dumps({"parallel_steps_completed": completed}, indent=2))
+    sys.exit(0)
+
+if cmd == "set-parallel-sprint-done":
+    sprint_name = ""
+    i = 1
+    while i < len(args):
+        if args[i] == "--sprint" and i + 1 < len(args):
+            sprint_name = args[i + 1]
+            i += 2
+        else:
+            i += 1
+    data = load()
+    done = data.get("parallel_sprint_done") or []
+    if sprint_name and sprint_name not in done:
+        done.append(sprint_name)
+    data["parallel_sprint_done"] = done
+    save(data)
+    if json_out:
+        print(json.dumps({"parallel_sprint_done": done}, indent=2))
     sys.exit(0)
 
 if cmd == "record":

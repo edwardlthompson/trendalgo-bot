@@ -46,13 +46,20 @@ def test_find_matching_tx() -> None:
     assert match["tx_hash"] == "abc123"
 
 
+def _current_statement_period() -> str:
+    """Period whose licensed_until is still in the future relative to UTC now."""
+    now = datetime.now(UTC)
+    return f"{now.year}-{now.month:02d}"
+
+
 def test_simulated_payment_unlocks_license(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TRENDALGO_PAYMENT_SIMULATE", "1")
+    period = _current_statement_period()
     billing = BillingStore(tmp_path / "billing.db")
-    billing.enroll(0.05, "2026-06-draft-1", "install-1")
+    billing.enroll(0.05, f"{period}-draft-1", "install-1")
     intent = create_payment_intent(
         billing,
-        period="2026-06",
+        period=period,
         amount_usd=12.5,
         install_uuid="install-1",
     )
@@ -62,7 +69,7 @@ def test_simulated_payment_unlocks_license(tmp_path, monkeypatch: pytest.MonkeyP
     status = billing.get_license_status()
     assert status["suspended"] == 0
     assert status["grace_day"] == 0
-    assert status["licensed_until"] == licensed_until_for_period("2026-06")
+    assert status["licensed_until"] == licensed_until_for_period(period)
     ok, reason = check_license_gate(billing.get_enrollment(), status, dry_run=False)
     assert ok is True
     assert reason == "licensed_until"
@@ -70,11 +77,12 @@ def test_simulated_payment_unlocks_license(tmp_path, monkeypatch: pytest.MonkeyP
 
 def test_simulated_usdc_payment_unlocks_license(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TRENDALGO_PAYMENT_SIMULATE", "1")
+    period = _current_statement_period()
     billing = BillingStore(tmp_path / "billing.db")
-    billing.enroll(0.05, "2026-06-draft-1", "install-usdc")
+    billing.enroll(0.05, f"{period}-draft-1", "install-usdc")
     intent = create_payment_intent(
         billing,
-        period="2026-06",
+        period=period,
         amount_usd=12.5,
         install_uuid="install-usdc",
         asset_id="USDC",
@@ -84,7 +92,7 @@ def test_simulated_usdc_payment_unlocks_license(tmp_path, monkeypatch: pytest.Mo
     assert intent["amount_to_send"] > 12.5
     result = verify_pending_payment(billing, intent["payment_id"])
     assert result["verified"] is True
-    assert billing.get_license_status()["licensed_until"] == licensed_until_for_period("2026-06")
+    assert billing.get_license_status()["licensed_until"] == licensed_until_for_period(period)
 
 
 def test_list_available_assets() -> None:

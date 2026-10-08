@@ -16,9 +16,8 @@ run_check() {
 
 echo "=== README health check ==="
 
-if command -v python3 >/dev/null 2>&1; then PY=python3
-elif command -v python >/dev/null 2>&1; then PY=python
-else PY=python3; fi
+# shellcheck source=lib/resolve-python.sh
+. "$(cd "$(dirname "$0")" && pwd)/lib/resolve-python.sh"
 
 $PY - "$ROOT/README.md" "$ROOT" << 'PY'
 import re, sys
@@ -42,7 +41,11 @@ if errors:
 print("OK   README relative links resolve")
 PY
 
-$PY - "$ROOT" << 'PY'
+run_check bash scripts/check-markdown-tables.sh
+run_check bash scripts/check-file-encoding.sh
+
+# Branding pitch README (mode-gated)
+if ! $PY - "$ROOT" << 'PY'
 import json
 import re
 import sys
@@ -69,6 +72,8 @@ else:
             "## Pitch",
             "## Features",
             "## Quick start",
+            "## For humans",
+            "## For agents",
             "## Install",
             "## Usage",
             "## Contributing",
@@ -104,9 +109,9 @@ if errors:
     sys.exit(1)
 print("OK   Branding README preview / product sections")
 PY
-
-run_check bash scripts/check-markdown-tables.sh
-run_check bash scripts/check-file-encoding.sh
+then
+  ERRORS=$((ERRORS + 1))
+fi
 
 if [ "$ERRORS" -gt 0 ]; then
   echo "${ERRORS} README health check(s) failed"

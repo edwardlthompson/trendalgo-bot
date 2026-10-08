@@ -23,7 +23,7 @@ def settlement_address() -> str:
 
 
 def settlement_info(amount_usd: float, period: str) -> dict[str, object]:
-    """Display payload for user-initiated settlement (no auto-withdraw)."""
+    """Display payload for user-initiated settlement (never automatic withdrawal)."""
     return {
         "amount_usd": amount_usd,
         "period": period,

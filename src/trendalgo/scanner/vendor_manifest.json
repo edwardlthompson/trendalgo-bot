@@ -11,6 +11,6 @@
     "scanner.alerts": "LTS alerting tiers A/B/C (O9)",
     "scanner.backtest": "BacktestDataLoader (O14)",
     "scanner.mixins": "OpportunityScannerMixin + TrendSpotter Boost (O8, O13)",
-    "scanner.watchlist_bridge": "Freqtrade pair whitelist feed (O8)"
+    "scanner.watchlist_bridge": "Native pair whitelist feed (O8)"
   }
 }

@@ -1063,9 +1063,12 @@ main {
 }
 
 .gp-legend-item::before {
-  content: "—";
+  content: "";
+  display: inline-block;
+  width: 0.85em;
+  border-block-end: 2px solid currentColor;
   margin-inline-end: var(--gp-space-xs);
-  font-weight: 700;
+  vertical-align: middle;
 }
 
 .gp-legend-portfolio::before {

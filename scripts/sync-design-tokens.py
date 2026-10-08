@@ -245,16 +245,13 @@ def generate_dimens_kt(tokens: dict, digest: str) -> str:
     return "\n".join(lines)
 
 
-def generate_theme_meta(tokens: dict, existing: dict | None = None) -> str:
+def generate_theme_meta(tokens: dict) -> str:
     meta = tokens["meta"]
-    payload = dict(existing or {})
-    payload.update(
-        {
-            "themeColorLight": meta["themeColorLight"],
-            "themeColorDark": meta["themeColorDark"],
-            "name": meta["name"],
-        }
-    )
+    payload = {
+        "themeColorLight": meta["themeColorLight"],
+        "themeColorDark": meta["themeColorDark"],
+        "name": meta["name"],
+    }
     return json.dumps(payload, indent=2) + "\n"
 
 
@@ -317,6 +314,52 @@ def require_brand_assets(root: Path) -> Path:
     return assets
 
 
+def _svg_fill_to_android_vector(mark_svg: str) -> str:
+    """Best-effort conversion of logo-mark.svg to a VectorDrawable."""
+    surface = "#1a1a2e"
+    primary = "#e94560"
+    rect = re.search(
+        r'<rect[^>]*fill="(#[0-9A-Fa-f]{6})"',
+        mark_svg,
+    )
+    path = re.search(
+        r'<path[^>]*d="([^"]+)"[^>]*fill="(#[0-9A-Fa-f]{6})"',
+        mark_svg,
+    )
+    if not path:
+        path = re.search(
+            r'<path[^>]*fill="(#[0-9A-Fa-f]{6})"[^>]*d="([^"]+)"',
+            mark_svg,
+        )
+        if path:
+            primary = path.group(1)
+            d = path.group(2)
+        else:
+            d = "M16 40 L32 16 L48 40 Z"
+    else:
+        d = path.group(1)
+        primary = path.group(2)
+    if rect:
+        surface = rect.group(1)
+    # Scale 64→24 viewport for Android convention
+    return "\n".join(
+        [
+            f"<!-- {HEADER} -->",
+            '<vector xmlns:android="http://schemas.android.com/apk/res/android"',
+            '    android:width="24dp"',
+            '    android:height="24dp"',
+            '    android:viewportWidth="64"',
+            '    android:viewportHeight="64">',
+            f'    <path android:fillColor="{surface}"',
+            '        android:pathData="M12,0 L52,0 A12,12 0 0 1 64,12 L64,52 A12,12 0 0 1 52,64 L12,64 A12,12 0 0 1 0,52 L0,12 A12,12 0 0 1 12,0 Z"/>',
+            f'    <path android:fillColor="{primary}"',
+            f'        android:pathData="{d}"/>',
+            "</vector>",
+            "",
+        ]
+    )
+
+
 def distribute_web_branding(web_root: Path, assets: Path, tokens: dict) -> None:
     public = web_root / "public"
     public.mkdir(parents=True, exist_ok=True)
@@ -335,6 +378,7 @@ def distribute_web_branding(web_root: Path, assets: Path, tokens: dict) -> None:
         manifest["theme_color"] = theme_dark
         manifest["background_color"] = surface_dark
         icons = manifest.get("icons") or []
+        # Ensure favicon + icon entries
         srcs = {i.get("src") for i in icons if isinstance(i, dict)}
         if "/icon.svg" not in srcs:
             icons.append(
@@ -385,6 +429,15 @@ def distribute_web_branding(web_root: Path, assets: Path, tokens: dict) -> None:
         index_path.write_text(html, encoding="utf-8", newline="\n")
 
 
+def distribute_android_branding(android_root: Path, assets: Path) -> None:
+    drawable = android_root / "app" / "src" / "main" / "res" / "drawable"
+    drawable.mkdir(parents=True, exist_ok=True)
+    mark = (assets / "logo-mark.svg").read_text(encoding="utf-8")
+    (drawable / "ic_brand_mark.xml").write_text(
+        _svg_fill_to_android_vector(mark), encoding="utf-8", newline="\n"
+    )
+
+
 def write_outputs(root: Path) -> None:
     tokens = load_tokens(root)
     digest = token_hash(tokens)
@@ -402,11 +455,8 @@ def write_outputs(root: Path) -> None:
         web_css = web_root / "src" / "design-tokens.css"
         theme_meta = web_root / "src" / "theme-meta.json"
         web_css.parent.mkdir(parents=True, exist_ok=True)
-        existing_meta: dict = {}
-        if theme_meta.is_file():
-            existing_meta = json.loads(theme_meta.read_text(encoding="utf-8"))
         web_css.write_text(generate_css(tokens, digest), encoding="utf-8")
-        theme_meta.write_text(generate_theme_meta(tokens, existing_meta), encoding="utf-8")
+        theme_meta.write_text(generate_theme_meta(tokens), encoding="utf-8")
         distribute_web_branding(web_root, assets, tokens)
         synced.append("web")
 
@@ -430,11 +480,8 @@ def write_outputs(root: Path) -> None:
         (android_theme / "Dimens.kt").write_text(
             generate_dimens_kt(tokens, digest), encoding="utf-8"
         )
+        distribute_android_branding(android_root, assets)
         synced.append("android")
-
-    if not synced:
-        print("No active example stacks for design token sync; skipped")
-        return
 
     print(f"Synced design tokens for {', '.join(synced)} (hash {digest})")
 

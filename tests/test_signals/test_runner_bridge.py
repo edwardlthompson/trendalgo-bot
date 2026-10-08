@@ -76,4 +76,5 @@ def test_bridge_rejects_invalid_signal(tmp_path: Path, monkeypatch: Any) -> None
     result = bridge_tradingview_signal({"pair": "", "action": "hold"}, state)
     assert result["executed"] is False
     assert result["status"] == "failed"
-    assert "pair" in result["error"].lower() or "action" in result["error"].lower()
+    assert result["error"] == "invalid_signal"
+    assert any("execution failed" in line for line in state.logs)

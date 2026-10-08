@@ -9,7 +9,9 @@
     "batch_commands_catalog": "docs/BATCH_COMMANDS.md",
     "bootstrap_alignment": "docs/BOOTSTRAP_ALIGNMENT.md",
     "cursor_integrations": "docs/CURSOR_INTEGRATIONS.md",
-    "codex_review": "docs/CODEX_REVIEW.md"
+    "codex_review": "docs/CODEX_REVIEW.md",
+    "upgrade_help": "docs/help/UPGRADE.md",
+    "feature_handoff": "docs/features/_handoff.md"
   },
   "files": [
     {
@@ -280,7 +282,7 @@
     },
     {
       "path": ".github/workflows/dependency-review.yml",
-      "purpose": "PR dependency review — fail on new High/Critical vulnerabilities",
+      "purpose": "PR dependency review \u2014 fail on new High/Critical vulnerabilities",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
@@ -721,7 +723,7 @@
     },
     {
       "path": "scripts/founder-gate.sh",
-      "purpose": "TrendAlgo founder gate CLI wrapper (H-001–H-029)",
+      "purpose": "TrendAlgo founder gate CLI wrapper (H-001\u2013H-029)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -756,7 +758,7 @@
     },
     {
       "path": "scripts/founder_gate.py",
-      "purpose": "Founder gate CLI (H-001–H-029 preflight, approve, backlog)",
+      "purpose": "Founder gate CLI (H-001\u2013H-029 preflight, approve, backlog)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -812,7 +814,7 @@
     },
     {
       "path": "scripts/check-api-key-policy.sh",
-      "purpose": "API key policy — no Withdraw permission (R-009)",
+      "purpose": "API key policy \u2014 no Withdraw permission (R-009)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -1530,6 +1532,867 @@
       "read_when": "prerelease",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
+    },
+    {
+      "path": "scripts/apply-depsonar-gradle.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/blender-icons.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/bootstrap-lifecycle.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-action-workflows.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-adr-architecture.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-adr-command.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-agent-adapters.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-agent-brief.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-agent-venue.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-android-cmdline-tools.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-android-r8.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-android-sdk-licenses.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-android-sdk-secrets.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-android-signing-runbook.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-auto-review.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-bootstrap-engine.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-build-plan-tally.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-ci-gaps.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-ci-refs.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-compose-a11y-lint.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-contributing-agent.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-conventional-commit.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-crash-inbox.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-crash-payload-allowlist.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-cursor-automations.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-cursor-canvas.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-cursor-cli.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-cursor-cloud-hooks.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-cursor-marketplace.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-doc-links.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-env.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-espresso-android16.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-fdroid-metadata-links.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-fdroid-screenshots.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-feature-specs.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-first-30-days.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-github-settings-yml.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-gitleaks-baseline.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-glossary-links.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-golden-path-app-version.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-hadolint.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-i18n-parity.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-ideas-discussion.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-lighthouse-floors.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-lightroom-lua.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-lightroom-sdk-playbook.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-lightroom-tagset-fuzz.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-local-compute.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-locale-pack-budget.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-mcp-allowlist.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-md-yaml-lint.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-merge-queue-docs.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-nix-flake.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-openvex.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-package-attestation-docs.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-pages-analytics.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-pages-demo-link.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-playwright-cache.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-pre-commit-hooks.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-project-card-index.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-psscriptanalyzer.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-readme-badges.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-readme-mermaid.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-reproducible-apk.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-reuse.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-sanitize-fixtures.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-scorecard-sarif-classifier.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-semgrep.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-shellcheck.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-social-preview.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-sw-cache-budget.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-template-gaps.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-template-upgrade-form.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-token-contrast.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-tour-coach-chrome.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-ux-inventory.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-web-import-hygiene.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/check-winget-runbook.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/compact-session-state.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/compress-memory.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/copy-sandbox-config.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/feedback-inbox.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/gc-parallel-lock.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/gc-worktrees.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/gen-feature-spec.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/install-android-cmdline-tools.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/install-commit-msg-hook.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/merge-release-please-pr.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/project-health.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/recommend-model.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/refresh-build-plan-tally.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/release-please-dry.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/render-gates-status.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/render-upd-status.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/report-issue.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/resume-handoff.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/run-android-emulator-local.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/run-python-mypy.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/setup-automerge-token.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/setup-local.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/smoke-sprint.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/sync-open-prs-build-plan.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/sync-template-gaps-build-plan.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/tour-verify.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/update-deps.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/validate-winget-stub.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/verify-android-insets.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/verify-lightroom.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/verify.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/wait-release-sbom.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/winget-publish-loop.sh",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".github/workflows/feedback-notify.yml",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".github/workflows/issue-pii-nudge.yml",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".github/workflows/release-please-automerge.yml",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".github/workflows/sbom-diff-dependabot.yml",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": ".github/workflows/sync-open-prs-build-plan.yml",
+      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "docs/help/UPGRADE.md",
+      "purpose": "Human /upgrade help",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "docs/features/_handoff.md",
+      "purpose": "Feature handoff template",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scratchpad.md.example",
+      "purpose": "Ephemeral scratchpad template",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "bootstrap.config.json",
+      "purpose": "Child bootstrap stamp",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "bootstrap.config.json.example",
+      "purpose": "Bootstrap config example",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "AGENT.md",
+      "purpose": "Portable agent pointer",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "PROJECT_CHECKLIST.md",
+      "purpose": "Project checklist",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
     }
   ],
   "modules": {
@@ -1545,7 +2408,7 @@
     }
   },
   "roadmap": {
-    "active": "BUILD_PLAN.md — maintenance + human open items",
+    "active": "BUILD_PLAN.md \u2014 maintenance + human open items",
     "completed_archive": "COMPLETED_TASKS.md",
     "batch_commands": [
       ".cursor/commands/audit.md",
@@ -1582,7 +2445,7 @@
   },
   "upstream_bootstrap": {
     "repo": "edwardlthompson/agent-project-bootstrap",
-    "aligned_version": "0.17.0",
+    "aligned_version": "1.9.0",
     "aligned_at": "2026-08-14",
     "notes": "FOSS agent surface aligned; .template-version tracks product release (release-please)"
   }

@@ -58,12 +58,57 @@ else
   fail "missing root LICENSE"
 fi
 
-if [ -d "$ROOT/examples/android/fastlane/metadata/android/en-US" ]; then
+FASTLANE="$ROOT/examples/android/fastlane/metadata/android/en-US"
+if [ ! -d "$FASTLANE" ]; then
+  fail "missing $FASTLANE"
+else
   ok "fastlane metadata mirror present"
+  for f in title.txt short_description.txt full_description.txt; do
+    if [ ! -s "$FASTLANE/$f" ]; then
+      fail "missing or empty $FASTLANE/$f"
+    else
+      ok "fastlane $f present"
+    fi
+  done
+  if [ ! -s "$ROOT/examples/android/fastlane/Fastfile" ]; then
+    fail "missing examples/android/fastlane/Fastfile"
+  else
+    ok "Fastfile present"
+  fi
+  if [ ! -s "$ROOT/examples/android/fastlane/Appfile" ]; then
+    fail "missing examples/android/fastlane/Appfile"
+  else
+    ok "Appfile present"
+  fi
+fi
+
+RECIPE="$ROOT/examples/android/metadata/dev.foss.goldenpath.yml"
+if [ ! -s "$RECIPE" ]; then
+  fail "missing F-Droid build recipe $RECIPE"
+elif ! grep -q "RepoType: git" "$RECIPE" || ! grep -q "subdir: examples/android" "$RECIPE"; then
+  fail "F-Droid recipe must set RepoType git and subdir examples/android"
+elif ! grep -q "gradle:" "$RECIPE"; then
+  fail "F-Droid recipe must use a gradle build"
+else
+  ok "F-Droid build recipe present"
+fi
+
+AF="$ROOT/examples/android/metadata/antifeatures.yml"
+if [ ! -s "$AF" ]; then
+  fail "missing F-Droid AntiFeatures template $AF"
+elif ! grep -q "AntiFeatures: \[\]" "$AF"; then
+  fail "FOSS AntiFeatures template must default to an empty list"
+else
+  ok "F-Droid AntiFeatures template present"
 fi
 
 echo ""
 echo "SKIP [ADB] reproducible APK hash verification — run on device/emulator per modules/android/MODULE.md"
+
+# Dummy/placeholder screenshots fail even when metadata text is present.
+if ! bash "$ROOT/scripts/check-fdroid-screenshots.sh"; then
+  fail "dummy F-Droid screenshots are not allowed"
+fi
 
 if [ "$ERRORS" -gt 0 ]; then
   echo "${ERRORS} F-Droid metadata check(s) failed"

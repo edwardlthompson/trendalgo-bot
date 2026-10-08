@@ -50,7 +50,7 @@ def run_grace_reminders(
         portfolio_store.insert_notification(
             "license",
             f"License grace day {day}",
-            "User-initiated settlement required to restore live trading. No auto-withdraw.",
+            "User-initiated settlement required to restore live trading. Never automatic withdrawal.",
         )
         if on_log:
             on_log(f"grace reminder day {day}")

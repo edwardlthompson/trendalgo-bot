@@ -8,7 +8,7 @@
   ],
   "parallel_scope_note": "Sprint 1 Parallel: one agent per active stack; no overlapping paths",
   "selected_at": "2026-06-25T23:43:16+00:00",
-  "aligned_template_version": "0.15.1",
+  "aligned_template_version": "1.9.0",
   "cursor_features_enabled": [
     "rules",
     "commands",
@@ -23,6 +23,7 @@
     "feature_radar",
     "plugin_pack",
     "cli_example",
+    "codex_review_example",
     "mcp_foss_example"
   ],
   "cursor_features_hidden": [
@@ -33,5 +34,5 @@
     "mcp_commercial_example",
     "android_commercial_patterns"
   ],
-  "cursor_features_synced_at": "2026-08-15T01:20:09+00:00"
+  "cursor_features_synced_at": "2026-10-08T18:10:54+00:00"
 }

@@ -1,8 +1,8 @@
 # Bootstrap Alignment - TrendAlgo Bot
 
 > Gap analysis and migration notes for aligning this child repo with
-> [agent-project-bootstrap](https://github.com/edwardlthompson/agent-project-bootstrap) **v0.17.0**.
-> First written 2026-07-21 (v0.15.1). Updated 2026-08-14. Update only at alignment milestones.
+> [agent-project-bootstrap](https://github.com/edwardlthompson/agent-project-bootstrap) **v1.9.0**.
+> First written 2026-07-21 (v0.15.1). Updated 2026-08-14; catch-up 2026-10-08 to v1.9.0. Update only at alignment milestones.
 
 ## Summary
 
@@ -11,10 +11,10 @@ Product code under `src/trendalgo/` and `examples/web/` is preserved.
 Product `.template-version` tracks release-please (currently **0.5.1**).
 Upstream FOSS surface is recorded as `upstream_aligned_version` in `.template-update.json`.
 
-| Item | Local | Upstream v0.17.0 | Action |
+| Item | Local | Upstream v1.9.0 | Action |
 |------|-------|------------------|--------|
-| `.template-version` | 0.5.1 (product) | 0.17.0 (template) | Keep product version |
-| `upstream_aligned_version` | 0.15.1 → **0.17.0** | — | Bump after FOSS surface green |
+| `.template-version` | 0.5.1 (product) | 1.9.0 (template) | Keep product version |
+| `upstream_aligned_version` | 0.17.0 → **1.9.0** | — | Bump after FOSS surface green |
 | Stack | Python + Web (pruned) | Multi-example | Keep python+web only |
 | CI matrix | Product-tuned | Full multi-stack | **Keep product CI** |
 | Codex / expanded `/prerelease` | Missing (pre-0.16) | Present | Adopt FOSS opt-in |
@@ -52,7 +52,7 @@ Upstream FOSS surface is recorded as `upstream_aligned_version` in `.template-up
 |----------|------------|
 | File limits vs upstream 300/150 | Keep TrendAlgo `check-file-limits` (250 / 300 / 150) |
 | HUMAN_BACKLOG location | Root stub → `docs/HUMAN_BACKLOG.md` |
-| Template version | Product 0.5.1; `upstream_aligned_version` 0.17.0 |
+| Template version | Product 0.5.1; `upstream_aligned_version` 1.9.0 |
 | npm High overrides | Adopt undici/ip-address/nanoid; keep 4.x/1.x yaml/brace pins |
 
 ## Recommended stack
@@ -65,12 +65,13 @@ Upstream FOSS surface is recorded as `upstream_aligned_version` in `.template-up
 2. CI required-check names — not changed
 3. `validate-bootstrap` new required files — `docs/CODEX_REVIEW.md` + `/codex-review` indexed together
 4. Secrets — never commit `.env` or API keys
-5. Do not set `.template-version` to 0.17.0
+5. Do not set `.template-version` to 1.9.0
 
 ## Migration notes (human)
 
 ### Done by AGENT
 
+- 2026-10-08: Canon/Mixed catch-up to upstream **v1.9.0** (`/upgrade` help, commands, scripts, schemas, adapters); product CI workflows kept; `.template-version` remains 0.5.1
 - 2026-07-21: FOSS Cursor surface to v0.15.1
 - 2026-08-14: critique hardening, Codex opt-in, expanded `/prerelease`, extra npm overrides
 - 2026-08-14: branding kit + pitch README generator in **template** mode (preview only)
