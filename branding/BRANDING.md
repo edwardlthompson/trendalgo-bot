@@ -11,7 +11,6 @@ Replaceable product identity for **TrendAlgo Bot**, adopted from
 | Logos / favicon / heroes | [`assets/`](assets/) | `python3 scripts/sync-design-tokens.py` |
 | Name, pitch, README copy | [`product.json`](product.json) | `python3 scripts/generate-project-readme.py` |
 | Voice guidelines | [`voice.md`](voice.md) | (docs only) |
-
 Official color stylesheet (generated): [`official-colors.css`](official-colors.css).
 
 ## Asset inventory
@@ -23,10 +22,12 @@ Official color stylesheet (generated): [`official-colors.css`](official-colors.c
 | `assets/logo-wordmark.svg` | Wordmark only |
 | `assets/logo-lockup.svg` | Mark + wordmark |
 | `assets/favicon.svg` | Browser tab |
-| `assets/app-icon-512.svg` | Export to store `icon.png` 512×512 (`[HUMAN]`) |
+| `assets/app-icon-512.svg` | Legacy vector export target (Sacred — do not overwrite) |
+| `assets/app-icon-512.png` | Photoreal app icon (A3); also 192/32 + `app-icon.ico` |
+| `assets/splash-1280x720.png` | Photoreal splash (desk pilot B) |
 | `assets/readme-hero.svg` | README banner |
-| `assets/social-preview.svg` | GitHub / OG 1280×640 (upload PNG export in repo Settings → Social preview) |
-
+| `assets/social-preview.svg` | Vector OG placeholder |
+| `assets/social-preview.png` | Photoreal OG / social preview |
 ## Clear space & contrast
 
 - Keep at least 1/8 of the mark’s width as padding around the mark.
