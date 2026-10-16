@@ -80,6 +80,14 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-015 — Linux CI hangs after green pytest summary (2026-10-16)
+
+**Symptom:** `uv run pytest` prints coverage + `N passed in Xs`, then the GHA step never exits (~10m) until `timeout` (exit 124). Orphan PIDs labeled `pytest` appear at job cleanup.
+
+**Fix:** `tests/conftest.py` calls `os._exit(status)` on `CI=true` in `pytest_unconfigure` (disable with `TRENDALGO_CI_FORCE_EXIT=0`). Also: pandas fallbacks for BBANDS/PLUS_DI/SAR without TA-Lib; CI `--cov-fail-under=55` when device/LTS suites are ignored; omit `*/device/*` from coverage; Release Please version bumps need `uv lock` sync.
+
+**Note:** `wait-release-sbom --require` still expects `openvex.json`, but `release.yml` only uploads CycloneDX SBOMs — treat OpenVEX as a known gap until the workflow emits it.
+
 ## KB-014 — v0.5.0 ship (2026-07-12)
 
 **Symptom:** `/ship` after product-rec + R-Audit-8; CI red on (1) `uv.lock` version drift after Release Please, (2) More menu always visible (`display:flex` overriding `[hidden]`), (3) e2e update tests using `page.route("**/*")` that bypassed API mocks.
