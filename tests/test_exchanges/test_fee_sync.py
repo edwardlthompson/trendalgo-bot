@@ -26,9 +26,14 @@ def test_sync_updates_changed_fees(tmp_path: Path) -> None:
                 source_url=str(seed.get("source_url", "")),
                 verified=True,
             )
-        from trendalgo.exchanges.fee_fetcher import fetch_exchange_fees
-
-        return fetch_exchange_fees(exchange_id, seed)
+        # Never hit the network in unit tests — return the documented seed unchanged.
+        return FetchedFees(
+            taker_pct=float(seed["taker_pct"]),
+            maker_pct=float(seed["maker_pct"]),
+            source="documented",
+            source_url=str(seed.get("source_url", "")),
+            verified=False,
+        )
 
     with patch("trendalgo.exchanges.fee_sync.fetch_exchange_fees", side_effect=fake_fetch):
         summary = sync_exchange_fees(store)

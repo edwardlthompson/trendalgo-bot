@@ -107,6 +107,8 @@ jobs:
   feature-gate:
     name: Feature Gate
     runs-on: ubuntu-latest
+    # Pytest historically hung after printing the summary (orphan PIDs); fail fast.
+    timeout-minutes: 20
     env:
       # Device Qt + LTS golden/window-flip suites need --extra device (numba/TA-Lib); skip on Linux CI.
       # Coverage floor relaxed: ignored suites leave device/LTS lines unmeasured on this job.
@@ -163,6 +165,8 @@ jobs:
   python:
     name: Python - Lint, Type, Test
     runs-on: ubuntu-latest
+    # Pytest historically hung after printing the summary (orphan PIDs); fail fast.
+    timeout-minutes: 20
     env:
       # Device Qt + LTS golden/window-flip suites need --extra device (numba/TA-Lib); skip on Linux CI.
       # Coverage floor relaxed: ignored suites leave device/LTS lines unmeasured on this job.
@@ -201,7 +205,9 @@ jobs:
         run: uv run pyright
       - name: Pytest
         working-directory: ${{ steps.pyroot.outputs.dir }}
-        run: uv run pytest --cov-report=json:coverage/coverage-summary.json
+        # GNU timeout reaps a stuck process group if pytest hangs after the summary.
+        timeout-minutes: 12
+        run: timeout --kill-after=15s 600s uv run pytest --cov-report=json:coverage/coverage-summary.json
       - name: Upload python coverage
         if: always()
         uses: actions/upload-artifact@v7

@@ -62,6 +62,30 @@ def _repo_relative_args(args: list[str]) -> list[str]:
     return converted
 
 
+def _linux_child_pids(pid: int) -> list[int]:
+    """Best-effort children of pid via /proc (reaps stragglers killpg missed)."""
+    children: list[int] = []
+    proc_root = Path("/proc")
+    if not proc_root.is_dir():
+        return children
+    for entry in proc_root.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            status = (entry / "status").read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for line in status.splitlines():
+            if line.startswith("PPid:"):
+                try:
+                    if int(line.split()[1]) == pid:
+                        children.append(int(entry.name))
+                except (IndexError, ValueError):
+                    pass
+                break
+    return children
+
+
 def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
     """Stop a timed-out command and its children (Windows taskkill /T; Linux killpg)."""
     if sys.platform == "win32":
@@ -81,6 +105,19 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
             try:
                 proc.kill()
             except OSError:
+                pass
+        # Walk remaining descendants (grandchild may leave the group if it setsid).
+        pending = _linux_child_pids(proc.pid)
+        seen: set[int] = set()
+        while pending:
+            child = pending.pop()
+            if child in seen:
+                continue
+            seen.add(child)
+            pending.extend(_linux_child_pids(child))
+            try:
+                os.kill(child, signal.SIGKILL)
+            except (OSError, ProcessLookupError):
                 pass
     try:
         proc.wait(timeout=10)

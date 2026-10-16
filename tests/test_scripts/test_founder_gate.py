@@ -52,16 +52,17 @@ def test_missing_command_is_reported_not_raised() -> None:
 
 def test_timeout_returns_even_when_a_grandchild_keeps_output_open() -> None:
     # The grandchild inherits the child's stdout: the shape that could hang a pipe-based runner.
+    # Keep sleeps short so a missed kill cannot stall CI for minutes.
     child = (
         "import subprocess, sys, time\n"
-        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
-        "time.sleep(60)\n"
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(8)'])\n"
+        "time.sleep(8)\n"
     )
     started = time.monotonic()
-    code, text = founder_gate._run([sys.executable, "-c", child], timeout=2)
+    code, text = founder_gate._run([sys.executable, "-c", child], timeout=1)
     assert code == 1
     assert "timed out" in text
-    assert time.monotonic() - started < 30
+    assert time.monotonic() - started < 15
 
 
 def test_sprint_scope_stops_at_reentry(monkeypatch) -> None:
