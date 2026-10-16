@@ -76,11 +76,13 @@ def _last_error() -> int:
 class WindowsCredentialStore:
     """Generic credentials in Windows Credential Manager, scoped to this Windows account."""
 
+    _lib: Any
+
     def __init__(self) -> None:
         if sys.platform != "win32":
             raise CredentialError("Windows Credential Manager is only available on Windows.")
         win_dll: Any = getattr(ctypes, "WinDLL")  # noqa: B009 (Windows only, see _last_error)
-        self._lib: Any = win_dll("advapi32", use_last_error=True)
+        self._lib = win_dll("advapi32", use_last_error=True)
         self._lib.CredWriteW.argtypes = [ctypes.POINTER(_Credential), ctypes.c_uint32]
         self._lib.CredReadW.argtypes = [
             ctypes.c_wchar_p,

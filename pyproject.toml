@@ -107,6 +107,10 @@ module = ["pandas", "pandas.*", "ccxt", "ccxt.*", "apscheduler", "apscheduler.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+module = ["PySide6", "PySide6.*", "shiboken6", "shiboken6.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = ["trendalgo.lts_vendor.*", "trendalgo.lts_vendor.backtesting.*"]
 ignore_errors = true
 

@@ -119,7 +119,7 @@ jobs:
           java-version: "21"
       - name: Sync trendalgo-bot python (dev tools)
         if: ${{ hashFiles('pyproject.toml') != '' }}
-        run: uv sync --locked --extra dev
+        run: uv sync --locked --extra dev --extra device
       - name: Sync python example
         if: ${{ hashFiles('examples/python/pyproject.toml') != '' }}
         working-directory: examples/python

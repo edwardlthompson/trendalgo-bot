@@ -154,6 +154,9 @@ if [ -f docs/risk-catalog.json ]; then
   if [ -f scripts/check-sprint0-founder-gates.sh ]; then
     if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
       echo "SKIP: check-sprint0-founder-gates (CI — human gates deferred to founder_gate.py)"
+    elif [ "${BOOTSTRAP_UPGRADE_SIM:-}" = "1" ]; then
+      # file:// clones lack branch-protection API + gitignored founder.defaults.json
+      echo "SKIP: check-sprint0-founder-gates (BOOTSTRAP_UPGRADE_SIM — human gates N/A)"
     elif ! command -v gh >/dev/null 2>&1; then
       # Git Bash on Windows often lacks gh on PATH even when GitHub CLI is installed.
       echo "SKIP: check-sprint0-founder-gates (gh not on PATH — run: python scripts/founder_gate.py status)"
