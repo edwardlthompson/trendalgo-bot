@@ -162,6 +162,12 @@ def compute_pandas(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.n
     if upper == "MOM":
         period = int(params.get("timeperiod", 10))
         return {"value": (c - c.shift(period)).to_numpy(dtype=float)}
+    if upper == "TODEG":
+        return {"value": np.degrees(c.to_numpy(dtype=float))}
+    if upper == "TORAD":
+        return {"value": np.radians(c.to_numpy(dtype=float))}
+    if upper == "TRUNC":
+        return {"value": np.trunc(c.to_numpy(dtype=float))}
     raise KeyError(f"no pandas fallback for {name}")
 
 
