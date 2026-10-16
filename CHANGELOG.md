@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.6.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.0...v0.6.1) (2026-10-16)
+
+
+### Fixed
+
+* **release:** sync uv.lock to 0.6.0 after Release Please bump ([a3b7433](https://github.com/edwardlthompson/trendalgo-bot/commit/a3b7433559bbe34fce54efa80243a8ed179312ac))
+
 ## [0.6.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.1...v0.6.0) (2026-10-16)
 
 
