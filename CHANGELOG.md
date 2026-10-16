@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.6.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.1...v0.6.2) (2026-10-16)
+
+
+### Fixed
+
+* **release:** sync uv.lock to 0.6.1 after Release Please bump ([7750cf7](https://github.com/edwardlthompson/trendalgo-bot/commit/7750cf700e97b8fad99a30ae635d9cf51766293f))
+
+
+### Documentation
+
+* **kb:** record Linux CI pytest hang workaround and OpenVEX gap ([d327405](https://github.com/edwardlthompson/trendalgo-bot/commit/d3274050382799c6d5a9ad194b51f7feef83c1e3))
+
 ## [0.6.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.0...v0.6.1) (2026-10-16)
 
 
