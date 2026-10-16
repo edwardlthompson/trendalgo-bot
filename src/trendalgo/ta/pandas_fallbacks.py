@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,7 @@ from trendalgo.strategies.runtime.indicators import close_series, sma
 
 
 def _wilder_rma(series: pd.Series, period: int) -> pd.Series:
-    return series.ewm(alpha=1 / period, adjust=False, min_periods=period).mean()
+    return cast(pd.Series, series.ewm(alpha=1 / period, adjust=False, min_periods=period).mean())
 
 
 def _true_range(df: pd.DataFrame) -> pd.Series:
@@ -22,7 +22,7 @@ def _true_range(df: pd.DataFrame) -> pd.Series:
         [high - low, (high - prev_close).abs(), (low - prev_close).abs()],
         axis=1,
     )
-    return ranges.max(axis=1)
+    return cast(pd.Series, ranges.max(axis=1))
 
 
 def _directional_movement(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
@@ -63,7 +63,8 @@ def compute_plus_di(df: pd.DataFrame, **params: Any) -> dict[str, np.ndarray]:
     period = int(params.get("timeperiod", 14))
     plus_dm, _minus_dm = _directional_movement(df)
     tr = _true_range(df)
-    di = 100.0 * (_wilder_rma(plus_dm, period) / _wilder_rma(tr, period).replace(0, np.nan))
+    ratio = _wilder_rma(plus_dm, period) / _wilder_rma(tr, period).replace(0, np.nan)
+    di = cast(pd.Series, 100.0 * ratio)
     return {"value": di.to_numpy(dtype=float)}
 
 
@@ -71,7 +72,8 @@ def compute_minus_di(df: pd.DataFrame, **params: Any) -> dict[str, np.ndarray]:
     period = int(params.get("timeperiod", 14))
     _plus_dm, minus_dm = _directional_movement(df)
     tr = _true_range(df)
-    di = 100.0 * (_wilder_rma(minus_dm, period) / _wilder_rma(tr, period).replace(0, np.nan))
+    ratio = _wilder_rma(minus_dm, period) / _wilder_rma(tr, period).replace(0, np.nan)
+    di = cast(pd.Series, 100.0 * ratio)
     return {"value": di.to_numpy(dtype=float)}
 
 
