@@ -108,8 +108,8 @@ jobs:
     name: Feature Gate
     runs-on: ubuntu-latest
     env:
-      # Device Qt UI tests need --extra device; skip on Linux CI runners.
-      PYTEST_ADDOPTS: "--ignore=tests/test_device"
+      # Device Qt + LTS golden/window-flip suites need --extra device (numba/TA-Lib); skip on Linux CI.
+      PYTEST_ADDOPTS: "--ignore=tests/test_device --ignore=tests/test_lts_vendor"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -163,8 +163,8 @@ jobs:
     name: Python - Lint, Type, Test
     runs-on: ubuntu-latest
     env:
-      # Device Qt UI tests need --extra device; skip on Linux CI runners.
-      PYTEST_ADDOPTS: "--ignore=tests/test_device"
+      # Device Qt + LTS golden/window-flip suites need --extra device (numba/TA-Lib); skip on Linux CI.
+      PYTEST_ADDOPTS: "--ignore=tests/test_device --ignore=tests/test_lts_vendor"
     defaults:
       run:
         working-directory: .
