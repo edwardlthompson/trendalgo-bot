@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
+
+from check_cursor_integrations_tier import validate_tier
+from cursor_rule_audit import audit_rules
 
 SKILLS = (
     "validate-bootstrap",
@@ -15,6 +17,13 @@ SKILLS = (
     "sprint0-signoff",
     "feature-vertical-slice",
     "canvas-bootstrap-status",
+    "update-deps",
+    "best-of-n",
+    "local-models",
+    "emulator",
+    "adr",
+    "ux-review",
+    "blender-icons",
 )
 AGENTS = ("verifier", "gate-fixer", "explorer")
 COMMAND_SKILL = {
@@ -23,19 +32,20 @@ COMMAND_SKILL = {
     "fix.md": ("watch-gates-autofix",),
     "audit.md": ("check-repo-hygiene",),
     "feature.md": ("feature-vertical-slice",),
+    "update-deps.md": ("update-deps",),
+    "best-of-n.md": ("best-of-n",),
+    "emulator.md": ("emulator",),
+    "adr.md": ("adr",),
+    "ux-review.md": ("ux-review",),
+    "ux-apply.md": ("ux-review",),
 }
-
-COMMERCIAL_LIVE = (
-    ".cursor/BUGBOT.md",
-    ".cursor/environment.json",
-    ".cursor/approval-policies",
-)
 
 FOSS_EXAMPLES = (
     ".cursor/mcp.foss.example",
     ".cursor/hooks.json",
     ".cursor/worktrees.json",
     ".cursor/permissions.json",
+    ".cursor/mcp-allowlist.json",
 )
 
 
@@ -82,61 +92,21 @@ def validate_artifacts(root: Path) -> list[str]:
             entries = data.get("entries") or []
             if not entries:
                 errors.append("registry has no entries")
+            if str(data.get("updated_at") or "") < "2026-09-10":
+                errors.append("registry updated_at is stale")
+            ids = {entry.get("id") for entry in entries}
             for entry in entries:
                 if "distribution_tier" not in entry:
                     errors.append(f"registry entry missing distribution_tier: {entry.get('id')}")
+            skills_dir = root / ".cursor" / "skills"
+            if skills_dir.is_dir():
+                for path in sorted(skills_dir.iterdir()):
+                    if path.is_dir() and (path / "SKILL.md").is_file():
+                        key = f"skills.{path.name}"
+                        if key not in ids:
+                            errors.append(f"registry missing {key}")
         except json.JSONDecodeError as exc:
             errors.append(f"invalid registry JSON: {exc}")
-
-    return errors
-
-
-def validate_tier(root: Path, tier: str) -> list[str]:
-    errors: list[str] = []
-    warnings: list[str] = []
-
-    if tier == "foss":
-        for rel in COMMERCIAL_LIVE:
-            path = root / rel
-            if path.exists():
-                errors.append(f"foss tier: commercial live file present: {rel}")
-        # Live .cursor/mcp.json is gitignored and OK locally; fail only if tracked.
-        mcp = root / ".cursor/mcp.json"
-        if mcp.is_file():
-            tracked = subprocess.run(
-                ["git", "ls-files", "--error-unmatch", ".cursor/mcp.json"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if tracked.returncode == 0:
-                errors.append(
-                    "foss tier: .cursor/mcp.json is tracked — keep live MCP config gitignored"
-                )
-
-    if tier == "commercial":
-        for rel in (".cursor/BUGBOT.md", ".cursor/environment.json"):
-            if not (root / rel).is_file():
-                warnings.append(
-                    f"commercial tier: {rel} not activated (copy from *.commercial.example)"
-                )
-
-    sel = root / ".cursor/stack-selection.json"
-    manifest = root / ".cursor/cursor-features.json"
-    if sel.is_file() and manifest.is_file():
-        try:
-            sel_tier = json.loads(read_text(sel)).get("distribution_tier", "foss")
-            man_tier = json.loads(read_text(manifest)).get("distribution_tier", "foss")
-            if sel_tier != man_tier:
-                errors.append("cursor-features.json tier mismatch with stack-selection.json")
-            if sel_tier != tier:
-                errors.append(f"stack-selection tier {sel_tier} != requested --tier {tier}")
-        except json.JSONDecodeError:
-            errors.append("invalid stack-selection or cursor-features JSON")
-
-    for warn in warnings:
-        print(f"WARN: {warn}", file=sys.stderr)
 
     return errors
 
@@ -152,6 +122,7 @@ def main() -> int:
 
     errors = validate_artifacts(root)
     errors.extend(validate_tier(root, args.tier))
+    errors.extend(audit_rules(root))
 
     if errors:
         for err in errors:

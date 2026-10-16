@@ -1,56 +1,32 @@
 # Agent shortcuts (cheat sheet)
 
-Shortcut commands for Cursor Agent — type `/` in Agent chat to pick a recipe.
+Type `/` in Cursor Agent chat. Other IDEs: paste the matching `docs/help/` file. Print: [`batch-commands-print.html`](batch-commands-print.html).
 
-## 30-second start
+**Any other IDE** (Windsurf, Antigravity, Claude Code, Copilot, Aider): paste `Read docs/help/TOUR.md and walk me through it.` Cursor slash commands live under `.cursor/commands/`. **Cline (VS Code):** same short names as workflows under `.clinerules/workflows/` — type `/` in Cline chat (see [`VSCODE_COMMANDS.md`](VSCODE_COMMANDS.md)). Portable recipes also live in this `docs/help/` folder. See [`docs/AGENT_PORTABILITY.md`](../AGENT_PORTABILITY.md).
 
-1. Open **Agent** chat in Cursor.
-2. Type **`/`** to open the command menu.
-3. Pick a command (e.g. `/bootstrap`, `/verify`, `/build`).
-4. The agent runs the workflow step by step.
+## Supers
 
-Bookmark this page for when you come back after a break.
+| Command | When |
+|---------|------|
+| `/bootstrap` | New project Sprint 0 |
+| `/tour` | First-run walk |
+| `/coach` | One next action |
+| `/verify` | Before merge |
+| `/build` | Run BUILD_PLAN |
+| `/ship` | Release to GitHub |
+| `/maintain` | Weekly health |
+Red CI → `/fix` or `/ci` + `/gates` first. Dirty Unreleased + empty AGENT → `/ship`. Empty board → `/allideas`.
 
-## Try these first (super commands)
+## By moment
 
-| Command | When to use |
-|---------|-------------|
-| `/bootstrap` | Brand-new project — Sprint 0 setup end to end |
-| `/verify` | After your changes, before opening a pull request |
-| `/build` | Run BUILD_PLAN end-to-end — automates HUMAN/ADB via scripts, backlogs failures, chains sprints until done |
-| `/ship` | Publish a release to GitHub (runs checks, push, post-release) |
-| `/maintain` | Weekly health pass — security, dependencies, full review |
+- **Start:** `/tour` · `/init` · `/setup` · `/setup-local` · `/gates` · `/coach`
+- **Build:** `/plan` · `/adr` · `/feature` · `/fix` · `/cleanup` · `/scope`
+- **UX:** `/ux-review` · `/ux-apply` · aliases `/ui-review` `/ux-audit` `/ui-audit`
+- **Publish:** `/update-deps` · `/prerelease` · `/push` · `/regress`
+- **Local:** `/best-of-n` · `/emulator` · `/recommend-model` · `/compress-memory` (opt-in Ollama: [`LOCAL_AGENT.md`](LOCAL_AGENT.md))
+- **Maintain:** `/triage` · `/dependabot` · `/audit` · `/upgrade`
+- **Handoff:** `/compact` · `/restore` · `/resume`
 
-**Worked example — new project:** clone your repo → open Cursor Agent → type `/bootstrap` → follow prompts. The agent walks through init, stack setup, GitHub settings, and validation gates.
+**Cline path:** Open this project in Cursor or VS Code. Install Cline (`saoudrizwan.claude-dev`). Sign In with GitHub. Prefer FREE model or optional local Ollama ([`LOCAL_AGENT.md`](LOCAL_AGENT.md)). Type `/tour` / `/coach` / `/build` / `/setup-local` after enabling project workflows, or paste: `Read docs/help/TOUR.md and walk me through it. Follow AGENTS.md.` Full steps: [`CLINE.md`](CLINE.md) · cheat sheet: [`VSCODE_COMMANDS.md`](VSCODE_COMMANDS.md).
 
-## When you need one step
-
-Grouped by life moment (not every command — use `/` menu for the full list).
-
-**Getting started:** `/init` · `/setup` · `/prune` · `/gates`
-
-**Building:** `/plan` · `/feature` · `/fix` (gates failed after `/build`) · `/cleanup` (archive finished BUILD_PLAN rows) · `/scope` (parallel manifest + auto Task dispatch)
-
-**Docs & checks:** `/docs` · `/ci` (CI poll only) · `/gates` (full local validation)
-
-**Publishing:** `/prerelease` (checks before publish) · `/push` (commit + push + release) · `/regress` (after release)
-
-**Maintenance:** `/triage` · `/dependabot` · `/audit` (full repo review)
-
-**Long sessions:** `/compact` (save checkpoint before clearing chat) · `/restore` (load checkpoint)
-
-## Before you publish
-
-`/push` and `/ship` **push code to GitHub**. Only run them when you intend to publish. `/ship` is the full path (pre-release checks → push → post-release verification). Use `/prerelease` alone if you want checks without pushing yet.
-
-## Coming back after a break?
-
-Same menu: type **`/`** in Agent chat. Supers like `/verify` or `/bootstrap` are a good refresher. Keep this file bookmarked.
-
-## Bare words (optional)
-
-You can type a single word like `audit` instead of `/audit`. Slash commands are more reliable — use them if a bare word is ignored.
-
----
-
-Advanced registry (maintainers): [docs/BATCH_COMMANDS.md](../BATCH_COMMANDS.md)
+`/gates` = agent-fast + dirty stacks; `/gates --full` = multi. Registry: [`docs/BATCH_COMMANDS.md`](../BATCH_COMMANDS.md). Cline: [`CLINE.md`](CLINE.md).

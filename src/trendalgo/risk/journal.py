@@ -100,6 +100,15 @@ class TradeJournal:
             )
             return require_row_id(cur)
 
+    def realized_pnl_since(self, since_utc: str) -> float:
+        """Sum of realized PnL on trades created at or after since_utc (ISO-8601, UTC offset)."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(pnl_usd), 0.0) FROM trades WHERE created_at >= ?",
+                (since_utc,),
+            ).fetchone()
+        return float(row[0])
+
     def first_profitable_trade(self) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute(

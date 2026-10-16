@@ -5,18 +5,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GATES_PATH = ROOT / ".cursor" / "founder-gates.json"
+SPRINT_PREFLIGHT_GUARD = "TRENDALGO_SPRINT_PREFLIGHT_ACTIVE"
 DEFAULTS_PATH = ROOT / "config" / "founder.defaults.json"
 DEFAULTS_EXAMPLE = ROOT / "config" / "founder.defaults.json.example"
 
-HARD_GATES = frozenset({"H-006", "H-008", "H-010", "H-011", "H-023", "H-028", "H-031", "H-032"})
+HARD_GATES = frozenset(
+    {"H-006", "H-008", "H-010", "H-011", "H-023", "H-028", "H-031", "H-032", "H-036"}
+)
 
 SPRINT_GATES: dict[int, list[str]] = {
     0: ["H-001", "H-003", "H-004", "H-005", "H-006"],
@@ -44,7 +49,38 @@ SPRINT_GATES: dict[int, list[str]] = {
 BUNDLE_PRE_SPRINT_1 = ["H-001", "H-005", "H-007"]
 
 
-def _run(cmd: list[str], *, cwd: Path | None = None) -> tuple[int, str]:
+def _repo_relative_args(args: list[str]) -> list[str]:
+    """Send repo paths to bash as ROOT-relative POSIX paths (Windows paths break under WSL bash)."""
+    converted: list[str] = []
+    for arg in args:
+        path = Path(arg)
+        if path.is_absolute() and path.is_relative_to(ROOT):
+            converted.append(path.relative_to(ROOT).as_posix())
+        else:
+            converted.append(arg)
+    return converted
+
+
+def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
+    """Stop a timed-out command and its children; taskkill /T reaches Windows grandchildren."""
+    if sys.platform == "win32":
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    proc.kill()
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        pass
+
+
+def _run(cmd: list[str], *, cwd: Path | None = None, timeout: int = 120) -> tuple[int, str]:
     if cmd and cmd[0] == "bash":
         bash = shutil.which("bash")
         if not bash:
@@ -56,27 +92,35 @@ def _run(cmd: list[str], *, cwd: Path | None = None) -> tuple[int, str]:
             else:
                 return 1, "bash unavailable"
         else:
-            cmd = [bash, *cmd[1:]]
+            cmd = [bash, *_repo_relative_args(cmd[1:])]
     try:
-        proc = subprocess.run(
-            cmd,
-            cwd=cwd or ROOT,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        out = (proc.stdout or "") + (proc.stderr or "")
-        if "\x00" in out:
-            out = out.replace("\x00", "")
-        text = out.strip()
-        if proc.returncode != 0 and "Windows Subsystem for Linux" in text:
-            script_path = cmd[1] if len(cmd) > 1 else None
-            script = Path(script_path) if script_path else None
-            if script and script.exists():
-                return 2, f"bash/WSL unavailable — {script.name} present (SCHEDULED)"
-        return proc.returncode, text
-    except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
+        # Output goes to a file, not a pipe. A grandchild that outlives a timeout can hold a pipe
+        # open, and communicate() then waits forever (the likely cause of the H-024 hang).
+        with tempfile.TemporaryFile() as sink:
+            proc = subprocess.Popen(
+                cmd,
+                cwd=cwd or ROOT,
+                stdin=subprocess.DEVNULL,
+                stdout=sink,
+                stderr=subprocess.STDOUT,
+            )
+            try:
+                code = proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                _kill_tree(proc)
+                return 1, f"Command {cmd!r} timed out after {timeout} seconds"
+            sink.seek(0)
+            out = sink.read().decode("utf-8", errors="replace")
+    except FileNotFoundError as exc:
         return 1, str(exc)
+    out = out.replace("\x00", "")
+    text = out.strip()
+    if code != 0 and "Windows Subsystem for Linux" in text:
+        script_path = cmd[1] if len(cmd) > 1 else None
+        script = Path(script_path) if script_path else None
+        if script and script.exists():
+            return 2, f"bash/WSL unavailable — {script.name} present (SCHEDULED)"
+    return code, text
 
 
 def load_gates() -> dict:
@@ -179,7 +223,15 @@ def preflight_sprint_scope(sprint: int) -> tuple[int, str]:
     script = ROOT / "scripts" / "sprint-preflight.sh"
     if not script.exists():
         return 2, f"SCHEDULED — sprint-preflight.sh (S{sprint})"
-    code, out = _run(["bash", str(script), "--sprint", str(sprint)])
+    if os.environ.get(SPRINT_PREFLIGHT_GUARD):
+        # sprint-preflight.sh -> check-human-backlog.sh -> preflight-sprint -> here again.
+        # The outer call already runs this sprint scope, so stop at the first re-entry.
+        return 2, f"SKIP — sprint-preflight S{sprint} already running (re-entry guard)"
+    os.environ[SPRINT_PREFLIGHT_GUARD] = str(sprint)
+    try:
+        code, out = _run(["bash", str(script), "--sprint", str(sprint)])
+    finally:
+        os.environ.pop(SPRINT_PREFLIGHT_GUARD, None)
     if code == 2:
         return 2, out or f"sprint-preflight S{sprint} SCHEDULED"
     return code, out or f"sprint-preflight S{sprint}"

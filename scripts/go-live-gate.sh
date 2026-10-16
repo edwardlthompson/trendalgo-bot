@@ -15,7 +15,6 @@ while [ $# -gt 0 ]; do
     *) echo "Unknown arg: $1"; exit 1 ;;
   esac
 done
-AUDIT="$ROOT/data/audit/go-live.jsonl"
 
 echo "=== go-live-gate ($MODE${EXCHANGE:+ exchange=$EXCHANGE}) ==="
 ERRORS=0
@@ -33,26 +32,18 @@ elif [ -f .env.example ]; then
 fi
 
 if [ "$MODE" = "--approve" ]; then
-  mkdir -p "$(dirname "$AUDIT")"
-  UUID="$(python3 -c 'import uuid; print(uuid.uuid4())')"
-  TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   EX="${EXCHANGE:-all}"
-  echo "{\"install_uuid\":\"$UUID\",\"approved_at\":\"$TS\",\"gate\":\"H-010/H-028\",\"exchange\":\"$EX\"}" >> "$AUDIT"
-  if command -v uv >/dev/null 2>&1; then
-    uv run python - <<PY
-from pathlib import Path
-from trendalgo.trading.control import ExchangeControlStore
-from trendalgo.exchanges.registry import list_trading_exchanges
-store = ExchangeControlStore(Path("data/exchange_control.db"))
-targets = ["$EX"] if "$EX" != "all" else [e.id for e in list_trading_exchanges() if e.trading_enabled]
-for ex in targets:
-    store.approve_go_live(ex)
-print("OK   exchange control updated:", ", ".join(targets))
-PY
-  else
-    echo "WARN uv not found — run API POST /trading/exchanges/{id}/go-live after approve"
+  # H2/H3: the approval is an owner-signed command to the host. The CLI writes the audit line
+  # (data/audit/go-live.jsonl) only after the host accepts it. This script never writes the
+  # exchange store directly. Requires TRENDALGO_OWNER_ID and TRENDALGO_OWNER_SECRET in the env.
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "FAIL uv not found — install uv, then re-run --approve"
+    exit 1
   fi
-  echo "OK   go-live approved (logged to data/audit/go-live.jsonl)"
+  if ! uv run python -m trendalgo.trading.go_live_cli --exchange "$EX"; then
+    echo "FAIL go-live refused or host unreachable (see above); no approval recorded"
+    exit 1
+  fi
   echo "HUMAN: confirm exchange IP whitelist and position caps in exchange UI"
   exit 0
 fi

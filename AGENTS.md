@@ -7,7 +7,7 @@
 5. **Task board:** `BUILD_PLAN.md` (Sequential before Parallel) — status: 🔲 open · ✅ done · ❌ blocked
 6. **Parallel dispatch:** parallel-first when Sequential clear; `/build` automates HUMAN/ADB first, backlogs failures to `HUMAN_BACKLOG.md` / `docs/HUMAN_BACKLOG.md`, never halts on human labels — `scripts/build-sprint-status.sh --lane child`
 7. **Living memory:** update `AGENT_MEMORY.md` only at milestone boundaries
-8. **Alignment:** `docs/BOOTSTRAP_ALIGNMENT.md` (upstream FOSS surface v0.15.1; product `.template-version` stays on release-please; CI non-parity)
+8. **Alignment:** `docs/BOOTSTRAP_ALIGNMENT.md` (upstream FOSS surface v0.17.0; product `.template-version` stays on release-please; CI non-parity)
 
 > Legacy `.cursorrules` is deprecated. Use `.cursor/rules/*.mdc` and this file instead.
 
@@ -24,7 +24,7 @@
 - Conventional Commits for all changes
 - Small, modular functions; keep files within token-optimal size
 - Read-before-write: inspect types/interfaces via `@filename` before editing
-- Cursor mode routing per `docs/CURSOR_MODES.md`; Plan for non-trivial tasks with `### Critique`
+- Cursor mode routing per `docs/CURSOR_MODES.md`; Plan for non-trivial tasks with resolved `### Critique` (Issue→Resolution baked into the plan body)
 
 ## Session Protocol
 
@@ -51,11 +51,12 @@ Do not re-add pruned Android/Node/Rust/Go/Lightroom modules unless the human exp
 Shipped (see `docs/CURSOR_INTEGRATIONS.md`):
 
 - **Hooks** — `.cursor/hooks.json` enforces destructive-ops + UTF-8 (fail-open; `/push` session override)
-- **Skills (7)** — `.cursor/skills/` progressive-load companions for `/gates`, `/scope`, `/fix`, hygiene, Sprint 0, features, canvas status
+- **Skills (8)** — `.cursor/skills/` companions for `/gates`, `/scope`, `/fix`, hygiene, Sprint 0, features, canvas status, `/codex-review`
 - **Subagents (3)** — `.cursor/agents/` verifier, gate-fixer, explorer
 - **Local compute first** — `.cursor/rules/local-compute.mdc`: This Computer + parallel Task/worktrees/`/best-of-n` before Cloud; multi-core bootstrap checks
 - **Worktrees** — `.cursor/worktrees.json` + fail-soft OS setup (`/worktree`, `/best-of-n`)
 - **Auto-review** — `.cursor/permissions.json` dual layer with hooks
+- **Codex review (opt-in)** — `docs/CODEX_REVIEW.md` + `/codex-review` (used by expanded `/prerelease` / `/ship`; skip if no key/CLI)
 
 Validate: `python3 scripts/agent-run.py check-cursor-hooks -- --smoke`, `python3 scripts/agent-run.py check-cursor-integrations -- --tier foss`
 

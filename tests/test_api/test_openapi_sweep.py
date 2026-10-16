@@ -138,6 +138,11 @@ def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyP
     c.post("/api/v1/strategies/import", json={"json": export["json"]})
     c.get("/api/v1/backtest/fleet/lookbacks")
 
+    # H1: a fresh host starts with zero bots, so the sweep adds one first.
+    c.post(
+        "/api/v1/bots",
+        json={"label": "Grid-1", "strategy_id": "grid-trading", "pair": "BTC/USD"},
+    )
     bots = c.get("/api/v1/bots").json()["bots"]
     bot_id = bots[0]["id"]
     c.get(f"/api/v1/bots/{bot_id}/equity-limits")

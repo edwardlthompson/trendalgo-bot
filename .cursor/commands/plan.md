@@ -1,35 +1,10 @@
 # Feature or ADR plan (Plan Mode)
 
-Read @docs/CURSOR_MODES.md and the active BUILD_PLAN row.
+Read `docs/CURSOR_MODES.md` + active BUILD_PLAN row.
 
-## Autonomous mode (invoked from `/build`)
+- From `/build`: decide internally (Critique + Parallelization), then execute — no user pause.
+- Standalone: trivial → Agent; else present single approach + resolved `### Critique` before coding.
 
-When called from @.cursor/commands/build.md:
-
-- **Do not ask the user for approval** — pick the single best approach and execute.
-- **Do not present multiple options** — use internal ### Critique + ### Parallelization only.
-- Proceed directly to implementation after a brief internal plan.
-
-## Standalone `/plan` (interactive)
-
-If the trivial rubric says Agent, skip planning and execute directly.
-Otherwise propose 1–3 approaches with mandatory ### Critique before coding.
-
-When drafting or extending **BUILD_PLAN.md** sprints, include mandatory **### Parallelization** (alongside ### Critique):
-
-1. **Sequential lock list** — shared schema/types/API that must finish before Parallel (1–3 items max)
-2. **Decomposition table** — Task | Isolated scope | Why safe in parallel
-3. **`agent_count_target`** — integer; justify any target `< 2` in one sentence
-4. **Dry-run** — expected output of `python3 scripts/agent-run.py plan-parallel-dispatch --draft BUILD_PLAN.md --suggest`
-
-Apply the decomposition checklist in @BUILD_PLAN.md (multi-stack, logic/view split, tests/docs/CI). **Maximize agent_count** across non-overlapping scopes.
-
-Before asking human approval of BUILD_PLAN changes (standalone `/plan` only), run:
-
-```bash
-python3 scripts/agent-run.py check-build-plan-parallel
-```
-
-Do not edit code until the user approves the plan **unless** autonomous `/build` invoked this command.
+Critique = Issue→Resolution table (null/empty, timeouts, races, exceptions; UI: empty/error/loading, focus, tokens, primary, i18n). No open risks. UI law: `docs/ux-ui-guidelines.md`.
 
 Begin now.

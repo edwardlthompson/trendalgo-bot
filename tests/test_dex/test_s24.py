@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -13,12 +15,12 @@ from trendalgo.dex.nonce import NonceStore
 from trendalgo.dex.router import live_dex_swap
 from trendalgo.dex.runner.live import LiveSwapRunner
 from trendalgo.dex.signer import sign_swap_payload, signer_configured, signer_fingerprint
+from trendalgo.trading.signed_command import OWNER_ID_ENV, OWNER_SECRET_ENV, sign_request
 from trendalgo.venues.registry import get_venue, load_venue_registry
 
 
 def _live_env(monkeypatch, tmp_path: Path) -> tuple[DexVenueControlStore, NonceStore]:
     monkeypatch.setenv("DEX_LIVE_TRADING_ACK", "1")
-    monkeypatch.setenv("GO_LIVE_APPROVED", "1")
     monkeypatch.setenv("DEX_SIGNER_KEY", "test-signer-key-vps-only")
     monkeypatch.setenv("DEX_MAX_SLIPPAGE_BPS", "100")
     control = DexVenueControlStore(tmp_path / "dex_control.db")
@@ -51,11 +53,15 @@ def test_live_swap_gates(tmp_path: Path, monkeypatch) -> None:
     with pytest.raises(ValueError, match="H-036"):
         validate_live_swap_gates("base", control, slippage_bps=50)
     monkeypatch.setenv("DEX_LIVE_TRADING_ACK", "1")
-    with pytest.raises(ValueError, match="GO_LIVE_APPROVED"):
-        validate_live_swap_gates("base", control, slippage_bps=50)
-    monkeypatch.setenv("GO_LIVE_APPROVED", "1")
     with pytest.raises(ValueError, match="DEX_SIGNER_KEY"):
         validate_live_swap_gates("base", control, slippage_bps=50)
+    monkeypatch.setenv("DEX_SIGNER_KEY", "test-signer-key-vps-only")
+    # H2: GO_LIVE_APPROVED does not enable live. Only the owner's signed approval does.
+    monkeypatch.setenv("GO_LIVE_APPROVED", "1")
+    with pytest.raises(ValueError, match="go_live_required"):
+        validate_live_swap_gates("base", control, slippage_bps=50)
+    control.approve_go_live("base")
+    validate_live_swap_gates("base", control, slippage_bps=50)
 
 
 def test_live_swap_base_venue(tmp_path: Path, monkeypatch) -> None:
@@ -114,7 +120,20 @@ def test_s24_api_routes(tmp_path: Path, monkeypatch) -> None:
     assert body["dex_live_phase"] == 1
     assert "base" in body["live_trading_venues"]
 
-    go_live = client.post("/api/v1/platform/dex/venues/base/go-live")
+    path = "/api/v1/platform/dex/venues/base/go-live"
+    assert client.post(path).status_code == 403  # H2/H3: an unsigned approval is refused
+    monkeypatch.setenv(OWNER_ID_ENV, "owner-s24")
+    monkeypatch.setenv(OWNER_SECRET_ENV, "owner-secret-for-s24-only")
+    headers = sign_request(
+        method="POST",
+        path=path,
+        body=b"",
+        owner_id="owner-s24",
+        secret="owner-secret-for-s24-only",
+        timestamp=int(time.time()),
+        nonce=uuid.uuid4().hex,
+    )
+    go_live = client.post(path, headers=headers)
     assert go_live.status_code == 200
 
     live = client.post(

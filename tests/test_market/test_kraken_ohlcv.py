@@ -7,12 +7,11 @@ from datetime import UTC, datetime
 import pytest
 
 from trendalgo.market import kraken as kraken_market
-from trendalgo.market.symbols import kraken_ccxt_pair
 
 
 def test_kraken_pair_known_and_fallback() -> None:
     assert kraken_market.kraken_pair("btc") == "BTC/USD"
-    assert kraken_market.kraken_pair("LTC") == kraken_ccxt_pair("LTC")
+    assert kraken_market.kraken_pair("LTC") == "LTC/USD"
 
 
 def test_fetch_ohlcv_maps_rows(monkeypatch: pytest.MonkeyPatch) -> None:

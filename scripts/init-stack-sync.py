@@ -15,6 +15,7 @@ MODULE_LINES = {
     "python": "Python",
     "node": "Node API",
     "lightroom": "Lightroom Classic",
+    "blender": "Blender icon factory",
     "rust": "Rust",
     "go": "Go",
 }
@@ -25,6 +26,7 @@ MODULE_EXAMPLE_DIRS = {
     "python": "examples/python",
     "node": "examples/node",
     "lightroom": "examples/lightroom",
+    "blender": "examples/blender",
     "rust": "examples/rust",
     "go": "examples/go",
 }

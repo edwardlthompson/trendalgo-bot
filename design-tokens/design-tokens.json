@@ -1,8 +1,9 @@
 {
   "meta": {
-    "name": "GoldenPath",
+    "name": "TrendAlgo",
     "themeColorLight": "#F5F5FA",
-    "themeColorDark": "#1a1a2e"
+    "themeColorDark": "#1a1a2e",
+    "accentPresets": ["#2563eb", "#059669", "#d97706", "#dc2626", "#7c3aed"]
   },
   "color": {
     "primary": { "light": "#B3263E", "dark": "#e94560" },

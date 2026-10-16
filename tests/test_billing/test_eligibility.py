@@ -51,8 +51,9 @@ def test_fees_after_billing_starts(tmp_path) -> None:
         TradeRecord("BTC/USD", "long", 100, 100.0, "bot", "win", "win-2"),
         created_at="2025-02-01T00:00:00+00:00",
     )
-    result = process_journal_trades(billing, journal, risk)
+    result = process_journal_trades(billing, journal, risk, period="2025-02")
     assert result["rollup"]["license_fee_usd"] > 0
+    assert [f["period"] for f in result["finalized"]] == ["2025-02"]
     assert result["billing_eligibility"]["billing_active"] is True
 
 

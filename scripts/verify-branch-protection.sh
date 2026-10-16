@@ -7,6 +7,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=lib/resolve-tools.sh
+. "$(cd "$(dirname "$0")" && pwd)/lib/resolve-tools.sh"
+# shellcheck source=lib/resolve-python.sh
+. "$(cd "$(dirname "$0")" && pwd)/lib/resolve-python.sh"
 
 REPO="${GITHUB_REPO:-}"
 BRANCH="${GITHUB_DEFAULT_BRANCH:-main}"
@@ -45,7 +49,7 @@ fi
 if [ -n "${GITHUB_REQUIRED_CHECKS:-}" ]; then
   EXPECTED_CSV="$GITHUB_REQUIRED_CHECKS"
 else
-  EXPECTED_CSV="CI,Security Scan,CodeQL,Repo Hygiene,Feature Gate"
+  EXPECTED_CSV="$("$PY" "$ROOT/scripts/lib/required_checks.py" | paste -sd, -)"
 fi
 
 echo "Branch protection for ${REPO} @ ${BRANCH}"

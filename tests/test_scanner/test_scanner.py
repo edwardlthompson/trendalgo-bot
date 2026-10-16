@@ -39,38 +39,43 @@ def test_pipeline_serves_last_successful_snapshot_when_live_fetch_fails(
     def fail_fetch(_pairs: list[str]) -> list[LiveMarketRow]:
         raise TimeoutError("market request exceeded deadline")
 
-    degraded = run_pipeline(ScannerSettings(), store=store, fetcher=fail_fetch)
+    reused = run_pipeline(ScannerSettings(), store=store, fetcher=fail_fetch)
 
-    assert degraded.degraded is True
-    assert degraded.scan_id == saved_id
-    assert degraded.as_of == successful.as_of
-    assert degraded.opportunities == successful.opportunities
+    assert reused.degraded is False
+    assert reused.scan_id == saved_id
+    assert reused.as_of == successful.as_of
+    assert reused.opportunities == successful.opportunities
 
 
-def test_pipeline_uses_synthetic_only_without_successful_cache(
+def test_pipeline_raises_without_successful_cache_when_live_fails(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    import trendalgo.scanner.listings as listings
+
     store = ScannerStore(tmp_path / "scanner.db")
     monkeypatch.delenv("TRENDALGO_MARKET_SOURCE", raising=False)
+    listings._CACHE = None
+    monkeypatch.setattr(
+        listings,
+        "_fetch_kraken_usd_spot",
+        lambda: list(listings.DEFAULT_KRAKEN_SPOT),
+    )
 
     def fail_fetch(_pairs: list[str]) -> list[LiveMarketRow]:
         raise ConnectionError("Kraken unavailable")
 
-    degraded = run_pipeline(ScannerSettings(), store=store, fetcher=fail_fetch)
-
-    assert degraded.degraded is True
-    assert degraded.scan_id == 0
-    assert degraded.opportunities
+    with pytest.raises(RuntimeError, match="Kraken market data"):
+        run_pipeline(ScannerSettings(), store=store, fetcher=fail_fetch)
 
 
-def test_live_fetch_retries_with_ten_second_request_deadline(
+def test_live_fetch_retries_with_request_deadline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     attempts: list[int] = []
 
     def flaky_fetch(*_args: object, timeout_ms: int, **_kwargs: object) -> list[OhlcvPoint]:
         attempts.append(timeout_ms)
-        if len(attempts) < 3:
+        if len(attempts) < 2:
             raise TimeoutError("temporary timeout")
         return [
             OhlcvPoint(
@@ -85,4 +90,7 @@ def test_live_fetch_retries_with_ten_second_request_deadline(
     rows = fetch_live_market(["BTC/USD"])
 
     assert len(rows) == 1
-    assert attempts == [10_000, 10_000, 10_000]
+    # Fail once, then 1h + 1d + 5m succeed.
+    assert attempts[0] == 12_000
+    assert len(attempts) >= 3
+    assert rows[0].volume_usd > 0

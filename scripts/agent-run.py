@@ -8,10 +8,15 @@ import os
 import shutil
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
+LIB = SCRIPTS / "lib"
+if str(LIB) not in sys.path:
+    sys.path.insert(0, str(LIB))
+
+from agent_run_env import child_env  # noqa: E402
 
 
 def script_argv(script: Path) -> str:
@@ -41,19 +46,27 @@ def resolve_script(name: str) -> Path | None:
 def resolve_bash() -> str | None:
     """Prefer Git Bash on Windows; avoid WSL1 System32\\bash.exe (breaks npm)."""
     if os.name == "nt":
+        # PureWindowsPath is constructible on Linux so the WSL1 skip test can run in CI.
         candidates = [
-            Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Git" / "bin" / "bash.exe",
-            Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
+            PureWindowsPath(os.environ.get("ProgramFiles", r"C:\Program Files"))
             / "Git"
             / "bin"
             / "bash.exe",
-            Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Git" / "bin" / "bash.exe",
+            PureWindowsPath(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"))
+            / "Git"
+            / "bin"
+            / "bash.exe",
+            PureWindowsPath(os.environ.get("LOCALAPPDATA", "") or r"C:\missing-local")
+            / "Programs"
+            / "Git"
+            / "bin"
+            / "bash.exe",
         ]
         for path in candidates:
-            if path.is_file():
-                return str(path)
+            if os.path.isfile(os.fspath(path)):
+                return os.fspath(path)
         which = shutil.which("bash")
-        if which and "System32" not in which.replace("/", "\\"):
+        if which and "system32" not in which.replace("/", "\\").lower():
             return which
         return None
     return shutil.which("bash")
@@ -70,6 +83,7 @@ def run_script(name: str, args: list[str]) -> int:
         proc = subprocess.run(
             ["powershell", "-NoProfile", "-File", str(script), *args],
             cwd=ROOT,
+            env=child_env(),
         )
         return proc.returncode
 
@@ -82,7 +96,11 @@ def run_script(name: str, args: list[str]) -> int:
         )
         return 1
 
-    proc = subprocess.run([bash, script_argv(script), *args], cwd=ROOT)
+    proc = subprocess.run(
+        [bash, script_argv(script), *args],
+        cwd=ROOT,
+        env=child_env(),
+    )
     return proc.returncode
 
 

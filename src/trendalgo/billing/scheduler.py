@@ -1,4 +1,4 @@
-"""Monthly statement + grace reminder jobs (M20)."""
+"""Monthly statement + grace reminder jobs (M20, M8)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,8 @@ from collections.abc import Callable
 from typing import Any
 
 from trendalgo.billing.engine import poll_settlement_payments, process_journal_trades
-from trendalgo.billing.license_gate import advance_grace
+from trendalgo.billing.license_gate import advance_grace, reminders_due
+from trendalgo.billing.schema import GRACE_PERIOD_DAYS
 from trendalgo.billing.store import BillingStore
 from trendalgo.risk.journal import TradeJournal
 from trendalgo.risk.manager import RiskManager
@@ -24,14 +25,17 @@ def run_monthly_statement_job(
         on_log(
             f"monthly statement: period={result['period']} fee=${result['rollup']['license_fee_usd']}"
         )
-    enrollment = billing.get_enrollment()
-    if enrollment.get("enrolled") and result["rollup"]["license_fee_usd"] > 0:
-        portfolio_store.insert_notification(
-            "license",
-            "Monthly license statement ready",
-            f"Period {result['period']}: license ${result['rollup']['license_fee_usd']:.2f}. "
-            "Pay from your wallet — view Billing tab.",
-        )
+    if not billing.get_enrollment().get("enrolled"):
+        return result
+    for closed in result["finalized"]:
+        fee = float(closed["license_fee_usd"])
+        if fee > 0:  # only a month that closed in this run; the open month is not announced
+            portfolio_store.insert_notification(
+                "license",
+                "Monthly license statement ready",
+                f"Period {closed['period']}: license ${fee:.2f}. Pay from your wallet within "
+                f"{GRACE_PERIOD_DAYS} days. Reminders on day 14 and day 25. View the Billing tab.",
+            )
     return result
 
 
@@ -44,18 +48,20 @@ def run_grace_reminders(
     if not status.get("grace_started_at"):
         return {"sent": 0}
     advanced = advance_grace(status)
-    billing.update_license_status(advanced)
-    day = int(advanced.get("grace_day", 0))
-    if day in (1, 4, 7):
+    day = int(advanced["grace_day"])
+    due = reminders_due(day, status.get("last_reminder_day"))
+    for reminder_day in due:
         portfolio_store.insert_notification(
             "license",
-            f"License grace day {day}",
-            "User-initiated settlement required to restore live trading. No auto-withdraw.",
+            f"License grace day {reminder_day} of {GRACE_PERIOD_DAYS}",
+            "User-initiated settlement required to restore live trading. Never automatic withdrawal.",
         )
         if on_log:
-            on_log(f"grace reminder day {day}")
-        return {"sent": 1, "grace_day": day}
-    return {"sent": 0, "grace_day": day}
+            on_log(f"grace reminder day {reminder_day}")
+    if due:
+        advanced["last_reminder_day"] = due[-1]
+    billing.update_license_status(advanced)
+    return {"sent": len(due), "grace_day": day}
 
 
 def run_payment_watch_job(

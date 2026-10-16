@@ -1,25 +1,14 @@
-"""Billing fee calculation tests (M1)."""
+"""Billing fee calculation tests (M1, M7)."""
 
 from trendalgo.billing.engine import process_journal_trades, reconcile_fees, seed_sample_trades
 from trendalgo.billing.license_gate import check_license_gate, clear_grace, start_grace_period
-from trendalgo.billing.profit import license_fee_for_trade, rollup_period
-from trendalgo.billing.rules import apply_fee_rules
+from trendalgo.billing.profit import rollup_period
+from trendalgo.billing.rules import apply_monthly_rules
 from trendalgo.billing.statements import build_statement, sign_payload
 from trendalgo.billing.store import BillingStore
 from trendalgo.risk.config import RiskLimits
 from trendalgo.risk.journal import TradeJournal
 from trendalgo.risk.manager import RiskManager
-
-
-def test_net_loss_zero_fee() -> None:
-    calc = license_fee_for_trade(-50.0, 0.12)
-    assert calc.license_fee_usd == 0.0
-    assert calc.rule_applied == "net_loss_zero"
-
-
-def test_positive_trade_fee() -> None:
-    calc = license_fee_for_trade(100.0, 0.12)
-    assert calc.license_fee_usd == 12.0
 
 
 def test_carry_forward_and_grace(tmp_path) -> None:
@@ -43,10 +32,19 @@ def test_carry_forward_and_grace(tmp_path) -> None:
 
 
 def test_statement_signing() -> None:
-    items = apply_fee_rules(
-        [{"pnl_usd": 25, "pair": "BTC/USD", "exchange_trade_id": "t1"}],
+    rows, _ = apply_monthly_rules(
+        [
+            {
+                "pnl_usd": 25,
+                "pair": "BTC/USD",
+                "exchange_trade_id": "t1",
+                "created_at": "2026-06-10T00:00:00+00:00",
+            }
+        ],
         0.12,
-    )[0]
-    rollup = rollup_period(items)
-    stmt = build_statement("2026-06", rollup, items)
+        deficit_usd=0.0,
+        billable_from="2026-06-01T00:00:00+00:00",
+    )
+    rollup = rollup_period(rows)
+    stmt = build_statement("2026-06", rollup, rows)
     assert stmt["signed_hash"] == sign_payload(stmt)

@@ -41,7 +41,7 @@ from trendalgo.api.state import AppState, default_state
 from trendalgo.bots.scheduler import start_bot_tick_scheduler
 from trendalgo.exchanges.fee_scheduler import start_fee_scheduler
 from trendalgo.exchanges.fee_store import get_fee_store
-from trendalgo.exchanges.fee_sync import startup_fee_sync
+from trendalgo.exchanges.fee_sync import startup_fee_sync_background
 from trendalgo.notifications.delivery import AlertDelivery
 from trendalgo.portfolio.overview import build_portfolio_overview
 from trendalgo.portfolio.snapshots import start_portfolio_scheduler
@@ -82,7 +82,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
         )
         app_state.portfolio_scheduler = portfolio_sched
         fee_store = get_fee_store()
-        startup_fee_sync(fee_store, on_log=app_state.log)
+        startup_fee_sync_background(fee_store, on_log=app_state.log)
         fee_sched = start_fee_scheduler(fee_store, on_log=app_state.log)
         app_state.fee_scheduler = fee_sched
         bot_sched = start_bot_tick_scheduler(app_state)

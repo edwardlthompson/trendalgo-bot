@@ -9,6 +9,7 @@ from trendalgo.bots.orchestrator import BotOrchestrator
 from trendalgo.bots.scheduler import BotTickScheduler
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.risk.config import RiskLimits
+from trendalgo.risk.journal import TradeJournal
 from trendalgo.risk.manager import RiskManager
 from trendalgo.strategies.runtime.contract import Candle
 from trendalgo.trading.control import ExchangeControlStore
@@ -27,15 +28,19 @@ class FakeRunner:
 
 def make_state(tmp_path: Path) -> SimpleNamespace:
     logs: list[str] = []
+    orchestrator = BotOrchestrator(tmp_path / "bots.db")
+    # H1: no seeded bot, so the test adds its own enabled bot.
+    orchestrator.add_bot("Bot-1", "multi-tf-example", "BTC/USD", 1000, timeframe="1h")
     return SimpleNamespace(
-        bot_orchestrator=BotOrchestrator(tmp_path / "bots.db"),
-        risk_manager=RiskManager(RiskLimits(), wallet_usd=1000),
+        bot_orchestrator=orchestrator,
+        # Host equity must cover the test bot's cap times max exposure (R4).
+        risk_manager=RiskManager(RiskLimits(), wallet_usd=10_000),
         exchange_control=ExchangeControlStore(tmp_path / "exchange.db"),
         billing_store=SimpleNamespace(
             get_enrollment=lambda: {},
             get_license_status=lambda: {},
         ),
-        trade_journal=object(),
+        trade_journal=TradeJournal(tmp_path / "journal.db"),
         bot=SimpleNamespace(dry_run=True),
         portfolio_store=PortfolioStore(tmp_path / "portfolio.db"),
         log=logs.append,

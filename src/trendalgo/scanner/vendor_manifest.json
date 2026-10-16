@@ -1,16 +1,22 @@
 {
-  "strategy": "native_port",
-  "source_repo": "linear-trend-spotter",
-  "note": "No git submodule — native implementation per ADR-0006 and destructive-ops policy",
+  "strategy": "file_vendor",
+  "source_repo": "https://github.com/edwardlthompson/linear-trend-spotter",
+  "source_status": "historical_absorbed",
+  "source_commit": "4a9fc435f56a299b1fef0f80953dc30e050bdd99",
+  "license": "MIT",
+  "note": "Provenance only — not a runtime fetch target. Logic and UI are vendored in-tree; standalone portal is obsolete.",
+  "paths": {
+    "ui": "examples/web/public/lts-dashboard/",
+    "backtesting": "src/trendalgo/lts_vendor/backtesting/",
+    "utils": "src/trendalgo/lts_vendor/utils/ (scan_artifacts, snapshot_validation, backtest_strategy_diff)",
+    "shims": "src/trendalgo/lts_vendor/shims/",
+    "bridge": "src/trendalgo/lts_vendor/bridge.py",
+    "fixture": "src/trendalgo/lts_vendor/fixtures/qualified_public_snapshot.sample.json"
+  },
   "modules": {
-    "scanner.pipeline": "volume, gain, uniformity, entry/exit stages",
-    "scanner.uniformity": "re-exports trendalgo.lts.uniformity",
-    "scanner.snapshot": "qualified_snapshot.json contract (O5)",
-    "scanner.store": "scanner.db namespaced SQLite (O3)",
-    "scanner.scheduler": "APScheduler interval jobs (O4)",
-    "scanner.alerts": "LTS alerting tiers A/B/C (O9)",
-    "scanner.backtest": "BacktestDataLoader (O14)",
-    "scanner.mixins": "OpportunityScannerMixin + TrendSpotter Boost (O8, O13)",
-    "scanner.watchlist_bridge": "Freqtrade pair whitelist feed (O8)"
+    "scanner.pipeline": "TrendAlgo v2 opportunities (bot-bridge)",
+    "lts_vendor.public_snapshot": "qualified_public_snapshot.json contract (local API)",
+    "lts_vendor.backtesting": "engine, signals, optimizer, runner, report",
+    "api.scanner.qualified_public_snapshot": "GET /api/v1/scanner/qualified_public_snapshot.json"
   }
 }

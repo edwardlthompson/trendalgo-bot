@@ -224,3 +224,20 @@ def startup_fee_sync(
         on_log and on_log("exchange fees: syncing from public fee pages")
         return sync_exchange_fees(store, on_log=on_log)
     return None
+
+
+def startup_fee_sync_background(
+    store: FeeStore,
+    *,
+    on_log: Callable[[str], None] | None = None,
+) -> None:
+    """Seed DB quickly; run website fee sync off the API startup critical path."""
+    import threading
+
+    ensure_fee_db_ready(store, on_log=on_log)
+    threading.Thread(
+        target=startup_fee_sync,
+        kwargs={"store": store, "on_log": on_log},
+        name="fee-sync-startup",
+        daemon=True,
+    ).start()

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+import threading
+import time
 from typing import Any
 
 from trendalgo.exchanges.registry import load_registry
@@ -47,11 +50,30 @@ _STATIC: dict[str, list[str]] = {
     ],
 }
 
+_CACHE_LOCK = threading.Lock()
+_CACHE: dict[str, tuple[float, list[str]]] = {}
+_REFRESHING: set[str] = set()
+_DEFAULT_TTL_S = 3600.0
 
-def list_pairs_for_exchange(exchange_id: str) -> list[str]:
+
+def _ttl_s() -> float:
+    raw = os.environ.get("TRENDALGO_PAIRS_CACHE_TTL_S", "").strip()
+    if not raw:
+        return _DEFAULT_TTL_S
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return _DEFAULT_TTL_S
+
+
+def _static_pairs(exchange_id: str) -> list[str]:
+    return sorted(_STATIC.get(exchange_id, list(KRAKEN_USD_PAIRS)))
+
+
+def _fetch_live_pairs(exchange_id: str) -> list[str]:
     registry = load_registry()
     entry = registry.by_id(exchange_id)
-    static = sorted(_STATIC.get(exchange_id, list(KRAKEN_USD_PAIRS)))
+    static = _static_pairs(exchange_id)
     if entry is None:
         return static
     try:
@@ -79,3 +101,42 @@ def list_pairs_for_exchange(exchange_id: str) -> list[str]:
     except Exception:
         pass
     return static
+
+
+def _refresh_cache(exchange_id: str) -> None:
+    try:
+        pairs = _fetch_live_pairs(exchange_id)
+        with _CACHE_LOCK:
+            _CACHE[exchange_id] = (time.monotonic(), pairs)
+    finally:
+        with _CACHE_LOCK:
+            _REFRESHING.discard(exchange_id)
+
+
+def list_pairs_for_exchange(exchange_id: str, *, force_refresh: bool = False) -> list[str]:
+    """Return USD pairs; serve cache/static immediately and refresh ccxt in background."""
+    ttl = _ttl_s()
+    now = time.monotonic()
+    with _CACHE_LOCK:
+        hit = _CACHE.get(exchange_id)
+        if not force_refresh and hit is not None and ttl > 0 and (now - hit[0]) < ttl:
+            return list(hit[1])
+        stale_or_static = list(hit[1]) if hit is not None else _static_pairs(exchange_id)
+        if force_refresh or ttl <= 0:
+            pass
+        elif exchange_id not in _REFRESHING:
+            _REFRESHING.add(exchange_id)
+            threading.Thread(
+                target=_refresh_cache,
+                args=(exchange_id,),
+                name=f"pairs-refresh-{exchange_id}",
+                daemon=True,
+            ).start()
+            return stale_or_static
+        else:
+            return stale_or_static
+
+    pairs = _fetch_live_pairs(exchange_id)
+    with _CACHE_LOCK:
+        _CACHE[exchange_id] = (time.monotonic(), pairs)
+    return list(pairs)

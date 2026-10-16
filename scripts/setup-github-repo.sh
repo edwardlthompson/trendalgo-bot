@@ -7,6 +7,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=lib/resolve-tools.sh
+. "$(cd "$(dirname "$0")" && pwd)/lib/resolve-tools.sh"
+# shellcheck source=lib/resolve-python.sh
+. "$(cd "$(dirname "$0")" && pwd)/lib/resolve-python.sh"
 
 REPO="${1:-${GITHUB_REPO:-}}"
 if [ -z "$REPO" ]; then
@@ -22,11 +26,11 @@ if [ -z "$REPO" ]; then
 fi
 
 BRANCH="${GITHUB_DEFAULT_BRANCH:-main}"
-# Comma-separated override: GITHUB_REQUIRED_CHECKS="CI,Security Scan,CodeQL,Repo Hygiene,Feature Gate"
+# Comma-separated override: GITHUB_REQUIRED_CHECKS="CI,Security Scan,CodeQL,Repo Hygiene,Feature Gate,Template Upgrade Simulation (Windows)"
 if [ -n "${GITHUB_REQUIRED_CHECKS:-}" ]; then
   IFS=',' read -ra REQUIRED_CHECKS <<< "$GITHUB_REQUIRED_CHECKS"
 else
-  REQUIRED_CHECKS=("CI" "Security Scan" "CodeQL" "Repo Hygiene" "Feature Gate")
+  mapfile -t REQUIRED_CHECKS < <("$PY" "$ROOT/scripts/lib/required_checks.py")
 fi
 TRANSIENT=0
 FAILED=0
@@ -38,9 +42,24 @@ MANUAL SETUP CHECKLIST (GitHub UI - API returned 422 or insufficient permissions
   2. Settings -> Code security and analysis -> Dependabot security updates: ON
   3. Settings -> Code security and analysis -> Private vulnerability reporting: ON
   4. Settings -> Branches -> Branch protection rules -> main:
-     - Require status checks: CI, Security Scan, CodeQL, Repo Hygiene, Feature Gate
+     - Require status checks: CI, Security Scan, CodeQL, Repo Hygiene, Feature Gate, Template Upgrade Simulation (Windows)
      - Require branches to be up to date before merging (recommended)
-  5. Re-run: bash scripts/setup-github-repo.sh
+     - Leave "Do not allow bypassing the above settings" OFF so repo admins can merge via gh --admin
+  4b. (Optional, org repos or Rulesets only) Settings -> Rules -> Rulesets -> Bypass list:
+     - Add GitHub Actions app, mode "For pull requests only" — not available on classic personal-repo branch rules
+  5. Settings -> General -> Features -> Discussions: ON
+     Then add a Q&A category (answers enabled) and an Ideas category if missing
+  5d. [HUMAN] Watch this repo → Custom → Issues. Add CODEOWNERS as collaborators
+     so feedback-notify.yml can assign crash/bug issues.
+  5b. Settings → Actions → General: do not require approval for same-repo
+     github-actions[bot] / Release Please PRs (required checks stay ACTION_REQUIRED)
+  5c. Do not attach GitHub Environments to CI, Security Scan, or CodeQL
+     (github-pages on Pages deploy is the exception)
+  6. Re-run: bash scripts/setup-github-repo.sh
+  7. (Optional) Settings → Secrets → Actions → AUTOMERGE_TOKEN
+     PAT with contents + workflow so Dependabot/Release Please merges trigger push CI
+     AUTOMERGE_TOKEN=... bash scripts/setup-automerge-token.sh
+     Or: SETUP_AUTOMERGE_TOKEN=1 bash scripts/setup-github-repo.sh
 EOF
 }
 
@@ -129,9 +148,9 @@ fi
 
 export GITHUB_REQUIRED_CHECKS="$(IFS=,; echo "${REQUIRED_CHECKS[*]}")"
 
-protection_json="$(python3 - <<PY
+protection_json="$("$PY" - <<PY
 import json, os
-checks = os.environ.get("GITHUB_REQUIRED_CHECKS", "CI,Security Scan,CodeQL,Repo Hygiene,Feature Gate").split(",")
+checks = os.environ.get("GITHUB_REQUIRED_CHECKS", "CI,Security Scan,CodeQL,Repo Hygiene,Feature Gate,Template Upgrade Simulation (Windows)").split(",")
 checks = [c.strip() for c in checks if c.strip()]
 print(json.dumps({
     "required_status_checks": {"strict": True, "contexts": checks},
@@ -140,6 +159,11 @@ print(json.dumps({
         "dismiss_stale_reviews": True,
         "require_code_owner_reviews": False,
         "required_approving_review_count": 0,
+    },
+    "bypass_pull_request_allowances": {
+        "users": [],
+        "teams": [],
+        "apps": ["github-actions"],
     },
     "restrictions": None,
     "required_linear_history": False,
@@ -156,6 +180,44 @@ if ! gh_api_retry PUT "repos/${REPO}/branches/${BRANCH}/protection" "$protection
 else
   echo "OK   Branch protection on ${BRANCH} (required checks: ${REQUIRED_CHECKS[*]})"
 fi
+
+if gh repo edit "$REPO" --enable-discussions >/dev/null 2>&1; then
+  echo "OK   GitHub Discussions enabled (point Q&A at SUPPORT.md)"
+else
+  echo "SKIP Discussions (gh could not enable — [HUMAN] Settings → General → Features → Discussions)"
+fi
+
+warn_required_check_environments() {
+  echo "NOTE: Do not attach GitHub Environments to CI, Security Scan, or CodeQL."
+  local names
+  names="$(gh api "repos/${REPO}/environments" --jq '.environments[].name' 2>/dev/null || true)"
+  if [ -n "$names" ]; then
+    echo "NOTE: Environments present: $(printf '%s' "$names" | tr '\n' ' ')"
+    echo "[HUMAN] Settings → Environments: reviewers on github-pages are OK; do not gate CI / Security Scan / CodeQL"
+  fi
+  echo "[HUMAN] Settings → Actions → General: do not require approval for same-repo github-actions[bot] / Release Please PRs"
+}
+
+ensure_discussions_qa() {
+  "$PY" "$ROOT/scripts/lib/discussions_qa.py" "$REPO"
+}
+
+maybe_setup_automerge_token() {
+  if [ -n "${AUTOMERGE_TOKEN:-}" ] || [ "${SETUP_AUTOMERGE_TOKEN:-}" = "1" ]; then
+    if bash "$ROOT/scripts/setup-automerge-token.sh"; then
+      echo "OK   AUTOMERGE_TOKEN repo secret set"
+    else
+      echo "NOTE AUTOMERGE_TOKEN helper failed — re-run: bash scripts/setup-automerge-token.sh"
+    fi
+    return 0
+  fi
+  echo "NOTE Optional AUTOMERGE_TOKEN not set. Dependabot/Release Please merges may skip push CI."
+  echo "     AUTOMERGE_TOKEN=... bash scripts/setup-automerge-token.sh"
+}
+
+warn_required_check_environments
+ensure_discussions_qa
+maybe_setup_automerge_token
 
 if [ "$TRANSIENT" -gt 0 ]; then
   echo "Transient errors after retries ($TRANSIENT); re-run later"

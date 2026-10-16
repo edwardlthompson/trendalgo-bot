@@ -10,6 +10,9 @@ __pycache__/
 *.py[cod]
 .uv/
 
+# Local packaging helpers (downloaded at install time)
+tools/rcedit*.exe
+
 # Build outputs
 dist/
 build/
@@ -52,6 +55,12 @@ playwright-report/
 donations.json
 examples/web/public/app-update.json
 examples/web/public/donations.json
+# LTS bulk coin PNGs (optional; dashboard uses CDN/monogram — see slim-lts-icons.ps1)
+examples/web/public/lts-dashboard/icons/coins/*
+!examples/web/public/lts-dashboard/icons/coins/README.md
+# Local junction to retired PWA coin icons (not committed)
+branding/assets/coins/from-retired-web-backup/
+examples/web/dist/lts-dashboard/icons/coins/
 examples/android/app/src/main/assets/app-update.json
 examples/android/app/src/main/assets/donations.json
 
@@ -94,3 +103,40 @@ src/trendalgo/data/**/__pycache__/
 # Ephemeral agent outputs (examples tracked)
 CODE_REVIEW.md
 RELEASE_NOTES.md
+
+# --- from agent-project-bootstrap v1.9.0 ---
+examples/blender/out/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+.cursor-session-state.json
+.agent/session-state.md
+.cursor/last-feature-gate.json
+.cursor/sprint-smoke.json
+.cursor/parallel-scope-lock.json
+.cursor/worktrees/
+.cursor/mcp.json
+.cursor/mcp-audit.log
+.cursor/environment.json
+.cursor/sandbox.json
+.cursor/automations.yaml
+CURSOR_RADAR_REPORT.md
+CURSOR_RADAR_BACKLOG.md
+CURSOR_RADAR_SUGGESTIONS.md
+CURSOR_RADAR_BUILD_PLAN_DRAFT.md
+.cursor/gates-status.md
+.cursor/upd-status.md
+.cursor/encoding-strict
+dist/cursor-plugin/
+.envrc
+!.envrc.example
+openvex.json
+*.jks
+*.keystore
+*.p12
+result
+.direnv/
+scratchpad.md
+.cursor/handoff-*.md
+

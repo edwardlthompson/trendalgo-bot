@@ -9,9 +9,8 @@ PROGRESS="$ROOT/.cursor/agent-progress.json"
 mkdir -p "$ROOT/.cursor"
 rm -f "$PROGRESS"
 
-if command -v python3 >/dev/null 2>&1; then PY=python3
-elif command -v python >/dev/null 2>&1; then PY=python
-else PY=python3; fi
+# shellcheck source=lib/resolve-python.sh
+. "$(cd "$(dirname "$0")" && pwd)/lib/resolve-python.sh"
 
 strikes() {
   "$PY" -c "import json,sys; print(json.load(open(sys.argv[1], encoding='utf-8')).get('strikes',0))" "$PROGRESS" 2>/dev/null || echo 0
@@ -42,3 +41,13 @@ if [ "$s" != "0" ]; then
 fi
 
 echo "verify-agent-strikes passed"
+
+# Explicit reset API (after env fix / 3-strike halt recovery)
+bash scripts/agent-progress.sh record --gate feature-gate --exit 1 >/dev/null
+bash scripts/agent-progress.sh reset-strikes >/dev/null
+s="$(strikes)"
+if [ "$s" != "0" ]; then
+  echo "FAIL: reset-strikes API should clear strikes (got $s)"
+  exit 1
+fi
+echo "OK: agent-progress reset-strikes API"

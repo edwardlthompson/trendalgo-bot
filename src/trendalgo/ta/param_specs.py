@@ -5,9 +5,14 @@ from __future__ import annotations
 from trendalgo.templates.schema import TemplateParamSpec
 
 _DEFAULT_PERIOD = TemplateParamSpec(key="timeperiod", label="Period", default=14, min=2, max=200)
+_ENTRY_LEVEL = TemplateParamSpec(key="entry_level", label="Entry level", default=30, min=5, max=50)
+_EXIT_LEVEL = TemplateParamSpec(key="exit_level", label="Exit level", default=70, min=50, max=95)
 
 _TA_PARAM_SPECS: dict[str, list[TemplateParamSpec]] = {
-    "RSI": [_DEFAULT_PERIOD],
+    "RSI": [_DEFAULT_PERIOD, _ENTRY_LEVEL, _EXIT_LEVEL],
+    "MFI": [_DEFAULT_PERIOD, _ENTRY_LEVEL, _EXIT_LEVEL],
+    "CMO": [_DEFAULT_PERIOD, _ENTRY_LEVEL, _EXIT_LEVEL],
+    "STOCHRSI": [_DEFAULT_PERIOD, _ENTRY_LEVEL, _EXIT_LEVEL],
     "MACD": [
         TemplateParamSpec(key="fastperiod", label="Fast period", default=12, min=2, max=100),
         TemplateParamSpec(key="slowperiod", label="Slow period", default=26, min=2, max=200),

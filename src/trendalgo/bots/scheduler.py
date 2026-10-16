@@ -1,14 +1,18 @@
-"""Async scheduled ticks for enabled bots."""
+"""Async scheduled ticks for enabled bots. Entries are gated; exits never are (R4, R5)."""
 
 from __future__ import annotations
 
 import asyncio
 import os
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from trendalgo.billing.license_gate import check_license_gate
 from trendalgo.bots.tick_candle import BotCandleLoader
+from trendalgo.risk.allocation import allocation_error
+from trendalgo.risk.manager import utc_day_start
+from trendalgo.risk.strategy_mixins import RiskGuardMixin
 from trendalgo.strategies.runtime.contract import Candle
 from trendalgo.strategies.runtime.loader import load_strategy
 from trendalgo.trading.runner.dry_run import DryRunRunner
@@ -43,7 +47,9 @@ class BotTickScheduler:
         self._candle_loader = candle_loader or BotCandleLoader(data_dir)
         self._locks: dict[int, asyncio.Lock] = {}
         self._runners: dict[int, DryRunRunner] = {}
+        self._holding: dict[int, bool] = {}
         self._last_candle: dict[int, int] = {}
+        self._allocation_block: str | None = None
         self._task: asyncio.Task[None] | None = None
 
     def start(self) -> None:
@@ -62,7 +68,21 @@ class BotTickScheduler:
 
     async def run_once(self) -> None:
         enabled = [bot for bot in self.state.bot_orchestrator.list_bots() if bot["enabled"]]
+        self._refresh_host_state(enabled)
         await asyncio.gather(*(self.tick_bot(int(bot["id"])) for bot in enabled))
+
+    def _refresh_host_state(self, enabled: list[dict[str, Any]]) -> None:
+        """Once per pass: today's PnL from journaled fills (R2) and the plan's allocation (R4)."""
+        risk = self.state.risk_manager
+        now = datetime.now(UTC)
+        risk.sync_daily_pnl(
+            self.state.trade_journal.realized_pnl_since(utc_day_start(now).isoformat()), now
+        )
+        self._allocation_block = allocation_error(
+            [float(bot["equity_usd"]) for bot in enabled],
+            risk.wallet_usd,
+            risk.limits.max_exposure_pct,
+        )
 
     async def tick_bot(self, bot_id: int) -> None:
         lock = self._locks.setdefault(bot_id, asyncio.Lock())
@@ -81,38 +101,39 @@ class BotTickScheduler:
                 except Exception as inbox_exc:
                     self.state.log(f"bot tick error notification failed: {inbox_exc}")
 
+    def _entry_block(self, bot: dict[str, Any]) -> str | None:
+        """Why new entries are blocked for this bot, or None. Exits are never blocked here (R5)."""
+        dry = bool(self.state.bot.dry_run)
+        checks = (
+            self.state.risk_manager.can_open_trade(),
+            self.state.exchange_control.can_execute(str(bot["exchange"]), dry_run=dry),
+            check_license_gate(
+                self.state.billing_store.get_enrollment(),
+                self.state.billing_store.get_license_status(),
+                dry_run=dry,
+            ),
+            (self._allocation_block is None, self._allocation_block or "allocation ok"),
+        )
+        return next((reason for ok, reason in checks if not ok), None)
+
     async def _guarded_tick(self, bot_id: int) -> None:
         bot = self.state.bot_orchestrator.get_bot(bot_id)
         if not bot or not bot["enabled"]:
             return
-        risk_ok, risk_reason = self.state.risk_manager.can_open_trade()
-        exchange_ok, exchange_reason = self.state.exchange_control.can_execute(
-            str(bot["exchange"]), dry_run=bool(self.state.bot.dry_run)
-        )
-        license_ok, license_reason = check_license_gate(
-            self.state.billing_store.get_enrollment(),
-            self.state.billing_store.get_license_status(),
-            dry_run=bool(self.state.bot.dry_run),
-        )
-        if not risk_ok or not exchange_ok or not license_ok:
-            reason = next(
-                reason
-                for ok, reason in (
-                    (risk_ok, risk_reason),
-                    (exchange_ok, exchange_reason),
-                    (license_ok, license_reason),
-                )
-                if not ok
-            )
-            self.state.log(f"bot tick blocked bot_id={bot_id}: {reason}")
+        block = self._entry_block(bot)
+        if block is not None and not self._holding.get(bot_id, False):
+            self.state.log(f"bot tick blocked bot_id={bot_id}: {block}")
             return
         candle = await asyncio.to_thread(self._candle_loader, bot)
         if self._last_candle.get(bot_id) == candle.timestamp_ms:
             return
         runner = self._runners.get(bot_id)
         if runner is None:
+            strategy = load_strategy(str(bot["strategy_id"]))
+            if isinstance(strategy, RiskGuardMixin):
+                strategy.risk_manager = self.state.risk_manager  # the one host manager (R3)
             runner = DryRunRunner(
-                strategy=load_strategy(str(bot["strategy_id"])),
+                strategy=strategy,
                 journal=self.state.trade_journal,
                 exchange_id=str(bot["exchange"]),
                 pair=str(bot["pair"]),
@@ -121,7 +142,11 @@ class BotTickScheduler:
                 control=self.state.exchange_control,
             )
             self._runners[bot_id] = runner
-        await asyncio.to_thread(runner.tick, candle)
+        if block is not None:
+            # A held position can only exit: the runner opens no second one (R5).
+            self.state.log(f"entries blocked bot_id={bot_id}: {block}; exits still run")
+        result = await asyncio.to_thread(runner.tick, candle)
+        self._holding[bot_id] = bool(result.get("position_open", False))
         self._last_candle[bot_id] = candle.timestamp_ms
 
     async def _run(self) -> None:

@@ -120,8 +120,7 @@ def compute_talib(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.nd
     if upper == "MIDPRICE":
         return {"value": fn(h, lo, **params)}
     if upper in {"WILLR", "CCI", "ULTOSC"}:
-        clean = {k: v for k, v in params.items() if k != "timeperiod"}
-        return {"value": fn(h, lo, c, **clean)}
+        return {"value": fn(h, lo, c, **params)}
     if upper in {"PLUS_DM", "MINUS_DM"}:
         return {"value": fn(h, lo, **params)}
     if upper in {"BETA", "CORREL"}:
@@ -176,17 +175,17 @@ def _compute_uncached(name: str, df: pd.DataFrame, **params: Any) -> dict[str, n
 
             if upper in TA_FUNCTION_NAMES:
                 return compute_talib(name, df, **params)
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, IndexError, AttributeError):
             pass
     if is_pandas_ta_indicator(upper) and pandas_ta_available():
         try:
             return compute_pandas_ta(upper, df, **params)
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, IndexError, AttributeError):
             pass
     if talib_available():
         try:
             return compute_talib(name, df, **params)
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, IndexError, AttributeError):
             pass
     return compute_pandas(name, df, **params)
 

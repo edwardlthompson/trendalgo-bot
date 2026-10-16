@@ -33,7 +33,7 @@ Verification: `tests/test_journal/test_journal.py::test_journal_and_idempotency`
 |-------|------|
 | Logic | `src/trendalgo/risk/journal.py` |
 | Tests | `tests/test_journal/` |
-| Wiring | Freqtrade close hook (Sprint 4+) |
+| Wiring | Native runner close hook (Sprint 4+) |
 
 ## Definition of Done
 

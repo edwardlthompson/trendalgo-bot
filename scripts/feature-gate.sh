@@ -270,11 +270,7 @@ fi
 
 if [ "$STRICT" = true ] && [ "$STACK" = "multi" ]; then
   run_cmd design-cohesion bash scripts/check-design-cohesion.sh
-  if command -v npm >/dev/null 2>&1; then
-    run_cmd about-feature-gate bash scripts/verify-about-feature-gate.sh
-  else
-    skip_or_block "Skipping about-feature-gate (npm not found)"
-  fi
+  # The About slice check was PWA-only (examples/web), retired in row 23 (p7-retire-pwa).
 fi
 
 log "Feature gate passed (${#GATES_PASSED[@]} stages)."

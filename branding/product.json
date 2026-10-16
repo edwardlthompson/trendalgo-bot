@@ -1,0 +1,39 @@
+{
+  "mode": "template",
+  "name": "TrendAlgo Bot",
+  "short_name": "TrendAlgo",
+  "tagline": "Self-hosted crypto trading you own end to end",
+  "pitch": "TrendAlgo Bot is a self-hosted cryptocurrency trading platform you run on your own VPS. It combines algorithmic spot trading, a CoinStats-style portfolio tracker, opportunity scanning, and research tools behind a single progressive web app — without custodial accounts, proprietary SDKs, or default telemetry.",
+  "features": [
+    "Read-only portfolio sync across 9 CEX venues with performance charts vs a top-10 crypto index",
+    "Native CCXT algo trading with dry-run default and explicit per-exchange go-live gates",
+    "Opportunity scanner, backtests, and research tools in one offline-capable PWA",
+    "You own the stack, the keys, and the data — MIT FOSS, no tracking by default",
+    "Agent-ready BUILD_PLAN sprints, design tokens, and CI guardrails from the bootstrap template"
+  ],
+  "quick_start": [
+    "Clone the repo and run `uv sync --extra dev` plus `cd examples/web && npm ci`.",
+    "Copy `.env.example` to `.env` and keep `TRENDALGO_MODE=dry-run`.",
+    "Start with `.\\scripts\\dev-local.ps1` (Windows) or `bash scripts/dev-local.sh`, then open http://localhost:5173."
+  ],
+  "install": "Python 3.12 (not 3.13+ yet) with uv or pip, and Node.js 20+ for the PWA. See the Self-hosted setup guide in the root README and docs/LOCAL_DEV.md.",
+  "usage": "Dry-run is the default. Connect read-only exchange keys for portfolio sync, run backtests from the PWA, and only go live on an external VPS after `scripts/go-live-gate.sh --approve`. Edit colors in `design-tokens/design-tokens.json` and logos in `branding/assets/`, then run `python3 scripts/sync-design-tokens.py`.",
+  "urls": {
+    "docs": "docs/START_HERE.md",
+    "contributing": "CONTRIBUTING.md",
+    "security": "SECURITY.md",
+    "license": "LICENSE",
+    "design": "docs/DESIGN_GUIDE.md",
+    "branding": "branding/BRANDING.md"
+  },
+  "badge": {
+    "primary": "e94560",
+    "secondary": "4A5F82",
+    "license": "2ea043",
+    "foss": "656d76"
+  },
+  "stacks": [
+    "python",
+    "web"
+  ]
+}

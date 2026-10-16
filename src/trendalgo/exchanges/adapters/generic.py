@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
-
-import ccxt
 
 from trendalgo.exchanges.adapters.fixtures import DRY_RUN_HOLDINGS
 from trendalgo.exchanges.asset_mapper import normalize_asset
 from trendalgo.exchanges.base import holdings_from_ccxt_balance
+from trendalgo.exchanges.private_client import ccxt_client
 from trendalgo.exchanges.registry import ExchangeEntry
 from trendalgo.portfolio.db import HoldingRow, PortfolioStore
+from trendalgo.trading.order_journal_store import default_journal
+from trendalgo.trading.reconcile import reconcile_exchange
 
 
 class GenericCcxtPortfolioAdapter:
@@ -25,19 +25,7 @@ class GenericCcxtPortfolioAdapter:
         return frozenset(self.entry.usd_aliases)
 
     def _client(self) -> Any:
-        exchange_class = getattr(ccxt, self.entry.ccxt_id, None)
-        if exchange_class is None:
-            raise ValueError(f"ccxt has no exchange class: {self.entry.ccxt_id}")
-        options: dict[str, Any] = {"enableRateLimit": True}
-        if self.entry.id == "kraken":
-            options["options"] = {"adjustForTimeDifference": True}
-        return exchange_class(
-            {
-                "apiKey": os.environ.get(self.entry.env_key, ""),
-                "secret": os.environ.get(self.entry.env_secret, ""),
-                **options,
-            }
-        )
+        return ccxt_client(self.entry)
 
     def _normalize_holdings(self, holdings: list[HoldingRow]) -> list[HoldingRow]:
         return [
@@ -94,7 +82,23 @@ class GenericCcxtPortfolioAdapter:
             }
 
         exchange = self._client()
-        balance = exchange.fetch_balance()
+        journal = default_journal()
+        with exchange.guard():  # no order of ours is sent while the account is read (E3)
+            try:
+                report = reconcile_exchange(journal, exchange, self.exchange_id)
+                balance = report.balance
+                reconcile_result: dict[str, Any] = {
+                    "open": len(report.open),
+                    "unresolved": len(report.unresolved),
+                    "halted": report.halt_reason,
+                }
+            except Exception as exc:  # the snapshot still shows holdings; buys stay gated
+                balance = exchange.fetch_balance()
+                reconcile_result = {"error": str(exc)}
+        reason = journal.pending_halt_notice(self.exchange_id)  # a halt from any path (E3)
+        if reason is not None:
+            store.insert_notification("trading", f"{self.exchange_id}: new buys halted", reason)
+            journal.mark_halt_announced(self.exchange_id)
         tickers = exchange.fetch_tickers()
         holdings, total_usd = holdings_from_ccxt_balance(
             balance, tickers, usd_aliases=self._usd_aliases()
@@ -113,4 +117,5 @@ class GenericCcxtPortfolioAdapter:
             "holdings": len(holdings),
             "mode": "live",
             "exchange": self.exchange_id,
+            "reconcile": reconcile_result,
         }

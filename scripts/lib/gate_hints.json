@@ -1,0 +1,359 @@
+{
+  "default": {
+    "means": "A quality gate failed in the active feature scope.",
+    "run": "bash scripts/feature-autofix.sh (or fix the errors shown above)",
+    "why": "Local gates are the same checks CI will run on your pull request.",
+    "suggested": [
+      "run scripts/feature-autofix.sh",
+      "fix errors in active feature scope"
+    ]
+  },
+  "stages": {
+    "web-lint": {
+      "means": "TypeScript or ESLint found problems in the web Golden Path.",
+      "run": "npm run lint in examples/web (then npm run format if that script exists)",
+      "why": "Catching type and style errors on the laptop is cheaper than waiting for CI.",
+      "suggested": [
+        "fix TypeScript errors in feature scope",
+        "run npm run lint in examples/web",
+        "run npm run format in examples/web if format script exists"
+      ]
+    },
+    "web-format": {
+      "means": "Web files are not formatted the way CI expects.",
+      "run": "npm run format in examples/web",
+      "why": "One formatter keeps diffs small and reviewable.",
+      "suggested": [
+        "run npm run format in examples/web"
+      ]
+    },
+    "web-test": {
+      "means": "A web unit or component test failed.",
+      "run": "npm test in examples/web",
+      "why": "Tests are the proof the Golden Path still works after your change.",
+      "suggested": [
+        "fix failing vitest in src/{feature}/",
+        "run npm test in examples/web"
+      ]
+    },
+    "web-lighthouse-floors": {
+      "means": "Lighthouse performance, accessibility, best-practices, or web-vitals (TBT/LCP) floors dropped.",
+      "run": "bash scripts/check-lighthouse-floors.sh",
+      "why": "CI Lighthouse assertions must stay error floors, not warnings (Settings IA re-baseline + TBT/LCP budgets).",
+      "suggested": [
+        "restore categories:performance minScore 0.9 in examples/web/.lighthouserc.json",
+        "restore categories:accessibility minScore 0.95 in examples/web/.lighthouserc.json",
+        "keep categories:best-practices minScore at least 0.9",
+        "keep largest-contentful-paint maxNumericValue <= 2500",
+        "keep total-blocking-time maxNumericValue <= 300 (lab INP proxy)"
+      ]
+    },
+    "web-sw-cache-budget": {
+      "means": "Service-worker PRECACHE shell exceeds the offline cache budget.",
+      "run": "bash scripts/check-sw-cache-budget.sh",
+      "why": "PWA offline-first shell must stay within the /gates canvas budget.",
+      "suggested": [
+        "trim examples/web/public/sw.js PRECACHE entries",
+        "keep shell assets under SW_CACHE_MAX_BYTES (default 256KiB)"
+      ]
+    },
+    "web-build": {
+      "means": "The web app did not produce a production build.",
+      "run": "npm run build in examples/web",
+      "why": "A broken build never reaches users; fix it before the pull request.",
+      "suggested": [
+        "fix build errors",
+        "run npm run build in examples/web"
+      ]
+    },
+    "python-lint": {
+      "means": "Ruff found lint issues in the Python Golden Path.",
+      "run": "uv run ruff check --fix in examples/python",
+      "why": "Auto-fix what you can locally so CI stays green.",
+      "suggested": [
+        "run uv run ruff check --fix in examples/python"
+      ]
+    },
+    "python-format": {
+      "means": "Python files are not formatted the way CI expects.",
+      "run": "uv run ruff format in examples/python",
+      "why": "One formatter keeps diffs small and reviewable.",
+      "suggested": [
+        "run uv run ruff format in examples/python"
+      ]
+    },
+    "python-type": {
+      "means": "A type checker rejected the Python Golden Path.",
+      "run": "Fix mypy/pyright errors in examples/python",
+      "why": "Types catch whole classes of bugs before runtime.",
+      "suggested": [
+        "fix mypy/pyright errors in examples/python"
+      ]
+    },
+    "python-type-mypy": {
+      "means": "mypy rejected the Python Golden Path.",
+      "run": "Fix mypy errors in examples/python",
+      "why": "Types catch whole classes of bugs before runtime.",
+      "suggested": [
+        "fix mypy errors in examples/python"
+      ]
+    },
+    "python-type-pyright": {
+      "means": "pyright rejected the Python Golden Path.",
+      "run": "Fix pyright errors in examples/python",
+      "why": "Types catch whole classes of bugs before runtime.",
+      "suggested": [
+        "fix pyright errors in examples/python"
+      ]
+    },
+    "python-test": {
+      "means": "A pytest failed in the Python Golden Path.",
+      "run": "uv run pytest in examples/python",
+      "why": "Tests are the proof the Golden Path still works after your change.",
+      "suggested": [
+        "fix pytest failures in examples/python"
+      ]
+    },
+    "file-limits": {
+      "means": "A file is over the token-economy size budget.",
+      "run": "Split oversized static-data or logic files (300 / 150 lines per AGENTS.md)",
+      "why": "Small files keep agents accurate and reviews short.",
+      "suggested": [
+        "split oversized static-data/logic files per AGENTS.md limits"
+      ]
+    },
+    "android-test": {
+      "means": "A JUnit test failed in the Android Golden Path.",
+      "run": "./gradlew test in examples/android",
+      "why": "Tests are the proof the Golden Path still works after your change.",
+      "suggested": [
+        "fix JUnit failures",
+        "run ./gradlew test in examples/android"
+      ]
+    },
+    "android-compile-androidtest": {
+      "means": "Instrumented Android tests failed to compile.",
+      "run": "./gradlew :app:compileDebugAndroidTestKotlin in examples/android",
+      "why": "Compile instrumented tests in feature-gate without an emulator.",
+      "suggested": [
+        "fix androidTest compile errors",
+        "run ./gradlew :app:compileDebugAndroidTestKotlin in examples/android"
+      ]
+    },
+    "android-reproducible-apk": {
+      "means": "SOURCE_DATE_EPOCH release APK wiring is missing from CI or the local verifier.",
+      "run": "bash scripts/check-reproducible-apk.sh",
+      "why": "F-Droid-style builds need a pinned epoch and a two-run hash compare.",
+      "suggested": [
+        "keep SOURCE_DATE_EPOCH=1700000000 on CI android-release",
+        "run bash scripts/check-reproducible-apk.sh"
+      ]
+    },
+    "android-signing-runbook": {
+      "means": "Android signing/rollback runbook or env-only Gradle signing is missing.",
+      "run": "bash scripts/check-android-signing-runbook.sh",
+      "why": "Upload keys stay outside git; rollback needs the same key and mapping.txt.",
+      "suggested": [
+        "keep docs/ANDROID_SIGNING.md env vars and rollback",
+        "run bash scripts/check-android-signing-runbook.sh"
+      ]
+    },
+    "android-r8": {
+      "means": "Release R8 minify flags or keep rules regressed.",
+      "run": "bash scripts/check-android-r8.sh",
+      "why": "Android 17 memory limits need shrinking; broad keep rules idle R8.",
+      "suggested": [
+        "keep isMinifyEnabled = true and proguard-android-optimize.txt",
+        "run bash scripts/check-android-r8.sh"
+      ]
+    },
+    "android-espresso-16": {
+      "means": "Espresso is pinned below 3.7.0 (breaks Compose UI tests on Android 16).",
+      "run": "bash scripts/check-espresso-android16.sh",
+      "why": "API 36 removed InputManager.getInstance; Espresso 3.7 uses getSystemService.",
+      "suggested": [
+        "set androidTestImplementation(\"androidx.test.espresso:espresso-core:3.7.0\")",
+        "run bash scripts/check-espresso-android16.sh"
+      ]
+    },
+    "android-compose-a11y": {
+      "means": "Android accessibility lint IDs are missing from lint.xml or Gradle.",
+      "run": "bash scripts/check-compose-a11y-lint.sh",
+      "why": "TalkBack and keyboard lint must stay errors on the Golden Path app.",
+      "suggested": [
+        "restore examples/android/app/lint.xml a11y issue ids",
+        "keep lint.error ContentDescription in app/build.gradle.kts"
+      ]
+    },
+    "design-cohesion": {
+      "means": "Design tokens or i18n keys are out of sync.",
+      "run": "bash scripts/check-design-cohesion.sh",
+      "why": "Shared tokens keep Web and Android looking like one product.",
+      "suggested": [
+        "run scripts/check-design-cohesion.sh",
+        "use design tokens and i18n keys"
+      ]
+    },
+    "about-feature-gate": {
+      "means": "The About feature slice failed its add/remove check.",
+      "run": "bash scripts/verify-about-feature-gate.sh",
+      "why": "The About slice is the template for the next vertical feature.",
+      "suggested": [
+        "run scripts/verify-about-feature-gate.sh",
+        "fix About slice regressions"
+      ]
+    },
+    "rust-fmt": {
+      "means": "Rust sources are not rustfmt-clean.",
+      "run": "cargo fmt in examples/rust",
+      "why": "One formatter keeps diffs small and reviewable.",
+      "suggested": [
+        "run cargo fmt in examples/rust"
+      ]
+    },
+    "rust-clippy": {
+      "means": "Clippy reported warnings treated as errors.",
+      "run": "Fix clippy warnings in examples/rust",
+      "why": "Clippy catches common Rust mistakes before review.",
+      "suggested": [
+        "fix clippy warnings in examples/rust"
+      ]
+    },
+    "rust-test": {
+      "means": "A Rust test failed.",
+      "run": "cargo test in examples/rust",
+      "why": "Tests are the proof the Golden Path still works after your change.",
+      "suggested": [
+        "run cargo test in examples/rust"
+      ]
+    },
+    "go-vet": {
+      "means": "go vet found a problem in the Go Golden Path.",
+      "run": "go vet ./... in examples/go",
+      "why": "vet catches common Go mistakes before review.",
+      "suggested": [
+        "run go vet in examples/go"
+      ]
+    },
+    "go-fmt": {
+      "means": "Go sources are not gofmt-clean.",
+      "run": "gofmt -w in examples/go",
+      "why": "One formatter keeps diffs small and reviewable.",
+      "suggested": [
+        "run gofmt -w in examples/go"
+      ]
+    },
+    "go-test": {
+      "means": "A Go test failed.",
+      "run": "go test ./... in examples/go",
+      "why": "Tests are the proof the Golden Path still works after your change.",
+      "suggested": [
+        "run go test in examples/go"
+      ]
+    },
+    "blender-stub": {
+      "means": "Icon factory stub QA or manifest validation failed.",
+      "run": "python3 examples/blender/cli.py --stub --limit 1",
+      "why": "Machine QA replaces human review of thousands of frames.",
+      "suggested": [
+        "fix examples/blender/fixtures/icon-manifest.sample.json",
+        "run python3 examples/blender/cli.py --stub --limit 1"
+      ]
+    },
+    "blender-qa": {
+      "means": "Icon factory unit tests failed (no Blender required).",
+      "run": "python3 -m unittest tests.test_blender_icon_factory",
+      "why": "Schema, stub PNG, and device env must pass without a GPU.",
+      "suggested": [
+        "run python3 -m unittest tests.test_blender_icon_factory"
+      ]
+    },
+    "blender-cpu": {
+      "means": "Cycles CPU smoke render failed.",
+      "run": "blender --background --python examples/blender/cli.py -- --limit 1",
+      "why": "CI never requires OptiX; CPU proves the bpy path.",
+      "suggested": [
+        "install Blender 4.x on PATH",
+        "run blender-icons --limit 1"
+      ]
+    },
+    "lightroom-sdk-playbook": {
+      "means": "Lightroom SDK playbook is missing or Info.lua versions drifted from the README table.",
+      "run": "bash scripts/check-lightroom-sdk-playbook.sh",
+      "why": "Classic SDK bumps must stay documented and HUMAN-tested.",
+      "suggested": [
+        "keep Info.lua versions matching examples/lightroom/README.md",
+        "run bash scripts/check-lightroom-sdk-playbook.sh"
+      ]
+    },
+    "lightroom-lua-lint": {
+      "means": "Lightroom Lua used generic require() or a non-Lr* import.",
+      "run": "bash scripts/check-lightroom-lua.sh",
+      "why": "Module D allows only Adobe Lr* SDK imports.",
+      "suggested": [
+        "keep Lr* imports only in examples/lightroom",
+        "run bash scripts/check-lightroom-lua.sh"
+      ]
+    },
+    "node-lint": {
+      "means": "Lint failed in the Node Golden Path.",
+      "run": "Fix lint in examples/node (then npm run format if that script exists)",
+      "why": "Catching style errors on the laptop is cheaper than waiting for CI.",
+      "suggested": [
+        "fix lint in examples/node",
+        "run npm run format in examples/node if format script exists"
+      ]
+    },
+    "node-format": {
+      "means": "Node files are not formatted the way CI expects.",
+      "run": "npm run format in examples/node",
+      "why": "One formatter keeps diffs small and reviewable.",
+      "suggested": [
+        "run npm run format in examples/node"
+      ]
+    },
+    "node-test": {
+      "means": "A Node test failed.",
+      "run": "npm test in examples/node",
+      "why": "Tests are the proof the Golden Path still works after your change.",
+      "suggested": [
+        "fix tests in examples/node"
+      ]
+    },
+    "environment": {
+      "means": "A required toolchain is missing from this machine.",
+      "run": "Install the tool named in the log, then re-run the gate.",
+      "why": "Gates cannot prove the stack works without its compiler or runtime.",
+      "suggested": [
+        "install the missing toolchain and re-run"
+      ]
+    },
+    "verify-env": {
+      "means": "The environment schema or required-tools check failed.",
+      "run": "bash scripts/check-env.sh (install missing tools; copy .env.example)",
+      "why": "verify.sh runs this first so later gates are not chasing a missing toolchain.",
+      "suggested": [
+        "run scripts/check-env.sh",
+        "install missing tools named in the log"
+      ]
+    },
+    "verify-bootstrap": {
+      "means": "A bootstrap artifact or delegated check failed.",
+      "run": "bash scripts/validate-bootstrap.sh --quick",
+      "why": "The template cannot ship if required files or adapters drifted.",
+      "suggested": [
+        "run scripts/validate-bootstrap.sh --quick",
+        "fix MISSING or FAIL lines above"
+      ]
+    },
+    "verify-feature-gate": {
+      "means": "The active-stack feature gate failed.",
+      "run": "bash scripts/feature-gate.sh --stack <active>",
+      "why": "verify --full uses the same stack checks CI will run.",
+      "suggested": [
+        "run scripts/feature-gate.sh --stack <active>",
+        "read the What failed block above"
+      ]
+    }
+  }
+}

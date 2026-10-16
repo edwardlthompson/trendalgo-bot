@@ -45,14 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **bootstrap:** Align FOSS agent surface with agent-project-bootstrap v0.15.1 — Cursor hooks/skills/agents, local-compute, parallel/backlog helpers, Cursor integration docs (docs/BOOTSTRAP_ALIGNMENT.md)
-- **docs:** Root HUMAN_BACKLOG.md pointer; agent how-to in README/START_HERE; upstream_aligned_version tracking for child products
+- **bootstrap:** Align FOSS agent surface with agent-project-bootstrap v0.17.0 — opt-in `/codex-review`, expanded `/prerelease`, critique Issue→Resolution (`docs/BOOTSTRAP_ALIGNMENT.md`)
 
 ### Changed
 
-- **agents:** Refresh AGENTS.md, CURSOR_MODES, batch commands, FOR_AGENTS; INIT prompt uses native CCXT (not Freqtrade)
-- **validate-bootstrap:** Parallel FOSS checks + cursor integrations; skip founder gates when gh missing from Git Bash PATH
-- **template-updates:** Prefer .template-update.json upstream_aligned_version over product .template-version
+- **security:** npm overrides for `undici`, `ip-address`, `nanoid`, `postcss`; `js-yaml >=5.2.2`; `brace-expansion >=1.1.18 <2`
+- **template-updates:** `upstream_aligned_version` 0.17.0 (product `.template-version` remains release-please)
 
 ## [0.5.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.4.1...v0.5.0) (2026-07-12)
 

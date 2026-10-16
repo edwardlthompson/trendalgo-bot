@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from trendalgo.risk.config import RiskLimits, default_risk_limits
-from trendalgo.risk.manager import RiskManager
+from trendalgo.risk.manager import RiskManager, StakeRejected
 
 
 class RiskGuardMixin:
@@ -15,6 +15,7 @@ class RiskGuardMixin:
     risk_manager: RiskManager | None = None
 
     def _ensure_risk_manager(self, wallet_usd: float = 1000.0) -> RiskManager:
+        """The host injects its one RiskManager (R3). The local fallback serves standalone runs."""
         if self.risk_manager is None:
             self.risk_manager = RiskManager(limits=self.risk_limits, wallet_usd=wallet_usd)
         return self.risk_manager
@@ -36,12 +37,14 @@ class RiskGuardMixin:
         ok, _ = mgr.can_open_trade()
         if not ok:
             return 0.0
-        return mgr.compute_stake(proposed_stake)
+        try:
+            return mgr.compute_stake(proposed_stake)
+        except StakeRejected:
+            return 0.0  # a zero or negative stake places no order (R3)
 
-    def risk_should_exit_daily_cap(self, pnl_delta: float) -> bool:
-        mgr = self._ensure_risk_manager()
-        mgr.record_pnl(pnl_delta)
-        return not mgr.can_open_trade()[0]
+    def risk_should_exit_daily_cap(self) -> bool:
+        """True when the breaker, pause, or daily cap blocks entries. Fills are the PnL source (R2)."""
+        return not self._ensure_risk_manager().can_open_trade()[0]
 
 
 class ScalePositionMixin:

@@ -1,0 +1,46 @@
+{
+ "architectures": {
+  "amd64": {
+   "digests": {
+    "ADX/0": "d961bf8d909f6763bd96b9534f0d46f8256335fa3651ad7de271e9c4ca2e841c",
+    "ADX/1": "05df274deb4a845c64394cdfe49ae320e22ed5e1e1f1765a2b780bb3fbeaa407",
+    "ADX/2": "8d6e0c15b573684568afca51a4ff91d84db6e621745b52d48bd6442c08adcdc1",
+    "CCI/0": "ca2126ed044d565c484b46e8b9b0e4ff28d4a50b8412d3b68947e8b3a5817ea9",
+    "CCI/1": "e4b67fe151254bc5ea7e8835f8ad1c780ef3a6d05ecc517cd0a518d81ddb5364",
+    "CCI/2": "fe48197da2cb7966f0c4657593c3f559ad763cb667d8bb62264b2ca2faa7e568",
+    "MFI/0": "ce0f3ae631a49baba303fa1ec8024ea770b92da639a4beb145250d34be5aea54",
+    "MFI/1": "dff313ef292a55623e11c728fe5e8f9a492c3477425d3d7c9f0935568a46dab2",
+    "MFI/2": "74088964694b22830563dc9d44a725a728646cf4df672ee3d3c4a78b154d19d0",
+    "Parabolic SAR/0": "85fa03128e8164a962e1f4851baa8156ba523e45231c26f476542d3cb35935ef",
+    "Parabolic SAR/1": "b52ae70145fafa36552c3ff91bae38886ae130592908c27b0adb56a3422b9142",
+    "Parabolic SAR/2": "1438c25b76587dff69c6ef76e22da9bf9a858e2239140042296b35c262be6c5e",
+    "Stochastic/0": "6d9bdcd66cb3bc7d974311813346eceefb59e8cd3afdf70be1f635caccb4da4c",
+    "Stochastic/1": "9d23576c5801936e8271f99f37aa1563e33c2a57cb1e4b1ad014857eec37b2c5",
+    "Stochastic/2": "4ab6efff7749abfe777f50655c5fa55932d385f7b11fb4db0d7d20e412d90a15",
+    "Ultimate Oscillator/0": "dc5308eb5d6ebba0112a22953372bfa1f17a1fa2c1650bc7ae47e73e40dae83b",
+    "Ultimate Oscillator/1": "5b4453e637d5b304e0ab4c14ee73134043cafcc40442006ef04171c6eb8808d7",
+    "Ultimate Oscillator/2": "894f684bb7c27f9fd626a61804eda3bfa34afdaa319db772b67276fd71d6e439"
+   }
+  },
+  "arm64": {
+   "digests": null
+  }
+ },
+ "live_v1": [
+  "Bollinger %B",
+  "EMA Crossover",
+  "Heikin Ashi",
+  "MACD",
+  "RSI",
+  "SMA Crossover"
+ ],
+ "talib_required": [
+  "ADX",
+  "CCI",
+  "MFI",
+  "Parabolic SAR",
+  "Stochastic",
+  "Ultimate Oscillator"
+ ],
+ "version": 1
+}

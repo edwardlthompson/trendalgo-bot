@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import json
 import os
 from urllib import error, parse, request
 
 from trendalgo.risk.manager import RiskManager
 from trendalgo.risk.metrics import metrics_summary
 
+_HOST_ONLY = frozenset({"/resume", "resume", "/reset", "reset", "/reset_breaker", "reset_breaker"})
+
 
 class TelegramCommands:
-    """Status / pause / resume for dry-run bot."""
+    """Status and pause. Resume and breaker reset are refused here (H6)."""
 
     def __init__(
         self,
@@ -33,12 +36,12 @@ class TelegramCommands:
         if cmd in ("/pause", "pause"):
             manager.pause()
             return "Trading paused"
-        if cmd in ("/resume", "resume"):
-            manager.resume()
-            return "Trading resumed"
+        if cmd in _HOST_ONLY:
+            # H6: Telegram can pause and nothing else. Resume and breaker reset stay on the host.
+            return "Refused: Telegram can pause only. Resume and breaker reset run on the host."
         if cmd in ("/help", "help"):
-            return "Commands: status, pause, resume"
-        return "Unknown command — try: status, pause, resume"
+            return "Commands: status, pause. Resume and breaker reset are host-only."
+        return "Unknown command — try: status, pause"
 
     def send_message(self, text: str) -> bool:
         if not self.enabled or not self.token or not self.chat_id:
@@ -49,8 +52,76 @@ class TelegramCommands:
             req = request.Request(url, data=data, method="POST")
             with request.urlopen(req, timeout=15) as resp:
                 return int(resp.status) == 200
-        except (error.URLError, TimeoutError):
+        except (error.URLError, TimeoutError, OSError):
             return False
+
+    def send_photo(self, png: bytes, caption: str = "") -> bool:
+        """Multipart sendPhoto. Falls back to send_message when png is empty."""
+        if not self.enabled or not self.token or not self.chat_id:
+            return False
+        if not png:
+            return self.send_message(caption or "(chart unavailable)")
+        boundary = "----TrendAlgoBoundary7MA4YWxkTrZu0gW"
+        url = f"https://api.telegram.org/bot{self.token}/sendPhoto"
+        parts: list[bytes] = []
+        for name, value in (("chat_id", self.chat_id), ("caption", caption[:1024])):
+            parts.append(
+                (
+                    f"--{boundary}\r\n"
+                    f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
+                    f"{value}\r\n"
+                ).encode()
+            )
+        parts.append(
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="photo"; filename="chart.png"\r\n'
+                f"Content-Type: image/png\r\n\r\n"
+            ).encode()
+        )
+        parts.append(png)
+        parts.append(f"\r\n--{boundary}--\r\n".encode())
+        body = b"".join(parts)
+        try:
+            req = request.Request(
+                url,
+                data=body,
+                method="POST",
+                headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            )
+            with request.urlopen(req, timeout=30) as resp:
+                return int(resp.status) == 200
+        except (error.URLError, TimeoutError, OSError):
+            return self.send_message(caption) if caption else False
+
+    def detect_chat_id(self) -> str | None:
+        """Best-effort: last private chat from getUpdates after the user /start'd the bot."""
+        if not self.token:
+            return None
+        url = f"https://api.telegram.org/bot{self.token}/getUpdates"
+        try:
+            req = request.Request(url, method="GET")
+            with request.urlopen(req, timeout=15) as resp:
+                raw = resp.read().decode("utf-8")
+        except (error.URLError, TimeoutError, OSError, UnicodeDecodeError):
+            return None
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+        results = payload.get("result") if isinstance(payload, dict) else None
+        if not isinstance(results, list):
+            return None
+        for item in reversed(results):
+            if not isinstance(item, dict):
+                continue
+            msg = item.get("message")
+            if not isinstance(msg, dict):
+                continue
+            chat = msg.get("chat")
+            if isinstance(chat, dict) and chat.get("id") is not None:
+                return str(chat["id"])
+        return None
 
     def notify_trade(self, pair: str, side: str, pnl_usd: float) -> bool:
         return self.send_message(f"Trade {side} {pair} pnl=${pnl_usd:.2f}")
