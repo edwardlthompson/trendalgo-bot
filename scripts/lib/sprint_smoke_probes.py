@@ -125,18 +125,34 @@ def _docs_path_exists(root: Path, rel: str) -> bool:
     if "/" in norm:
         return False
     name = Path(rel).name
-    for folder in ("schemas", "docs", "examples", "modules", "scripts"):
+    for folder in ("schemas", "docs", "examples", "modules", "scripts", "src", "tests"):
         base = root / folder
         if base.is_dir() and any(base.rglob(name)):
             return True
     return False
 
 
+def _is_repo_ref(root: Path, rel: str) -> bool:
+    """Dotless slash names with no repo top folder (`TrendAlgo/practice-secret`) are not paths."""
+    if "/" in rel and "." not in Path(rel).name and not (root / rel.split("/", 1)[0]).exists():
+        return False
+    return True
+
+
 def probe_docs(root: Path, paths: list[str]) -> ProbeResult:
-    missing = [p for p in paths if p and not _docs_path_exists(root, p)]
+    refs = [p for p in paths if p and _is_repo_ref(root, p)]
+    missing = [p for p in refs if not _docs_path_exists(root, p)]
     if missing:
         return ProbeResult("docs", False, f"missing {missing}")
-    return ProbeResult("docs", True, "mentioned paths exist" if paths else "docs probe")
+    return ProbeResult("docs", True, "mentioned paths exist" if refs else "docs probe")
+
+
+def probe_docs_absent(root: Path, paths: list[str]) -> ProbeResult:
+    """Paths a row removed must be gone; a Delete row fails while any of them still exists."""
+    present = [p for p in paths if p and _docs_path_exists(root, p)]
+    if present:
+        return ProbeResult("docs", False, f"still present after removal {present}")
+    return ProbeResult("docs", True, "removed paths are absent" if paths else "docs probe")
 
 
 def probe_feature_gate(root: Path, stacks: list[str]) -> ProbeResult:

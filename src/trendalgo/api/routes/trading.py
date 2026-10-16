@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from trendalgo.api.owner_auth import require_owner_command
 from trendalgo.exchanges.pair_normalizer import normalize_pair
 from trendalgo.exchanges.registry import get_entry, list_trading_exchanges, load_registry
 from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
@@ -79,12 +80,14 @@ def exchange_pause(exchange_id: str, body: PauseBody, request: Request) -> dict[
 
 
 @router.post("/trading/exchanges/{exchange_id}/go-live")
-def exchange_go_live(exchange_id: str, request: Request) -> dict[str, Any]:
+async def exchange_go_live(exchange_id: str, request: Request) -> dict[str, Any]:
+    """Owner-signed approval only (H2, H3). An unsigned or replayed call gets 403."""
     state = request.app.state.trendalgo
+    await require_owner_command(request, state.exchange_control.db_path)
     if exchange_id not in list_supported_exchanges():
         raise HTTPException(status_code=404, detail="exchange not enabled for trading")
     state.exchange_control.approve_go_live(exchange_id)
-    state.log(f"go-live approved for {exchange_id}")
+    state.log(f"go-live approved for {exchange_id} (owner-signed)")
     return {"exchange": state.exchange_control.get(exchange_id)}
 
 

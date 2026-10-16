@@ -3,8 +3,9 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 
+from trendalgo.portfolio.metrics import heatmap_rows
 from trendalgo.portfolio.multi_exchange import sync_all_exchanges
-from trendalgo.portfolio.overview import build_portfolio_overview, heatmap_rows
+from trendalgo.portfolio.overview import build_portfolio_overview
 from trendalgo.portfolio.performance import build_performance_payload
 from trendalgo.portfolio.snapshots import capture_portfolio_snapshot, run_daily_notification
 

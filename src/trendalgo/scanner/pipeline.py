@@ -12,6 +12,7 @@ from trendalgo.market.types import OhlcvPoint
 from trendalgo.scanner.config import ScannerSettings
 from trendalgo.scanner.listings import verify_kraken_listings
 from trendalgo.scanner.live_market import LiveMarketRow, fetch_live_market
+from trendalgo.scanner.progress import get_scan_progress
 from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
 from trendalgo.scanner.uniformity import uniformity_score
 
@@ -71,21 +72,43 @@ def run_pipeline(
     *,
     store: SnapshotCache | None = None,
     sample: bool = False,
-    fetcher: MarketFetcher = fetch_live_market,
+    fetcher: MarketFetcher | None = None,
 ) -> QualifiedSnapshot:
+    progress = get_scan_progress()
     pairs = verify_kraken_listings()
+    progress.log(f"Universe: {len(pairs)} Kraken USD pairs (filter: {settings.universe_filter})")
     use_sample = sample or os.environ.get("TRENDALGO_MARKET_SOURCE", "").lower() == "synthetic"
+    if use_sample:
+        progress.log("Using synthetic sample market (not live Kraken data)", level="warn")
     degraded = use_sample
+    live_fetcher: MarketFetcher = fetcher or (
+        lambda ps: fetch_live_market(
+            ps,
+            min_volume_usd=settings.min_volume_usd,
+            min_gain_pct=settings.min_gain_pct,
+            min_gain_7d_pct=float(getattr(settings, "min_gain_7d_pct", 0.0) or 0.0),
+        )
+    )
     try:
-        market = _sample_rows() if use_sample else fetcher(pairs)
-    except Exception:
-        cached = store.latest_successful_snapshot() if store else None
-        if cached is not None:
-            return cached.model_copy(update={"degraded": True})
-        market = _sample_rows()
-        degraded = True
+        market = _sample_rows() if use_sample else live_fetcher(pairs)
+    except Exception as exc:
+        progress.log(f"Live market fetch failed: {exc}", level="error")
+        if use_sample:
+            market = _sample_rows()
+            degraded = True
+        else:
+            cached = store.latest_successful_snapshot() if store else None
+            if cached is not None:
+                progress.log(
+                    "Reusing last successful scan (live Kraken fetch failed)",
+                    level="warn",
+                )
+                # Keep the prior snapshot as-is (not marked degraded) so the device can refresh.
+                return cached
+            raise RuntimeError(f"Kraken market data was not available ({exc})") from exc
 
     candidates: list[OpportunityRow] = []
+    progress.phase("Scan · uniformity gate + rank", total=len(market), unit="pairs")
     for row in market:
         pair = row.pair
         if pair not in pairs:
@@ -116,13 +139,19 @@ def run_pipeline(
                 pair=pair,
                 uniformity=uni,
                 gain_pct=gain,
-                volume_score=min(1.0, volume_usd / settings.min_volume_usd),
+                # Store approximate 24h notional USD (bridge maps this to volume_24h).
+                volume_score=float(volume_usd),
                 entry_signal=entry,
                 sparkline=spark,
             )
         )
 
+    progress.step(len(market), total=len(market))
     candidates.sort(key=lambda o: (o.uniformity, o.gain_pct), reverse=True)
+    progress.log(
+        f"Qualified {len(candidates)} of {len(market)} pairs "
+        f"(uniformity ≥ {settings.min_uniformity:.2f})"
+    )
     ranked = [
         OpportunityRow(rank=i + 1, **{k: v for k, v in o.model_dump().items() if k != "rank"})
         for i, o in enumerate(candidates)

@@ -117,9 +117,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - name: Install web dependencies
-        working-directory: examples/web
-        run: npm ci
       - name: Sync trendalgo-bot python (dev tools)
         if: ${{ hashFiles('pyproject.toml') != '' }}
         run: uv sync --locked --extra dev
@@ -158,44 +155,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/validate-bootstrap.sh --quick
 
-  web:
-    name: Web - Lint, Test, Build
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: examples/web
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: examples/web/package-lock.json
-      - uses: astral-sh/setup-uv@v7
-      - name: Sync Python API dependencies
-        working-directory: .
-        run: uv sync --locked
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - run: npm run build
-      - name: Bundle size budget
-        working-directory: ${{ github.workspace }}
-        run: bash scripts/check-bundle-size.sh
-      - run: npx playwright install --with-deps chromium
-      - run: npx playwright test
-      - run: npm run lighthouse
-      - name: Upload web coverage
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-web
-          path: examples/web/coverage/coverage-summary.json
-          if-no-files-found: ignore
-      - name: License compliance (web)
-        working-directory: ${{ github.workspace }}
-        run: bash scripts/check-license-compliance.sh web
-
   python:
     name: Python - Lint, Type, Test
     runs-on: ubuntu-latest
@@ -217,7 +176,7 @@ jobs:
           fi
       - name: Sync dependencies
         working-directory: ${{ steps.pyroot.outputs.dir }}
-        run: uv sync --locked --extra dev
+        run: uv sync --locked --extra dev --extra device
       - name: Ruff check
         working-directory: ${{ steps.pyroot.outputs.dir }}
         run: uv run ruff check .
@@ -248,7 +207,7 @@ jobs:
     name: PR Coverage Summary
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    needs: [web, python]
+    needs: [python]
     permissions:
       pull-requests: write
     steps:

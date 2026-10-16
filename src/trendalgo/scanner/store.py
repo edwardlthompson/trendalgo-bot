@@ -8,7 +8,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from trendalgo.db.rowid import require_row_id
-from trendalgo.scanner.config import ScannerSettings, default_scanner_settings
+from trendalgo.scanner.config import (
+    ScannerSettings,
+    clamp_interval_minutes,
+    default_scanner_settings,
+)
 from trendalgo.scanner.schema import SCANNER_SCHEMA
 from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
 
@@ -46,7 +50,7 @@ class ScannerStore:
                     INSERT INTO scanner_settings
                     (id, interval_minutes, min_volume_usd, min_gain_pct, min_uniformity,
                      universe_filter, trendspotter_boost, updated_at)
-                    VALUES (1, 60, 100000, 0.02, 0.55, 'kraken-spot', 1, ?)
+                    VALUES (1, 60, 100000, 0.02, 0.2, 'kraken-spot', 1, ?)
                     """,
                     (_utc_now(),),
                 )
@@ -56,14 +60,21 @@ class ScannerStore:
             row = conn.execute("SELECT * FROM scanner_settings WHERE id = 1").fetchone()
             if row is None:
                 return default_scanner_settings()
-            return ScannerSettings(
-                interval_minutes=int(row["interval_minutes"]),
+            raw_minutes = int(row["interval_minutes"])
+            minutes = clamp_interval_minutes(raw_minutes)
+            settings = ScannerSettings(
+                interval_minutes=minutes,
                 min_volume_usd=float(row["min_volume_usd"]),
                 min_gain_pct=float(row["min_gain_pct"]),
+                min_gain_7d_pct=0.0,
                 min_uniformity=float(row["min_uniformity"]),
                 universe_filter=str(row["universe_filter"]),
                 trendspotter_boost=bool(row["trendspotter_boost"]),
             )
+        # Persist clamp so legacy 15m rows do not keep driving schedulers/readers.
+        if minutes != raw_minutes:
+            self.save_settings(settings)
+        return settings
 
     def save_settings(self, settings: ScannerSettings) -> ScannerSettings:
         with self._connect() as conn:

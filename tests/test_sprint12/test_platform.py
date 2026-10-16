@@ -57,7 +57,9 @@ def test_postgres_adapter_and_sentiment() -> None:
     assert stub["asset"] == "BTC" and stub["prototype"]
 
 
-def test_platform_api_routes() -> None:
+def test_platform_api_routes(tmp_path, monkeypatch) -> None:
+    # Isolate app data so a paused exchange in the local control DB cannot change the result.
+    monkeypatch.setenv("TRENDALGO_DATA_DIR", str(tmp_path))
     client = TestClient(create_app(default_state()))
     assert client.get("/api/v1/platform/forager").status_code == 200
     assert client.get("/api/v1/platform/funding").status_code == 200

@@ -16,6 +16,44 @@ def _utc_now() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
+def _upsert_ledger_row(conn: sqlite3.Connection, period: str, row: dict[str, Any]) -> int:
+    """Insert or refresh one trade's ledger row. Returns 1 when the row is new."""
+    trade_ref = str(row["trade_ref"])
+    existed = conn.execute(
+        "SELECT 1 FROM fee_ledger_entries WHERE trade_ref = ?", (trade_ref,)
+    ).fetchone()
+    conn.execute(
+        """
+        INSERT INTO fee_ledger_entries
+        (trade_ref, period, pair, gross_profit_usd, license_fee_usd, net_benefit_usd,
+         rule_applied, exchange, bot_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(trade_ref) DO UPDATE SET
+            period = excluded.period,
+            pair = excluded.pair,
+            gross_profit_usd = excluded.gross_profit_usd,
+            license_fee_usd = excluded.license_fee_usd,
+            net_benefit_usd = excluded.net_benefit_usd,
+            rule_applied = excluded.rule_applied,
+            exchange = excluded.exchange,
+            bot_id = excluded.bot_id
+        """,
+        (
+            trade_ref,
+            period,
+            row.get("pair", ""),
+            row["gross_profit_usd"],
+            row["license_fee_usd"],
+            row["net_benefit_usd"],
+            row["rule_applied"],
+            str(row.get("exchange", "")),
+            row.get("bot_id"),
+            _utc_now(),
+        ),
+    )
+    return 0 if existed else 1
+
+
 class BillingStore:
     def __init__(self, db_path: Path) -> None:
         self.db_path = db_path
@@ -46,6 +84,8 @@ class BillingStore:
                 conn.execute("ALTER TABLE license_status ADD COLUMN last_payment_id TEXT")
             if "last_tx_hash" not in status_cols:
                 conn.execute("ALTER TABLE license_status ADD COLUMN last_tx_hash TEXT")
+            if "last_reminder_day" not in status_cols:
+                conn.execute("ALTER TABLE license_status ADD COLUMN last_reminder_day INTEGER")
 
         pay_cols = {
             row[1] for row in conn.execute("PRAGMA table_info(settlement_payments)").fetchall()
@@ -193,6 +233,50 @@ class BillingStore:
             except sqlite3.IntegrityError:
                 return False
 
+    def list_closed_periods(self) -> dict[str, float]:
+        """Closed months and the deficit each one left below its high-water mark."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT period, deficit_out_usd FROM fee_periods ORDER BY period"
+            ).fetchall()
+            return {str(r["period"]): float(r["deficit_out_usd"]) for r in rows}
+
+    def ledger_refs(self, period: str) -> set[str]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT trade_ref FROM fee_ledger_entries WHERE period = ?", (period,)
+            ).fetchall()
+            return {str(r["trade_ref"]) for r in rows}
+
+    def upsert_ledger_rows(self, period: str, rows: list[dict[str, Any]]) -> int:
+        """Provisional rows for the open month: add new trades and refresh their shares."""
+        with self._connect() as conn:
+            return sum(_upsert_ledger_row(conn, period, row) for row in rows)
+
+    def finalize_period(
+        self,
+        period: str,
+        rows: list[dict[str, Any]],
+        *,
+        net_usd: float,
+        fee_usd: float,
+        deficit_out_usd: float,
+    ) -> int:
+        """Write a closed month, its rows, and the carry-forward in one transaction."""
+        now = _utc_now()
+        with self._connect() as conn:
+            added = sum(_upsert_ledger_row(conn, period, row) for row in rows)
+            conn.execute(
+                "INSERT INTO fee_periods (period, net_usd, license_fee_usd, deficit_out_usd, "
+                "finalized_at) VALUES (?, ?, ?, ?, ?)",
+                (period, net_usd, fee_usd, deficit_out_usd, now),
+            )
+            conn.execute(
+                "UPDATE carry_forward_credits SET credit_usd = ?, updated_at = ? WHERE id = 1",
+                (deficit_out_usd, now),
+            )
+            return added
+
     def list_ledger(self, period: str | None = None, limit: int = 500) -> list[dict[str, Any]]:
         with self._connect() as conn:
             if period:
@@ -270,7 +354,7 @@ class BillingStore:
                 UPDATE license_status SET
                     grace_started_at = ?, grace_day = ?, suspended = ?,
                     unpaid_period = ?, licensed_until = ?, last_payment_id = ?,
-                    last_tx_hash = ?, updated_at = ?
+                    last_tx_hash = ?, last_reminder_day = ?, updated_at = ?
                 WHERE id = 1
                 """,
                 (
@@ -281,6 +365,7 @@ class BillingStore:
                     status.get("licensed_until"),
                     status.get("last_payment_id"),
                     status.get("last_tx_hash"),
+                    status.get("last_reminder_day"),
                     status.get("updated_at", _utc_now()),
                 ),
             )

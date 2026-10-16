@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from trendalgo.exchanges.registry import list_trading_exchanges
+from trendalgo.exchanges.registry import get_entry, list_trading_exchanges
+from trendalgo.trading.live_gate import LiveRequest, decide_live
+
+# Refusal text that existing callers and tests match on.
+_CEX_REFUSALS = {
+    "paused": "exchange_paused",
+    "legal_ack_missing": "us_restricted exchange requires WORLDWIDE_TRADING_ACK=1 for live",
+}
 
 
 def _utc_now() -> str:
@@ -92,11 +100,20 @@ class ExchangeControlStore:
             ]
 
     def can_execute(self, exchange_id: str, *, dry_run: bool) -> tuple[bool, str]:
+        """The host's one live gate (H2) for one exchange. Env flags never enable live."""
         row = self.get(exchange_id)
         if row is None:
             return False, "unknown_exchange"
-        if row["paused"]:
-            return False, "exchange_paused"
-        if not dry_run and not row["go_live_approved"]:
-            return False, "go_live_required"
-        return True, "ok"
+        entry = get_entry(exchange_id)
+        decision = decide_live(
+            LiveRequest(
+                requested_live=not dry_run,
+                venue_enabled=entry.trading_enabled,
+                paused=row["paused"],
+                owner_approved=row["go_live_approved"],
+                credentials_ok=entry.has_api_keys(),
+                legal_ack_ok=not entry.us_restricted
+                or os.environ.get("WORLDWIDE_TRADING_ACK") == "1",
+            )
+        )
+        return decision.allowed, _CEX_REFUSALS.get(decision.reason, decision.reason)

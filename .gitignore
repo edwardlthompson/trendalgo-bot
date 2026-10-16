@@ -10,6 +10,9 @@ __pycache__/
 *.py[cod]
 .uv/
 
+# Local packaging helpers (downloaded at install time)
+tools/rcedit*.exe
+
 # Build outputs
 dist/
 build/
@@ -52,6 +55,12 @@ playwright-report/
 donations.json
 examples/web/public/app-update.json
 examples/web/public/donations.json
+# LTS bulk coin PNGs (optional; dashboard uses CDN/monogram — see slim-lts-icons.ps1)
+examples/web/public/lts-dashboard/icons/coins/*
+!examples/web/public/lts-dashboard/icons/coins/README.md
+# Local junction to retired PWA coin icons (not committed)
+branding/assets/coins/from-retired-web-backup/
+examples/web/dist/lts-dashboard/icons/coins/
 examples/android/app/src/main/assets/app-update.json
 examples/android/app/src/main/assets/donations.json
 

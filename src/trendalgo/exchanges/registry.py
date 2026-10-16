@@ -9,6 +9,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from trendalgo.exchanges.secrets import EnvSecretStore, SecretStore
+
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_REGISTRY = _REPO_ROOT / "config" / "exchanges.registry.json"
 
@@ -43,8 +45,10 @@ class ExchangeEntry:
     usd_aliases: tuple[str, ...] = ("USD", "ZUSD", "USDT")
     sync_interval_sec: int | None = None
 
-    def has_api_keys(self) -> bool:
-        return bool(os.environ.get(self.env_key) and os.environ.get(self.env_secret))
+    def has_api_keys(self, store: SecretStore | None = None) -> bool:
+        """True when both key names resolve to a value in the store (default: the environment)."""
+        source = store or EnvSecretStore()
+        return bool(source.get(self.env_key) and source.get(self.env_secret))
 
     def to_public_dict(self) -> dict[str, Any]:
         return {

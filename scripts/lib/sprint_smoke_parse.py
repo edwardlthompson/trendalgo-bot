@@ -86,4 +86,8 @@ def find_sprint(sprints: list[SmokeSprint], query: str | None) -> SmokeSprint | 
     finished = [s for s in sprints if s.complete]
     if finished:
         return finished[-1]
-    return next((s for s in sprints if s.open_agent_auto), None)
+    open_sprint = next((s for s in sprints if s.open_agent_auto), None)
+    if open_sprint is not None:
+        return open_sprint
+    # Every AGENT row is archived (COMPLETED_TASKS.md): the newest header anchors the report.
+    return sprints[-1] if sprints else None

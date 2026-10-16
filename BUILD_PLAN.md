@@ -1,5 +1,8 @@
 # TrendAlgo Bot — BUILD_PLAN
 
+<!-- remaining-tally -->
+**Remaining:** AGENT 0 · LOCAL 0 · CLOUD 0 · AUTO 0 · HUMAN 0 · ADB 0 · **0 open**
+<!-- /remaining-tally -->
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
@@ -10,7 +13,6 @@
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-
 **Source:** Template upgrade catch-up to agent-project-bootstrap **v1.9.0**. Port patterns into existing feature folders; never copy `examples/` over the app. One feature per `/feature` task. Thin wiring ≤10 lines.
 
 **Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix`
@@ -29,16 +31,13 @@
 | GP-6 | Harden About/donations + update-check patterns vs template stub · [`docs/features/donations-updates.md`](docs/features/donations-updates.md) | `[AGENT]` | 🔲 |
 | GP-7 | Port deep-link feedback entry into examples/web · [`docs/features/deep-link-feedback.md`](docs/features/deep-link-feedback.md) | `[AGENT]` | 🔲 |
 | GP-8 | Adopt crash-inbox ops docs/scripts for local review queue · [`docs/features/crash-inbox.md`](docs/features/crash-inbox.md) | `[AGENT]` | 🔲 |
-
 ### Human & device
 
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
 | R-BA.H1 | Review alignment doc (`docs/BOOTSTRAP_ALIGNMENT.md`) | `[HUMAN]` | 🔲 |
 | GP-H1 | Approve Settings-only chrome change vs current ThemeToggle (GP-5) before AGENT implements | `[HUMAN]` | 🔲 |
-
 ---
-
 
 ## Program status (summary)
 
@@ -62,7 +61,6 @@ AGENT 8.1–8.8 ✅ (see [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md)). Remaining:
 |----|------|-------|--------|
 | R-Audit-8.9 | Attorney review of legal packet (F-010 / R-Audit-7.10) | HUMAN | 🔲 |
 | R-Audit-8.10 | Triage PR #13 release + PR #12 web deps after CI green (F-011) | AGENT | ✅ |
-
 ### Carry-forward (HUMAN)
 
 | Track | Owner | Status |
@@ -76,7 +74,6 @@ AGENT 8.1–8.8 ✅ (see [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md)). Remaining:
 | CI green + v0.4.x tag | AGENT/HUMAN | ✅ v0.4.1 tagged 2026-07-12 |
 | Risk Register Zero | AUTO | ✅ |
 | Scope preflights H-013–H-025 | AGENT | ✅ |
-
 Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md).
 
 ### Maintenance cadence
@@ -86,7 +83,6 @@ Founder gates, VPS, legal, go-live, and recurring controls — full checklist: [
 | Weekly | AUTO | `check_risk_mitigations.py` · CI/CodeQL on `main` · Dependabot triage |
 | Monthly | AUTO | portfolio integrity · production cost · backup dry-run (R-020) |
 | Pre-live | AUTO/HUMAN | `go-live-gate.sh --check-only` → `--approve` (H-010/H-028) |
-
 Local preview (S13+ UI/API): [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md) · `scripts/dev-local.ps1`
 
 Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python scripts/founder_gate.py status`
@@ -100,7 +96,6 @@ Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python sc
 | `AGENT` | Code, docs, tests |
 | `HUMAN` | Credentials, legal, go-live |
 | `AUTO` | CI / gate scripts |
-
 **Hard gates (never AUTO):** H-006, H-008, H-010, H-011, H-023, H-028, H-031, H-032, H-036
 
 ---

@@ -27,19 +27,21 @@ def validate_live_swap_gates(
     *,
     slippage_bps: int,
 ) -> None:
-    """Hard gates for live DEX swap broadcast (H-036, CM-9, CM-10)."""
+    """Hard gates for live DEX swap broadcast (H-036, CM-9, CM-10, H2).
+
+    The owner's signed go-live approval is the only thing that enables live. GO_LIVE_APPROVED
+    no longer does; the DEX_LIVE_TRADING_ACK ack and the signer are extra conditions.
+    """
     entry = get_venue(venue_id)
     if not entry.trading_enabled:
         raise ValueError(f"venue trading not enabled in registry: {venue_id}")
     if os.environ.get("DEX_LIVE_TRADING_ACK") != "1":
         raise ValueError("H-036: live DEX swaps require DEX_LIVE_TRADING_ACK=1 on VPS")
-    if os.environ.get("GO_LIVE_APPROVED") != "1":
-        raise ValueError("GO_LIVE_APPROVED=1 required for live DEX swaps")
     if not signer_configured():
         raise ValueError("DEX_SIGNER_KEY required on VPS for live swaps (CM-9)")
     max_slip = int(os.environ.get("DEX_MAX_SLIPPAGE_BPS", "100"))
     if slippage_bps < 0 or slippage_bps > max_slip:
         raise ValueError(f"slippage_bps must be 0–{max_slip}")
-    ok, reason = control.can_execute(venue_id, live=True)
+    ok, reason = control.can_execute(venue_id, live=True, credentials_ok=True)
     if not ok:
         raise ValueError(reason)

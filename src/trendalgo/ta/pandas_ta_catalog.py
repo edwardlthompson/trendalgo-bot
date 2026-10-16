@@ -14,7 +14,8 @@ def pandas_ta_available() -> bool:
         import pandas_ta_classic  # noqa: F401
 
         return True
-    except ImportError:
+    except (ImportError, OSError):
+        # Frozen builds can raise WinError when the package dir is missing from _internal.
         return False
 
 

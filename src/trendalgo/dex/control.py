@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from trendalgo.venues.registry import list_swap_venues
+from trendalgo.trading.live_gate import LiveRequest, decide_live
+from trendalgo.venues.registry import get_venue, list_swap_venues
+
+_DEX_REFUSALS = {"paused": "venue_paused"}
 
 
 def _utc_now() -> str:
@@ -91,12 +95,22 @@ class DexVenueControlStore:
                 for r in rows
             ]
 
-    def can_execute(self, venue_id: str, *, live: bool) -> tuple[bool, str]:
+    def can_execute(
+        self, venue_id: str, *, live: bool, credentials_ok: bool = False
+    ) -> tuple[bool, str]:
+        """The host's one live gate (H2) for one venue. Fails closed without credentials."""
         row = self.get(venue_id)
         if row is None:
             return False, "unknown_venue"
-        if row["paused"]:
-            return False, "venue_paused"
-        if live and not row["go_live_approved"]:
-            return False, "go_live_required"
-        return True, "ok"
+        entry = get_venue(venue_id)
+        decision = decide_live(
+            LiveRequest(
+                requested_live=live,
+                venue_enabled=entry.trading_enabled,
+                paused=row["paused"],
+                owner_approved=row["go_live_approved"],
+                credentials_ok=credentials_ok,
+                legal_ack_ok=os.environ.get("DEX_LIVE_TRADING_ACK") == "1",
+            )
+        )
+        return decision.allowed, _DEX_REFUSALS.get(decision.reason, decision.reason)

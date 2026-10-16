@@ -5,13 +5,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from trendalgo.backtest.ta_simulator import simulate_buy_and_hold, simulate_long_with_fees
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 from trendalgo.ta.cache import ohlcv_list_to_df, preset_warmup_bars
-from trendalgo.ta.catalog import all_ta_names
+from trendalgo.ta.pandas_ta_catalog import is_pandas_ta_indicator, pandas_ta_available
 from trendalgo.ta.param_specs import ta_param_specs
+from trendalgo.ta.signal_kinds import signal_kind
 from trendalgo.ta.signals import resolve_preset, signals_for_preset
 
 MIN_BARS_FLOOR = 50
@@ -20,6 +22,55 @@ MIN_BARS_FLOOR = 50
 def default_params(strategy_id: str) -> dict[str, Any]:
     specs = ta_param_specs(strategy_id)
     return {str(s.key): s.default for s in specs}
+
+
+def prepare_signals(
+    df: pd.DataFrame,
+    strategy_id: str,
+    params: dict[str, Any] | None = None,
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]] | tuple[None, None, str]:
+    """Compute entry/exit arrays once for reuse across TSL trials."""
+    used_params = dict(params if params is not None else default_params(strategy_id))
+    if signal_kind(strategy_id) == "math_skip":
+        return None, None, "not_a_strategy"
+    if is_pandas_ta_indicator(strategy_id) and not pandas_ta_available():
+        return None, None, "missing_backend"
+    preset = resolve_preset(strategy_id, used_params)
+    warmup = preset_warmup_bars(preset)
+    if len(df) < max(MIN_BARS_FLOOR, warmup + 10):
+        return None, None, "insufficient_bars"
+    try:
+        entries, exits = signals_for_preset(df, preset)
+    except (KeyError, ValueError, TypeError, IndexError, AttributeError, RuntimeError):
+        # pandas-ta / TA-Lib can raise IndexError (e.g. QQE on short frames).
+        return None, None, "compute_error"
+    if not entries.any():
+        # CDL rarity vs structural zero — distinguish when kind is cdl_pattern.
+        if preset.get("kind") == "cdl_pattern":
+            return None, None, "no_pattern"
+    return entries, exits, used_params
+
+
+def row_from_stats(
+    stats: dict[str, Any],
+    *,
+    strategy_id: str,
+    timeframe: str,
+    lookback_seconds: int,
+    params: dict[str, Any],
+    phase: str,
+    bar_count: int,
+) -> dict[str, Any]:
+    return {
+        "strategy_id": strategy_id.upper(),
+        "timeframe": timeframe,
+        "bar_count": bar_count,
+        "lookback_seconds": lookback_seconds,
+        "params": params,
+        "trailing_stop_pct": float(stats.get("trailing_stop_pct") or 0.0),
+        "phase": phase,
+        **stats,
+    }
 
 
 def backtest_one(
@@ -33,16 +84,13 @@ def backtest_one(
     params: dict[str, Any] | None = None,
     trailing_stop_pct: float = 0.0,
     phase: str = "pass1",
+    collect_trades: bool = False,
 ) -> tuple[dict[str, Any] | None, str | None]:
-    used_params = dict(params if params is not None else default_params(strategy_id))
-    preset = resolve_preset(strategy_id, used_params)
-    warmup = preset_warmup_bars(preset)
-    if len(df) < max(MIN_BARS_FLOOR, warmup + 10):
-        return None, "insufficient_bars"
-    try:
-        entries, exits = signals_for_preset(df, preset)
-    except (KeyError, ValueError, TypeError):
-        return None, "compute_error"
+    prepared = prepare_signals(df, strategy_id, params)
+    entries, exits, used_or_err = prepared
+    if entries is None or exits is None:
+        return None, str(used_or_err)
+    used_params = used_or_err if isinstance(used_or_err, dict) else {}
     stats = simulate_long_with_fees(
         df,
         entries,
@@ -50,20 +98,20 @@ def backtest_one(
         stake_usd=stake_usd,
         fee=fee,
         trailing_stop_pct=trailing_stop_pct,
+        collect_trades=collect_trades,
     )
     if stats["trades"] == 0:
         return None, "no_trades"
     return (
-        {
-            "strategy_id": strategy_id.upper(),
-            "timeframe": timeframe,
-            "bar_count": len(df),
-            "lookback_seconds": lookback_seconds,
-            "params": used_params,
-            "trailing_stop_pct": trailing_stop_pct,
-            "phase": phase,
-            **stats,
-        },
+        row_from_stats(
+            stats,
+            strategy_id=strategy_id,
+            timeframe=timeframe,
+            lookback_seconds=lookback_seconds,
+            params=used_params,
+            phase=phase,
+            bar_count=len(df),
+        ),
         None,
     )
 
@@ -152,7 +200,10 @@ def filter_beats_buy_hold(
 
 
 def all_strategies() -> tuple[str, ...]:
-    return all_ta_names()
+    """Tradeable All-TA pool only (excludes chart/math/reference TA-Lib helpers)."""
+    from trendalgo.ta.strategy_pool import trade_strategy_names
+
+    return trade_strategy_names()
 
 
 def group_by_strategy(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -43,6 +43,14 @@ TrendAlgo Bot is a self-hosted cryptocurrency trading platform you run on your o
 2. Copy `.env.example` to `.env` and keep `TRENDALGO_MODE=dry-run`.
 3. Start with `.\scripts\dev-local.ps1` (Windows) or `bash scripts/dev-local.sh`, then open http://localhost:5173.
 
+## For humans
+
+Start with the self-hosted setup in the root README, then [`../../docs/START_HERE.md`](../../docs/START_HERE.md) and the product tour [`../../docs/help/TOUR.md`](../../docs/help/TOUR.md). Keep dry-run until you deliberately go live.
+
+## For agents
+
+Read [`../../AGENTS.md`](../../AGENTS.md) and [`../../docs/START_HERE.md`](../../docs/START_HERE.md) before editing. Follow BUILD_PLAN Sequential → Parallel, run gates after AGENT steps, and never commit secrets or push without approval.
+
 ## Install
 
 Python 3.12 (not 3.13+ yet) with uv or pip, and Node.js 20+ for the PWA. See the Self-hosted setup guide in the root README and docs/LOCAL_DEV.md.

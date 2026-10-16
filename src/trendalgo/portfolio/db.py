@@ -46,10 +46,14 @@ class HoldingRow:
 
 
 class PortfolioStore:
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path, *, create: bool = True) -> None:
         self.db_path = db_path
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._init_schema()
+        self._create = create
+        if create:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            self._init_schema()
+        elif not self.db_path.is_file():
+            raise FileNotFoundError(str(self.db_path))
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -109,6 +113,8 @@ class PortfolioStore:
             ).fetchone()
             if row:
                 return int(row["id"])
+            if not self._create:
+                raise RuntimeError("portfolio store is read-only; cannot create an account")
             cur = conn.execute(
                 "INSERT INTO portfolio_accounts (exchange, label, created_at) VALUES (?, ?, ?)",
                 (exchange, label, _utc_now()),

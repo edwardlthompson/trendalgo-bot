@@ -512,13 +512,6 @@
       "owner": "maintainer"
     },
     {
-      "path": ".github/workflows/pages.yml",
-      "purpose": "Deploy examples/web to GitHub Pages (no tracking)",
-      "read_when": "milestone_boundary",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
       "path": ".github/workflows/dependabot-automerge.yml",
       "purpose": "Auto-merge Dependabot patch/minor when CI + dependency-review pass",
       "read_when": "milestone_boundary",
@@ -629,27 +622,6 @@
       "read_when": "web_hosting",
       "update_when": "layout_change",
       "owner": "agent+human"
-    },
-    {
-      "path": "examples/web/src/panelDialog.ts",
-      "purpose": "Modal a11y: role=dialog, focus trap, Escape, focus restore",
-      "read_when": "ui_work",
-      "update_when": "milestone_boundary",
-      "owner": "agent"
-    },
-    {
-      "path": "examples/web/src/appBootstrap.ts",
-      "purpose": "Web composition root: theme, donations, update check, SW register",
-      "read_when": "ui_work",
-      "update_when": "milestone_boundary",
-      "owner": "agent"
-    },
-    {
-      "path": "examples/web/public/sw.js",
-      "purpose": "PWA service worker; CACHE_NAME stamped from package version at build",
-      "read_when": "web_hosting",
-      "update_when": "milestone_boundary",
-      "owner": "agent"
     },
     {
       "path": ".cursor/rules/design-system.mdc",
@@ -1184,13 +1156,6 @@
       "owner": "human+agent"
     },
     {
-      "path": "scripts/dev-local.sh",
-      "purpose": "TrendAlgo ops: dev local",
-      "read_when": "contributing",
-      "update_when": "milestone_boundary",
-      "owner": "human+agent"
-    },
-    {
       "path": "scripts/generate-legal-review-packet.sh",
       "purpose": "TrendAlgo ops: generate legal review packet",
       "read_when": "contributing",
@@ -1228,13 +1193,6 @@
     {
       "path": "scripts/postgres-migrate-dry-run.sh",
       "purpose": "TrendAlgo ops: postgres migrate dry run",
-      "read_when": "contributing",
-      "update_when": "milestone_boundary",
-      "owner": "human+agent"
-    },
-    {
-      "path": "scripts/preview-local.sh",
-      "purpose": "TrendAlgo ops: preview local",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -2398,7 +2356,6 @@
   "modules": {
     "web": {
       "guide": "modules/web/MODULE.md",
-      "example": "examples/web",
       "activate_when": "stack includes PWA, web, or static site"
     },
     "python": {
@@ -2437,11 +2394,7 @@
       ".cursor/commands/ship.md",
       ".cursor/commands/maintain.md"
     ],
-    "key_exemplars": [
-      "examples/web/src/panelDialog.ts",
-      "examples/web/src/appBootstrap.ts",
-      "examples/web/public/sw.js"
-    ]
+    "key_exemplars": []
   },
   "upstream_bootstrap": {
     "repo": "edwardlthompson/agent-project-bootstrap",

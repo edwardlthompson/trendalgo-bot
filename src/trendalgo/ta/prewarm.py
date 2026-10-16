@@ -98,14 +98,16 @@ class TaPrewarmRunner:
                     with self._lock:
                         job.completed += 1
                     self._log(job, f"✓ {label}")
+            # _log takes self._lock itself (non-reentrant): call it after releasing, or the
+            # thread deadlocks on completion and every snapshot() call blocks behind it.
             with self._lock:
                 job.status = "complete"
-                self._log(job, "TA signal prewarm complete.")
+            self._log(job, "TA signal prewarm complete.")
         except Exception as exc:
             with self._lock:
                 job.status = "error"
                 job.error = str(exc)
-                self._log(job, f"✗ TA prewarm failed: {exc}")
+            self._log(job, f"✗ TA prewarm failed: {exc}")
 
 
 def _unique_bot_targets(bots: list[dict[str, Any]]) -> list[dict[str, Any]]:

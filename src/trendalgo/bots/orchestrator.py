@@ -48,25 +48,11 @@ class BotOrchestrator:
     def __init__(self, db_path: Path) -> None:
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # H1: a fresh host starts with zero bots. No bot is seeded or enabled
+        # until a valid plan is applied through add_bot.
         with sqlite3.connect(self.db_path) as conn:
             conn.executescript(BOT_SCHEMA)
             self._migrate(conn)
-            count = conn.execute("SELECT COUNT(*) FROM bots").fetchone()[0]
-            if count == 0:
-                conn.execute(
-                    "INSERT INTO bots (label, strategy_id, pair, enabled, equity_usd, engine, exchange, created_at) "
-                    "VALUES (?,?,?,?,?,?,?,?)",
-                    (
-                        "Bot-1",
-                        "multi-tf-example",
-                        "BTC/USD",
-                        1,
-                        1000,
-                        "native",
-                        "kraken",
-                        _utc_now(),
-                    ),
-                )
 
     def _migrate(self, conn: sqlite3.Connection) -> None:
         cols = {row[1] for row in conn.execute("PRAGMA table_info(bots)").fetchall()}
@@ -82,6 +68,8 @@ class BotOrchestrator:
             conn.execute("ALTER TABLE bots ADD COLUMN equity_input REAL NOT NULL DEFAULT 1000")
         if "ta_params" not in cols:
             conn.execute("ALTER TABLE bots ADD COLUMN ta_params TEXT NOT NULL DEFAULT '{}'")
+        if "deleted_at" not in cols:
+            conn.execute("ALTER TABLE bots ADD COLUMN deleted_at TEXT")
 
     def _row_to_bot(self, row: sqlite3.Row) -> dict[str, Any]:
         ta_raw = row["ta_params"] if "ta_params" in row.keys() else "{}"
@@ -104,12 +92,18 @@ class BotOrchestrator:
             if "equity_input" in row.keys()
             else float(row["equity_usd"]),
             "ta_params": ta_params,
+            "deleted_at": row["deleted_at"] if "deleted_at" in row.keys() else None,
         }
 
-    def list_bots(self) -> list[dict[str, Any]]:
+    def list_bots(self, *, include_retired: bool = False) -> list[dict[str, Any]]:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            rows = conn.execute("SELECT * FROM bots ORDER BY id").fetchall()
+            if include_retired:
+                rows = conn.execute("SELECT * FROM bots ORDER BY id").fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM bots WHERE deleted_at IS NULL ORDER BY id"
+                ).fetchall()
             return [self._row_to_bot(r) for r in rows]
 
     def add_bot(
@@ -199,11 +193,17 @@ class BotOrchestrator:
             )
 
     def delete_bot(self, bot_id: int) -> None:
+        """Soft-retire a bot. Trades keep bot_id credit; row stays for performance."""
         with sqlite3.connect(self.db_path) as conn:
-            count = conn.execute("SELECT COUNT(*) FROM bots").fetchone()[0]
-            if count <= 1:
+            active = conn.execute("SELECT COUNT(*) FROM bots WHERE deleted_at IS NULL").fetchone()[
+                0
+            ]
+            if active <= 1:
                 raise ValueError("cannot delete the last bot")
-            conn.execute("DELETE FROM bots WHERE id = ?", (bot_id,))
+            conn.execute(
+                "UPDATE bots SET deleted_at = ?, enabled = 0 WHERE id = ? AND deleted_at IS NULL",
+                (_utc_now(), bot_id),
+            )
 
     def count_enabled(self) -> int:
         with sqlite3.connect(self.db_path) as conn:

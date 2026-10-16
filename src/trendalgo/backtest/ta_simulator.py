@@ -10,6 +10,47 @@ import pandas as pd
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 
 
+def _bar_time(df: pd.DataFrame, index: int) -> str:
+    stamp = df.index[index]
+    iso = getattr(stamp, "isoformat", None)
+    if callable(iso):
+        return str(iso())
+    return str(stamp)
+
+
+def _trade_record(
+    df: pd.DataFrame,
+    *,
+    entry_i: int,
+    exit_i: int,
+    entry_price: float,
+    exit_price: float,
+    net_pnl: float,
+    stake_usd: float,
+    tsl_exit: bool,
+    open_exit: bool = False,
+) -> dict[str, Any]:
+    price_pct = ((exit_price / entry_price) - 1.0) * 100.0 if entry_price else 0.0
+    net_pct = (net_pnl / stake_usd) * 100.0 if stake_usd else price_pct
+    if open_exit:
+        reason = "open"
+    elif tsl_exit:
+        reason = "tsl"
+    else:
+        reason = "signal"
+    return {
+        "entry_time": _bar_time(df, entry_i),
+        "exit_time": _bar_time(df, exit_i),
+        "entry_price": float(entry_price),
+        "exit_price": float(exit_price),
+        "net_pnl": round(net_pnl, 4),
+        "pnl_pct": round(net_pct, 2),
+        "tsl_exit": bool(tsl_exit),
+        "open_exit": bool(open_exit),
+        "exit_reason": reason,
+    }
+
+
 def simulate_long_with_fees(
     df: pd.DataFrame,
     entries: np.ndarray,
@@ -18,23 +59,62 @@ def simulate_long_with_fees(
     stake_usd: float,
     fee: ExchangeFeeSchedule,
     trailing_stop_pct: float = 0.0,
+    collect_trades: bool = False,
+) -> dict[str, Any]:
+    closes = df["close"].to_numpy(dtype=float)
+    fee_per_trade = fee.round_trip_taker_cost(stake_usd)
+    tsl = max(0.0, trailing_stop_pct)
+    if not collect_trades:
+        from trendalgo.backtest.sim_accel import pack_stats, simulate_arrays  # noqa: PLC0415
+
+        gross, fees_paid, trades, wins, tsl_hits, open_n = simulate_arrays(
+            closes,
+            entries,
+            exits,
+            stake_usd=stake_usd,
+            fee_per_trade=fee_per_trade,
+            trailing_stop_pct=tsl,
+        )
+        return pack_stats((gross, fees_paid, trades, wins, tsl_hits, open_n, tsl), fee)
+    return _simulate_collecting_trades(
+        df,
+        closes,
+        entries,
+        exits,
+        stake_usd=stake_usd,
+        fee=fee,
+        fee_per_trade=fee_per_trade,
+        tsl=tsl,
+    )
+
+
+def _simulate_collecting_trades(
+    df: pd.DataFrame,
+    closes: np.ndarray,
+    entries: np.ndarray,
+    exits: np.ndarray,
+    *,
+    stake_usd: float,
+    fee: ExchangeFeeSchedule,
+    fee_per_trade: float,
+    tsl: float,
 ) -> dict[str, Any]:
     gross = 0.0
     fees_paid = 0.0
     trades = 0
     wins = 0
     tsl_hits = 0
+    open_trades = 0
     in_pos = False
     entry_price = 0.0
+    entry_i = 0
     peak_price = 0.0
-    closes = df["close"].to_numpy(dtype=float)
-    fee_per_trade = fee.round_trip_taker_cost(stake_usd)
-    tsl = max(0.0, trailing_stop_pct)
-
+    trade_list: list[dict[str, Any]] = []
     for i in range(1, len(closes)):
         if not in_pos and entries[i]:
             in_pos = True
             entry_price = closes[i]
+            entry_i = i
             peak_price = entry_price
         elif in_pos:
             peak_price = max(peak_price, closes[i])
@@ -49,29 +129,55 @@ def simulate_long_with_fees(
                 trades += 1
                 if net_pnl > 0:
                     wins += 1
+                trade_list.append(
+                    _trade_record(
+                        df,
+                        entry_i=entry_i,
+                        exit_i=i,
+                        entry_price=entry_price,
+                        exit_price=float(closes[i]),
+                        net_pnl=net_pnl,
+                        stake_usd=stake_usd,
+                        tsl_exit=stop_hit,
+                    )
+                )
                 in_pos = False
                 entry_price = 0.0
                 peak_price = 0.0
-
     if in_pos and entry_price:
         gross_pnl = stake_usd * ((closes[-1] / entry_price) - 1.0)
         net_pnl = gross_pnl - fee_per_trade
         gross += gross_pnl
         fees_paid += fee_per_trade
         trades += 1
-        if net_pnl > 0:
-            wins += 1
-
-    net = gross - fees_paid
-    win_rate = (wins / trades) if trades else 0.0
+        open_trades = 1
+        trade_list.append(
+            _trade_record(
+                df,
+                entry_i=entry_i,
+                exit_i=len(closes) - 1,
+                entry_price=entry_price,
+                exit_price=float(closes[-1]),
+                net_pnl=net_pnl,
+                stake_usd=stake_usd,
+                tsl_exit=False,
+                open_exit=True,
+            )
+        )
+    closed = max(0, trades - open_trades)
+    win_rate = (wins / closed) if closed else 0.0
     return {
         "gross_profit": round(gross, 4),
         "fees_paid": round(fees_paid, 4),
-        "net_profit": round(net, 4),
+        "net_profit": round(gross - fees_paid, 4),
         "trades": trades,
+        "wins": wins,
+        "open_trades": open_trades,
         "tsl_hits": tsl_hits,
         "win_rate": round(win_rate, 4),
         "fee_taker_pct": fee.taker_pct,
+        "trailing_stop_pct": tsl,
+        "trade_list": trade_list,
     }
 
 
@@ -98,6 +204,8 @@ def simulate_buy_and_hold(
         "fees_paid": round(fee_paid, 4),
         "net_profit": round(net, 4),
         "trades": 1,
+        "wins": 1 if net > 0 else 0,
+        "open_trades": 0,
         "tsl_hits": 0,
         "win_rate": 1.0 if net > 0 else 0.0,
         "fee_taker_pct": fee.taker_pct,
@@ -106,3 +214,41 @@ def simulate_buy_and_hold(
         "phase": "baseline",
         "bar_count": len(df),
     }
+
+
+def trade_hold_regions(trade_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Map simulator trade_list into chart highlight regions (green/red)."""
+    regions: list[dict[str, Any]] = []
+    for trade in trade_list:
+        entry_px = float(trade.get("entry_price") or 0.0)
+        exit_px = float(trade.get("exit_price") or 0.0)
+        pnl = trade.get("net_pnl")
+        profitable = float(pnl) >= 0 if pnl is not None else exit_px >= entry_px
+        pnl_pct = trade.get("pnl_pct")
+        if pnl_pct is None and entry_px:
+            pnl_pct = ((exit_px / entry_px) - 1.0) * 100.0
+        tsl_exit = bool(trade.get("tsl_exit"))
+        regions.append(
+            {
+                "entry_time": trade.get("entry_time"),
+                "exit_time": trade.get("exit_time"),
+                "entry_price": entry_px,
+                "exit_price": exit_px,
+                "net_pnl": float(pnl) if pnl is not None else None,
+                "pnl_pct": float(pnl_pct) if pnl_pct is not None else None,
+                "tsl_exit": tsl_exit,
+                "exit_reason": str(trade.get("exit_reason") or ("tsl" if tsl_exit else "signal")),
+                "profitable": profitable,
+                "label": _region_label(pnl_pct, tsl_exit),
+            }
+        )
+    return regions
+
+
+def _region_label(pnl_pct: object, tsl_exit: bool) -> str:
+    try:
+        pct = float(pnl_pct)  # type: ignore[arg-type]
+        text = f"{pct:+.1f}%"
+    except (TypeError, ValueError):
+        text = "—"
+    return f"{text} TSL" if tsl_exit else text

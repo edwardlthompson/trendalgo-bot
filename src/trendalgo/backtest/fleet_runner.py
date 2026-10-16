@@ -111,6 +111,7 @@ class FleetJob:
     top10: list[dict[str, Any]] = field(default_factory=list)
     summary: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
+    max_passes: int = 3
     _started_at: float = field(default_factory=time.monotonic)
     _combo_ms: list[float] = field(default_factory=list)
 
@@ -190,6 +191,7 @@ class TaFleetBacktestRunner:
         *,
         strategies: tuple[str, ...] | None = None,
         timeframes: tuple[str, ...] | None = None,
+        max_passes: int = 3,
     ) -> dict[str, Any]:
         eid, normalized_pair = validate_fleet_request(exchange_id, pair)
         strat_list = strategies or all_strategies()
@@ -205,6 +207,7 @@ class TaFleetBacktestRunner:
                 pair=normalized_pair,
                 stake_usd=stake_usd,
                 total=len(strat_list) * tf_estimate,
+                max_passes=max(1, min(3, max_passes)),
             )
             job.messages.append(
                 f"Fleet pass 1: {len(strat_list)} strategies · "
@@ -374,6 +377,61 @@ class TaFleetBacktestRunner:
                 self._log(job, f"Timeframe {tv_tf} done: {tf_hits}/{len(strategies)} ranked")
 
             top10 = merge_rank(all_results, top_n=OPTIMIZE_TOP_N)
+            if job.max_passes <= 1:
+                top10_bh = filter_beats_buy_hold(top10, buy_hold, top_n=10)
+                ranked = filter_beats_buy_hold(
+                    merge_rank(all_results, top_n=100), buy_hold, top_n=100
+                )
+                summary = {
+                    "skipped": sum(skips.values()),
+                    "errors_by_reason": skips,
+                    "timeframes_skipped": timeframes_skipped,
+                    "combinations_run": job.completed,
+                    "fee_taker_pct": fee.taker_pct,
+                    "exchange_id": job.exchange_id,
+                    "pair": job.pair,
+                    "lookback_days": FLEET_LOOKBACK_DAYS,
+                    "lookback_seconds": lookback,
+                    "timeframes_tested": list(timeframes),
+                    "buy_and_hold": buy_hold,
+                    "top10_pass1": top10_bh,
+                    "optimized_top10": [],
+                    "final_top10": top10_bh,
+                    "passes_limit": 1,
+                }
+                self._store.save_run(
+                    job.id, job.exchange_id, job.pair, job.stake_usd, summary, ranked
+                )
+                with self._lock:
+                    job.status = "complete"
+                    job.phase = "complete"
+                    job.summary = summary
+                    job.top10 = top10_bh
+                    job.completed = job.total
+                    job.eta_seconds = 0
+                    self._last_completed = {
+                        "job_id": job.id,
+                        "exchange_id": job.exchange_id,
+                        "pair": job.pair,
+                        "stake_usd": job.stake_usd,
+                        "summary": summary,
+                        "rankings": ranked,
+                        "top10": top10_bh,
+                        "final_top10": top10_bh,
+                        "top5": _top5_for_bots(top10_bh, job.pair, job.exchange_id),
+                        "best": top10_bh[0] if top10_bh else None,
+                        "buy_and_hold": buy_hold,
+                    }
+                bh_net = buy_hold.get("net_profit") if buy_hold else None
+                fin_net = top10_bh[0]["net_profit"] if top10_bh else 0.0
+                bh_msg = f"buy & hold ${bh_net:.2f}" if bh_net is not None else "buy & hold n/a"
+                self._log(
+                    job,
+                    f"Fleet pass 1 complete: top ${fin_net:.2f} · {bh_msg} "
+                    f"(param/TSL optimize deferred)",
+                )
+                return
+
             opt_total = estimate_optimize_combos(top10)
             with self._lock:
                 job.phase = "optimize_params"

@@ -1,0 +1,5 @@
+{
+  "note": "Pin image_sha256 to the SHA-256 of the released image archive before any install. null refuses the install (fail closed).",
+  "version": "0.0.0-unreleased",
+  "image_sha256": null
+}

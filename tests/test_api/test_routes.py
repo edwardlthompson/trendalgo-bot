@@ -123,8 +123,17 @@ def test_portfolio_overview_and_export() -> None:
     assert "sent" in daily
 
 
+def _add_bot(c: TestClient) -> None:
+    """H1: a fresh host starts with zero bots, so tests add one through the API."""
+    c.post(
+        "/api/v1/bots",
+        json={"label": "Grid-1", "strategy_id": "grid-trading", "pair": "BTC/USD"},
+    )
+
+
 def test_sprint6_bots_library_watchlist() -> None:
     c = client()
+    _add_bot(c)
     bots = c.get("/api/v1/bots").json()
     assert bots["bots"]
     limits = c.get("/api/v1/bots/limits").json()
@@ -166,6 +175,7 @@ def test_ta_cache_stats_and_config_invalidation() -> None:
 
     reset_all_ta_caches()
     c = client()
+    _add_bot(c)
     bots = c.get("/api/v1/bots").json()["bots"]
     bot_id = bots[0]["id"]
     before = c.get("/api/v1/bots/ta-cache/stats").json()
@@ -195,6 +205,7 @@ def test_bot_detail_trades_zero_skips_ta_cache_meta() -> None:
 
     reset_all_ta_caches()
     c = client()
+    _add_bot(c)
     bots = c.get("/api/v1/bots").json()["bots"]
     bot_id = bots[0]["id"]
     before = c.get("/api/v1/bots/ta-cache/stats").json()
@@ -215,7 +226,8 @@ def test_scanner_run_and_settings() -> None:
     c = client()
     settings = c.get("/api/v1/scanner/settings").json()
     assert settings["interval_minutes"] == 60
-    updated = c.put(
+    # Values below 1H snap to the nearest allowed interval (≥ 60m).
+    clamped = c.put(
         "/api/v1/scanner/settings",
         json={
             "interval_minutes": 30,
@@ -226,7 +238,19 @@ def test_scanner_run_and_settings() -> None:
             "trendspotter_boost": True,
         },
     )
-    assert updated.json()["interval_minutes"] == 30
+    assert clamped.json()["interval_minutes"] == 60
+    updated = c.put(
+        "/api/v1/scanner/settings",
+        json={
+            "interval_minutes": 240,
+            "min_volume_usd": 100000,
+            "min_gain_pct": 0.02,
+            "min_uniformity": 0.55,
+            "universe_filter": "kraken-spot",
+            "trendspotter_boost": True,
+        },
+    )
+    assert updated.json()["interval_minutes"] == 240
     run = c.post("/api/v1/scanner/run").json()
     assert run["opportunities"]
     snap = c.get("/api/v1/scanner/snapshot").json()

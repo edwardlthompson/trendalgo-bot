@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generate platform design outputs from design-tokens/design-tokens.json.
 
-Also distributes branding assets and writes branding/official-colors.css.
+Also distributes branding assets, writes branding/official-colors.css, and writes the device
+app constants to src/trendalgo/device/design_tokens.py.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import sys
 from pathlib import Path
 
 HEADER = "GENERATED — do not edit; run scripts/sync-design-tokens.py"
+DEVICE_HEADER = "GENERATED: do not edit. Run scripts/sync-design-tokens.py."
 
 REQUIRED_BRAND_ASSETS = (
     "logo-mark.svg",
@@ -304,6 +306,36 @@ def generate_official_colors_css(tokens: dict, digest: str) -> str:
     return "\n".join(lines)
 
 
+def generate_device_module(tokens: dict, digest: str, mark_svg: str) -> str:
+    """Python constants for the device app (theme_css.py and icons.py read them)."""
+    if '"""' in mark_svg or "\\" in mark_svg:
+        raise ValueError("logo-mark.svg must not contain triple quotes or backslashes")
+    colors = tokens["color"]
+    lines = [
+        f"# {DEVICE_HEADER}",
+        f"# source-hash: {digest}",
+        '"""Golden Path tokens for the device app. Edit design-tokens.json, then re-sync."""',
+        "",
+        "from __future__ import annotations",
+        "",
+        "LIGHT: dict[str, str] = {",
+    ]
+    lines += [f'    "{key}": "{value["light"]}",' for key, value in colors.items()]
+    lines += ["}", "DARK: dict[str, str] = {"]
+    lines += [f'    "{key}": "{value["dark"]}",' for key, value in colors.items()]
+    lines += ["}", "ACCENT_PRESETS: tuple[str, ...] = ("]
+    lines += [f'    "{color}",' for color in tokens["meta"]["accentPresets"]]
+    lines += [")", "SPACING: dict[str, int] = {"]
+    lines += [f'    "{key}": {value},' for key, value in tokens["spacing"].items()]
+    lines += ["}", "RADIUS: dict[str, int] = {"]
+    lines += [f'    "{key}": {value},' for key, value in tokens["radius"].items()]
+    lines += ["}", "TEXT_SIZE_SP: dict[str, int] = {"]
+    scale = tokens["typography"]["scale"]
+    lines += [f'    "{key}": {value["sizeSp"]},' for key, value in scale.items()]
+    lines += ["}", 'BRAND_MARK_SVG = """' + mark_svg.strip() + '\n"""', ""]
+    return "\n".join(lines)
+
+
 def require_brand_assets(root: Path) -> Path:
     assets = root / "branding" / "assets"
     if not assets.is_dir():
@@ -449,6 +481,14 @@ def write_outputs(root: Path) -> None:
         generate_official_colors_css(tokens, digest), encoding="utf-8", newline="\n"
     )
     synced.append("branding")
+
+    device_root = root / "src" / "trendalgo" / "device"
+    if device_root.is_dir():
+        mark = (assets / "logo-mark.svg").read_text(encoding="utf-8")
+        (device_root / "design_tokens.py").write_text(
+            generate_device_module(tokens, digest, mark), encoding="utf-8", newline="\n"
+        )
+        synced.append("device")
 
     web_root = root / "examples" / "web"
     if web_root.is_dir():

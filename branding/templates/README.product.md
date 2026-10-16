@@ -35,6 +35,14 @@
 
 {{quick_start}}
 
+## For humans
+
+Start with the self-hosted setup in the root README, then [`{{url_start_here}}`]({{url_start_here}}) and the product tour [`{{url_tour}}`]({{url_tour}}). Keep dry-run until you deliberately go live.
+
+## For agents
+
+Read [`{{url_agents}}`]({{url_agents}}) and [`{{url_start_here}}`]({{url_start_here}}) before editing. Follow BUILD_PLAN Sequential → Parallel, run gates after AGENT steps, and never commit secrets or push without approval.
+
 ## Install
 
 {{install}}

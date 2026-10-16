@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import functools
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from trendalgo.market.symbols import kraken_ccxt_pair
+from trendalgo.exchanges.pair_normalizer import normalize_pair
+from trendalgo.market.rate_budget import call_with_backoff
 from trendalgo.market.types import OhlcvPoint, PricePoint
 
+# The plan's ten symbols. Each value equals normalize_pair(symbol, "kraken") (E4, tested).
 KRAKEN_PAIR: dict[str, str] = {
     "BTC": "BTC/USD",
     "ETH": "ETH/USD",
@@ -24,10 +28,15 @@ KRAKEN_PAIR: dict[str, str] = {
 
 
 def kraken_pair(symbol: str) -> str:
-    sym = symbol.upper()
-    if sym in KRAKEN_PAIR:
-        return KRAKEN_PAIR[sym]
-    return kraken_ccxt_pair(sym)
+    """The Kraken pair for a symbol. Candles and orders use this one mapping (E4)."""
+    return normalize_pair(symbol, "kraken")
+
+
+def _rate_limit_errors() -> tuple[type[BaseException], ...]:
+    import ccxt
+
+    # RateLimitExceeded is not a DDoSProtection subclass in ccxt, so both are listed.
+    return (ccxt.RateLimitExceeded, ccxt.DDoSProtection)
 
 
 def _client(timeout_ms: int = 10_000) -> Any:
@@ -56,7 +65,11 @@ def _fetch_ohlcv_rows(
     rows: list[list[float]] = []
     cursor = since_ms
     while cursor <= until_ms:
-        batch = exchange.fetch_ohlcv(pair, timeframe, since=cursor, limit=720)
+        batch = call_with_backoff(
+            functools.partial(exchange.fetch_ohlcv, pair, timeframe, since=cursor, limit=720),
+            retry_on=_rate_limit_errors(),
+            sleep=time.sleep,
+        )
         if not batch:
             break
         rows.extend(batch)
@@ -69,6 +82,47 @@ def _fetch_ohlcv_rows(
             break
         cursor = next_cursor
     return rows
+
+
+def fetch_quote_volumes(
+    pairs: list[str],
+    *,
+    timeout_ms: int = 10_000,
+) -> dict[str, float]:
+    """24h quote volume (USD notional) from Kraken tickers — cheap prefilter before OHLCV."""
+    if not pairs:
+        return {}
+    client = _client(timeout_ms=timeout_ms)
+    # Full book: passing unknown symbols raises BadSymbol on Kraken.
+    raw = call_with_backoff(
+        client.fetch_tickers,
+        retry_on=_rate_limit_errors(),
+        sleep=time.sleep,
+    )
+    out: dict[str, float] = {}
+    if not isinstance(raw, dict):
+        return out
+    for pair in pairs:
+        base = pair.split("/", 1)[0] if "/" in pair else pair
+        ticker = raw.get(pair) or raw.get(kraken_pair(base))
+        if not isinstance(ticker, dict):
+            continue
+        quote = ticker.get("quoteVolume")
+        if quote is None:
+            last = ticker.get("last") or ticker.get("close")
+            base_vol = ticker.get("baseVolume")
+            if last is not None and base_vol is not None:
+                try:
+                    quote = float(last) * float(base_vol)
+                except (TypeError, ValueError):
+                    quote = None
+        if quote is None:
+            continue
+        try:
+            out[pair] = float(quote)
+        except (TypeError, ValueError):
+            continue
+    return out
 
 
 def fetch_ohlcv(

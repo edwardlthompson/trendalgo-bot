@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from trendalgo.risk.config import RiskLimits
+from trendalgo.trading.live_gate import LiveDecision
 
 
 def build_protections(limits: RiskLimits) -> list[dict[str, Any]]:
@@ -31,12 +32,14 @@ def build_protections(limits: RiskLimits) -> list[dict[str, Any]]:
     ]
 
 
-def validate_pre_live(config: dict[str, Any], *, go_live_approved: bool = False) -> list[str]:
-    """Block accidental live trading without go-live gate (R-003)."""
+def validate_pre_live(
+    config: dict[str, Any], *, live_decision: LiveDecision | None = None
+) -> list[str]:
+    """Block accidental live trading. A live config needs an allowed LiveGate decision (R-003, H2)."""
     errors: list[str] = []
     if config.get("dry_run", True) is not False:
         return errors
-    if not go_live_approved:
+    if live_decision is None or not live_decision.allowed:
         errors.append("dry_run=false requires go-live-gate approval (H-010/H-028)")
     if not config.get("exchange", {}).get("key"):
         errors.append("live mode requires exchange API key in .env")
@@ -47,10 +50,10 @@ def merge_risk_into_config(
     config: dict[str, Any],
     limits: RiskLimits,
     *,
-    go_live_approved: bool = False,
+    live_decision: LiveDecision | None = None,
 ) -> dict[str, Any]:
     """Apply stake caps and protections to a native bot config dict."""
-    errors = validate_pre_live(config, go_live_approved=go_live_approved)
+    errors = validate_pre_live(config, live_decision=live_decision)
     if errors:
         raise ValueError("; ".join(errors))
     merged = dict(config)

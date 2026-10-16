@@ -14,9 +14,13 @@ from trendalgo.portfolio.metrics import (
     allocation_rows,
     daily_pnl_from_curve,
     enrich_holdings,
+    heatmap_rows,
     period_comparison,
     pl_breakdown,
 )
+
+# Re-export for API/tests that import heatmap helpers from this module.
+__all__ = ["build_portfolio_overview", "heatmap_rows"]
 from trendalgo.portfolio.multi_exchange import aggregate_holdings
 from trendalgo.portfolio.performance import (
     PERFORMANCE_RANGES,
@@ -117,18 +121,3 @@ def build_portfolio_overview(state: AppState) -> dict[str, Any]:
         "bot": bot,
         "latest_snapshot": snap,
     }
-
-
-def heatmap_rows(holdings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for h in holdings:
-        pct = float(h.get("pct_change", 0))
-        vol = abs(pct) * 100
-        rows.append(
-            {
-                "asset": h["asset"],
-                "return_pct": round(pct * 100, 2),
-                "volatility_pct": round(vol, 2),
-            }
-        )
-    return sorted(rows, key=lambda r: abs(r["return_pct"]), reverse=True)

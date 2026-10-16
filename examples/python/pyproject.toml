@@ -15,8 +15,8 @@ dev = [
     "pip-licenses>=4.5.0",
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",
-    "ruff>=0.8.0",
-    "pyright>=1.1.390",
+    "ruff>=0.17.1",
+    "pyright>=1.1.414",
 ]
 
 [build-system]
@@ -53,3 +53,8 @@ fail_under = 90
 [tool.pyright]
 include = ["src"]
 typeCheckingMode = "basic"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.1",
+]

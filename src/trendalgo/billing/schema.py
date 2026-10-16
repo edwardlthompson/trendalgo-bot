@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS license_status (
     licensed_until TEXT,
     last_payment_id TEXT,
     last_tx_hash TEXT,
+    last_reminder_day INTEGER,
     updated_at TEXT NOT NULL
 );
 
@@ -96,9 +97,18 @@ CREATE TABLE IF NOT EXISTS carry_forward_credits (
     credit_usd REAL NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS fee_periods (
+    period TEXT PRIMARY KEY,
+    net_usd REAL NOT NULL,
+    license_fee_usd REAL NOT NULL,
+    deficit_out_usd REAL NOT NULL,
+    finalized_at TEXT NOT NULL
+);
 """
 
 CURRENT_TERMS_VERSION = "2026-06-draft-1"
 DEFAULT_LICENSE_RATE = 0.05
-GRACE_PERIOD_DAYS = 7
+GRACE_PERIOD_DAYS = 30
+GRACE_REMINDER_DAYS = (0, 14, 25)  # day 0 is the statement notice; the others are reminders
 BILLING_START_DELAY_MONTHS = 1

@@ -28,11 +28,13 @@ def test_bot_orchestrator_add(tmp_path: Path) -> None:
     orch = BotOrchestrator(tmp_path / "bots.db")
     orch.add_bot("Bot-2", "grid-trading", "ETH/USD")
     bots = orch.list_bots()
-    assert len(bots) >= 2
+    # H1: a fresh host has no seeded bot, so the only bot is the one added.
+    assert [b["label"] for b in bots] == ["Bot-2"]
 
 
 def test_bot_orchestrator_update_and_delete(tmp_path: Path) -> None:
     orch = BotOrchestrator(tmp_path / "bots.db")
+    orch.add_bot("Bot-1", "grid-trading", "BTC/USD")
     bot_id = orch.add_bot("Bot-2", "grid-trading", "ETH/USD")
     orch.update_bot(
         bot_id,
@@ -48,7 +50,10 @@ def test_bot_orchestrator_update_and_delete(tmp_path: Path) -> None:
     assert updated["equity_usd"] == 2500
     assert updated["timeframe"] == "5m"
     orch.delete_bot(bot_id)
-    assert orch.get_bot(bot_id) is None
+    retired = orch.get_bot(bot_id)
+    assert retired is not None
+    assert retired["deleted_at"]
+    assert all(b["id"] != bot_id for b in orch.list_bots())
     with pytest.raises(ValueError, match="last bot"):
         orch.delete_bot(orch.list_bots()[0]["id"])
 

@@ -115,6 +115,7 @@ _MATH_TR = {
 
 _FIBONACCI = set(CUSTOM_TA_NAMES)
 _PTA_OVERLAP = {
+    "ACCBANDS",  # acceleration bands — tradeable channel (not a volatility filter)
     "ALMA",
     "DONCHIAN",
     "FWMA",
@@ -221,7 +222,6 @@ _PTA_CYCLE = {"EBSW", "MSW", "REFLEX", "SMC_SWEEP"}
 
 _PTA_VOLATILITY = {
     "ABERRATION",
-    "ACCBANDS",
     "CHOP",
     "HVOL",
     "MASSI",

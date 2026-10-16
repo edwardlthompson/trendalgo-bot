@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from trendalgo.api.owner_auth import require_owner_command
 from trendalgo.billing.onchain_receipts import issue_fee_receipt, verify_fee_receipt
 from trendalgo.data.onchain_sentiment import onchain_sentiment_stub
 from trendalgo.db.postgres_adapter import PostgresDualWrite
@@ -168,12 +169,15 @@ def dex_status_full(request: Request) -> dict[str, Any]:
 
 
 @router.post("/dex/venues/{venue_id}/go-live")
-def dex_venue_go_live(venue_id: str, request: Request) -> dict[str, Any]:
+async def dex_venue_go_live(venue_id: str, request: Request) -> dict[str, Any]:
+    """Owner-signed approval only (H2, H3). An unsigned or replayed call gets 403."""
+    state = request.app.state.trendalgo
+    await require_owner_command(request, state.dex_control.db_path)
     try:
         get_venue(venue_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    request.app.state.trendalgo.dex_control.approve_go_live(venue_id)
+    state.dex_control.approve_go_live(venue_id)
     return {"venue_id": venue_id, "go_live_approved": True}
 
 

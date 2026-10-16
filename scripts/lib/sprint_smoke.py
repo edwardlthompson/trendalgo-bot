@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from sprint_smoke_map import backtick_paths, infer_probes
+from sprint_smoke_map import infer_probes, split_task_paths
 from sprint_smoke_parse import find_sprint, parse_sprints
 from sprint_smoke_probes import (
     ProbeResult,
@@ -16,6 +16,7 @@ from sprint_smoke_probes import (
     probe_android,
     probe_cli,
     probe_docs,
+    probe_docs_absent,
     probe_feature_gate,
 )
 from sprint_smoke_web import probe_web
@@ -39,6 +40,12 @@ def run(root: Path, args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
+    if not sprint.agent_auto:
+        print(
+            f"PASS: {sprint.title} has no AGENT/AUTO rows left on the board "
+            "(archived after its last smoke run); nothing to smoke"
+        )
+        return 0
     if args.if_complete and not sprint.complete:
         print(f"SKIP: {sprint.title} still has open AGENT/AUTO rows")
         return 0
@@ -78,7 +85,15 @@ def run(root: Path, args: argparse.Namespace) -> int:
     for item in items:
         needed = infer_probes(item.task)
         if "docs" in needed:
-            docs = probe_docs(root, backtick_paths(item.task))
+            present, gone = split_task_paths(item.task)
+            docs = probe_docs(root, present)
+            if gone:
+                removed = probe_docs_absent(root, gone)
+                docs = ProbeResult(
+                    "docs",
+                    docs.ok and removed.ok,
+                    "; ".join(d for d in (docs.detail, removed.detail) if d),
+                )
             by_name["docs"] = docs
             results.append(docs)
             if not docs.ok:

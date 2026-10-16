@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-10-16 — Ship dependency refresh with transitive CVE pins
+- **Status:** Accepted
+- **Context:** `/ship` audit reported HIGH/CRITICAL on `anyio`, `httpx2`/`httpcore2`, and `urllib3` after patch/minor bumps; upd also rewrote CodeQL refs to invalid `vcodeql-bundle-*` tags.
+- **Decision:** Apply patch/minor via `update-deps --apply`, re-lock with `uv lock`, pin `anyio>=4.14.2` in `[tool.uv] constraint-dependencies`, restore `github/codeql-action@v4`, keep Scorecard `v2.5.0`.
+- **Alternatives considered:** Halt ship on first audit fail without pins (rejected — fixes are local and within patch/minor policy); adopt major-only bumps (rejected).
+- **Consequences:** Local audit clean; Release Please will version the next tag from Conventional Commits after push/merge.
+
 ### 2026-08-14 — Adopt branding kit (template mode)
 - **Status:** Accepted
 - **Context:** Upstream v0.17.0 ships `branding/` + `generate-project-readme.py`. First 0.17 alignment skipped the kit because product mode overwrites the live self-hosted README.

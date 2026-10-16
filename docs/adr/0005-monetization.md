@@ -1,6 +1,6 @@
 # ADR-0005: Monetization — Performance License Model
 
-- **Status:** Proposed (H-022 attorney review Sprint 10)
+- **Status:** Proposed (H-022 attorney review Sprint 10); amended by ADR-0017
 - **Date:** 2026-06-25
 
 ## Context

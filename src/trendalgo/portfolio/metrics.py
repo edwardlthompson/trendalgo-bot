@@ -92,6 +92,21 @@ def period_comparison(curve: list[dict[str, Any]]) -> list[PeriodPl]:
     return result
 
 
+def heatmap_rows(holdings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for h in holdings:
+        pct = float(h.get("pct_change", 0))
+        vol = abs(pct) * 100
+        rows.append(
+            {
+                "asset": h["asset"],
+                "return_pct": round(pct * 100, 2),
+                "volatility_pct": round(vol, 2),
+            }
+        )
+    return sorted(rows, key=lambda r: abs(r["return_pct"]), reverse=True)
+
+
 def enrich_holdings(holdings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     enriched: list[dict[str, Any]] = []
     for h in holdings:

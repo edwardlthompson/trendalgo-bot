@@ -13,6 +13,7 @@ class RiskLimits(BaseModel):
     daily_loss_cap_usd: float = Field(50.0, gt=0)
     circuit_breaker_drawdown_pct: float = Field(0.10, gt=0, le=1.0)
     max_open_trades: int = Field(1, ge=1)
+    max_exposure_pct: float = Field(0.8, gt=0, le=1.0)
 
     model_config = {"extra": "forbid"}
 

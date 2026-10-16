@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 from trendalgo.exchanges.pair_normalizer import normalize_pair
@@ -13,6 +14,13 @@ from trendalgo.trading.runner.adapters.registry import get_trading_adapter
 
 def list_supported_exchanges() -> list[str]:
     return [e.id for e in list_trading_exchanges()]
+
+
+def _host_exchange_control() -> ExchangeControlStore:
+    """The host's own approval state, the same store the API routes use."""
+    return ExchangeControlStore(
+        Path(os.environ.get("TRENDALGO_DATA_DIR", "data")) / "exchange_control.db"
+    )
 
 
 def route_order(
@@ -32,32 +40,31 @@ def route_order(
     if amount <= 0:
         raise ValueError("amount must be positive")
 
-    if control is not None:
-        ok, reason = control.can_execute(exchange, dry_run=dry_run)
+    # H2: the one live gate. A dry run needs no approval. A live order is refused unless the
+    # host's own approval state allows it, even when the caller passes no control store.
+    gate = control if control is not None else (None if dry_run else _host_exchange_control())
+    if gate is not None:
+        ok, reason = gate.can_execute(exchange, dry_run=dry_run)
         if not ok:
             raise ValueError(reason)
 
     entry = get_entry(exchange)
     normalized_pair = normalize_pair(pair, exchange)
-    if not dry_run and entry.us_restricted and os.environ.get("WORLDWIDE_TRADING_ACK") != "1":
-        raise ValueError("us_restricted exchange requires WORLDWIDE_TRADING_ACK=1 for live")
-
     adapter = get_trading_adapter(exchange)
-    price = 1.0
-    live_allowed = (
-        not dry_run
-        and os.environ.get("GO_LIVE_APPROVED") == "1"
-        and entry.has_api_keys()
-        and (control is None or bool((control.get(exchange) or {}).get("go_live_approved")))
-    )
-    if live_allowed:
+    if not dry_run:
+        # E1: size from a real ticker price. A failed fetch raises here, so no order is sent.
+        price = adapter.reference_price(normalized_pair)
         result = adapter.submit_order(normalized_pair, side, amount, price)
+        sizing = "priced"
     else:
-        result = adapter.simulate_order(normalized_pair, side, amount, price)
+        # Dry run never calls the exchange, so its base size is not a real price (E1).
+        result = adapter.simulate_order(normalized_pair, side, amount, 1.0)
+        sizing = "unpriced_dry_run"
     return {
         **result,
         "pair": normalized_pair,
         "unified_router": True,
         "status": result.get("status", "simulated"),
         "us_restricted": entry.us_restricted,
+        "sizing": sizing,
     }

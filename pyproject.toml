@@ -5,31 +5,60 @@ description = "Self-hosted crypto trading platform — native CCXT engine, portf
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "apscheduler>=3.10.0",
-    "ccxt>=4.4.0",
+    "apscheduler>=3.11.3",
+    "ccxt>=4.5.88",
     "pandas>=2.2.0",
-    "pydantic>=2.10.0",
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.14.1",
+    "fastapi>=0.143.2",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "httpx2>=2.0.0",
+    "httpx2>=2.13.1",
     "mypy>=1.13.0",
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",
-    "ruff>=0.8.0",
-    "pyright>=1.1.390",
+    "pytest-qt>=4.5.0",
+    "ruff>=0.17.1",
+    "pyright>=1.1.414",
+]
+desktop = [
+    "pywebview>=5.0",
+    "pystray>=0.19",
+    "pillow>=10",
+    # Six LTS indicators (Stochastic, CCI, Ultimate Oscillator, MFI, ADX, Parabolic SAR)
+    # require TA-Lib; without it their combos are silently skipped in the backtest sweep.
+    "TA-Lib>=0.8.2",
+]
+device = [
+    "pyside6-addons>=6.12.0,<6.13",
+    # Qt for the device app (ADR-0016). LGPL-3.0, dynamically linked. Essentials leaves out WebEngine and PDF.
+    "PySide6-Essentials>=6.12.0,<6.13",
+    # TA-Lib: RSI, MACD, and Bollinger signals use it when it is importable. The golden trade lists
+    # (tests/test_lts_vendor) were generated with it, so the device must ship it to match them.
+    "TA-Lib>=0.8.2",
+    # Community pandas-ta fork — required for ~85 catalog indicators beyond TA-Lib.
+    "pandas-ta-classic>=0.8.32",
+    "numba>=0.68.0",
+]
+accel = [
+    "numba>=0.68.0",
 ]
 ta = [
-    "TA-Lib>=0.4.28",
-    "pandas-ta-classic>=0.6.52",
+    "TA-Lib>=0.8.2",
+    "pandas-ta-classic>=0.8.32",
 ]
 
 [project.scripts]
 trendalgo-download = "trendalgo.data.download:main"
 trendalgo-api = "trendalgo.api.main:run"
+
+# Security pins for transitive HIGH/CRITICAL findings (update-deps audit).
+[tool.uv]
+constraint-dependencies = [
+    "anyio>=4.14.2",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -37,6 +66,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/trendalgo"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/trendalgo/device/data/ta-glossary.json" = "trendalgo/device/data/ta-glossary.json"
 
 [tool.hatch.build.targets.sdist]
 include = ["src/trendalgo", "tests"]
@@ -52,6 +84,8 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 "scripts/*.py" = ["E402"]
 "tests/test_sprint12/test_platform.py" = ["I001"]
+"src/trendalgo/lts_vendor/backtesting/*.py" = ["E", "F", "I", "UP", "B"]
+"src/trendalgo/lts_vendor/utils/*.py" = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
 strict = true
@@ -65,12 +99,20 @@ init_typed = true
 warn_required_dynamic_aliases = true
 
 [[tool.mypy.overrides]]
-module = ["pandas_ta_classic.*", "pandas_ta.*", "talib.*"]
+module = ["pandas_ta_classic.*", "pandas_ta.*", "talib.*", "numba", "numba.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["pandas", "pandas.*", "ccxt", "ccxt.*", "apscheduler", "apscheduler.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["trendalgo.lts_vendor.*", "trendalgo.lts_vendor.backtesting.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["trendalgo.backtest.sim_accel_kernels"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -83,6 +125,11 @@ omit = [
     "tests/*",
     "*/icons/sync.py",
     "*/ta/pandas_ta_engine.py",
+    "*/lts_vendor/backtesting/*",
+    "*/lts_vendor/utils/*",
+    "*/lts_vendor/shims/*",
+    "*/device/views/*",
+    "*/device/app.py",
 ]
 
 [tool.coverage.report]
@@ -90,6 +137,12 @@ fail_under = 86
 
 [tool.pyright]
 include = ["src"]
+exclude = [
+    "**/lts_vendor/backtesting/**",
+    "**/lts_vendor/utils/**",
+    "**/lts_vendor/shims/**",
+    "**/backtest/sim_accel_kernels.py",
+]
 typeCheckingMode = "basic"
 reportMissingImports = "none"
 reportUnusedExpression = "none"

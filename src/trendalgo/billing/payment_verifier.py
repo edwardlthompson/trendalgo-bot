@@ -17,6 +17,7 @@ from trendalgo.billing.evm_token_watcher import (
 )
 from trendalgo.billing.license_gate import clear_grace, licensed_until_for_period
 from trendalgo.billing.onchain_receipts import issue_fee_receipt
+from trendalgo.billing.schema import GRACE_PERIOD_DAYS
 from trendalgo.billing.settlement_assets import (
     SettlementAsset,
     contract_for_asset,
@@ -204,7 +205,7 @@ def enrich_payment_response(payment: dict[str, Any]) -> dict[str, Any]:
         "payment_instructions": instructions,
         "auto_verify": True,
         "min_confirmations": MIN_CONFIRMATIONS,
-        "grace_period_days": 7,
+        "grace_period_days": GRACE_PERIOD_DAYS,
         "user_initiated_only": True,
         "auto_withdraw": False,
         "disclaimer": "Pay from your own wallet. TrendAlgo never holds withdrawal keys.",
