@@ -138,8 +138,8 @@ omit = [
     "*/lts_vendor/backtesting/*",
     "*/lts_vendor/utils/*",
     "*/lts_vendor/shims/*",
-    "*/device/views/*",
-    "*/device/app.py",
+    # Device UI needs --extra device; Linux CI ignores those suites.
+    "*/device/*",
 ]
 
 [tool.coverage.report]

@@ -11,6 +11,12 @@ from trendalgo.strategies.runtime.indicators import close_series, ema, macd, rsi
 from trendalgo.ta.custom_indicators import compute_custom
 from trendalgo.ta.extended_catalog import CUSTOM_TA_NAMES
 from trendalgo.ta.indicator_cache import get_indicator_cache, signature_from_df
+from trendalgo.ta.pandas_fallbacks import (
+    compute_bbands,
+    compute_minus_di,
+    compute_plus_di,
+    compute_sar,
+)
 from trendalgo.ta.pandas_ta_catalog import is_pandas_ta_indicator, pandas_ta_available
 from trendalgo.ta.pandas_ta_engine import compute_pandas_ta
 
@@ -168,6 +174,14 @@ def compute_pandas(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.n
         return {"value": np.radians(c.to_numpy(dtype=float))}
     if upper == "TRUNC":
         return {"value": np.trunc(c.to_numpy(dtype=float))}
+    if upper == "BBANDS":
+        return compute_bbands(df, **params)
+    if upper == "PLUS_DI":
+        return compute_plus_di(df, **params)
+    if upper == "MINUS_DI":
+        return compute_minus_di(df, **params)
+    if upper in {"SAR", "SAREXT"}:
+        return compute_sar(df, **params)
     raise KeyError(f"no pandas fallback for {name}")
 
 

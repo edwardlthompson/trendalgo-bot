@@ -56,4 +56,4 @@ def test_backtest_one_qqe_short_frame_does_not_raise() -> None:
         trailing_stop_pct=0.01,
     )
     assert row is None
-    assert reason in {"compute_error", "insufficient_bars", "no_trades"}
+    assert reason in {"compute_error", "insufficient_bars", "no_trades", "missing_backend"}

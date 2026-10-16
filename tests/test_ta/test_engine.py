@@ -34,6 +34,12 @@ def test_compute_pandas_indicators() -> None:
     macd = compute_pandas("MACD", df)
     roc = compute_pandas("ROC", df, timeperiod=3)
     mom = compute_pandas("MOM", df, timeperiod=3)
+    bb = compute_pandas("BBANDS", df, timeperiod=5)
+    plus_di = compute_pandas("PLUS_DI", df, timeperiod=5)
+    sar = compute_pandas("SAR", df)
+    assert "middle" in bb and len(bb["middle"]) == len(df)
+    assert "value" in plus_di and len(plus_di["value"]) == len(df)
+    assert "value" in sar and len(sar["value"]) == len(df)
     assert len(ema["value"]) == len(df)
     assert len(rsi["value"]) == len(df)
     assert set(macd) == {"macd", "signal", "hist"}

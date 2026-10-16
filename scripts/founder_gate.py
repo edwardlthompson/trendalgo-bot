@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -62,7 +63,7 @@ def _repo_relative_args(args: list[str]) -> list[str]:
 
 
 def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
-    """Stop a timed-out command and its children; taskkill /T reaches Windows grandchildren."""
+    """Stop a timed-out command and its children (Windows taskkill /T; Linux killpg)."""
     if sys.platform == "win32":
         try:
             subprocess.run(
@@ -73,7 +74,14 @@ def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
             )
         except (OSError, subprocess.TimeoutExpired):
             pass
-    proc.kill()
+    else:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except (OSError, ProcessLookupError):
+            try:
+                proc.kill()
+            except OSError:
+                pass
     try:
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
@@ -96,6 +104,7 @@ def _run(cmd: list[str], *, cwd: Path | None = None, timeout: int = 120) -> tupl
     try:
         # Output goes to a file, not a pipe. A grandchild that outlives a timeout can hold a pipe
         # open, and communicate() then waits forever (the likely cause of the H-024 hang).
+        # start_new_session=True puts the child in its own process group so Linux killpg works.
         with tempfile.TemporaryFile() as sink:
             proc = subprocess.Popen(
                 cmd,
@@ -103,6 +112,7 @@ def _run(cmd: list[str], *, cwd: Path | None = None, timeout: int = 120) -> tupl
                 stdin=subprocess.DEVNULL,
                 stdout=sink,
                 stderr=subprocess.STDOUT,
+                start_new_session=True,
             )
             try:
                 code = proc.wait(timeout=timeout)
