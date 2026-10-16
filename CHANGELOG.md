@@ -20,6 +20,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.6.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.1...v0.6.0) (2026-10-16)
+
+
+### Added
+
+* align FOSS surface to template 0.17 with branding kit ([92ea03b](https://github.com/edwardlthompson/trendalgo-bot/commit/92ea03b8bb4dd3d29f2789efd90f731c4350c85b))
+* **device:** add TrendAlgo app icon assets and brand inventory ([632db17](https://github.com/edwardlthompson/trendalgo-bot/commit/632db1714a742cd17fcc5b65d017bded987b1444))
+
+
+### Fixed
+
+* **ci:** cast pandas Series returns for pyright on fallbacks ([3dc7b6a](https://github.com/edwardlthompson/trendalgo-bot/commit/3dc7b6a25ef233f7968f0e281f7bc82905a3cd30))
+* **ci:** device typing and skip founder gates in upgrade sim ([426b5c3](https://github.com/edwardlthompson/trendalgo-bot/commit/426b5c3570b1efc8f294feffa115c0c6b3bc3485))
+* **ci:** exclude device package from pyright without Qt stubs ([930969c](https://github.com/edwardlthompson/trendalgo-bot/commit/930969ce5b2043acfcce81581ac9196dbab1858b))
+* **ci:** hard-exit pytest on GitHub Actions after session ends ([ce9b6b2](https://github.com/edwardlthompson/trendalgo-bot/commit/ce9b6b2907992a358b0bc30ec60bec2ffc6ab1e5))
+* **ci:** ignore device mypy without PySide6; quiet unused-ignore ([59593f8](https://github.com/edwardlthompson/trendalgo-bot/commit/59593f8b076b6208a5b7735e8f527834c1c2d7b9))
+* **ci:** ignore device Qt tests without --extra device ([a496186](https://github.com/edwardlthompson/trendalgo-bot/commit/a496186ffa7ba042b2dd2b111d4996438d087a31))
+* **ci:** ignore LTS vendor tests without numba/device extras ([8f0846b](https://github.com/edwardlthompson/trendalgo-bot/commit/8f0846b8b5989e988dcdc0eaf4e6008f2b772472))
+* **ci:** install Qt EGL libs for headless pytest-qt ([db85d94](https://github.com/edwardlthompson/trendalgo-bot/commit/db85d9466f353112854cf74430c605c00814760e))
+* **ci:** keep Qt/TA-Lib off Linux runners ([9046ea7](https://github.com/edwardlthompson/trendalgo-bot/commit/9046ea7a0c1e0fb53ac07292369f07cba6da7d8f))
+* **ci:** reap orphan processes and bound pytest step runtime ([056bfe4](https://github.com/edwardlthompson/trendalgo-bot/commit/056bfe404f3d06464f40d906a82a824fbcb87940))
+* **ci:** skip founder_gate grandchild hang probe on GitHub Actions ([1f05aab](https://github.com/edwardlthompson/trendalgo-bot/commit/1f05aaba23abfa4a8068bd566739ca295902223b))
+* **ci:** skip Windows goldens on Linux CI; add math TA fallbacks ([334802b](https://github.com/edwardlthompson/trendalgo-bot/commit/334802b7a82486c588a1ed84bd2ee00c5a48efca))
+* **ci:** track device glossary and shrink large fixtures ([d76edf2](https://github.com/edwardlthompson/trendalgo-bot/commit/d76edf2ca81f746cc372464f4581efd6bb543317))
+* **ci:** unblock Linux pytest with TA fallbacks and process-group kill ([de14bf7](https://github.com/edwardlthompson/trendalgo-bot/commit/de14bf796eff1a9fff6d9f454470187039631cea))
+* **security:** override js-yaml and brace-expansion High alerts ([b251300](https://github.com/edwardlthompson/trendalgo-bot/commit/b251300ba34caad833d271626f52ebeb17ac00c5))
+
+
+### Changed
+
+* **deps-dev:** Bump ip-address from 10.2.0 to 10.4.0 in /examples/web ([#24](https://github.com/edwardlthompson/trendalgo-bot/issues/24)) ([a5f215e](https://github.com/edwardlthompson/trendalgo-bot/commit/a5f215e6f1b2933c60653f38a8cc04f24699875a))
+* **deps-dev:** Bump ip-address from 10.4.0 to 10.7.2 in /examples/web ([#38](https://github.com/edwardlthompson/trendalgo-bot/issues/38)) ([197c00f](https://github.com/edwardlthompson/trendalgo-bot/commit/197c00f0aef76806fd0172c1d3c3cfafae116184))
+* **deps-dev:** Bump js-yaml from 5.2.1 to 5.4.1 in /examples/web ([#33](https://github.com/edwardlthompson/trendalgo-bot/issues/33)) ([150fa73](https://github.com/edwardlthompson/trendalgo-bot/commit/150fa737e1e81ae584483d285dc5854692ee1c4e))
+* **deps-dev:** Bump postcss from 8.5.15 to 8.5.25 in /examples/web ([#23](https://github.com/edwardlthompson/trendalgo-bot/issues/23)) ([4ca6b4d](https://github.com/edwardlthompson/trendalgo-bot/commit/4ca6b4d93a5156f74ebb12bc8cf45c628c556c62))
+* **deps-dev:** Bump undici from 7.28.0 to 7.29.0 in /examples/web ([#25](https://github.com/edwardlthompson/trendalgo-bot/issues/25)) ([0b297df](https://github.com/edwardlthompson/trendalgo-bot/commit/0b297df8c71349f3755c56619484256526a73db1))
+* **deps-dev:** Bump undici from 7.29.0 to 7.30.0 in /examples/web ([#39](https://github.com/edwardlthompson/trendalgo-bot/issues/39)) ([dd2e150](https://github.com/edwardlthompson/trendalgo-bot/commit/dd2e150856b4b7c4ab044c05fa807679a412ecb3))
+* **deps:** Bump anyio from 4.14.1 to 4.14.2 ([#37](https://github.com/edwardlthompson/trendalgo-bot/issues/37)) ([252d5a2](https://github.com/edwardlthompson/trendalgo-bot/commit/252d5a2e9708684a7cfa53dd8294db0c4caf88bb))
+* **deps:** Bump httpx2 from 2.5.0 to 2.12.0 ([#32](https://github.com/edwardlthompson/trendalgo-bot/issues/32)) ([c952c66](https://github.com/edwardlthompson/trendalgo-bot/commit/c952c662f490ee2af229c8724501d04cddfdb31a))
+* **deps:** Bump urllib3 from 2.7.0 to 2.8.0 ([#40](https://github.com/edwardlthompson/trendalgo-bot/issues/40)) ([80fb773](https://github.com/edwardlthompson/trendalgo-bot/commit/80fb77337cbe68cc6d0712930c846aa81c0775d3))
+* **release:** merge template-upgrade-v1.9.0 for v0.6.0 prepare ([ee10ddd](https://github.com/edwardlthompson/trendalgo-bot/commit/ee10ddd6583aa9a844277215ad5f5f0dcee519dc))
+* **release:** prepare v0.6.0 release ([06f3bf2](https://github.com/edwardlthompson/trendalgo-bot/commit/06f3bf25dd17d514c6d7eb31ef01ad96003f2bcb))
+* **release:** sync uv.lock package version to 0.5.1 ([e90ab11](https://github.com/edwardlthompson/trendalgo-bot/commit/e90ab11ab4ef78dc38f37d6cce15ef90ea941e15))
+* **template:** align FOSS surface to agent-project-bootstrap v1.9.0 ([ee5213c](https://github.com/edwardlthompson/trendalgo-bot/commit/ee5213c1b4ac6cc5bc908fac82e8e38425f96351))
+
+
+### Documentation
+
+* **plan:** backlog Golden Path gaps GP-1..GP-8 from template v1.9.0 ([90da166](https://github.com/edwardlthompson/trendalgo-bot/commit/90da1669ebe123c0bc568a6cf2fab8d93626f220))
+* **ship:** record v0.5.1 release milestone in memory logs ([467f64f](https://github.com/edwardlthompson/trendalgo-bot/commit/467f64ff464655aa4c249c907bd2ef68e88afc75))
+
 ## [0.5.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.0...v0.5.1) (2026-07-22)
 
 
