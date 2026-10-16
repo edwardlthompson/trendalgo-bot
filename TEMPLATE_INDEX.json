@@ -282,7 +282,7 @@
     },
     {
       "path": ".github/workflows/dependency-review.yml",
-      "purpose": "PR dependency review \u2014 fail on new High/Critical vulnerabilities",
+      "purpose": "PR dependency review — fail on new High/Critical vulnerabilities",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
@@ -695,7 +695,7 @@
     },
     {
       "path": "scripts/founder-gate.sh",
-      "purpose": "TrendAlgo founder gate CLI wrapper (H-001\u2013H-029)",
+      "purpose": "TrendAlgo founder gate CLI wrapper (H-001–H-029)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -730,7 +730,7 @@
     },
     {
       "path": "scripts/founder_gate.py",
-      "purpose": "Founder gate CLI (H-001\u2013H-029 preflight, approve, backlog)",
+      "purpose": "Founder gate CLI (H-001–H-029 preflight, approve, backlog)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -786,7 +786,7 @@
     },
     {
       "path": "scripts/check-api-key-policy.sh",
-      "purpose": "API key policy \u2014 no Withdraw permission (R-009)",
+      "purpose": "API key policy — no Withdraw permission (R-009)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -2365,7 +2365,7 @@
     }
   },
   "roadmap": {
-    "active": "BUILD_PLAN.md \u2014 maintenance + human open items",
+    "active": "BUILD_PLAN.md — maintenance + human open items",
     "completed_archive": "COMPLETED_TASKS.md",
     "batch_commands": [
       ".cursor/commands/audit.md",
