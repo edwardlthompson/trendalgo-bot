@@ -1535,7 +1535,6 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pytest-qt" },
     { name = "ruff" },
 ]
 device = [
@@ -1543,6 +1542,7 @@ device = [
     { name = "pandas-ta-classic" },
     { name = "pyside6-addons" },
     { name = "pyside6-essentials" },
+    { name = "pytest-qt" },
     { name = "ta-lib" },
 ]
 ta = [
@@ -1570,7 +1570,7 @@ requires-dist = [
     { name = "pystray", marker = "extra == 'desktop'", specifier = ">=0.19" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
-    { name = "pytest-qt", marker = "extra == 'dev'", specifier = ">=4.5.0" },
+    { name = "pytest-qt", marker = "extra == 'device'", specifier = ">=4.5.0" },
     { name = "pywebview", marker = "extra == 'desktop'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.17.1" },
     { name = "ta-lib", marker = "extra == 'desktop'", specifier = ">=0.8.2" },

@@ -19,7 +19,6 @@ dev = [
     "mypy>=1.13.0",
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",
-    "pytest-qt>=4.5.0",
     "ruff>=0.17.1",
     "pyright>=1.1.414",
 ]
@@ -35,6 +34,8 @@ device = [
     "pyside6-addons>=6.12.0,<6.13",
     # Qt for the device app (ADR-0016). LGPL-3.0, dynamically linked. Essentials leaves out WebEngine and PDF.
     "PySide6-Essentials>=6.12.0,<6.13",
+    # Qt UI tests — keep out of `dev` so Linux CI does not load pytest-qt/PySide6 at configure.
+    "pytest-qt>=4.5.0",
     # TA-Lib: RSI, MACD, and Bollinger signals use it when it is importable. The golden trade lists
     # (tests/test_lts_vendor) were generated with it, so the device must ship it to match them.
     "TA-Lib>=0.8.2",
