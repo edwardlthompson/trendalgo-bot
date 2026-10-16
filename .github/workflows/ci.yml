@@ -107,6 +107,9 @@ jobs:
   feature-gate:
     name: Feature Gate
     runs-on: ubuntu-latest
+    env:
+      # Device Qt UI tests need --extra device; skip on Linux CI runners.
+      PYTEST_ADDOPTS: "--ignore=tests/test_device"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
@@ -159,6 +162,9 @@ jobs:
   python:
     name: Python - Lint, Type, Test
     runs-on: ubuntu-latest
+    env:
+      # Device Qt UI tests need --extra device; skip on Linux CI runners.
+      PYTEST_ADDOPTS: "--ignore=tests/test_device"
     defaults:
       run:
         working-directory: .
