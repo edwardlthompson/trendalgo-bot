@@ -152,6 +152,8 @@ exclude = [
     "**/lts_vendor/utils/**",
     "**/lts_vendor/shims/**",
     "**/backtest/sim_accel_kernels.py",
+    # Device UI needs PySide6 stubs; CI syncs without --extra device.
+    "**/device/**",
 ]
 typeCheckingMode = "basic"
 reportMissingImports = "none"
