@@ -113,7 +113,7 @@ jobs:
       PYTEST_ADDOPTS: "--ignore=tests/test_device --ignore=tests/test_lts_vendor --cov-fail-under=55"
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - uses: astral-sh/setup-uv@v7
@@ -354,7 +354,7 @@ jobs:
         working-directory: examples/go
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: "1.22"
           cache-dependency-path: examples/go/go.mod
