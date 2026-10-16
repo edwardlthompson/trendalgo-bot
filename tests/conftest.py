@@ -2,7 +2,26 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Stash status for CI force-exit (see pytest_unconfigure)."""
+    session.config._trendalgo_exitstatus = exitstatus  # type: ignore[attr-defined]
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_unconfigure(config: pytest.Config) -> None:
+    """Linux GHA hangs after a green summary (orphan non-daemon leftovers). Hard-exit on CI."""
+    if os.environ.get("CI") != "true":
+        return
+    if os.environ.get("TRENDALGO_CI_FORCE_EXIT", "1") == "0":
+        return
+    status = int(getattr(config, "_trendalgo_exitstatus", 0))
+    os._exit(status)
 
 
 @pytest.fixture(autouse=True)
