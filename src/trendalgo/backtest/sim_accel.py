@@ -18,7 +18,7 @@ def accel_backend() -> str:
     try:
         from numba import cuda as nbcuda  # noqa: PLC0415
 
-        if bool(nbcuda.is_available()):  # type: ignore[no-untyped-call]
+        if bool(nbcuda.is_available()):  # type: ignore[no-untyped-call,unused-ignore]
             return "cuda"
     except Exception:
         pass

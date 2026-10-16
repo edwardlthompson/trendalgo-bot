@@ -111,6 +111,11 @@ ignore_missing_imports = true
 module = ["PySide6", "PySide6.*", "shiboken6", "shiboken6.*"]
 ignore_missing_imports = true
 
+# Device UI is typed against PySide6; CI runs without the device extra.
+[[tool.mypy.overrides]]
+module = ["trendalgo.device.*"]
+ignore_errors = true
+
 [[tool.mypy.overrides]]
 module = ["trendalgo.lts_vendor.*", "trendalgo.lts_vendor.backtesting.*"]
 ignore_errors = true
