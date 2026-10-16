@@ -7,6 +7,7 @@ amd64 and arm64 captures match (L6). Fixtures: see parity_support.py.
 
 from __future__ import annotations
 
+import gzip
 import json
 
 import pytest
@@ -29,7 +30,7 @@ from .parity_support import (
     window_flips,
 )
 
-GOLDEN = json.loads(TRADE_FIXTURE.read_text(encoding="utf-8"))["trades"]
+GOLDEN = json.loads(gzip.decompress(TRADE_FIXTURE.read_bytes()).decode("utf-8"))["trades"]
 TALIB_DATA = json.loads(TALIB_FIXTURE.read_text(encoding="utf-8"))
 
 

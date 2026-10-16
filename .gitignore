@@ -97,6 +97,9 @@ data/
 !src/trendalgo/data/
 !src/trendalgo/data/**
 src/trendalgo/data/**/__pycache__/
+!src/trendalgo/device/data/
+!src/trendalgo/device/data/**
+src/trendalgo/device/data/**/__pycache__/
 !examples/web/src/data/
 !examples/web/public/data/
 

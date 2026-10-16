@@ -6,6 +6,7 @@ Regenerate the fixtures only after an intentional, reviewed change:
 
 from __future__ import annotations
 
+import gzip
 import json
 import platform
 import sys
@@ -30,7 +31,7 @@ from .engine_golden_support import INDICATORS, SEEDS, _config, _midpoint, digest
 
 GOLDEN_BARS = 720
 TALIB_INDICATORS = ("Stochastic", "CCI", "Ultimate Oscillator", "MFI", "ADX", "Parabolic SAR")
-TRADE_FIXTURE = Path(__file__).parent / "fixtures" / "engine_golden_trades.json"
+TRADE_FIXTURE = Path(__file__).parent / "fixtures" / "engine_golden_trades.json.gz"
 TALIB_FIXTURE = Path(__file__).parent / "fixtures" / "talib_arch.json"
 TRADE_CONFIGS: dict[str, BacktestConfig] = {
     "tsl2": _config(2.0),
@@ -162,7 +163,8 @@ def dump_trades(trades: dict[str, list[dict[str, Any]]]) -> str:
 
 def write_trade_fixture() -> None:
     trades = {case_key(*case): trade_rows(engine_trades(*case)) for case in CASES}
-    TRADE_FIXTURE.write_text(dump_trades(trades), encoding="utf-8")
+    # Gzip keeps the fixture under the 500 KB tracked-file hygiene budget.
+    TRADE_FIXTURE.write_bytes(gzip.compress(dump_trades(trades).encode("utf-8"), compresslevel=9))
 
 
 def write_talib_capture() -> None:
