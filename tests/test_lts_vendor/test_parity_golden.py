@@ -39,14 +39,18 @@ TALIB_DATA = json.loads(TALIB_FIXTURE.read_text(encoding="utf-8"))
 _SKIP_LINUX_CI = sys.platform.startswith("linux") and os.environ.get("CI") == "true"
 
 
-@pytest.mark.skipif(_SKIP_LINUX_CI, reason="golden trades are Windows-captured; regenerate on Linux")
+@pytest.mark.skipif(
+    _SKIP_LINUX_CI, reason="golden trades are Windows-captured; regenerate on Linux"
+)
 @pytest.mark.parametrize(("indicator", "seed", "config_name"), CASES)
 def test_engine_trades_match_the_golden_list(indicator: str, seed: int, config_name: str) -> None:
     expected = GOLDEN[case_key(indicator, seed, config_name)]
     assert trade_rows(engine_trades(indicator, seed, config_name)) == expected
 
 
-@pytest.mark.skipif(_SKIP_LINUX_CI, reason="golden trades are Windows-captured; regenerate on Linux")
+@pytest.mark.skipif(
+    _SKIP_LINUX_CI, reason="golden trades are Windows-captured; regenerate on Linux"
+)
 @pytest.mark.parametrize(("indicator", "seed", "config_name"), CASES)
 def test_port_with_window_signals_matches_the_golden_list(
     indicator: str, seed: int, config_name: str
@@ -88,7 +92,9 @@ def test_talib_indicators_stay_out_of_live_until_both_architectures_match() -> N
     assert not live_talib or matched, f"{sorted(live_talib)} need matching amd64 and arm64 captures"
 
 
-@pytest.mark.skipif(_SKIP_LINUX_CI, reason="TA-Lib digests need Linux amd64 re-capture after dep bumps")
+@pytest.mark.skipif(
+    _SKIP_LINUX_CI, reason="TA-Lib digests need Linux amd64 re-capture after dep bumps"
+)
 @pytest.mark.skipif(not talib_available(), reason="TA-Lib not installed on this machine")
 def test_talib_digests_match_this_architectures_capture() -> None:
     capture = TALIB_DATA["architectures"].get(current_arch(), {}).get("digests")

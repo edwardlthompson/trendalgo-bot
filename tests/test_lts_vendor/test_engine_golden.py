@@ -18,7 +18,9 @@ from .engine_golden_support import FIXTURE_PATH, build_digests
 _SKIP_LINUX_CI = sys.platform.startswith("linux") and os.environ.get("CI") == "true"
 
 
-@pytest.mark.skipif(_SKIP_LINUX_CI, reason="golden digests are Windows-captured; regenerate on Linux")
+@pytest.mark.skipif(
+    _SKIP_LINUX_CI, reason="golden digests are Windows-captured; regenerate on Linux"
+)
 def test_engine_matches_golden_digests() -> None:
     expected = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))["digests"]
     actual = build_digests()
