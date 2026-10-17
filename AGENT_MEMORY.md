@@ -8,7 +8,8 @@
 |-------|-----------|-------|
 | Trading | Native CCXT runner (ADR-0010) | `strategies/runtime/` + `trading/runner/` |
 | Backend | Python 3.12+ (uv) | `src/trendalgo/` hexagonal modules |
-| Web | Vite + TypeScript PWA | `examples/web/` |
+| Device UI | PySide6 (ADR-0016) | `src/trendalgo/device/` — PWA/`examples/web` retired |
+| Host | `botd` headless | Device-initiated sync; no inbound to PC |
 | DB MVP | SQLite on VPS | Postgres path Sprint 12 |
 | Exchange | 9 portfolio / 7 trading venues | Registry v5; worldwide Phase 1 (S18) |
 | DEX | Venue plugin engine (ADR-0011) | S21–S24; Base Phase 1 live path; H-036 open |
@@ -17,7 +18,7 @@
 ## Active Modules
 
 - ✅ Python (`modules/python/MODULE.md`)
-- ✅ Web / PWA (`modules/web/MODULE.md`)
+- ✅ Web module retained in stack-selection for FOSS surface; product UI is device
 
 ## Project Constraints
 
@@ -39,15 +40,27 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** `/ship` prepare next release after 0.5.1 — deps + device/desktop path; HUMAN R-BA.H1 + attorney H-006 open.
+**Current sprint:** Sprint PF AGENT ✅ (Modular Dashboard). Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
 
-**Tests:** 1654 pass · ~86.8% coverage (2026-10-16; pyproject cov-fail-under=86%).
+**Tests:** Device portfolio/layout/calendar slices green; watch-agent-gates OK; smoke-sprint PASS for Sprint PF (2026-10-16).
 
-**Recent:** `/ship` (2026-10-16) — patch/minor deps + CVE pins (`anyio`, `httpx2`, `urllib3`); local pre-release gate green; device/desktop extras. Product `.template-version` = 0.5.1 until Release Please bumps. See `docs/BOOTSTRAP_ALIGNMENT.md`.
+**Recent:** Sprint PF — Portfolio tab renamed Dashboard; snap-to-grid multi-page modules; PNG export; Events Calendar + CoinMarketCal/Coindar wizard. Spec: `docs/features/portfolio-modules.md`.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### Sprint PF — Modular Dashboard (2026-10-16)
+
+- Nav **Dashboard**; grid canvas with magnetic snap; Customize + page tabs
+- Calendar: official CMC/Coindar APIs only; CredMgr wizard; no CryptoCraft scrape
+- PF-H1 optional for live keys; empty-state CI path works without them
+
+### GP-Template-1.9 → device (2026-10-16)
+
+- Retargeted scopes off deleted `examples/web` onto PySide6 device
+- GP-1…GP-8 ✅; smoke-sprint PASS; `/cleanup` archived
+- Do not run WSL `bash`/`uv` against this repo — it recreates Linux `.venv` on the Windows tree
 
 ### Ship prepare (deps + device) (2026-10-16)
 

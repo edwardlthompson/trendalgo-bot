@@ -41,7 +41,7 @@ class EquityChart(QWidget):
             series.attachAxis(self._axis_y)
         self._view = QChartView(self._chart)
         self._view.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self._view.setMinimumHeight(360)
+        self._view.setMinimumHeight(120)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.addWidget(self._empty)

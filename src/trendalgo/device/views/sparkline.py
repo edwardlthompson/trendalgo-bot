@@ -33,7 +33,7 @@ class Sparkline(QWidget):
         self._gain: float | None = None
         self._on_click: Callable[[], None] | None = None
         self.setMinimumSize(SPARK_W, SPARK_H)
-        self.setMaximumHeight(SPARK_H + 4)
+        self.setMaximumHeight(120)
 
     def set_click_handler(self, handler: Callable[[], None] | None) -> None:
         self._on_click = handler

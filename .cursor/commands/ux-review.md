@@ -1,6 +1,7 @@
 # UX review (same construction law)
 
 > Skill: `.cursor/skills/ux-review/`
+> Skills (when present under `.agents/skills/`): also apply `frontend-design` / `web-design-guidelines` as scoring lenses — still record findings as `UX-NNN` inventory items; do not invent screens.
 
 Score **shipped** UI against [`docs/ux-ui-guidelines.md`](../../docs/ux-ui-guidelines.md). This is not a second checklist. Do **not** invent screens. Do **not** implement unless the user also asked `/ux-apply`.
 
@@ -36,6 +37,7 @@ Other IDEs: `docs/help/UX-REVIEW.md`.
 - **Fix:** …
 - **Pattern:** named product or guideline section
 - **Success:** observable
+
 ```
 
 Replace `_No UX inventory items._` when adding the first id. Next id is `UX-001` if empty, else one past the highest `UX-NNN`.

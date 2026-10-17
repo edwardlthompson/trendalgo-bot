@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from trendalgo.device import strings as S
 
-# Primary workflow: Portfolio → Alerts → Scanner → Backtest → Bots
+# Primary workflow: Dashboard → Alerts → Scanner → Backtest → Bots
 PORTFOLIO, ALERTS, SCANNER, BACKTESTS, STATUS = range(5)
 GLOSSARY, EXPORT, BILLING, SETTINGS, DEBUG = range(5, 10)
 # Legacy aliases: Plan/Research/AI removed from chrome; Plan redirects to Bots.

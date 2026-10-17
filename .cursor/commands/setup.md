@@ -1,5 +1,7 @@
 # GitHub repo setup
 
+> Skills (when present under `.agents/skills/`): follow `setup-pre-commit` for hook install guidance; still run the commands below.
+
 1. Run `scripts/setup-github-repo.sh` (or `.ps1`) with `gh` authenticated as repo admin.
 2. Enable Dependabot alerts, private vulnerability reporting, and branch protection (CI, Security Scan, CodeQL).
 3. If API returns 422, follow the printed manual checklist in Settings ([HUMAN]).

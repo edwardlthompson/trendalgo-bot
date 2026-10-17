@@ -2,6 +2,73 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint PF — Modular Dashboard (2026-10-16)
+
+Device Dashboard (ex-Portfolio): snap-to-grid multi-page modules, PNG export, Events Calendar + CoinMarketCal/Coindar wizard. Smoke-sprint PASS; watch-agent-gates OK; all-catalog module pack smoke green.
+
+1. ✅ [AGENT][LOCAL] PF-0 Rename user-facing Portfolio nav/title to Dashboard (internal ids stay `portfolio`) — scope: src/trendalgo/device/strings.py,src/trendalgo/device/nav_layout.py,docs
+2. ✅ [AGENT][LOCAL] PF-1 Layout prefs + snap GridCanvas (cols/rows/gap/magnet) + ModuleChrome DnD/resize + tests — scope: src/trendalgo/device,tests/test_device
+3. ✅ [AGENT][LOCAL] PF-2 Per-module and per-page PNG export — scope: src/trendalgo/device/portfolio_share.py,src/trendalgo/device/views
+4. ✅ [AGENT][LOCAL] PF-3 Total Worth + PL Insights + Assets (sort chips, Avg Buy, 24h) — scope: src/trendalgo/device/views/modules,tests/test_device
+5. ✅ [AGENT][LOCAL] PF-4 Portfolio Value, Cumulative P/L, Daily P/L bars, Portfolio vs Market charts — scope: src/trendalgo/device/views/modules,tests/test_device
+6. ✅ [AGENT][LOCAL] PF-5 Coin/Category allocation, Asset Allocation bar, Heatmap modules — scope: src/trendalgo/device/views/modules,tests/test_device
+7. ✅ [AGENT][LOCAL] PF-6 Inflows/Outflows + Trading Fees Paid/Monthly + Funding Fees modules — scope: src/trendalgo/device/views/modules,tests/test_device
+8. ✅ [AGENT][LOCAL] PF-7 Open Orders/Positions, Top Gainers/Losers + competition modules (market, risk, drawdown, …) — scope: src/trendalgo/device/views/modules,tests/test_device
+9. ✅ [AGENT][LOCAL] PF-8 Calendar API setup wizard (CoinMarketCal + Coindar) + CredMgr vault + test fetch — scope: src/trendalgo/device/views,src/trendalgo/device/calendar,tests/test_device · docs/features/portfolio-modules.md
+10. ✅ [AGENT][LOCAL] PF-9 Events Calendar module (chips/filters/sort) + CMC/Coindar providers + cache — scope: src/trendalgo/device/calendar,src/trendalgo/device/views/modules,tests/test_device
+11. ✅ [AGENT][LOCAL] PF-10 Feature spec + PORTFOLIO_DEVICE_GAPS + string polish; gates + smoke — scope: docs,src/trendalgo/device,tests
+
+## Template upgrade catch-up v1.10.0 — remaining apply (2026-10-16)
+
+- ✅ Canon/Mixed surface already landed (shape/brand, recipes, coverage summarize, clinerules, MCP web example, alignment `upstream_aligned_version` 1.10.0)
+- ✅ #8 TEMPLATE_INDEX indexed 1.10 recipe/help/skill/command paths + `tests/test_agent_brief.py`
+- ✅ #9 CodeQL actions already `@v4`
+- ✅ #16 product-brief anti-amnesia: BUILD_PLAN `product-brief-sync` markers + stamp/check green + unit tests
+- ✅ #12/#19/#20 human/Sacred items previously archived (H-BA-12/19/20); #13/#14 agent-skipped (Sacred / PWA retired)
+- ⚠ `AGENT.md` still holds icon-factory placeholder brief (Sacred — human rewrite when ready); anti-amnesia preserves it by design
+
+## Sprint GP-Template-1.9 — Golden Path adoption (2026-10-16)
+
+Ported Golden Path patterns into the PySide6 device app (`examples/web` retired per ADR-0016). Smoke-sprint PASS; gates OK.
+
+1. ✅ [AGENT][LOCAL] GP-1 Port crash-capture vertical slice into device app (PWA retired; ref template stub) · docs/features/crash-capture.md — scope: src/trendalgo/device/crash_capture,src/trendalgo/device/views,src/trendalgo/device/app.py,tests/test_device
+2. ✅ [AGENT][LOCAL] GP-2 Port feedback clipboard/inbox slice into device app · docs/features/feedback.md — scope: src/trendalgo/device
+3. ✅ [AGENT][LOCAL] GP-3 Port GitHub feedback bridge into device app · docs/features/github-feedback.md — scope: src/trendalgo/device
+4. ✅ [AGENT][LOCAL] GP-4 Port privacy-report sanitize/fingerprint slice into device app · docs/features/privacy-report.md — scope: src/trendalgo/device
+5. ✅ [AGENT][LOCAL] GP-5 Adopt Settings-only header chrome (tour/coach; GP-H1 approved) · docs/features/settings-chrome.md — scope: src/trendalgo/device
+6. ✅ [AGENT][LOCAL] GP-6 Harden About/donations + update-check patterns vs template stub · docs/features/donations-updates.md — scope: src/trendalgo/device
+7. ✅ [AGENT][LOCAL] GP-7 Port deep-link feedback entry into device app · docs/features/deep-link-feedback.md — scope: src/trendalgo/device
+8. ✅ [AGENT][LOCAL] GP-8 Adopt crash-inbox ops docs/scripts for local review queue · docs/features/crash-inbox.md — scope: scripts,docs
+
+## HUMAN backlog clearances + template catch-up v1.10.0 (2026-10-16)
+
+- **Exit:** Soft shipped-scope gates + **all template-upgrade human rows** (H-BA-9/12/19/20, R-BA.H1) archived off HUMAN_BACKLOG / BUILD_PLAN. Agent FOSS surface **v1.10.0**. Open HUMAN: hard/ops/recurring + GP-H1. GP-1…GP-8 AGENT remain open.
+
+- ✅ [HUMAN] **H-001** Repo name, origin, README — approved 2026-10-10
+- ✅ [HUMAN] **H-005** Founder defaults — approved 2026-10-10
+- ✅ [HUMAN] **H-013** LTS absorption scope — approved 2026-10-16 (S4 shipped)
+- ✅ [HUMAN] **H-015** S5 scope / UI bar — approved 2026-10-16
+- ✅ [HUMAN] **H-018** S6 templates scope — approved 2026-10-16
+- ✅ [HUMAN] **H-019** S7 analytics scope — approved 2026-10-16
+- ✅ [HUMAN] **H-020** S8 multi-exchange scope — approved 2026-10-16
+- ✅ [HUMAN] **H-021** Old second-exchange choice — superseded → H-030
+- ✅ [HUMAN] **H-024** S11 / no marketplace — approved 2026-10-16
+- ✅ [HUMAN] **H-030** Exchange program + native-only scope — approved 2026-10-16
+- ✅ [HUMAN] **H-034** Local preview L1 — superseded 2026-10-10 (device app / PWA)
+- ✅ [HUMAN] **H-035** DEX program scope (dry-run) — approved 2026-10-16; live = H-036
+- ✅ [AGENT] `founder_gate.py approve` accepts HUMAN (exit 2) with `--note` so soft scopes can clear
+- ✅ [AGENT] Template upgrade catch-up v1.10.0 — `/shape` `/brand`, skills/MCP recipes, `upstream_aligned_version` 1.10.0
+- ✅ [HUMAN] **H-BA-9** CI pin review — local already on `github/codeql-action@v4` + scorecard v2.5.0; no workflow cherry-pick needed (product matrix kept)
+- ✅ [HUMAN] **H-BA-19** skills.sh install; **H-BA-20** skipped (skills wired into `/` commands)
+- ✅ [HUMAN] **H-BA-12** Sacred `AGENTS.md` — alignment v1.10.0 + `/shape` / PREFERENCES / skills.sh slash wiring
+- ✅ [HUMAN] **R-BA.H1** Reviewed `docs/BOOTSTRAP_ALIGNMENT.md` (upstream v1.10.0 catch-up)
+- ✅ [HUMAN] **H-002** Pick Cursor mode — skipped (optional)
+- ✅ [HUMAN] **H-025** On-chain provider — stay dry-run (2026-10-16)
+- ✅ [HUMAN] **H-031** ADR-0010 + Freqtrade removal approved (2026-10-16)
+- ✅ [HUMAN] **GP-H1** Settings-only chrome approved (theme under Settings → Appearance; Agent may implement GP-5)
+- ✅ [HUMAN] **H-016** Daily notification digest **07:00 AST** (`America/Puerto_Rico`, `notification_digest_hour_local: 7`)
+- ✅ [HUMAN] **H-014** Archived old LTS GitHub repo (2026-10-16)
+
 ## Sprint R-Bootstrap-Align — template FOSS surface v0.15.1 (2026-07-21)
 
 - **Exit:** AGENT R-BA.0–R-BA.5 ✅; HUMAN R-BA.H1 open (review docs/BOOTSTRAP_ALIGNMENT.md).

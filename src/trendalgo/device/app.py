@@ -59,6 +59,11 @@ def run(root: Path | None = None) -> int:
         return 1
     apply_saved_appearance(app, ctx)
     follow_color_scheme(app, ctx)
+    from trendalgo.device.crash_capture.install_handler import install_crash_handler
+    from trendalgo.device.crash_capture.save_crashes import get_save_crashes
+    from trendalgo.device.views.crash_review_dialog import offer_crash_review
+
+    install_crash_handler(ctx.root, lambda: get_save_crashes(ctx.root))
     lock = ProfileLock(ctx.lock_path)
     try:
         lock.acquire()
@@ -78,10 +83,35 @@ def run(root: Path | None = None) -> int:
         window.show()
         if splash is not None:
             splash.finish(window)
+        offer_crash_review(ctx, window)
+        _offer_startup_extras(ctx, window)
         return app.exec()
     finally:
         pool.shutdown()
         lock.release()
+
+
+def _offer_startup_extras(ctx: DeviceContext, window: object) -> None:
+    """Crash review siblings: update/donate prompt and Feedback deep link (≤10 lines each)."""
+    from PySide6.QtWidgets import QWidget
+
+    from trendalgo import __version__ as _ver
+    from trendalgo.device.about.run_updates import decide_launch_prompt
+    from trendalgo.device.deep_link import feedback_link_from_argv
+    from trendalgo.device.views.feedback_dialog import open_feedback
+    from trendalgo.device.views.launch_prompt_dialog import offer_launch_prompt
+    from trendalgo.device.views.main_window import SETTINGS, MainWindow
+
+    parent = window if isinstance(window, QWidget) else None
+    prompt = decide_launch_prompt(ctx.root, current_version=_ver)
+    if prompt is not None:
+        offer_launch_prompt(ctx, prompt, current_version=_ver, parent=parent)
+    link = feedback_link_from_argv(sys.argv)
+    if link is not None:
+        if isinstance(window, MainWindow):
+            window.show_page(SETTINGS)
+        kind = "feature" if link.kind == "feature" else "bug"
+        open_feedback(ctx, kind, parent=parent, description=link.subject)
 
 
 def open_setup_wizard(ctx: DeviceContext, lock: ProfileLock) -> None:

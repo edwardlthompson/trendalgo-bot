@@ -6,47 +6,46 @@
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
-## Current sprint: **GP-Template-1.9 — Golden Path adoption (2026-10-08)**
+### Product (do not drift)
+
+<!-- product-brief-sync:begin -->
+> Read `AGENT.md` before any sprint row.
+
+**One-liner:** Photoreal Cycles icons from a locked seed, camera, and lighting.
+**Do not drift:** camera, messages, tame, neon
+
+**Rules:**
+- Generate store/PWA icons from a JSON manifest (seed, camera, lighting).
+- Machine QA only — do not ask a human to review thousands of frames.
+- Cycles OptiX is local GPU; CI stays CPU/headless or skip if Blender is missing.
+- Do not overwrite live `branding/assets/*.svg` (Sacred vector SoT).
+
+**First milestone:** Seeded icon factory with QA JSON; sample manifest in CI; 4000+ run on This Computer.
+<!-- product-brief-sync:end -->
+
+## Current sprint
+
+> **Now:** Board clear of AGENT/AUTO. **Sprint PF** archived in COMPLETED_TASKS.md @ `c3b46fb`+. Open HUMAN: PF-H1 (optional calendar keys) + carry-forward / R-Audit-8.9.
 
 | Marker | State |
 |--------|-------|
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-**Source:** Template upgrade catch-up to agent-project-bootstrap **v1.9.0**. Port patterns into existing feature folders; never copy `examples/` over the app. One feature per `/feature` task. Thin wiring ≤10 lines.
+🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
 
-**Agent rule:** `[AGENT]` sequential · after each step → `bash scripts/watch-agent-gates.sh --once --autofix`
+> **R-BA-17** / template FOSS surface archived in COMPLETED_TASKS. Alignment: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) (`upstream_aligned_version` 1.10.0). Skills: [`docs/SKILLS_RECIPES.md`](docs/SKILLS_RECIPES.md).
 
-> **R-BA-17** / template FOSS surface archived context in COMPLETED_TASKS / prior sections. Alignment: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) (`upstream_aligned_version` 1.9.0).
-
-## Sequential — GP-Template-1.9
-
-| ID | Task | Owner | Status |
-|----|------|-------|--------|
-| GP-1 | Port crash-capture vertical slice into examples/web (ref stub; no overwrite) · [`docs/features/crash-capture.md`](docs/features/crash-capture.md) | `[AGENT]` | 🔲 |
-| GP-2 | Port feedback clipboard/inbox slice into examples/web · [`docs/features/feedback.md`](docs/features/feedback.md) | `[AGENT]` | 🔲 |
-| GP-3 | Port GitHub feedback bridge into examples/web · [`docs/features/github-feedback.md`](docs/features/github-feedback.md) | `[AGENT]` | 🔲 |
-| GP-4 | Port privacy-report sanitize/fingerprint slice into examples/web · [`docs/features/privacy-report.md`](docs/features/privacy-report.md) | `[AGENT]` | 🔲 |
-| GP-5 | Adopt Settings-only header chrome (tour/coach pattern) without ripping product ThemeToggle blindly — Plan first · [`docs/features/settings-chrome.md`](docs/features/settings-chrome.md) | `[AGENT]` | 🔲 |
-| GP-6 | Harden About/donations + update-check patterns vs template stub · [`docs/features/donations-updates.md`](docs/features/donations-updates.md) | `[AGENT]` | 🔲 |
-| GP-7 | Port deep-link feedback entry into examples/web · [`docs/features/deep-link-feedback.md`](docs/features/deep-link-feedback.md) | `[AGENT]` | 🔲 |
-| GP-8 | Adopt crash-inbox ops docs/scripts for local review queue · [`docs/features/crash-inbox.md`](docs/features/crash-inbox.md) | `[AGENT]` | 🔲 |
-### Human & device
-
-| ID | Task | Owner | Status |
-|----|------|-------|--------|
-| R-BA.H1 | Review alignment doc (`docs/BOOTSTRAP_ALIGNMENT.md`) | `[HUMAN]` | 🔲 |
-| GP-H1 | Approve Settings-only chrome change vs current ThemeToggle (GP-5) before AGENT implements | `[HUMAN]` | 🔲 |
 ---
 
 ## Program status (summary)
 
 | Program | Sprints | AGENT | Open human gates |
 |---------|---------|-------|------------------|
-| Core (S0–S12) | Setup → platform, Risk Register Zero | ✅ | H-001–H-029 backlog |
-| Exchange | S13–S20 · 9 venues · ADR-0010 | ✅ | **H-032** worldwide live |
-| DEX | S21–S24 · Base Phase 1 · ADR-0011 | ✅ | **H-035** scope · **H-036** live |
-| Reviews | R-Audit … R-Audit-8 · GP-Template-1.9 open | 🔲 | H-006 · GP-H1 · R-BA.H1 |
+| Core (S0–S12) | Setup → platform, Risk Register Zero | ✅ | Open H-* in HUMAN_BACKLOG (H-001/H-005 archived) |
+| Exchange | S13–S20 · 9 venues · ADR-0010 | ✅ | **H-032** (H-030/H-031 ✅) |
+| DEX | S21–S24 · Base Phase 1 · ADR-0011 | ✅ | **H-036** live (H-035 ✅) |
+| Reviews | R-Audit … R-Audit-8 · GP-Template-1.9 ✅ | ✅ | H-006 |
 Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigations CM-1–CM-11: closed in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md).
 
 ---
@@ -106,6 +105,9 @@ Full task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 
 | Sprint | Closed | Archive |
 |--------|--------|---------|
+| Sprint PF | 2026-10-16 | Modular Dashboard (PF-0…PF-10; see COMPLETED_TASKS) |
+| GP-Template-1.9 | 2026-10-16 | Golden Path → device app (GP-1…GP-8; see COMPLETED_TASKS) |
+| HUMAN clearances + template v1.10.0 | 2026-10-16 | H-001/H-005/H-021/H-034 + agent catch-up (see COMPLETED_TASKS) |
 | R-Bootstrap-Align | 2026-07-21 | FOSS agent surface → upstream v0.15.1 (see COMPLETED_TASKS) |
 | S27 | 2026-06-29 | TA fleet backtest + v0.4.0 Settings/billing (see COMPLETED_TASKS) |
 | S25–S26 | 2026-06-26 | TA cache epic + file-limit gate alignment (see COMPLETED_TASKS) |

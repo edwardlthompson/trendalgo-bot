@@ -7,7 +7,7 @@
 5. **Task board:** `BUILD_PLAN.md` (Sequential before Parallel) — status: 🔲 open · ✅ done · ❌ blocked
 6. **Parallel dispatch:** parallel-first when Sequential clear; `/build` automates HUMAN/ADB first, backlogs failures to `HUMAN_BACKLOG.md` / `docs/HUMAN_BACKLOG.md`, never halts on human labels — `scripts/build-sprint-status.sh --lane child`
 7. **Living memory:** update `AGENT_MEMORY.md` only at milestone boundaries
-8. **Alignment:** `docs/BOOTSTRAP_ALIGNMENT.md` (upstream FOSS surface v0.17.0; product `.template-version` stays on release-please; CI non-parity)
+8. **Alignment:** `docs/BOOTSTRAP_ALIGNMENT.md` (upstream FOSS surface v1.10.0; product `.template-version` stays on release-please; CI non-parity)
 
 > Legacy `.cursorrules` is deprecated. Use `.cursor/rules/*.mdc` and this file instead.
 
@@ -29,6 +29,7 @@
 ## Session Protocol
 
 - On session start: read `START_HERE.md`, pick mode via `docs/CURSOR_MODES.md`, then `BUILD_PLAN.md` Sequential lane
+- Prefer `/shape` before `/plan` for non-trivial ideas; read `docs/PREFERENCES.md`. skills.sh installs under `.agents/skills/` are invoked via slash commands (see `docs/SKILLS_RECIPES.md`) — Custom Modes are optional
 - On milestone end: update `AGENT_MEMORY.md`, append to `DECISION_LOG.md` or `docs/adr/`
 - On 3-strike failure: halt and escalate to human
 - On context bloat: write `.cursor-session-state`, ask human to clear chat

@@ -30,6 +30,8 @@ examples/android/local.properties
 Thumbs.db
 .idea/
 .vscode/
+# skills.sh / Agent Skills installs (local; do not vendor the leaderboard)
+.agents/
 *.swp
 .cursor-session-state
 .cursor/agent-progress.json

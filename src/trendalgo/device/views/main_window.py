@@ -128,8 +128,9 @@ class MainWindow(QMainWindow):
         )
         self._scanner_page = scanner
         # Stack index == nav_layout page index: Portfolio, Alerts, Scanner, Backtest, Bots, …
+        self._portfolio = PortfolioPage(ctx)
         for page in (
-            PortfolioPage(ctx),
+            self._portfolio,
             alerts,
             scanner,
             BacktestPage(ctx, pool, on_open_plan=open_bots_from_fleet),
@@ -137,7 +138,13 @@ class MainWindow(QMainWindow):
             GlossaryPage(),
             ExportPage(ctx),
             BillingPage(),
-            _scrolled(SettingsPage(ctx, on_setup_wizard)),
+            _scrolled(
+                SettingsPage(
+                    ctx,
+                    on_setup_wizard,
+                    on_module_mins_saved=self._portfolio.reload_module_mins,
+                )
+            ),
             DebugPage(ctx),
         ):
             self._stack.addWidget(page)

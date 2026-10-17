@@ -9,5 +9,6 @@
   "second_exchange": null,
   "vps_monthly_budget_usd": 10,
   "production_hosting": "external_vps_only",
-  "notification_quiet_hours_default": true
+  "notification_quiet_hours_default": true,
+  "notification_digest_hour_local": 7
 }

@@ -22,6 +22,8 @@ QLabel { color: ${onBackground}; background: transparent; }
 QLabel#pageTitle, QLabel#brandName { font-size: ${title_pt}pt; font-weight: 600; color: ${onSurface}; }
 QLabel#status, QLabel#subtitle, QLabel#hint { color: ${onSurfaceVariant}; }
 QLabel#sectionTitle, QLabel#emptyTitle { font-weight: 600; color: ${onSurface}; }
+QLabel#collapseChevron { font-size: 11pt; color: ${onSurfaceVariant}; }
+QFrame#collapseHeader:hover { background: ${surfaceVariant}; border-radius: ${radius_sm}px; }
 QLabel#problem { font-weight: 600; color: ${error}; }
 QLabel#badge { background: ${secondaryContainer}; color: ${onSecondaryContainer};
     border-radius: ${radius_sm}px; padding: 3px ${space_sm}px; font-weight: 600; }
@@ -89,6 +91,37 @@ QCheckBox::indicator { width: 16px; height: 16px; border: 2px solid ${outline};
 QCheckBox::indicator:unchecked { background: ${background}; border-color: ${outline}; }
 QCheckBox::indicator:checked { background: ${primary}; border-color: ${primary}; }
 QCheckBox::indicator:hover { border-color: ${primary}; }
+/* Dashboard / CoinStats-like modules */
+QFrame#dashModule { background: ${surface}; border: 1px solid ${outline};
+    border-radius: ${radius_md}px; }
+QLabel#dashModuleTitle { color: ${onSurface}; font-size: 12pt; font-weight: 600; }
+QLabel#dashHeroValue { color: ${onSurface}; font-size: 32pt; font-weight: 700; }
+QLabel#dashDeltaUp { color: ${gainUp}; font-size: 12pt; font-weight: 600; }
+QLabel#dashDeltaDown { color: ${gainDown}; font-size: 12pt; font-weight: 600; }
+QLabel#dashMuted { color: ${onSurfaceVariant}; font-size: 10pt; }
+QPushButton#chip { background: transparent; color: ${onSurfaceVariant}; border: none;
+    border-radius: ${radius_md}px; padding: 4px 10px; min-height: 16px; font-weight: 600;
+    font-size: 9pt; }
+QPushButton#chip:hover { color: ${onSurface}; background: ${surfaceVariant}; }
+QPushButton#chip:checked { background: ${surfaceVariant}; color: ${onSurface}; }
+QPushButton#dashIconBtn { background: transparent; color: ${onSurfaceVariant};
+    border: 1px solid ${outline}; border-radius: ${radius_sm}px; padding: 4px 8px;
+    min-height: 20px; max-height: 28px; }
+QPushButton#dashIconBtn:hover { color: ${onSurface}; background: ${surfaceVariant}; }
+QToolButton#dashShareBtn { background: ${surfaceVariant}; color: ${onSurfaceVariant};
+    border: 1px solid ${outline}; border-radius: ${radius_md}px;
+    padding: ${space_sm}px ${space_md}px; min-height: 22px; }
+QToolButton#dashShareBtn:hover { color: ${onSurface}; }
+QLabel#dashResizeGrip { color: ${outline}; background: transparent; font-size: 11pt; }
+QLabel#dashResizeGrip:hover { color: ${onSurface}; }
+QWidget#dashCanvas { background: ${background}; }
+QLabel#dashStatLabel { color: ${onSurfaceVariant}; font-size: 10pt; }
+QLabel#dashStatValue { color: ${onSurface}; font-size: 13pt; font-weight: 700; }
+QTableWidget#dashAssetsTable { background: transparent; border: none;
+    gridline-color: ${surfaceVariant}; font-size: 10pt; }
+QTableWidget#dashAssetsTable::item { padding: 6px 8px; }
+QHeaderView::section { background: ${surface}; color: ${onSurfaceVariant}; border: none;
+    border-bottom: 1px solid ${outline}; padding: 8px; font-size: 9pt; font-weight: 600; }
 """
 )
 

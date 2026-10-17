@@ -6,37 +6,38 @@
 
 - ✅ User-visible behavior: About has Report a bug and Request a feature; review panel shows escaped preview, Copy, Open GitHub, Discard
 - ✅ Offline/error behavior: Copy still works; Open GitHub disabled with i18n reason; search fail-soft
-- ✅ Accessibility: dialog `role="dialog"` with labelled buttons; no Android Toast
-- ✅ i18n: `feedback.*` web / `feedback_*` Android
+- ✅ Accessibility: dialog labelled buttons; no Android Toast
+- ✅ i18n: `feedback.copy` (device; was `feedback.*` on PWA)
 
 ## Smoke scenario
 
 1. Given crash-capture is off
-2. When the user opens Settings → App info and chooses Report a bug, types a description
-3. Then they can copy sanitized markdown; Open GitHub is enabled only when description or stack exists
+2. When the user opens Settings → About and chooses Report a bug, types a description
+3. Then they can copy sanitized markdown; Open GitHub is enabled only when description or stack exists **and** a release repo is configured (GP-3)
 
 ## Container map
 
-| Layer | Web | Android |
-|-------|-----|---------|
-| View | `examples/web/src/components/FeedbackPanel.ts` | `examples/android/.../ui/feedback/` |
-| Logic | `examples/web/src/feedback/` | `examples/android/.../feedback/` |
-| Tests | `FeedbackPanel.test.ts`, `preview.test.ts` | `FeedbackPreviewTest.kt` |
-| Wiring | `appBootstrap.ts` / `AppShell.ts` ≤10 lines | `GoldenPathApp.kt` ≤10 lines |
+| Layer | Device (product) | Template stub (ref only) |
+|-------|------------------|--------------------------|
+| View | `src/trendalgo/device/views/feedback_dialog.py` | `FeedbackPanel.ts` |
+| Logic | `src/trendalgo/device/feedback/` | `examples/web/src/feedback/` |
+| Tests | `tests/test_device/test_feedback_preview.py` | `preview.test.ts` |
+| Wiring | Settings About section ≤10 lines | `AppShell.ts` |
 ## Tests
 
-- Automated: yes — `FeedbackPanel.test.ts`, `preview.test.ts`, `FeedbackPreviewTest.kt`
+- Automated: yes — `tests/test_device/test_feedback_preview.py`
 
 ## Fallback validation
 
 - Why tests are not feasible: N/A (automated tests exist)
-- Command: `python3 scripts/agent-run.py feature-gate --stack <active>`
+- Command: `python3 scripts/agent-run.py feature-gate --stack python`
 
 ## Definition of Done
 
-See `docs/FEATURE_MODULES.md`. XSS test: preview never uses `innerHTML` of reporter text.
+See `docs/FEATURE_MODULES.md`. XSS test: preview never uses rich HTML of reporter text (plain `QPlainTextEdit`).
 
 ## Notes
 
-- Settings toggle “Save crash details for me to review” defaults off (`feedback.save_crashes`)
+- Settings toggle “Save crash details for me to review” defaults off (`crash_prefs.json`; GP-1)
 - Discard best-effort clears clipboard text we wrote
+- Open GitHub body URL lands in GP-3

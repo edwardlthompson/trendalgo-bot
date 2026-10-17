@@ -2,7 +2,7 @@
 
 APP_TITLE = "TrendAlgo Bot"
 NAV_LABEL = "Main navigation"
-NAV_PORTFOLIO = "Portfolio"
+NAV_PORTFOLIO = "Dashboard"
 NAV_ALERTS = "Alerts"
 NAV_STATUS = "Bots"
 NAV_SCANNER = "Scanner"
@@ -108,10 +108,8 @@ DEBUG_EMPTY_BODY = (
     "When this app writes device.log under your profile folder, the last lines show here."
 )
 
-PORTFOLIO_TITLE = "Portfolio"
-PORTFOLIO_SUBTITLE = (
-    "Net worth and holdings from the last saved snapshot on this PC. Public data only here."
-)
+PORTFOLIO_TITLE = "Dashboard"
+PORTFOLIO_SUBTITLE = "Net worth and holdings from the last saved snapshot on this PC."
 PORTFOLIO_CAPTION = "Last saved snapshot on this PC."
 PORTFOLIO_SYNC = "Sync from host"
 PORTFOLIO_SYNC_NO_HOST = "Set a host address and pair in the setup wizard before syncing."
@@ -131,8 +129,49 @@ PORTFOLIO_DEMO_CAPTION = (
     "Top-20 demo portfolio — Sync from host or Exit demo to return to your balances."
 )
 PORTFOLIO_SHARE_DONE = "Saved screenshot {name} under {path}."
-PORTFOLIO_SHARE_TIP = (
-    "Save a PNG of the active Portfolio tab (Overview, Holdings, Analytics, or Tools)."
+PORTFOLIO_SHARE_TIP = "Save a PNG of the active Dashboard page or selected module."
+PORTFOLIO_SYNC_ALL = "Sync All"
+PORTFOLIO_CUSTOMIZE = "Customize"
+PORTFOLIO_EDIT_LAYOUT = "Edit layout"
+PORTFOLIO_RESIZE_MODULE = "Drag corner to resize"
+PORTFOLIO_EXPORT_PAGE = "Export page PNG"
+PORTFOLIO_EXPORT_MODULE = "Export PNG"
+PORTFOLIO_GRID_COLS = "Columns"
+PORTFOLIO_GRID_ROWS = "Rows"
+PORTFOLIO_SHOW_GRID = "Show grid"
+PORTFOLIO_ADD_PAGE = "Add page"
+PORTFOLIO_RENAME_PAGE = "Rename page"
+PORTFOLIO_DELETE_PAGE = "Delete page"
+PORTFOLIO_RESET_LAYOUT = "Reset layout"
+PORTFOLIO_REMOVE_MODULE = "Remove"
+PORTFOLIO_MODULE_EMPTY = "Nothing so far"
+PORTFOLIO_MODULE_EMPTY_HINT = "Sync from the host or load the Top-20 demo to get started."
+PORTFOLIO_CALENDAR_SETUP = "Set up calendar APIs"
+PORTFOLIO_CALENDAR_CONNECTED = "Calendar connected"
+PORTFOLIO_CHIP_24H = "24H"
+PORTFOLIO_CHIP_1W = "1W"
+PORTFOLIO_CHIP_1M = "1M"
+PORTFOLIO_CHIP_3M = "3M"
+PORTFOLIO_CHIP_6M = "6M"
+PORTFOLIO_CHIP_1Y = "1Y"
+PORTFOLIO_CHIP_YTD = "YTD"
+PORTFOLIO_CHIP_ALL = "ALL"
+PORTFOLIO_QUOTE_USD = "USD"
+PORTFOLIO_ASSETS_SORT_NAME = "Name"
+PORTFOLIO_ASSETS_SORT_PRICE = "Price"
+PORTFOLIO_ASSETS_SORT_HOLDINGS = "Holdings"
+PORTFOLIO_ASSETS_SORT_24H = "24h"
+PORTFOLIO_ASSETS_SORT_AVG_BUY = "Avg Buy"
+PORTFOLIO_ASSETS_SORT_PROFIT = "Profit / Loss"
+PORTFOLIO_ASSETS_SORT_ALLOC = "Allocation"
+PORTFOLIO_HEADERS_RICH = (
+    "Name",
+    "Amount",
+    "24h Change",
+    "Price",
+    "Total",
+    "Avg Buy",
+    "P/L",
 )
 PORTFOLIO_DEMO_TIP = "Preview a sample Top-20 coin portfolio with a synthetic equity curve."
 PORTFOLIO_ALLOCATION = "Allocation"
@@ -536,6 +575,22 @@ THEME_LIGHT = "Light"
 THEME_DARK = "Dark"
 SETTINGS_ACCENT = "Accent color"
 SETTINGS_ACCENT_HELP = "Colors the focus ring and the edge of the open section."
+SETTINGS_CONNECTION = "Connection"
+SETTINGS_APPEARANCE = "Appearance"
+SETTINGS_DASHBOARD_MODULES = "Dashboard modules"
+SETTINGS_DASHBOARD_MODULES_HELP = (
+    "Minimum size for each Dashboard module in square grid cubes (width × height). "
+    "Overrides apply on resize and when loading a layout."
+)
+SETTINGS_DASHBOARD_RESET_MINS = "Reset module mins to defaults"
+SETTINGS_DASHBOARD_SAVE_MINS = "Save module mins"
+SETTINGS_DASHBOARD_MINS_SAVED = "Module minimum sizes saved."
+SETTINGS_DATA = "Data"
+SETTINGS_CUSTOMIZE_HINT = (
+    "Checked modules are placed on any Dashboard page. "
+    "Categories hint which page type each module fits. "
+    "Uncheck to remove; add missing modules to this page."
+)
 ACCENT_DEFAULT = "TrendAlgo (default)"
 ACCENT_NAMES: tuple[str, ...] = ("Blue", "Green", "Amber", "Red", "Violet")
 ABOUT_TITLE = "About"
@@ -602,3 +657,26 @@ SCANNER_ALERTS_EMPTY_TITLE = "No alerts yet"
 SCANNER_ALERTS_EMPTY_BODY = (
     "After each scan, newly qualified coins and watchlisted coins that drop out appear here."
 )
+CAL_WIZARD_TITLE = "Calendar API setup"
+CAL_WIZARD_NEXT = "Next"
+CAL_WIZARD_BACK = "Back"
+CAL_WIZARD_SKIP = "Skip"
+CAL_WIZARD_FINISH = "Finish"
+CAL_WIZARD_OPEN_DOCS = "Open docs"
+CAL_WIZARD_KEY = "API key"
+CAL_WIZARD_TOKEN = "Access token"
+CAL_WIZARD_TEST = "Test"
+CAL_WIZARD_SAVE = "Save"
+CAL_WIZARD_TEST_OK = "Connection OK."
+CAL_WIZARD_TEST_FAIL = "Test failed: {detail}"
+CAL_WIZARD_SAVED = "Saved to Credential Manager."
+CAL_WIZARD_NEED_TEST = "Test the key successfully before saving."
+CAL_EVENTS_EMPTY = "No upcoming events match your filters."
+CAL_EVENTS_NO_KEYS = "Connect CoinMarketCal or Coindar to load crypto event dates."
+CAL_EVENTS_REFRESH = "Refresh events"
+CAL_FILTER_HOLDINGS = "My holdings"
+CAL_FILTER_30D = "30D"
+CAL_FILTER_IMPACT = "Medium+"
+CAL_SORT_DATE = "Date"
+CAL_SORT_IMPACT = "Impact"
+CAL_SORT_POP = "Popularity"

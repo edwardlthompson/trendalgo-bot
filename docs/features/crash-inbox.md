@@ -6,13 +6,13 @@
 
 - ✅ Example stub ships `enabled: false` with empty DSN/endpoint
 - ✅ Gate fails if the stub is enabled or a live DSN is present
-- ✅ FOSS example manifests do not depend on Sentry/Crashlytics/GlitchTip/Bugsink SDKs
+- ✅ FOSS path does not depend on Sentry/Crashlytics/GlitchTip/Bugsink SDKs
 
 ## Smoke scenario
 
-1. _Given_ the template checkout
-2. _When_ `scripts/check-crash-inbox.sh` runs
-3. _Then_ it exits 0 and prints that the stub stays disabled
+1. Given this checkout
+2. When `scripts/check-crash-inbox.sh` / `agent-run.py check-crash-inbox` runs
+3. Then it exits 0 and prints that the stub stays disabled
 
 ## Container map
 
@@ -21,18 +21,12 @@
 | Logic | `scripts/lib/crash_inbox.py` |
 | View | `docs/CRASH_INBOX.md` |
 | Tests | `tests/test_crash_inbox.py` |
-| Wiring | `scripts/check-crash-inbox.sh` in `validate-bootstrap.sh` |
-
+| Wiring | `scripts/check-crash-inbox.sh` in validate-bootstrap |
 ## Tests
 
-- Automated: yes — stub off, DSN rejected, validate-bootstrap wiring
-- Coverage: missing example file; enabled=true
+- Automated: yes — stub off, DSN rejected
+- Verified 2026-10-16: `check-crash-inbox` → Crash inbox stub stays disabled
 
-## Fallback validation
+## Notes
 
-- Why tests are not feasible: N/A
-- Command: `python3 scripts/agent-run.py feature-gate --stack docs`
-
-## Definition of Done
-
-See `docs/FEATURE_MODULES.md`.
+- Local crash queue for operator review is GP-1 (`crash_capture`); this feature is the **remote inbox stub**, kept off

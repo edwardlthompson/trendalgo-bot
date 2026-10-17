@@ -1,4 +1,4 @@
-"""Qt smoke for the Portfolio page (tabs, demo, Share)."""
+"""Qt smoke for the Dashboard (modular portfolio page)."""
 
 from __future__ import annotations
 
@@ -20,14 +20,14 @@ def test_empty_portfolio_seeds_demo(qtbot: QtBot, tmp_path: Path) -> None:
     qtbot.addWidget(page)
     assert not page._demo.isHidden()
     assert page._demo_btn.text() == S.PORTFOLIO_EXIT_DEMO
-    assert page._share.text() == S.PORTFOLIO_SHARE
-    assert page._tabs.count() == 4
-    assert page._chart._view.minimumHeight() >= 320
+    assert page._sync.text() == S.PORTFOLIO_SYNC_ALL
+    assert page._tabs.count() == 3
     assert page._overview is not None
     assert len(page._overview.holdings) == 20
+    assert "total_worth" in page._modules
 
 
-def test_seeded_portfolio_shows_load_demo_and_share(qtbot: QtBot, tmp_path: Path) -> None:
+def test_seeded_portfolio_shows_load_demo(qtbot: QtBot, tmp_path: Path) -> None:
     profile = tmp_path / "profile"
     path = _seed(profile / "portfolio.db")
     ctx = open_context(profile)
@@ -38,18 +38,19 @@ def test_seeded_portfolio_shows_load_demo_and_share(qtbot: QtBot, tmp_path: Path
     page.show()
     assert page._demo.isHidden()
     assert page._demo_btn.text() == S.PORTFOLIO_LOAD_DEMO
-    assert page._share.text() == S.PORTFOLIO_SHARE
-    assert "$1,500.00" in page._hero._net._value.text()
+    assert page._overview is not None
+    assert page._overview.net_worth_usd == 1500.0
     page._toggle_demo()
     assert not page._demo.isHidden()
     assert page._overview is not None
     assert len(page._overview.holdings) == 20
     page._toggle_demo()
     assert page._demo.isHidden()
-    assert "$1,500.00" in page._hero._net._value.text()
+    assert page._overview is not None
+    assert page._overview.net_worth_usd == 1500.0
 
 
-def test_multi_snapshot_shows_timeline_scrubber(qtbot: QtBot, tmp_path: Path) -> None:
+def test_multi_snapshot_loads_overview(qtbot: QtBot, tmp_path: Path) -> None:
     profile = tmp_path / "profile"
     path = profile / "portfolio.db"
     store = PortfolioStore(path, create=True)
@@ -75,18 +76,26 @@ def test_multi_snapshot_shows_timeline_scrubber(qtbot: QtBot, tmp_path: Path) ->
     page = PortfolioPage(ctx)
     qtbot.addWidget(page)
     page.show()
-    assert page._timeline._combo.count() == 2
-    assert page._timeline._row.isVisible()
-    assert page._chart._chart.legend().isVisible()
+    assert page._overview is not None
+    assert page._overview.net_worth_usd == 1500.0
+    assert page._tabs.count() >= 1
 
 
-def test_share_png_writes_export(qtbot: QtBot, tmp_path: Path) -> None:
+def test_nav_label_is_dashboard() -> None:
+    assert S.NAV_PORTFOLIO == "Dashboard"
+    assert S.PORTFOLIO_TITLE == "Dashboard"
+
+
+def test_export_page_png_writes_export(qtbot: QtBot, tmp_path: Path) -> None:
     profile = tmp_path / "profile"
     _seed(profile / "portfolio.db")
     ctx = open_context(profile)
     page = PortfolioPage(ctx)
     qtbot.addWidget(page)
     page.show()
-    page._share_png()
-    exports = list((profile / "exports").glob("portfolio-*.png"))
-    assert exports, "expected Share PNG under exports/"
+    qtbot.waitExposed(page)
+    dest = profile / "exports" / "portfolio-page-overview-test.png"
+    # Skip the save dialog / message box in automated tests.
+    page._show_share_done = lambda _out: None  # type: ignore[method-assign]
+    page._export_page_png(dest=dest)
+    assert dest.is_file() and dest.stat().st_size > 0

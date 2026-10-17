@@ -70,6 +70,11 @@
       "group": "build",
       "caption": "Design one feature or decision before coding."
     },
+    "shape": {
+      "kind": "step",
+      "group": "build",
+      "caption": "Turn a rough idea into a short buildable spec (no app code)."
+    },
     "adr": {
       "kind": "step",
       "group": "build",
@@ -224,6 +229,11 @@
       "kind": "step",
       "group": "build",
       "caption": "Patch the UX/UI construction guidelines (how we build screens), not a review-only file."
+    },
+    "brand": {
+      "kind": "step",
+      "group": "start",
+      "caption": "Replace Golden Path placeholder logos and pitch with your product brand."
     }
   }
 }

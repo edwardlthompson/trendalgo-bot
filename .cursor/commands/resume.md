@@ -1,5 +1,7 @@
 # Cloud → PC handoff after a Cloud Agent session
 
+> Skills (when present under `.agents/skills/`): follow `handoff` when reading prior session notes / digest before continuing AGENT rows.
+
 Run the digest first (fetch + sync Dependabot/Release Please into BUILD_PLAN + list open `cursor/*` PRs + LOCAL scope overlap):
 
 ```bash

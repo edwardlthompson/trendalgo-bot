@@ -2,6 +2,8 @@
 
 Read `docs/CURSOR_MODES.md` + active BUILD_PLAN row.
 
+> Skills (when present under `.agents/skills/`): use `implement-spec` to turn an approved `/shape` spec into a concrete plan + BUILD_PLAN row; keep `### Critique` Issue→Resolution.
+
 - From `/build`: decide internally (Critique + Parallelization), then execute — no user pause.
 - Standalone: trivial → Agent; else present single approach + resolved `### Critique` before coding.
 

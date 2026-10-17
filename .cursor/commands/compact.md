@@ -1,5 +1,7 @@
 # Save session checkpoint
 
+> Skills (when present under `.agents/skills/`): follow `handoff` for what a future agent needs (open risks, next row, unpushed work).
+
 Before clearing chat, write `.cursor-session-state.json` from current context:
 - repo mode (Bootstrap vs Reference)
 - active stack from `.cursor/stack-selection.json`

@@ -1,38 +1,32 @@
 # Feature: deep-link Settings → About → Feedback
 
 ## Intent
-`goldenpath://settings/about/feedback` opens the feedback stack (Settings → About → Feedback).
 
-## Validation
-- Manifest intent-filter on `MainActivity`
-- Fallback: instrumented nav smoke Settings→About→Feedback
-- Fallback command: `./gradlew :app:connectedDebugAndroidTest` (or `/emulator`)
+`trendalgo://settings/about/feedback` opens Settings and the Feedback dialog (device).
 
 ## Acceptance criteria
 
 - ✅ Deep links into Feedback carry a sanitized subject when provided
-- ✅ Invalid payloads fall back to the default Feedback route
+- ✅ Invalid payloads fall back (no crash; unknown routes ignored)
 
 ## Smoke scenario
 
-1. _Given_ a Feedback deep link
-2. _When_ the app opens it
-3. _Then_ Feedback is shown without crashing
+1. Given a Feedback deep link in argv
+2. When the device app starts
+3. Then Feedback is shown without crashing
 
 ## Container map
 
-| Layer | Path |
-|-------|------|
-| Logic | stack feedback modules |
-| View | Feedback screens |
-| Tests | stack feedback / deep-link tests |
-| Wiring | app bootstrap / manifest |
-
+| Layer | Device |
+|-------|--------|
+| Logic | `src/trendalgo/device/deep_link.py` |
+| View | `views/feedback_dialog.py` |
+| Tests | `tests/test_device/test_deep_link.py` |
+| Wiring | `app.py` `_offer_startup_extras` |
 ## Tests
 
-- Automated: yes — covered by stack feedback tests when present
+- Automated: yes — `tests/test_device/test_deep_link.py`
 
 ## Fallback validation
 
-- Why tests are not feasible: N/A
-- Command: `python3 scripts/agent-run.py feature-gate --stack web`
+- Command: `python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto`

@@ -21,7 +21,13 @@
     "second_exchange": { "type": ["string", "null"] },
     "vps_monthly_budget_usd": { "type": "number", "maximum": 10 },
     "production_hosting": { "enum": ["external_vps_only"] },
-    "notification_quiet_hours_default": { "type": "boolean" }
+    "notification_quiet_hours_default": { "type": "boolean" },
+    "notification_digest_hour_local": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 23,
+      "description": "Local hour (0–23) for daily notification digest in founder timezone"
+    }
   },
   "additionalProperties": false
 }

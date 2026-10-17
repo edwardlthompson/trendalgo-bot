@@ -8,7 +8,7 @@
   ],
   "parallel_scope_note": "Sprint 1 Parallel: one agent per active stack; no overlapping paths",
   "selected_at": "2026-06-25T23:43:16+00:00",
-  "aligned_template_version": "1.9.0",
+  "aligned_template_version": "1.10.0",
   "cursor_features_enabled": [
     "rules",
     "commands",

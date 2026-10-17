@@ -7,7 +7,7 @@
 - ✅ User-visible behavior: after a captured crash, one review dialog; never auto-open GitHub
 - ✅ Offline/error behavior: write failure drops the record; handler errors do not re-enter
 - ✅ Accessibility: same dialog contract as Feedback
-- ✅ i18n: uses `feedback.*` / `feedback_*`
+- ✅ i18n: uses `crash_capture.copy` (device; was `feedback.*` on PWA)
 
 ## Smoke scenario
 
@@ -18,19 +18,19 @@
 
 ## Container map
 
-| Layer | Web | Android |
-|-------|-----|---------|
-| Logic | `examples/web/src/crash-capture/` | `examples/android/.../crashcapture/` |
-| Tests | `pendingCrash.test.ts` | `PendingCrashTest.kt` |
-| Wiring | `appBootstrap.ts` ≤10 lines | `GoldenPathApp.kt` / `MainActivity` ≤10 lines |
+| Layer | Device (product) | Template stub (ref only) |
+|-------|------------------|--------------------------|
+| Logic | `src/trendalgo/device/crash_capture/` | `examples/web/src/crash-capture/` |
+| Tests | `tests/test_device/test_pending_crash.py` | `pendingCrash.test.ts` |
+| Wiring | `app.py` + Settings privacy section ≤10 lines | `appBootstrap.ts` |
 ## Tests
 
-- Automated: yes — `pendingCrash.test.ts` and `PendingCrashTest.kt`
+- Automated: yes — `tests/test_device/test_pending_crash.py`
 
 ## Fallback validation
 
 - Why tests are not feasible: N/A (automated tests exist)
-- Command: `python3 scripts/agent-run.py feature-gate --stack <active>`
+- Command: `python3 scripts/agent-run.py feature-gate --stack python`
 
 ## Definition of Done
 
@@ -38,9 +38,6 @@ Unit tests for queue-at-most-one, sanitize-before-persist, opt-in false, no re-e
 
 ## Notes
 
-- Web: `sessionStorage` unless save-crashes is on (`localStorage`)
-- Android: one app-internal file; chain previous `UncaughtExceptionHandler`
-
-## WorkManager-free crash trim
-
-Golden Path Android crash capture stays **in-process** (sanitize + optional local pending file). Do **not** add WorkManager / JobScheduler upload workers on the FOSS path — that expands background network surface and conflicts with “stub only until DPIA”. Trim stacks in the capture path; upload stays opt-in after DPIA (`docs/CRASH_INBOX.md`).
+- Device: process session + optional `pending_crash.json` when save-crashes is on
+- Template web stub used sessionStorage / localStorage; PWA retired (ADR-0016)
+- Upload stays opt-in after DPIA (`docs/CRASH_INBOX.md`)

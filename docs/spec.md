@@ -6,7 +6,18 @@
 ## Overview
 
 <!-- product-brief-sync:begin -->
-_Template maintainer: no product AGENT.md. Children write AGENT.md before init._
+> Read `AGENT.md` before any sprint row.
+
+**One-liner:** Photoreal Cycles icons from a locked seed, camera, and lighting.
+**Do not drift:** camera, messages, tame, neon
+
+**Rules:**
+- Generate store/PWA icons from a JSON manifest (seed, camera, lighting).
+- Machine QA only — do not ask a human to review thousands of frames.
+- Cycles OptiX is local GPU; CI stays CPU/headless or skip if Blender is missing.
+- Do not overwrite live `branding/assets/*.svg` (Sacred vector SoT).
+
+**First milestone:** Seeded icon factory with QA JSON; sample manifest in CI; 4000+ run on This Computer.
 <!-- product-brief-sync:end -->
 
 **Product:** agent-project-bootstrap
@@ -20,7 +31,6 @@ _Template maintainer: no product AGENT.md. Children write AGENT.md before init._
 | FR-1 | As a maintainer I run `scripts/init-project.sh` so the child repo is customized | Manifest, adapters, and checklist exist; unused stacks prune when asked |
 | FR-2 | As an agent I read `AGENTS.md` first so I follow architecture and test-first rules | Adapters for Cursor, Claude Code, and Copilot stay in sync |
 | FR-3 | As a reviewer I get CI + security on every PR without opting in | `ci.yml`, `security.yml`, Dependabot, issue/PR templates present |
-
 ## Non-Functional Constraints
 
 - MIT default (Apache-2.0 selectable at init for child repos)
@@ -40,6 +50,7 @@ flowchart LR
   Post --> Agents[AGENTS.md adapters]
   Post --> Check[PROJECT_CHECKLIST.md]
   Post --> Manifest[bootstrap.config.json]
+
 ```
 
 ## Test-first rule

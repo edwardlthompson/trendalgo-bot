@@ -476,16 +476,28 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_approve(args: argparse.Namespace) -> int:
+    """Approve after preflight PASS (0) or intentional HUMAN skip (2) with --note.
+
+    Exit 1 (FAIL) always blocks. Exit 2 means artifacts exist but a human must
+    confirm — require --note so soft scope gates (H-030/H-035) and hard gates
+    can actually clear. Scripts alone never flip status to approved.
+    """
     hid = args.hid
-    code, msg = run_preflight(hid, strict=True)
-    if code != 0:
+    code, msg = run_preflight(hid, strict=False)
+    if code == 1:
         print(f"Cannot approve {hid}: preflight failed — {msg}", file=sys.stderr)
+        return 1
+    if code == 2 and not (args.note or "").strip():
+        print(
+            f'Cannot approve {hid}: HUMAN confirmation required — re-run with --note "…" ({msg})',
+            file=sys.stderr,
+        )
         return 1
     data = load_gates()
     rec = gate_record(data, hid)
     rec["status"] = "approved"
     rec["approved_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
-    rec["preflight_exit"] = 0
+    rec["preflight_exit"] = code
     if args.note:
         rec["note"] = args.note
     save_gates(data)
