@@ -78,6 +78,13 @@
       "owner": "maintainer"
     },
     {
+      "path": "scripts/summarize-coverage.sh",
+      "purpose": "Summarize pytest coverage JSON for docs/COVERAGE.md gate",
+      "read_when": "validation",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
       "path": "scripts/check-template-version-sync.sh",
       "purpose": "Fail when .template-version drifts from release-please manifest",
       "read_when": "validation",
