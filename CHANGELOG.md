@@ -20,6 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.2...v0.7.0) (2026-10-17)
+
+
+### Added
+
+* **device:** square portfolio grid and Settings module mins ([f11ea6d](https://github.com/edwardlthompson/trendalgo-bot/commit/f11ea6dd121ec98ce4474fcd5f7da0f15fe6abd5))
+
+
+### Fixed
+
+* **ci:** index summarize-coverage.sh in TEMPLATE_INDEX ([84a1b00](https://github.com/edwardlthompson/trendalgo-bot/commit/84a1b0066b94a4856cc5006481c973134c4527a1))
+* **ci:** restore child TEMPLATE_INDEX and ship mcp.web.example ([0340bec](https://github.com/edwardlthompson/trendalgo-bot/commit/0340bec7d62c19645970a3c393c5622a9798fa7c))
+* **ci:** restore codeql-action@v4 after invalid bundle pin ([a10ebba](https://github.com/edwardlthompson/trendalgo-bot/commit/a10ebba1714d90d6b064d9cb33c02e7de3aed9ec))
+
 ## [0.6.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.1...v0.6.2) (2026-10-16)
 
 
