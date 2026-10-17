@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Sprint PF AGENT ✅ (Modular Dashboard). Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
+**Current sprint:** Board clear of AGENT/AUTO after `/ship` → **v0.7.0**. Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
 
-**Tests:** Device portfolio/layout/calendar slices green; watch-agent-gates OK; smoke-sprint PASS for Sprint PF (2026-10-16).
+**Tests:** Local `pre-release-gate --local` green; GitHub CI / Security Scan / CodeQL green on `84a1b00`+; Release Please #47 → tag v0.7.0.
 
-**Recent:** Sprint PF — Portfolio tab renamed Dashboard; snap-to-grid multi-page modules; PNG export; Events Calendar + CoinMarketCal/Coindar wizard. Spec: `docs/features/portfolio-modules.md`.
+**Recent:** `/ship` 2026-10-17 — 24-col square Dashboard grid, resize push-aside, Settings module mins, customize categories, share PNG; CodeQL stays on `@v4` (upd bundle pins invalid). Spec: `docs/features/portfolio-modules.md`.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 

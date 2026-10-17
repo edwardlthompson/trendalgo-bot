@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-10-17 — Ship v0.7.0 Dashboard grid + CodeQL pin
+- **Status:** Accepted
+- **Context:** `/ship` after modular Dashboard work; `update-deps` rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`; a full upstream `TEMPLATE_INDEX.json` briefly landed and failed child-repo path validation.
+- **Decision:** Ship square 24-col portfolio modules with Settings `module_mins`; restore `codeql-action@v4`; keep child `TEMPLATE_INDEX` and index `scripts/summarize-coverage.sh`; add `.cursor/mcp.web.example` for MCP recipe tests. Merge Release Please #47 → v0.7.0; sync `uv.lock`.
+- **Alternatives considered:** Keep upd CodeQL bundle tags (rejected — Actions cannot resolve them); leave unindexed coverage script (rejected — CI hard-fails).
+- **Consequences:** Required checks green; Dependabot Critical/High open count 0; `/regress` must confirm SBOM/Pages/upgrade sim.
+
 ### 2026-10-16 — Ship dependency refresh with transitive CVE pins
 - **Status:** Accepted
 - **Context:** `/ship` audit reported HIGH/CRITICAL on `anyio`, `httpx2`/`httpcore2`, and `urllib3` after patch/minor bumps; upd also rewrote CodeQL refs to invalid `vcodeql-bundle-*` tags.
