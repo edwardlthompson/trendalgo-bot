@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.0...v0.7.1) (2026-10-17)
+
+
+### Changed
+
+* **release:** sync uv.lock to 0.7.0 on release PR ([4e8ea94](https://github.com/edwardlthompson/trendalgo-bot/commit/4e8ea9450ca0be137f15539a285202bacdd018a3))
+
+
+### Documentation
+
+* **kb:** record v0.7.0 ship CI pin and OpenVEX gap ([8ba0e76](https://github.com/edwardlthompson/trendalgo-bot/commit/8ba0e76ca83719b96254e3550535e414457cf378))
+* record v0.7.0 ship milestone in memory and decision log ([89b48f1](https://github.com/edwardlthompson/trendalgo-bot/commit/89b48f142de0ab3fb65d288ee3e59a79e11d9ed7))
+
 ## [0.7.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.2...v0.7.0) (2026-10-17)
 
 
