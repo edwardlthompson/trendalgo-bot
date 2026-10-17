@@ -80,6 +80,12 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-016 — Ship v0.7.0 CodeQL pin + TEMPLATE_INDEX + OpenVEX gap (2026-10-17)
+
+**Symptom:** `/ship` CI red after `update-deps` pinned `github/codeql-action@vcodeql-bundle-v2.27.2` (unresolvable); overwriting child `TEMPLATE_INDEX.json` with full-template paths failed validate-template-index; `mcp.web.example` missing broke pytest; new `scripts/summarize-coverage.sh` was UNINDEXED.
+
+**Fix:** Restore `codeql-action@v4` (and Scorecard SARIF upload); keep child `TEMPLATE_INDEX`; index coverage script; commit `.cursor/mcp.web.example`. After Release Please, `uv lock` → commit. `wait-release-sbom --require` still fails without `openvex.json` (CycloneDX assets present on v0.7.0) — same gap as KB-015 note. Branch-protection verify needs admin token (H-003).
+
 ## KB-015 — Linux CI hangs after green pytest summary (2026-10-16)
 
 **Symptom:** `uv run pytest` prints coverage + `N passed in Xs`, then the GHA step never exits (~10m) until `timeout` (exit 124). Orphan PIDs labeled `pytest` appear at job cleanup.
