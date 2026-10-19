@@ -80,6 +80,12 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-017 — Ship v0.7.1 Secret Sauce + CodeQL pin recurrence (2026-10-19)
+
+**Symptom:** `/ship` after Secret Sauce Lab; `update-deps` again pinned `github/codeql-action@vcodeql-bundle-v2.27.2`; CI pytest `test_masks_for_rsx_cross_period` got `None` from live RSX; `/regress` `wait-release-sbom --require` fails without `openvex.json`; `verify-branch-protection` needs admin (H-003).
+
+**Fix:** Restore `codeql-action@v4`; stub `_rsx_series` in the RSX mask unit test; Release Please #48 → `v0.7.1`; `uv lock` sync. CycloneDX SBOMs present on the release; OpenVEX still a known workflow gap (KB-015/016).
+
 ## KB-016 — Ship v0.7.0 CodeQL pin + TEMPLATE_INDEX + OpenVEX gap (2026-10-17)
 
 **Symptom:** `/ship` CI red after `update-deps` pinned `github/codeql-action@vcodeql-bundle-v2.27.2` (unresolvable); overwriting child `TEMPLATE_INDEX.json` with full-template paths failed validate-template-index; `mcp.web.example` missing broke pytest; new `scripts/summarize-coverage.sh` was UNINDEXED.
