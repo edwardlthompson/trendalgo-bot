@@ -9,13 +9,13 @@ dependencies = [
     "ccxt>=4.5.88",
     "pandas>=2.2.0",
     "pydantic>=2.14.1",
-    "fastapi>=0.143.2",
+    "fastapi>=0.147.0",
     "uvicorn[standard]>=0.54.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "httpx2>=2.13.1",
+    "httpx2>=2.14.0",
     "mypy>=1.13.0",
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",
@@ -64,6 +64,14 @@ constraint-dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.0",
+    "pyright>=1.1.414",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.1",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/trendalgo"]
@@ -128,6 +136,9 @@ ignore_errors = true
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--cov=trendalgo --cov-report=term-missing --cov-fail-under=86"
+markers = [
+    "slow: multi-coin All-TA Secret Sauce smokes (deselect with -m 'not slow')",
+]
 
 [tool.coverage.run]
 source = ["trendalgo"]

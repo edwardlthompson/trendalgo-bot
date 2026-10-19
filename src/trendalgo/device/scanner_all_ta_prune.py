@@ -23,8 +23,10 @@ def fleet_row_to_lts(
     symbol: str,
     stake_usd: float,
     is_bh: bool = False,
+    is_oracle: bool = False,
 ) -> dict[str, Any]:
     """Map a ta_fleet / simulator row into LTS Results / merge shape."""
+    baseline = is_bh or is_oracle
     net = float(row.get("net_profit") or 0.0)
     stake = float(stake_usd) if stake_usd else 1.0
     net_pct = (net / stake) * 100.0
@@ -38,8 +40,13 @@ def fleet_row_to_lts(
     # Fraction (0.01) → percent (1); allow 0% for signal-only winners.
     tsl_pct = tsl * 100.0 if 0.0 < tsl <= 1.0 else tsl
     sid = str(row.get("strategy_id") or row.get("indicator") or "")
-    raw_params = dict(row.get("params") or {}) if not is_bh else {}
-    params = int_params(raw_params, sid) if raw_params else {}
+    ind0 = str(row.get("indicator") or "")
+    is_secret = sid.upper().startswith("GEN_SECRET") or ind0.startswith("Secret Sauce")
+    raw_params = dict(row.get("params") or {}) if not baseline else {}
+    if is_secret:
+        params = raw_params
+    else:
+        params = int_params(raw_params, sid) if raw_params else {}
     trades = row.get("trades")
     signal_net = row.get("signal_net_profit")
     if signal_net is None:
@@ -50,27 +57,49 @@ def fleet_row_to_lts(
         )
     except (TypeError, ValueError):
         signal_net_pct = net_pct
-    return {
-        "indicator": "B&H" if is_bh else sid,
+    if is_oracle:
+        indicator = "Oracle max"
+    elif is_bh:
+        indicator = "B&H"
+    elif is_secret:
+        # Preserve Secret Sauce TA / Lab labels when callers set them.
+        indicator = ind0 if ind0.startswith("Secret Sauce") else "Secret Sauce Lab"
+    else:
+        indicator = sid
+    out: dict[str, Any] = {
+        "indicator": indicator,
         "timeframe": str(row.get("timeframe") or ""),
         "params": params,
-        "trailing_stop_pct": None if is_bh else float(tsl_pct),
-        "trailing_stop_loss_pct": None if is_bh else float(tsl_pct),
+        "trailing_stop_pct": None if baseline else float(tsl_pct),
+        "trailing_stop_loss_pct": None if baseline else float(tsl_pct),
         "final_equity": stake + net,
         "net_pct": net_pct,
-        "signal_net_pct": None if is_bh else signal_net_pct,
+        "signal_net_pct": None if baseline else signal_net_pct,
         "gross_profit": float(row.get("gross_profit") or 0.0),
         "fees_paid": fees_paid,
         "fee_taker_pct": row.get("fee_taker_pct"),
         "stake_usd": stake,
         "trades": "-" if is_bh else int(trades or 0),
         "wins": "-" if is_bh else int(row.get("wins") or 0),
-        "open_trades": 0 if is_bh else int(row.get("open_trades") or 0),
+        "open_trades": 0 if baseline else int(row.get("open_trades") or 0),
         "win_pct": "-" if is_bh else win_pct,
-        "tsl_hits": 0 if is_bh else int(row.get("tsl_hits") or 0),
+        "tsl_hits": 0 if baseline else int(row.get("tsl_hits") or 0),
         "symbol": symbol,
         "optimized": bool(row.get("optimized")),
+        "oracle_swings": list(row.get("oracle_swings") or row.get("trade_list") or [])
+        if is_oracle
+        else [],
     }
+    dossier = row.get("heartbeat_dossier")
+    if is_secret and isinstance(dossier, dict):
+        out["heartbeat_dossier"] = dossier
+        out["strategy_id"] = sid.upper() if sid else "GEN_SECRET_1"
+    if is_secret and bool(row.get("ss_lab_pending")):
+        out["ss_lab_pending"] = True
+    regime = row.get("regime")
+    if is_secret and isinstance(regime, dict):
+        out["regime"] = regime
+    return out
 
 
 def is_profitable(row: dict[str, Any] | None) -> bool:

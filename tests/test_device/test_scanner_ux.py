@@ -144,9 +144,10 @@ def test_results_sheet_cells() -> None:
     assert cells[10] == "2"
     assert "20" in cells[11]  # tsl hit %
     assert cells[12]  # Strength
-    # Create Bot is a widget column, not a text cell.
-    assert len(cells) == len(headers) - 1
-    assert headers[-1]
+    # Show Chart + Create Bot are widget columns, not text cells.
+    assert len(cells) == len(headers) - 2
+    assert headers[-2] == "Show Chart"
+    assert headers[-1] == "Create Bot"
     bh = row_cells({"indicator": "B&H", "net_pct": 4.0, "fees_paid": 5.2}, is_bh=True)
     assert bh[4] == "5.20"
     assert bh[5] == "—"  # Open

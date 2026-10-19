@@ -93,8 +93,8 @@ def test_local_comparison_curves_need_two_points() -> None:
     one = [{"captured_at": "2026-10-10", "total_usd": 100.0}]
     assert local_comparison_curves(one) == ([], [])
     two = [
-        {"captured_at": "2026-10-09", "total_usd": 100.0},
-        {"captured_at": "2026-10-10", "total_usd": 110.0},
+        {"captured_at": "2025-01-01", "total_usd": 100.0},
+        {"captured_at": "2025-06-01", "total_usd": 110.0},
     ]
     top10, buy_hold = local_comparison_curves(two)
     assert len(top10) == 2

@@ -39,6 +39,26 @@ def test_buy_and_hold_rows_are_not_counted_as_the_bot() -> None:
     assert edge["bot_vs_bh_pct"] == -28.0
 
 
+def test_oracle_max_is_not_counted_as_best_bot() -> None:
+    edge = bot_vs_bh_edge(
+        [_row("Oracle max", 500.0), _row("RSI", 12.0), _row("Secret Sauce", 40.0)],
+        {"indicator": "B&H", "net_pct": 25.0},
+    )
+    assert edge is not None
+    assert edge["bot_best_net_pct"] == 40.0
+    assert edge["bot_best_label"] == "Secret Sauce 1h"
+    assert edge["bot_vs_bh_pct"] == 15.0
+
+
+def test_secret_sauce_can_win_best_bt() -> None:
+    edge = bot_vs_bh_edge(
+        [_row("Secret Sauce", 88.0), _row("RSI", 10.0)],
+        {"indicator": "B&H", "net_pct": 20.0},
+    )
+    assert edge is not None
+    assert edge["bot_best_net_pct"] == 88.0
+
+
 def test_missing_buy_and_hold_or_strategies_yield_no_edge() -> None:
     assert bot_vs_bh_edge([_row("RSI", 5.0)], None) is None
     assert bot_vs_bh_edge([], {"net_pct": 5.0}) is None

@@ -23,9 +23,10 @@
 **First milestone:** Seeded icon factory with QA JSON; sample manifest in CI; 4000+ run on This Computer.
 <!-- product-brief-sync:end -->
 
-## Current sprint
+## Now
 
-> **Now:** Board clear of AGENT/AUTO. **Sprint PF** archived in COMPLETED_TASKS.md @ `c3b46fb`+. Open HUMAN: PF-H1 (optional calendar keys) + carry-forward / R-Audit-8.9.
+> **Sprint Oracle-SS** archived in COMPLETED_TASKS.md @ `8ba0e76`.
+> Board clear of AGENT/AUTO. Open HUMAN: PF-H1 (optional calendar keys) + carry-forward / R-Audit-8.9.
 
 | Marker | State |
 |--------|-------|
@@ -35,18 +36,6 @@
 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
 
 > **R-BA-17** / template FOSS surface archived in COMPLETED_TASKS. Alignment: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) (`upstream_aligned_version` 1.10.0). Skills: [`docs/SKILLS_RECIPES.md`](docs/SKILLS_RECIPES.md).
-
----
-
-## Program status (summary)
-
-| Program | Sprints | AGENT | Open human gates |
-|---------|---------|-------|------------------|
-| Core (S0–S12) | Setup → platform, Risk Register Zero | ✅ | Open H-* in HUMAN_BACKLOG (H-001/H-005 archived) |
-| Exchange | S13–S20 · 9 venues · ADR-0010 | ✅ | **H-032** (H-030/H-031 ✅) |
-| DEX | S21–S24 · Base Phase 1 · ADR-0011 | ✅ | **H-036** live (H-035 ✅) |
-| Reviews | R-Audit … R-Audit-8 · GP-Template-1.9 ✅ | ✅ | H-006 |
-Task-level history: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Critique mitigations CM-1–CM-11: closed in [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md).
 
 ---
 
@@ -101,23 +90,4 @@ Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python sc
 
 ## Archived sprints
 
-Full task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
-
-| Sprint | Closed | Archive |
-|--------|--------|---------|
-| Sprint PF | 2026-10-16 | Modular Dashboard (PF-0…PF-10; see COMPLETED_TASKS) |
-| GP-Template-1.9 | 2026-10-16 | Golden Path → device app (GP-1…GP-8; see COMPLETED_TASKS) |
-| HUMAN clearances + template v1.10.0 | 2026-10-16 | H-001/H-005/H-021/H-034 + agent catch-up (see COMPLETED_TASKS) |
-| R-Bootstrap-Align | 2026-07-21 | FOSS agent surface → upstream v0.15.1 (see COMPLETED_TASKS) |
-| S27 | 2026-06-29 | TA fleet backtest + v0.4.0 Settings/billing (see COMPLETED_TASKS) |
-| S25–S26 | 2026-06-26 | TA cache epic + file-limit gate alignment (see COMPLETED_TASKS) |
-| DEX S21–S24 | 2026-06-26 | Plugin engine → dry-run → Base live (see COMPLETED_TASKS) |
-| Exchange S13–S20 | 2026-06-26 | Native CCXT → worldwide Phase 2 → ops |
-| R-Audit-8 | 2026-07-12 | Post product-rec · Lightning 501 · e2e · **v0.5.0** |
-| R-Audit-7 | 2026-07-12 | Post-audit hygiene · charts pin · version sync · PR #7 → 0.4.1 |
-| R-Audit-6 | 2026-07-11 | Post v0.4.0 CI mypy (AGENT ✅; HUMAN → R-Audit-7.9/7.10) |
-| R-Audit-5 | 2026-06-26 | CI axe + offline e2e + KB-013 |
-| R-Audit-4 | 2026-06-26 | Doc sync post DEX S21–S24 |
-| R-Audit … R-Audit-3 | 2026-06-25 | Post-program doc sync |
-| S0–S12 | 2026-06-25 | MVP → platform · Risk Register Zero |
-| Post-Delivery | 🔲 open | [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) |
+Finished sprint task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Post-delivery checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md).

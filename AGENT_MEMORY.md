@@ -40,15 +40,21 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board clear of AGENT/AUTO after `/ship` → **v0.7.0**. Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
+**Current sprint:** Board clear of AGENT/AUTO after Sprint Oracle-SS archive. Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
 
-**Tests:** Local `pre-release-gate --local` green; GitHub CI / Security Scan / CodeQL green on `84a1b00`+; Release Please #47 → tag v0.7.0.
+**Tests:** watch-agent-gates OK 8 stages; SS Lab #2 smokes BTC/ETH/SOL/AVAX 4/4; smoke-sprint PASS (Sprint Oracle-SS).
 
-**Recent:** `/ship` 2026-10-17 — 24-col square Dashboard grid, resize push-aside, Settings module mins, customize categories, share PNG; CodeQL stays on `@v4` (upd bundle pins invalid). Spec: `docs/features/portfolio-modules.md`.
+**Recent:** Sprint Oracle-SS (2026-10-18) — Oracle glossary/Show Chart, SS CDL/Fib bank, parallel Pass 2, Sauce TA (catalog coincidence) vs Lab (deep refine), live ranked Results stream. Spec: `docs/features/secret-sauce.md`.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### Sprint Oracle-SS (2026-10-18)
+
+- Sauce split: **Secret Sauce TA** (Oracle×catalog coincidence, live) vs **Secret Sauce Lab** (async refine, #2 under Oracle)
+- All-TA wall clock dominated by catalog Pass 2 — parallel workers; live partial JSON streams Results
+- Child board needs `### Sprint …` numbered rows for `smoke-sprint` parse
 
 ### Sprint PF — Modular Dashboard (2026-10-16)
 

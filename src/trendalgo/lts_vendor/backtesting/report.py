@@ -187,16 +187,20 @@ def notification_rows_for_symbol(
     ]
 
     if not result_rows:
-        return {"top_strategies": [], "buy_hold": None}
+        return {"top_strategies": [], "buy_hold": None, "oracle_max": None}
 
-    strategy_rows = [row for row in result_rows if str(row.get("indicator", "")) != "B&H"]
+    def _ind(row: dict[str, Any]) -> str:
+        return str(row.get("indicator", "")).strip()
+
+    buy_hold_rows = [row for row in result_rows if _ind(row) == "B&H"]
+    oracle_rows = [row for row in result_rows if _ind(row) == "Oracle max"]
+    strategy_rows = [row for row in result_rows if _ind(row) not in {"B&H", "Oracle max"}]
     strategy_rows_sorted = sorted(
         strategy_rows,
         key=lambda item: (_weighted_rank_value(item), float(item.get("net_pct", float("-inf")))),
         reverse=True,
     )
 
-    buy_hold_rows = [row for row in result_rows if str(row.get("indicator", "")) == "B&H"]
     buy_hold_best = None
     if buy_hold_rows:
         buy_hold_best = sorted(
@@ -204,7 +208,15 @@ def notification_rows_for_symbol(
         )[0]
         _weighted_rank_value(buy_hold_best)
 
+    oracle_best = None
+    if oracle_rows:
+        oracle_best = sorted(
+            oracle_rows, key=lambda item: float(item.get("net_pct", float("-inf"))), reverse=True
+        )[0]
+        _weighted_rank_value(oracle_best)
+
     return {
         "top_strategies": strategy_rows_sorted[: max(0, top_n)],
         "buy_hold": buy_hold_best,
+        "oracle_max": oracle_best,
     }

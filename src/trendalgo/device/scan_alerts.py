@@ -11,6 +11,7 @@ from trendalgo.device.scanner_alert_diff import AlertEvent, coin_keys, diff_aler
 from trendalgo.device.scanner_alerts_store import (
     append_alerts,
     load_history,
+    load_previous_coins,
     load_previous_qualified,
     save_previous_qualified,
 )
@@ -26,13 +27,21 @@ def process_scan_alerts(
     coins: list[dict[str, Any]],
     watchlist_pairs: list[str],
     telegram: TelegramCommands | None = None,
+    floors: dict[str, float] | None = None,
 ) -> tuple[list[AlertEvent], list[dict[str, Any]]]:
     """Diff vs last qualified set, append history, send Telegram when prefs allow."""
     previous = load_previous_qualified(root)
+    prev_coins = load_previous_coins(root)
     watch = watchlist_keys(watchlist_pairs)
-    events = diff_alerts(previous=previous, current_coins=coins, watchlist=watch)
+    events = diff_alerts(
+        previous=previous,
+        current_coins=coins,
+        watchlist=watch,
+        previous_coins=prev_coins,
+        floors=floors,
+    )
     history = append_alerts(root, events) if events else load_history(root)
-    save_previous_qualified(root, coin_keys(coins))
+    save_previous_qualified(root, coin_keys(coins), coins=coins)
     prefs = load_prefs(root)
     for plan in plans_for(events, prefs):
         for event in plan.events:

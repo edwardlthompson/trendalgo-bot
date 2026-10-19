@@ -322,13 +322,15 @@ class ScannerPage(QWidget):
         self._shown = coins
         show_table = tab in (TAB_QUALIFIED, TAB_WATCH)
         show_logs = tab == TAB_LOGS
-        # Keep the table (and its filter row) when source rows exist but filters match none —
-        # otherwise the 7D/30D controls vanish and there is no way to clear them.
+        # Always keep the table shell + column filters on Qualified/Watch so chart-dist
+        # and other widen-net controls stay available even when the scan qualifies none.
         has_source = bool(base)
-        show_grid = show_table and (bool(coins) or has_source)
+        show_grid = show_table
         filter_miss = show_table and has_source and not coins
+        empty_scan = show_table and not has_source
         self._table.setVisible(show_grid)
-        self._empty.setVisible(show_table and not has_source)
+        # Filters stay on the table; status carries the "no pairs" copy (not a blank page).
+        self._empty.setVisible(False)
         self._col_filters.set_filters_visible(show_grid)
         self._logs.setVisible(show_logs)
         if show_logs:
@@ -337,9 +339,11 @@ class ScannerPage(QWidget):
         else:
             self._fill.set_target(self._table)
             self._fill.update(show_grid)
-        if filter_miss:
+        if empty_scan:
+            self._status.setText(S.SCANNER_NONE_TITLE)
+        elif filter_miss:
             self._status.setText(S.SCANNER_FILTER_NONE_STATUS)
-        elif self._status.text() == S.SCANNER_FILTER_NONE_STATUS:
+        elif self._status.text() in {S.SCANNER_FILTER_NONE_STATUS, S.SCANNER_NONE_TITLE}:
             self._status.clear()
         self._filters.set_compare_pairs(self._compare)
         if show_grid:
@@ -399,6 +403,7 @@ class ScannerPage(QWidget):
             coin,
             window=window,
             candles_db=self._candles,
+            price_only=True,
         )
 
     def _open_compare(self) -> None:
@@ -526,8 +531,24 @@ class ScannerPage(QWidget):
         QMessageBox.information(self, S.SCANNER_SHARE, note)
 
     def _emit_scan_alerts(self) -> None:
+        from trendalgo.device.scanner_alerts_store import append_log_alert
+
         watch = load_watchlist(self._root)
-        events, _history = process_scan_alerts(self._root, coins=self._coins, watchlist_pairs=watch)
+        floors = self._filters.dump()
+        events, _history = process_scan_alerts(
+            self._root,
+            coins=self._coins,
+            watchlist_pairs=watch,
+            floors={
+                "min_volume_usd": float(floors.get("min_volume_usd") or 0),
+                "min_uniformity": float(floors.get("min_uniformity") or 0),
+            },
+        )
+        append_log_alert(
+            self._root,
+            kind="scan_log",
+            reason=f"Scan finished: {len(self._coins)} qualified",
+        )
         if self._on_alerts_changed is not None:
             self._on_alerts_changed()
         if self._on_toast is not None:

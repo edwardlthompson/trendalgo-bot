@@ -2,22 +2,56 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any
 
 import pandas as pd
 
-from trendalgo.backtest.fleet_config import PASS12_TRAILING_STOP_PCT
 from trendalgo.backtest.heartbeat_tf import sort_timeframes
 from trendalgo.backtest.load_days import days_for_timeframe
 from trendalgo.backtest.ohlcv_resample import frames_from_1h
-from trendalgo.backtest.ta_fleet import MIN_BARS_FLOOR, backtest_one, buy_and_hold_row
+from trendalgo.backtest.oracle_catalog_coincidence import coincidence_sauce_row
+from trendalgo.backtest.ta_fleet import MIN_BARS_FLOOR, buy_and_hold_row, oracle_max_row
+from trendalgo.device import strings as S
+from trendalgo.device.pair_strategy_pass2 import run_catalog_pass2
+from trendalgo.device.pair_strategy_rows import (
+    collapse_bh_rows,
+    dedupe_indicator_tf,
+    ensure_full_catalog,
+    remember_skip,
+    skip_placeholder_row,
+    sort_rows_by_net,
+)
+from trendalgo.device.pair_strategy_secret_sauce import (
+    current_lab_sauce,
+    lab_oracle_row,
+    mine_and_eval_secret_sauce,
+    pending_sauce_row,
+    refine_sauce_from_peers,
+    upsert_secret_sauce,
+    upsert_secret_sauce_ta,
+    validate_sauce_against_peers,
+)
 from trendalgo.device.scanner_all_ta_prune import deepen_seeds, fleet_row_to_lts
 from trendalgo.device.scanner_tsl_seeds import best_signal_per_strategy, select_tsl_seeds
 
+# Re-export row helpers for existing imports.
+__all__ = [
+    "collapse_bh_rows",
+    "dedupe_indicator_tf",
+    "ensure_full_catalog",
+    "scan_pair_strategies",
+    "skip_placeholder_row",
+    "sort_rows_by_net",
+]
+
 ProgressFn = Callable[[dict[str, Any]], None]
-_BH = "B&H"
-SIGNAL_TSL = float(PASS12_TRAILING_STOP_PCT)
+RowsFn = Callable[[list[dict[str, Any]]], None]
+
+# Sauce TA + Lab after catalog — keep the bar under 100% until both finish.
+SAUCE_PROGRESS_STEPS = 2
 
 
 def scan_pair_strategies(
@@ -31,6 +65,7 @@ def scan_pair_strategies(
     loader: Any,
     gecko_id: str | None = None,
     on_progress: ProgressFn | None = None,
+    on_rows: RowsFn | None = None,
 ) -> list[dict[str, Any]]:
     """Signal-only all TF → best TF → params → TSL grid (trades ≥ 3)."""
     out: list[dict[str, Any]] = []
@@ -38,14 +73,18 @@ def scan_pair_strategies(
     load_symbol = pair.split("/", 1)[0].strip().upper() if "/" in pair else symbol
     load_symbol = (load_symbol or symbol).upper()
     ordered_tf = sort_timeframes(timeframes)
-    total = max(1, len(ordered_tf) * max(1, len(strat_list)))
+    catalog_budget = max(1, len(ordered_tf) * max(1, len(strat_list)))
+    total = catalog_budget + SAUCE_PROGRESS_STEPS
     done = 0
     frames_by_tf: dict[str, pd.DataFrame] = {}
-    signal_rows: list[dict[str, Any]] = []
 
     def emit(message: str, **extra: Any) -> None:
         if on_progress is not None:
             on_progress({"message": message, "done": done, "total": total, **extra})
+
+    def publish() -> None:
+        if on_rows is not None:
+            on_rows(list(out))
 
     lookback_days = days_for_timeframe("1h")
     emit(
@@ -62,9 +101,10 @@ def scan_pair_strategies(
     if loaded_1h.frame is None or loaded_1h.frame.empty:
         emit(f"No 1h candles for {load_symbol}", phase="load", timeframe="1h")
         for sid in strat_list:
-            _remember_skip(skip_best, sid, "insufficient_bars")
+            remember_skip(skip_best, sid, "insufficient_bars")
         done = total
         out = ensure_full_catalog(out, strat_list, symbol=symbol, stake_usd=stake, skips=skip_best)
+        publish()
         emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
         return out
 
@@ -86,7 +126,6 @@ def scan_pair_strategies(
                 phase="load",
                 timeframe=timeframe,
             )
-            done += len(strat_list)
             continue
         frames_by_tf[timeframe] = frame
         emit(
@@ -100,30 +139,56 @@ def scan_pair_strategies(
             bh["timeframe"] = timeframe
             out.append(fleet_row_to_lts(bh, symbol=symbol, stake_usd=stake, is_bh=True))
             emit(f"{timeframe} B&H recorded", phase="bh", timeframe=timeframe)
+        oracle = oracle_max_row(frame, lookback_seconds=0, stake_usd=stake, fee=fee)
+        if oracle is not None:
+            oracle = dict(oracle)
+            oracle["timeframe"] = timeframe
+            out.append(fleet_row_to_lts(oracle, symbol=symbol, stake_usd=stake, is_oracle=True))
+            emit(f"{timeframe} Oracle max recorded", phase="oracle", timeframe=timeframe)
+        publish()
 
-        for index, sid in enumerate(strat_list, start=1):
-            done += 1
-            emit(
-                f"{timeframe} {sid} signal-only ({index}/{len(strat_list)})",
-                phase="pass1-signal",
-                timeframe=timeframe,
-                strategy=sid,
-            )
-            row, reason = backtest_one(
-                frame,
-                sid,
-                fee,
-                stake,
-                timeframe=timeframe,
-                lookback_seconds=0,
-                trailing_stop_pct=SIGNAL_TSL,
-            )
-            if row is None:
-                _remember_skip(skip_best, sid, reason or "compute_error")
-                continue
-            signal_rows.append(row)
+    ss_future: Future[dict[str, Any] | None] | None = None
+    ss_pool: ThreadPoolExecutor | None = None
+    t_ss_start = time.perf_counter()
+    lab_oracle = lab_oracle_row(out)
+    if lab_oracle is not None:
+        ss_tf = str(lab_oracle.get("timeframe") or "1h")
+        out.append(pending_sauce_row(symbol=symbol, timeframe=ss_tf, stake=stake))
+        publish()
+        emit(
+            f"Secret Sauce Lab started on {ss_tf} (overlaps catalog TA)…",
+            phase="sauce",
+            ss_lab_pending=True,
+            ss_tf=ss_tf,
+        )
+        ss_pool = ThreadPoolExecutor(max_workers=1)
+        ss_future = ss_pool.submit(
+            mine_and_eval_secret_sauce,
+            lab_oracle,
+            frames_by_tf=frames_by_tf,
+            symbol=symbol,
+            stake=stake,
+            fee=fee,
+        )
+
+    def _on_tf(_tf: str, batch: list[dict[str, Any]]) -> None:
+        for row in batch:
             out.append(fleet_row_to_lts(row, symbol=symbol, stake_usd=stake))
-        emit(f"{timeframe} done — {len(out)} rows so far", phase="tf_done", timeframe=timeframe)
+        publish()
+
+    signal_rows, pass2_skips, done = run_catalog_pass2(
+        frames_by_tf=frames_by_tf,
+        ordered_tf=ordered_tf,
+        strat_list=strat_list,
+        fee=fee,
+        stake=stake,
+        done_start=done,
+        total=total,
+        on_progress=on_progress,
+        on_tf_rows=_on_tf,
+    )
+    for sid, reason in pass2_skips.items():
+        remember_skip(skip_best, sid, reason)
 
     winners = best_signal_per_strategy(signal_rows)
     seeds = select_tsl_seeds(winners)
@@ -136,7 +201,6 @@ def scan_pair_strategies(
         def deepen_line(msg: str) -> None:
             emit(msg, phase="tsl-grid")
 
-        # Any loaded frame as fallback; deepen_seeds picks seed TF from frames_by_tf.
         fallback = next(iter(frames_by_tf.values()))
         for best in deepen_seeds(
             fallback,
@@ -148,146 +212,85 @@ def scan_pair_strategies(
             on_progress=deepen_line,
         ):
             out.append(fleet_row_to_lts(best, symbol=symbol, stake_usd=stake))
+            publish()
 
     out = dedupe_indicator_tf(out)
     out = ensure_full_catalog(out, strat_list, symbol=symbol, stake_usd=stake, skips=skip_best)
-    emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
-    return out
+    publish()
+    # Catalog budget used; Sauce steps still pending (bar must stay < 100%).
+    done = min(done, catalog_budget)
+    emit(S.SCAN_PHASE_SAUCE_COINCIDENCE, phase="sauce", catalog_ready=True)
 
+    # Secret Sauce TA — catalog coincidence at Oracle bars (live, before Lab).
+    if lab_oracle is not None:
+        o_tf = str(lab_oracle.get("timeframe") or "1h")
+        o_frame = frames_by_tf.get(o_tf)
+        if o_frame is not None:
+            try:
+                coin = coincidence_sauce_row(
+                    o_frame, lab_oracle, out, fee=fee, stake=stake, symbol=symbol
+                )
+            except (TypeError, ValueError, KeyError, IndexError):
+                coin = None
+            if coin is not None:
+                out = upsert_secret_sauce_ta(out, coin)
+                publish()
+                emit(
+                    f"Secret Sauce TA recorded ({coin.get('net_pct')}%)",
+                    phase="sauce",
+                    ss_coincidence=True,
+                )
+    done = min(total, done + 1)
+    emit(S.SCAN_PHASE_SAUCE_COINCIDENCE + " done", phase="sauce", ss_ta_done=True)
 
-def ensure_full_catalog(
-    rows: list[dict[str, Any]],
-    strat_list: tuple[str, ...],
-    *,
-    symbol: str,
-    stake_usd: float,
-    skips: dict[str, str] | None = None,
-) -> list[dict[str, Any]]:
-    """After dedupe, fill missing indicators with honest skip_reason rows (+ keep B&H)."""
-    present = {str(r.get("indicator") or "").strip().upper() for r in rows}
-    skips = skips or {}
-    filled = list(rows)
-    for sid in strat_list:
-        upper = str(sid).strip().upper()
-        if not upper or upper in present or upper == _BH:
-            continue
-        reason = skips.get(upper) or skips.get(sid) or "no_trades"
-        filled.append(
-            skip_placeholder_row(upper, symbol=symbol, stake_usd=stake_usd, reason=reason)
-        )
-        present.add(upper)
-    return collapse_bh_rows(filled)
-
-
-def skip_placeholder_row(
-    strategy_id: str,
-    *,
-    symbol: str,
-    stake_usd: float,
-    reason: str,
-) -> dict[str, Any]:
-    """Sheet row for an indicator that was tried but produced no tradable result."""
-    stake = float(stake_usd) if stake_usd else 1.0
-    return {
-        "indicator": strategy_id.upper(),
-        "timeframe": "—",
-        "params": {},
-        "trailing_stop_pct": None,
-        "trailing_stop_loss_pct": None,
-        "final_equity": stake,
-        "net_pct": 0.0,
-        "signal_net_pct": 0.0,
-        "gross_profit": 0.0,
-        "fees_paid": 0.0,
-        "fee_taker_pct": None,
-        "stake_usd": stake,
-        "trades": 0,
-        "win_pct": "-",
-        "tsl_hits": 0,
-        "symbol": symbol,
-        "optimized": False,
-        "skip_reason": reason,
-    }
-
-
-def _remember_skip(best: dict[str, str], sid: str, reason: str) -> None:
-    """Keep the most informative skip reason across TFs."""
-    upper = str(sid).strip().upper()
-    rank = {
-        "compute_error": 0,
-        "missing_backend": 1,
-        "not_a_strategy": 2,
-        "no_pattern": 3,
-        "no_trades": 4,
-        "insufficient_bars": 5,
-    }
-    prev = best.get(upper)
-    if prev is None or rank.get(reason, 9) < rank.get(prev, 9):
-        best[upper] = reason
-
-
-def collapse_bh_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Keep a single B&H row — the best Net % — for the Backtest sheet."""
-    best_bh: dict[str, Any] | None = None
-    best_net = float("-inf")
-    others: list[dict[str, Any]] = []
-    for row in rows:
-        if str(row.get("indicator") or "").strip() != _BH:
-            others.append(row)
-            continue
+    t_join = time.perf_counter()
+    sauce: dict[str, Any] | None = None
+    if ss_future is not None:
+        if ss_future.done():
+            emit("Secret Sauce Lab already done — merging…", phase="sauce")
+        else:
+            emit("Secret Sauce Lab still cooking (async merge)…", phase="sauce")
         try:
-            net = float(row.get("net_pct"))  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            net = float("-inf")
-        if net > best_net:
-            best_bh, best_net = row, net
-    if best_bh is not None:
-        others.append(best_bh)
-    return others
+            sauce = ss_future.result()
+        except Exception:
+            sauce = None
+        ss_wait = time.perf_counter() - t_join
+        ss_total = time.perf_counter() - t_ss_start
+        emit(
+            f"{S.SCAN_PHASE_SAUCE_MERGE} total={ss_total:.2f}s wait={ss_wait:.2f}s",
+            phase="sauce",
+            ss_mine_s=round(ss_total, 3),
+            ss_wait_s=round(ss_wait, 3),
+        )
+    if ss_pool is not None:
+        ss_pool.shutdown(wait=False)
 
+    # Secret Sauce Lab — deep refine; never replaces Sauce TA.
+    base = sauce if sauce is not None else current_lab_sauce(out)
+    if base is not None:
+        emit(S.SCAN_PHASE_SAUCE_REFINE, phase="sauce")
+        try:
+            base = refine_sauce_from_peers(
+                base, out, frames_by_tf, stake=stake, fee=fee, time_budget_s=12.0
+            )
+        except (TypeError, ValueError, KeyError, IndexError):
+            pass
+        ok, reason = validate_sauce_against_peers(base, out, frames_by_tf, stake=stake, fee=fee)
+        base = dict(base)
+        base["ss_lab_pending"] = False
+        base["spectrum_ok"] = bool(ok)
+        if not ok:
+            base["spectrum_note"] = reason
+        out = upsert_secret_sauce(out, base)
+        publish()
+        if ok:
+            emit("Secret Sauce Lab recorded", phase="sauce")
+        else:
+            emit(f"Secret Sauce Lab recorded (spectrum: {reason})", phase="sauce")
+    else:
+        emit("Secret Sauce Lab unavailable — pending stub left for honesty", phase="sauce")
+    done = min(total, done + 1)
 
-def dedupe_indicator_tf(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """One row per indicator — best Net % across TFs; prefer optimized on ties."""
-    best: dict[str, dict[str, Any]] = {}
-    bhs: list[dict[str, Any]] = []
-    for row in rows:
-        ind = str(row.get("indicator") or "").strip()
-        if ind == _BH:
-            bhs.append(row)
-            continue
-        prev = best.get(ind)
-        if prev is None or _row_beats(row, prev):
-            best[ind] = row
-    return collapse_bh_rows(list(best.values()) + bhs)
-
-
-def sort_rows_by_net(
-    rows: list[dict[str, Any]], *, descending: bool = True
-) -> list[dict[str, Any]]:
-    """Sort by Net % (dir) → Win % desc → fewer TSL hits."""
-
-    def key(row: dict[str, Any]) -> tuple[float, float, float]:
-        net = _num(row.get("net_pct"), missing=float("-inf"))
-        win = _num(row.get("win_pct"), missing=float("-inf"))
-        hits = _num(row.get("tsl_hits"), missing=0.0)
-        net_key = net if descending else -net
-        return (net_key, win, -hits)
-
-    return sorted(rows, key=key, reverse=True)
-
-
-def _row_beats(candidate: dict[str, Any], incumbent: dict[str, Any]) -> bool:
-    c_net = _num(candidate.get("net_pct"), missing=float("-inf"))
-    i_net = _num(incumbent.get("net_pct"), missing=float("-inf"))
-    if c_net != i_net:
-        return c_net > i_net
-    return bool(candidate.get("optimized")) and not bool(incumbent.get("optimized"))
-
-
-def _num(value: Any, *, missing: float) -> float:
-    if value in (None, "-", ""):
-        return missing
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return missing
+    emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
+    publish()
+    return out

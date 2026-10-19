@@ -216,6 +216,108 @@ def simulate_buy_and_hold(
     }
 
 
+def simulate_oracle_max_gain(
+    df: pd.DataFrame,
+    *,
+    stake_usd: float,
+    fee: ExchangeFeeSchedule,
+) -> dict[str, Any] | None:
+    """Long-only max gain: non-overlapping swing trough→peak on completed bars.
+
+    Uses bar high/low only at index ``i`` (no lookahead past that bar). Fees match
+    buy-and-hold (fixed stake round-trip per swing).
+    """
+    if len(df) < 3:
+        return None
+    highs = (
+        df["high"].to_numpy(dtype=float)
+        if "high" in df.columns
+        else df["close"].to_numpy(dtype=float)
+    )
+    lows = (
+        df["low"].to_numpy(dtype=float)
+        if "low" in df.columns
+        else df["close"].to_numpy(dtype=float)
+    )
+    swings = _swing_points(highs, lows)
+    if not swings:
+        return None
+    gross = 0.0
+    fees_paid = 0.0
+    trades = 0
+    wins = 0
+    trade_list: list[dict[str, Any]] = []
+    position: tuple[int, float] | None = None
+    for idx, kind, price in swings:
+        if position is None and kind == "L" and price > 0:
+            position = (idx, price)
+            continue
+        if position is not None and kind == "H" and price > position[1]:
+            entry_i, entry_px = position
+            g = stake_usd * ((price / entry_px) - 1.0)
+            f = fee.round_trip_taker_cost(stake_usd)
+            net_t = g - f
+            gross += g
+            fees_paid += f
+            trades += 1
+            if net_t > 0:
+                wins += 1
+            trade_list.append(
+                {
+                    "entry_index": entry_i,
+                    "exit_index": idx,
+                    "entry_time": _bar_time(df, entry_i),
+                    "exit_time": _bar_time(df, idx),
+                    "entry_price": entry_px,
+                    "exit_price": price,
+                    "net_pnl": round(net_t, 4),
+                    "pnl_pct": round(((price / entry_px) - 1.0) * 100.0, 4),
+                    "exit_reason": "oracle_swing",
+                }
+            )
+            position = None
+    if trades == 0:
+        return None
+    net = gross - fees_paid
+    return {
+        "strategy_id": "ORACLE_MAX",
+        "timeframe": "ALL",
+        "gross_profit": round(gross, 4),
+        "fees_paid": round(fees_paid, 4),
+        "net_profit": round(net, 4),
+        "trades": trades,
+        "wins": wins,
+        "open_trades": 0,
+        "tsl_hits": 0,
+        "win_rate": round(wins / trades, 4) if trades else 0.0,
+        "fee_taker_pct": fee.taker_pct,
+        "params": {},
+        "trailing_stop_pct": 0.0,
+        "phase": "baseline",
+        "bar_count": len(df),
+        "trade_list": trade_list,
+        "oracle_swings": trade_list,
+    }
+
+
+def _swing_points(
+    highs: Any,
+    lows: Any,
+) -> list[tuple[int, str, float]]:
+    """Local trough (L) / peak (H) on completed bars only (needs neighbors)."""
+    n = len(highs)
+    out: list[tuple[int, str, float]] = []
+    for i in range(1, n - 1):
+        lo = float(lows[i])
+        hi = float(highs[i])
+        if lo <= float(lows[i - 1]) and lo <= float(lows[i + 1]):
+            out.append((i, "L", lo))
+        if hi >= float(highs[i - 1]) and hi >= float(highs[i + 1]):
+            out.append((i, "H", hi))
+    out.sort(key=lambda item: item[0])
+    return out
+
+
 def trade_hold_regions(trade_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Map simulator trade_list into chart highlight regions (green/red)."""
     regions: list[dict[str, Any]] = []

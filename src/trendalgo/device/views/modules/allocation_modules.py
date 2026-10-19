@@ -27,26 +27,19 @@ class CoinAllocationModule(QWidget):
         chart.setBackgroundVisible(False)
         self._view = QChartView(chart)
         self._view.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self._center = QLabel("—")
-        self._center.setObjectName("hint")
-        self._center.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._legend = QLabel("")
         self._legend.setWordWrap(True)
         self._legend.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
-        left = QVBoxLayout()
-        left.addWidget(self._view, 1)
-        left.addWidget(self._center)
-        lay.addLayout(left, 3)
+        lay.addWidget(self._view, 3)
         lay.addWidget(self._legend, 1)
 
     def set_overview(self, overview: PortfolioOverview | None, *, range_key: str) -> None:
         del range_key
         self._series.clear()
         if overview is None or not overview.allocation:
-            self._center.setText(S.PORTFOLIO_MODULE_EMPTY)
-            self._legend.setText("")
+            self._legend.setText(S.PORTFOLIO_MODULE_EMPTY)
             return
         lines = []
         for row in overview.allocation[:8]:
@@ -57,12 +50,6 @@ class CoinAllocationModule(QWidget):
             del slice_
             lines.append(f"{name}  {pct:.2f}%  {money(val)}")
         self._legend.setText("\n".join(lines))
-        top = overview.allocation[0]
-        # Value/% only under the donut — asset names live in the right-hand list.
-        self._center.setText(
-            f"{money(top.get('value_usd'))}\n"
-            f"{float(top.get('pct') or top.get('allocation_pct') or 0):.2f}%"
-        )
 
 
 class CategoryAllocationModule(QWidget):
@@ -72,6 +59,7 @@ class CategoryAllocationModule(QWidget):
         self._series.setHoleSize(0.5)
         chart = QChart()
         chart.addSeries(self._series)
+        chart.legend().setVisible(False)
         chart.setBackgroundVisible(False)
         self._view = QChartView(chart)
         self._view.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -79,7 +67,7 @@ class CategoryAllocationModule(QWidget):
         self._legend.setWordWrap(True)
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
-        lay.addWidget(self._view, 1)
+        lay.addWidget(self._view, 3)
         lay.addWidget(self._legend, 1)
 
     def set_overview(self, overview: PortfolioOverview | None, *, range_key: str) -> None:

@@ -173,8 +173,9 @@ def test_scanner_and_status_show_empty_states_and_create_no_files(
 ) -> None:
     scanner = ScannerPage(ctx)
     qtbot.addWidget(scanner)
-    assert not scanner._empty.isHidden()
-    assert scanner._table.isHidden()
+    # Qualified keeps table + column filters even with zero coins (widen-net).
+    assert scanner._empty.isHidden()
+    assert not scanner._table.isHidden()
     opened: list[bool] = []
     status = StatusPage(ctx, on_build_plan=lambda: opened.append(True))
     qtbot.addWidget(status)

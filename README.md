@@ -216,11 +216,41 @@ bash scripts/deploy-vps.sh
 
 </details>
 
+<details open>
+<summary><strong>Secret Sauce — the star of the show</strong></summary>
+
+Most backtests dump a pile of indicators and shrug. **Secret Sauce** is TrendAlgo’s attempt to *think*: for *this* coin and *this* window it cooks a causal **Enter when… / Exit when…** recipe, then earns its seat on the results board — no forced sort, no future peek.
+
+### The spectrum (we don’t cheat)
+
+| Role | What it means |
+|------|----------------|
+| **Oracle max** | Hindsight ceiling — perfect long-only swing timing on completed bars |
+| **Secret Sauce** | Causal Lab formula that has to *earn* Net % against real fees |
+| **Buy & Hold / catalog TA** | Lazy baseline and the peer crowd |
+Secret Sauce aims for: `Oracle → Secret Sauce → peers / B&H`. We never re-order the table to fake #2.
+
+### How we cook it
+
+After Oracle is on the board, the **Secret Sauce Lab** runs as its own job (catalog Results unlock without waiting):
+
+1. **Regime detector** — structural × volatility × direction (ADX / Efficiency Ratio / Choppiness ensemble, ATR & Bollinger width percentiles, MA ribbon, volume when it’s real).
+2. **Family budgets** — soft weights across dip-in-uptrend, mean-reversion, momentum, squeeze-breakout, volume impulse. Always skim every family; fat-budget the home regime. No brittle hard-switch.
+3. **Fee-aware P&L search** — same exchange fees as the scan; prefer beating Buy & Hold when the math allows.
+4. **Plain English + dossier** — re-simulable Enter/Exit; Study shows regime chips, Oracle gap, and why this recipe won.
+
+Blind RSI mean-reversion is looking for keys under the streetlight. An uptrend wants dip-in-uptrend math; a quiet range wants mean-reversion; chop is where grown-ups skim and admit the tape is hostile. Closing every point of Oracle would mean seeing the future — we don’t. Sparse, fee-honest trades that beat B&H under the Oracle ceiling are the win.
+
+**Lab notebook (full regime catalog):** [`docs/features/secret-sauce.md`](docs/features/secret-sauce.md)
+
+</details>
+
 <details>
 <summary><strong>What it does</strong></summary>
 
 | Capability | Description |
 |------------|-------------|
+| **Secret Sauce** | Per-coin causal Lab formula on the Oracle→Sauce→B&H spectrum — [feature write-up](docs/features/secret-sauce.md) |
 | **Portfolio tracking** | Read-only sync across **9 CEX venues** — [exchange roadmap](docs/EXCHANGE_ROADMAP.md) |
 | **Performance charts** | 1Y/6M/3M/1M/14D/7D/24H views vs equal-weight **top-10 crypto index** |
 | **Algo trading** | Native [CCXT runner](docs/NATIVE_TRADING.md) (dry-run default), strategy templates, risk limits, multi-bot |

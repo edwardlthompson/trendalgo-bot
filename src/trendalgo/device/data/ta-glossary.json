@@ -891,7 +891,7 @@
       "category": "Extended Indicators",
       "title": "Cksp",
       "short": "The Tushar Chande and Stanley Kroll in their book",
-      "long": "Chande Kroll Stop (CKSP) The Tushar Chande and Stanley Kroll in their book \u201cThe New Technical Trader\u201d. It is a trend-following indicator, The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+      "long": "Chande Kroll Stop (CKSP) The Tushar Chande and Stanley Kroll in their book “The New Technical Trader”. It is a trend-following indicator, The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
       "formula": "Default Inputs: p=10, x=1, q=9, tvmode=True ATR = Average True Range LS0 = high.rolling(p).max() - x * ATR(length=p) LS = LS0.rolling(q).max() SS0 = high.rolling(p).min() + x * ATR(length=p) SS = SS0.rolling(q).min()"
     },
     {
@@ -1182,7 +1182,7 @@
       "title": "Fibonacci Extension Levels",
       "short": "Projected targets beyond the swing using 127.2%, 161.8%, and 261.8% ratios.",
       "long": "Fibonacci extensions estimate where price may reach after breaking a swing. They are used for profit targets and breakout continuation zones.",
-      "formula": "Ext(p) = SwingHigh + p \u00d7 (SwingHigh \u2212 SwingLow); p \u2208 {0.272, 0.618, 1.618}",
+      "formula": "Ext(p) = SwingHigh + p × (SwingHigh − SwingLow); p ∈ {0.272, 0.618, 1.618}",
       "related": [
         "FIB_RETRACE"
       ]
@@ -1191,9 +1191,9 @@
       "id": "FIB_RETRACE",
       "category": "Fibonacci & Levels",
       "title": "Fibonacci Retracement Levels",
-      "short": "Horizontal support/resistance from swing high\u2013low using 23.6%\u201378.6% ratios.",
+      "short": "Horizontal support/resistance from swing high–low using 23.6%–78.6% ratios.",
       "long": "Fibonacci retracement plots proportional pullback levels between a recent swing high and swing low. Traders watch 38.2%, 50%, and 61.8% as common reaction zones during trends.",
-      "formula": "Level(p) = SwingHigh \u2212 p \u00d7 (SwingHigh \u2212 SwingLow); p \u2208 {0.236, 0.382, 0.5, 0.618, 0.786}",
+      "formula": "Level(p) = SwingHigh − p × (SwingHigh − SwingLow); p ∈ {0.236, 0.382, 0.5, 0.618, 0.786}",
       "related": [
         "FIB_EXT"
       ]
@@ -1236,7 +1236,7 @@
       "title": "Ha",
       "short": "The Heikin-Ashi technique averages price data to create a Japanese",
       "long": "Heikin Ashi Candles (HA) The Heikin-Ashi technique averages price data to create a Japanese candlestick chart that filters out market noise. Heikin-Ashi charts, The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
-      "formula": "HA_OPEN[0] = (open[0] + close[0]) / 2 HA_CLOSE = (open[0] + high[0] + low[0] + close[0]) / 4 HA_OPEN = (HA_OPEN[i\u22121] + HA_CLOSE[i\u22121]) / 2 HA_HIGH = MAX(HA_OPEN, HA_HIGH, HA_CLOSE) HA_LOW = MIN(HA_OPEN, HA_LOW, HA_CLOSE)"
+      "formula": "HA_OPEN[0] = (open[0] + close[0]) / 2 HA_CLOSE = (open[0] + high[0] + low[0] + close[0]) / 4 HA_OPEN = (HA_OPEN[i−1] + HA_CLOSE[i−1]) / 2 HA_HIGH = MAX(HA_OPEN, HA_HIGH, HA_CLOSE) HA_LOW = MIN(HA_OPEN, HA_LOW, HA_CLOSE)"
     },
     {
       "id": "HILO",
@@ -1352,7 +1352,7 @@
       "category": "Overlap Studies",
       "title": "Ichimoku",
       "short": "Developed Pre WWII as a forecasting model for financial markets.",
-      "long": "Ichimoku Kink\u014d Hy\u014d (ichimoku) Developed Pre WWII as a forecasting model for financial markets. https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/ichimoku-ich/ The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+      "long": "Ichimoku Kinkō Hyō (ichimoku) Developed Pre WWII as a forecasting model for financial markets. https://www.tradingtechnologies.com/help/x-study/technical-indicator-definitions/ichimoku-ich/ The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
       "formula": "Default Inputs: tenkan=9, kijun=26, senkou=52 MIDPRICE = Midprice TENKAN_SEN = MIDPRICE(high, low, close, length=tenkan) KIJUN_SEN = MIDPRICE(high, low, close, length=kijun) CHIKOU_SPAN = close.shift(-kijun) SPAN_A = 0.5 * (TENKAN_SEN + KIJUN_SEN) SPAN_A = SPAN_A.shift(kijun)",
       "related": [
         "SUPERTREND",
@@ -2248,7 +2248,7 @@
       "category": "Extended Indicators",
       "title": "Ssf",
       "short": "John F. Ehlers's solution to reduce lag and remove aliasing noise with his",
-      "long": "Ehler's Super Smoother Filter (SSF) \u00a9 2013 John F. Ehlers's solution to reduce lag and remove aliasing noise with his research in aerospace analog filter design. This indicator comes with two The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+      "long": "Ehler's Super Smoother Filter (SSF) © 2013 John F. Ehlers's solution to reduce lag and remove aliasing noise with his research in aerospace analog filter design. This indicator comes with two The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
       "formula": "Default Inputs: length=10, poles=[2, 3]"
     },
     {
@@ -2508,8 +2508,8 @@
       "id": "TTM_TREND",
       "category": "Momentum Indicators",
       "title": "Ttm Trend",
-      "short": "This indicator is from John Carters book \u201cMastering the Trade\u201d and plots the",
-      "long": "TTM Trend (TTM_TRND) This indicator is from John Carters book \u201cMastering the Trade\u201d and plots the bars green or red. It checks if the price is above or under the average price of The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
+      "short": "This indicator is from John Carters book “Mastering the Trade” and plots the",
+      "long": "TTM Trend (TTM_TRND) This indicator is from John Carters book “Mastering the Trade” and plots the bars green or red. It checks if the price is above or under the average price of The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
       "formula": "Default Inputs: length=6 averageprice = (((high[5]+low[5])/2)+((high[4]+low[4])/2)+((high[3]+low[3])/2)+((high[2]+low[2])/2)+((high[1]+low[1])/2)+((high[6]+low[6])/2)) / 6"
     },
     {
@@ -2707,7 +2707,19 @@
       "short": "SMA = Simple Moving Average",
       "long": "Rolling Z Score length=30, std=1 SMA = Simple Moving Average The indicator uses standard OHLCV inputs and integrates with the unified TA backtest engine.",
       "formula": "Default Inputs: length=30, std=1 SMA = Simple Moving Average STDEV = Standard Deviation std = std * STDEV(close, length) mean = SMA(close, length) ZSCORE = (close - mean) / std"
+    },
+    {
+      "id": "oracle-max",
+      "category": "Baselines",
+      "title": "Oracle max",
+      "short": "Hindsight ceiling — the most a trader could have made over the window with flawless trough-to-peak timing.",
+      "long": "Oracle max is not a live strategy. It is the fee-aware Net % ceiling if every confirmed trough-to-peak swing in the backtest window had been taken perfectly. No causal indicator can equal it; Secret Sauce and catalog strategies aim below this bar. Use it to judge how much edge remains on the tape, not as a bot recipe.",
+      "formula": "sum(perfect_swing_net_after_fees) / stake → Net %",
+      "related": [
+        "B&H",
+        "Secret Sauce"
+      ]
     }
   ],
-  "count": 307
+  "count": 308
 }

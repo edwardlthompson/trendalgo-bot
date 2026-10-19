@@ -301,8 +301,56 @@ SCANNER_COLOR_RANKS = "Color ranks"
 BACKTEST_PERFECT_ONLY = "Perfect Strategies"
 BACKTEST_PERFECT_HELP = (
     "Show only strategies with a 100% win rate and zero trailing-stop hits "
-    "(plus buy & hold). These edged without relying on the TSL."
+    "(plus buy & hold). Not the same as Oracle max (perfect trough→peak swings)."
 )
+BACKTEST_ORACLE_LABEL = "Oracle max  ← perfect trough→peak"
+BACKTEST_DERIVE_RULE = "Derive rule from oracle"
+BACKTEST_DERIVE_RULE_HELP = (
+    "Mine a local GEN_ORACLE rule from oracle swings vs strategy misses "
+    "(requires a prior All-TA run with Oracle max)."
+)
+BACKTEST_DERIVE_EMPTY = "Run All-TA first so Oracle max and strategy rows exist."
+BACKTEST_DERIVE_NONE = "No composite rule found from the current oracle gap."
+SECRET_SAUCE_LABEL = "Secret Sauce Lab"
+SECRET_SAUCE_TA_LABEL = "Secret Sauce TA"
+SECRET_SAUCE_PARAMS_STUB = "entry+exit · study"
+SECRET_SAUCE_STUDY_TITLE = "{name} — {symbol}"
+SECRET_SAUCE_STUDY_EMPTY = (
+    "No heartbeat dossier on this row. Re-run All-TA / Backtest to refresh Secret Sauce."
+)
+SECRET_SAUCE_STUDY_META = (
+    "Pair {pair} · TF {tf} · train coverage {train:.0f}% · holdout {hold:.0f}%"
+)
+SECRET_SAUCE_STUDY_NETS = (
+    "Replay Net % — {name} {sauce:.2f}% · B&H {bh:.2f}% · Oracle ceiling {oracle:.2f}%"
+)
+SECRET_SAUCE_REGIME = (
+    "Regime — {structural} · vol {volatility} · dir {direction}"
+    "{squeeze} · confidence {confidence:.0%}"
+)
+SECRET_SAUCE_REGIME_VOTES = "Votes — ADX {adx} · ER {er} · CHOP {chop} · ribbon {ribbon}"
+SECRET_SAUCE_PENDING = "Secret Sauce Lab is still cooking…"
+SCAN_PHASE_CATALOG = "Catalog TA (parallel)…"
+SCAN_PHASE_SAUCE_COINCIDENCE = "Secret Sauce TA — Oracle×catalog coincidence…"
+SCAN_PHASE_SAUCE_REFINE = "Secret Sauce Lab refine (~12s)…"
+SCAN_PHASE_SAUCE_MERGE = "Secret Sauce Lab merge…"
+SECRET_SAUCE_FORMULA = "Formula (Enter + Exit — same rhyme every trade)"
+SECRET_SAUCE_ENTER = "Enter"
+SECRET_SAUCE_EXIT = "Exit"
+SECRET_SAUCE_COVERAGE = "Oracle swing coverage under this formula"
+SECRET_SAUCE_COL_SWING = "#"
+SECRET_SAUCE_COL_ENTRY = "Entry bar"
+SECRET_SAUCE_COL_EXIT = "Exit bar"
+SECRET_SAUCE_COL_FIRED = "Entry fired?"
+SECRET_SAUCE_COL_EXIT_FIRED = "Exit fired?"
+SECRET_SAUCE_YES = "Yes"
+SECRET_SAUCE_NO = "No"
+SECRET_SAUCE_COPY = "Copy formula"
+SECRET_SAUCE_CREATE_BOT = "Create bot from Secret Sauce"
+ALERTS_TAB_LOGS = "Logs"
+ALERTS_TAB_ENTERED = "Entered"
+ALERTS_TAB_LEFT = "Left"
+ALERTS_TAB_TRADES = "Trades"
 SCANNER_FILTER_SIGNALS = "Signals"
 SCANNER_SIGNALS_3COMMAS = "3Commas"
 SCANNER_SIGNALS_ALL_TA = "All TA"
@@ -427,8 +475,10 @@ BACKTEST_RESULT_HEADERS = (
     "TSL Hits",
     "TSL Hit %",
     "Strength",
+    "Show Chart",
     "Create Bot",
 )
+BACKTEST_SHOW_CHART = "Show Chart"
 BACKTEST_SHARE = "Share"
 BACKTEST_SHARE_TIP = "Export the filtered results table as a PNG image."
 BACKTEST_SHARE_DIALOG = "Export backtest results"
@@ -617,13 +667,19 @@ AUTOSCAN_PAUSED = "Auto-scan paused (scan running)."
 AUTOSCAN_OFF = "Auto-scan waits until a scan finishes."
 NOTIFY_SECTION = "Alerts and notifications"
 NOTIFY_SECTION_HELP = (
-    "Choose which events raise an OS toast, appear on the Alerts tab, and (when enabled) "
-    "mirror to Telegram."
+    "Per event kind: enable Windows toast and/or Telegram. Logs default off to avoid spam. "
+    "Alerts history still records events on the Alerts tabs."
 )
+NOTIFY_COL_WINDOWS = "Windows"
+NOTIFY_COL_TELEGRAM = "Telegram"
+NOTIFY_KIND_LOGS = "Scan / backtest logs"
+NOTIFY_KIND_ENTERED = "New qualified entries"
+NOTIFY_KIND_LEFT = "Left qualified (watchlist)"
+NOTIFY_KIND_TRADES = "Trade alerts"
 NOTIFY_WATCHLIST = "Watchlist leave alerts"
 NOTIFY_QUALIFIED = "Qualified enter alerts"
 NOTIFY_TRADES = "Trade fill alerts"
-NOTIFY_TELEGRAM = "Send matching alerts to Telegram"
+NOTIFY_TELEGRAM = "Enable Telegram for checked kinds"
 NOTIFY_TG_WATCHLIST = "Telegram: watchlist"
 NOTIFY_TG_QUALIFIED = "Telegram: qualified"
 NOTIFY_TG_TRADES = "Telegram: trades"

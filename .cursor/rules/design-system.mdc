@@ -2,6 +2,7 @@
 description: Design system rules for UI work — tokens, themes, i18n separation
 alwaysApply: false
 globs:
+  - src/trendalgo/device/**
   - examples/web/**
   - examples/android/**
   - design-tokens/**
@@ -12,12 +13,13 @@ globs:
 
 # Design System
 
-Before editing UI in `examples/web/` or `examples/android/`:
+Primary product UI is **PySide6 device** (`src/trendalgo/device/`). Before editing device, web, or android UI:
 
-1. Read @docs/WEB_PROJECT_LAYOUT.md before moving site files or choosing publish paths (web stack)
-2. Read @docs/DESIGN_GUIDE.md, @docs/ux-ui-guidelines.md, and @branding/BRANDING.md
-3. Read generated tokens in `design-tokens/design-tokens.json` (source) — not hand-edit outputs
-4. Logos and pitch copy live under `branding/` — run sync + `generate-project-readme.py` after edits
+1. Device: read @docs/DESIGN_GUIDE.md, @docs/ux-ui-guidelines.md, and device theme/token helpers under `src/trendalgo/device/`
+2. Web: read @docs/WEB_PROJECT_LAYOUT.md before moving site files or choosing publish paths
+3. Read @docs/DESIGN_GUIDE.md, @docs/ux-ui-guidelines.md, and @branding/BRANDING.md
+4. Read generated tokens in `design-tokens/design-tokens.json` (source) — not hand-edit outputs
+5. Logos and pitch copy live under `branding/` — run sync + `generate-project-readme.py` after edits
 
 ## Repository layout (web)
 

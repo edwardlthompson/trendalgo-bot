@@ -28,6 +28,8 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import strings as S
 from trendalgo.device.backtest_results_ui import (
+    CREATE_BOT_COL,
+    SHOW_CHART_COL,
     filter_perfect_rows,
     heat_for_rows,
     row_cells,
@@ -60,10 +62,12 @@ def strategy_sheet_rows(
     raw = coin.get("backtest_top_strategies")
     strategies = [r for r in raw if isinstance(r, dict)] if isinstance(raw, list) else []
     bh = coin.get("backtest_buy_hold")
+    oracle = coin.get("backtest_oracle_max")
     all_ta = str(coin.get("bt_signal_set") or "") == BT_SET_ALL_TA
     ranked: list[tuple[float, dict[str, Any]]] = []
     for row in strategies:
-        if str(row.get("indicator") or "").strip() == _BH:
+        name = str(row.get("indicator") or "").strip()
+        if name in {_BH, "Oracle max"}:
             continue
         net = _net(row)
         if net is None:
@@ -79,6 +83,12 @@ def strategy_sheet_rows(
         if not has_bh:
             row = dict(bh)
             row.setdefault("indicator", _BH)
+            out.append(row)
+    if isinstance(oracle, dict):
+        has_or = any(str(r.get("indicator") or "").strip() == "Oracle max" for r in out)
+        if not has_or:
+            row = dict(oracle)
+            row.setdefault("indicator", "Oracle max")
             out.append(row)
     out.sort(key=lambda row: (_net(row) is not None, _net(row) or 0.0), reverse=True)
     if perfect_only:
@@ -96,6 +106,12 @@ def indicator_display_label(
     text = str(indicator or "—")
     if is_bh:
         return f"{_BH}  ← buy & hold" if text == _BH else text
+    if text == "Oracle max":
+        return S.BACKTEST_ORACLE_LABEL
+    from trendalgo.device.sauce_names import is_sauce
+
+    if is_sauce(text):
+        return S.SECRET_SAUCE_LABEL
     if bt_signal_set == BT_SET_ALL_TA and is_three_commas_indicator(text):
         return f"{text} *"
     return text
@@ -143,14 +159,21 @@ def show_results_dialog(
         theme = colors_for(active_mode())
         bh_bg = theme["secondaryContainer"]
         bh_fg = theme["onSecondaryContainer"]
+        ss_bg = theme["primaryContainer"]
+        ss_fg = theme["onPrimaryContainer"]
         signal_set = str(coin.get("bt_signal_set") or "")
         for r, row in enumerate(rows):
-            is_bh = str(row.get("indicator") or "").strip() == _BH
+            name = str(row.get("indicator") or "").strip()
+            is_bh = name == _BH
+            from trendalgo.device.sauce_names import is_sauce as _is_sauce
+
+            is_sauce = _is_sauce(name)
+            is_baseline = name in {_BH, "Oracle max"}
             values = row_cells(row, is_bh=is_bh)
             for c, text in enumerate(values):
                 label = (
                     indicator_display_label(
-                        str(row.get("indicator") or ""),
+                        name,
                         bt_signal_set=signal_set,
                         is_bh=is_bh,
                     )
@@ -159,18 +182,25 @@ def show_results_dialog(
                 )
                 item = QTableWidgetItem(label)
                 if c == 0 and not is_bh:
-                    tip = glossary_tooltip(str(row.get("indicator") or ""))
-                    skip = skip_tooltip(row)
-                    if skip:
-                        tip = f"{skip}\n\n{tip}" if tip else skip
+                    if is_sauce:
+                        tip = S.SECRET_SAUCE_FORMULA
+                        dossier = row.get("heartbeat_dossier")
+                        if isinstance(dossier, dict) and dossier.get("formula_en"):
+                            tip = str(dossier.get("formula_en"))
+                    else:
+                        tip = glossary_tooltip(name)
+                        skip = skip_tooltip(row)
+                        if skip:
+                            tip = f"{skip}\n\n{tip}" if tip else skip
                     if tip:
                         item.setToolTip(tip)
-                    item.setData(Qt.ItemDataRole.UserRole, str(row.get("indicator") or ""))
+                    item.setData(Qt.ItemDataRole.UserRole, name)
+                    item.setData(Qt.ItemDataRole.UserRole + 1, r)
                     item.setForeground(QColor(theme["primary"]))
                     font = item.font()
                     font.setUnderline(True)
                     item.setFont(font)
-                if is_bh:
+                if is_baseline or is_sauce:
                     font = item.font()
                     font.setBold(True)
                     item.setFont(font)
@@ -181,11 +211,25 @@ def show_results_dialog(
                 elif is_bh:
                     item.setBackground(QColor(bh_bg))
                     item.setForeground(QColor(bh_fg))
+                elif is_sauce:
+                    item.setBackground(QColor(ss_bg))
+                    item.setForeground(QColor(ss_fg))
                 table.setItem(r, c, item)
+            _show_chart_cell(table, r, row, coin=coin, parent=dialog)
             _create_bot_cell(
-                table, r, row, is_bh=is_bh, pair=pair, status=status, on_create_bot=on_create_bot
+                table,
+                r,
+                row,
+                is_bh=is_bh and not is_sauce,
+                pair=pair,
+                status=status,
+                on_create_bot=on_create_bot,
             )
-        table.cellClicked.connect(lambda row_i, col: _on_indicator_click(table, row_i, col, dialog))
+        table.cellClicked.connect(
+            lambda row_i, col: _on_indicator_click(
+                table, row_i, col, dialog, rows=rows, coin=coin, on_create_bot=on_create_bot
+            )
+        )
         fit_table_columns(table)
         body_layout.addWidget(table)
     scroll = QScrollArea()
@@ -248,7 +292,16 @@ def show_results_dialog(
     dialog.exec()
 
 
-def _on_indicator_click(table: QTableWidget, row: int, col: int, parent: QWidget) -> None:
+def _on_indicator_click(
+    table: QTableWidget,
+    row: int,
+    col: int,
+    parent: QWidget,
+    *,
+    rows: list[dict[str, Any]],
+    coin: dict[str, Any],
+    on_create_bot: CreateBotCb | None = None,
+) -> None:
     if col != 0:
         return
     item = table.item(row, 0)
@@ -258,7 +311,51 @@ def _on_indicator_click(table: QTableWidget, row: int, col: int, parent: QWidget
     name = str(raw or item.text() or "").strip()
     if not name or name.startswith(_BH):
         return
+    from trendalgo.device.sauce_names import is_sauce as _is_sauce_click
+
+    if _is_sauce_click(name):
+        from trendalgo.device.views.secret_sauce_study import show_secret_sauce_study
+
+        idx = item.data(Qt.ItemDataRole.UserRole + 1)
+        data = rows[int(idx)] if isinstance(idx, int) and 0 <= int(idx) < len(rows) else {}
+        show_secret_sauce_study(parent, data, coin=coin, on_create_bot=on_create_bot)
+        return
     show_glossary_popup(parent, name)
+
+
+def _show_chart_cell(
+    table: QTableWidget,
+    row: int,
+    strategy: dict[str, Any],
+    *,
+    coin: dict[str, Any],
+    parent: QWidget,
+) -> None:
+    host = QWidget()
+    layout = QHBoxLayout(host)
+    layout.setContentsMargins(2, 2, 2, 2)
+    btn = QPushButton(S.BACKTEST_SHOW_CHART)
+    btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+    name = str(strategy.get("indicator") or "").strip()
+    from trendalgo.device.sauce_names import is_sauce_lab
+
+    pending = is_sauce_lab(name) and bool(strategy.get("ss_lab_pending"))
+    btn.setEnabled(not pending)
+
+    def _open(_checked: bool = False, data: dict[str, Any] = strategy) -> None:
+        from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
+
+        show_scanner_chart_dialog(
+            parent,
+            coin,
+            window="30d",
+            price_only=str(data.get("indicator") or "").strip() == _BH,
+            strategy_row=None if str(data.get("indicator") or "").strip() == _BH else data,
+        )
+
+    btn.clicked.connect(_open)
+    layout.addWidget(btn)
+    table.setCellWidget(row, SHOW_CHART_COL, host)
 
 
 def _create_bot_cell(
@@ -293,7 +390,7 @@ def _create_bot_cell(
 
         btn.clicked.connect(_create)
         layout.addWidget(btn)
-    table.setCellWidget(row, len(_COLUMNS) - 1, host)
+    table.setCellWidget(row, CREATE_BOT_COL, host)
 
 
 def _net(row: dict[str, Any]) -> float | None:

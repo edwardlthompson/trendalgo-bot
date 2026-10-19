@@ -10,32 +10,41 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
-from trendalgo.backtest.ta_fleet import backtest_one
-from trendalgo.backtest.ta_simulator import trade_hold_regions
+from trendalgo.backtest.ta_fleet import backtest_one, prepare_signals
+from trendalgo.backtest.ta_simulator import simulate_long_with_fees, trade_hold_regions
+from trendalgo.device.sauce_names import is_sauce, is_sauce_ta
 from trendalgo.device.scan_stake import DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scanner_all_ta_prune import fee_for_bps
 
 _BH = "B&H"
 _SCAN_LOOKBACK_DAYS = 30
 _DEFAULT_FEE_BPS = 52.0
+_SECRET_SID = "GEN_SECRET_1"
 
 
 def top_strategy_rows(coin: dict[str, Any], *, limit: int | None = None) -> list[dict[str, Any]]:
-    """Strategies that beat B&H net (best first). limit=None → all beaters."""
+    """Secret Sauce + B&H-beaters + Oracle max (for chart radios)."""
     raw = coin.get("backtest_top_strategies")
     strategies = [r for r in raw if isinstance(r, dict)] if isinstance(raw, list) else []
     bh = coin.get("backtest_buy_hold")
+    oracle = coin.get("backtest_oracle_max")
     bh_net: float | None = None
     if isinstance(bh, dict):
         try:
             bh_net = float(bh.get("net_pct"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             bh_net = None
+    sauces: list[dict[str, Any]] = []
     ranked: list[tuple[float, dict[str, Any]]] = []
     for row in strategies:
-        if str(row.get("indicator") or "").strip() == _BH:
+        name = str(row.get("indicator") or "").strip()
+        if name in {_BH, "Oracle max"}:
+            continue
+        if name.startswith("Secret Sauce"):
+            sauces.append(dict(row))
             continue
         try:
             net = float(row.get("net_pct"))  # type: ignore[arg-type]
@@ -45,9 +54,15 @@ def top_strategy_rows(coin: dict[str, Any], *, limit: int | None = None) -> list
             continue
         ranked.append((net, row))
     ranked.sort(key=lambda item: item[0], reverse=True)
-    if limit is None:
-        return [dict(row) for _, row in ranked]
-    return [dict(row) for _, row in ranked[: max(0, int(limit))]]
+    beaters = [dict(row) for _, row in ranked]
+    if limit is not None:
+        beaters = beaters[: max(0, int(limit))]
+    # Lab before TA when both present (stable radio order).
+    sauces.sort(key=lambda r: 0 if str(r.get("indicator") or "").endswith("Lab") else 1)
+    out: list[dict[str, Any]] = [*sauces, *beaters]
+    if isinstance(oracle, dict):
+        out.append(dict(oracle))
+    return out
 
 
 def frame_from_closes(closes: list[float], *, hours_step: int = 1) -> pd.DataFrame:
@@ -113,18 +128,29 @@ def regions_for_strategy(
     sid = str(row.get("indicator") or row.get("strategy_id") or "")
     if not sid or sid == _BH:
         return []
+    if sid == "Oracle max":
+        return regions_from_oracle_swings(frame, list(row.get("oracle_swings") or []))
     stake, bps = _stake_and_fee(stake_usd, fee_bps)
     tsl = _tsl_fraction(row)
-    params = row.get("params") if isinstance(row.get("params"), dict) else None
+    params = row.get("params") if isinstance(row.get("params"), dict) else {}
+    fee = fee_for_bps(bps)
     try:
+        if (
+            is_sauce_ta(sid)
+            or bool(params.get("ss_coincidence"))
+            or bool(row.get("ss_coincidence"))
+        ):
+            return _regions_sauce_ta(frame, params, stake=stake, fee=fee, tsl=tsl)
+        if is_sauce(sid) or sid.upper().startswith("GEN_SECRET"):
+            return _regions_sauce_lab(frame, row, params, stake=stake, fee=fee, tsl=tsl)
         trial, _reason = backtest_one(
             frame,
             sid,
-            fee_for_bps(bps),
+            fee,
             stake,
             timeframe=str(row.get("timeframe") or "1h"),
             lookback_seconds=0,
-            params=params,
+            params=params or None,
             trailing_stop_pct=tsl,
             phase="chart_overlay",
             collect_trades=True,
@@ -137,6 +163,116 @@ def regions_for_strategy(
     if not isinstance(trades, list):
         return []
     return trade_hold_regions(trades)
+
+
+def _regions_sauce_ta(
+    frame: pd.DataFrame,
+    params: dict[str, Any],
+    *,
+    stake: float,
+    fee: Any,
+    tsl: float,
+) -> list[dict[str, Any]]:
+    e_sid = str(params.get("coincidence_entry") or "").strip()
+    x_sid = str(params.get("coincidence_exit") or "").strip()
+    if not e_sid or not x_sid:
+        return []
+    e_prep = prepare_signals(frame, e_sid, {})
+    x_prep = prepare_signals(frame, x_sid, {})
+    if e_prep[0] is None or x_prep[1] is None:
+        return []
+    stats = simulate_long_with_fees(
+        frame,
+        np.asarray(e_prep[0], dtype=bool),
+        np.asarray(x_prep[1], dtype=bool),
+        stake_usd=stake,
+        fee=fee,
+        trailing_stop_pct=tsl,
+        collect_trades=True,
+    )
+    trades = stats.get("trade_list")
+    return trade_hold_regions(trades) if isinstance(trades, list) else []
+
+
+def _regions_sauce_lab(
+    frame: pd.DataFrame,
+    row: dict[str, Any],
+    params: dict[str, Any],
+    *,
+    stake: float,
+    fee: Any,
+    tsl: float,
+) -> list[dict[str, Any]]:
+    from trendalgo.backtest.secret_sauce_dossier import dossier_from_dict
+
+    eval_params = dict(params)
+    dossier = row.get("heartbeat_dossier")
+    if isinstance(dossier, dict):
+        cooked = dossier_from_dict(dossier)
+        if cooked is not None:
+            eval_params = {**eval_params, **cooked.eval_params()}
+    sid = str(row.get("strategy_id") or eval_params.get("strategy_id") or _SECRET_SID)
+    if not sid.upper().startswith("GEN_SECRET"):
+        sid = _SECRET_SID
+    trial, _reason = backtest_one(
+        frame,
+        sid,
+        fee,
+        stake,
+        timeframe=str(row.get("timeframe") or "1h"),
+        lookback_seconds=0,
+        params=eval_params,
+        trailing_stop_pct=tsl,
+        phase="chart_overlay",
+        collect_trades=True,
+    )
+    if trial is None:
+        return []
+    trades = trial.get("trade_list")
+    return trade_hold_regions(trades) if isinstance(trades, list) else []
+
+
+def regions_from_oracle_swings(
+    frame: pd.DataFrame,
+    swings: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Map stored oracle swing indexes onto the overlay frame timestamps."""
+    if frame.empty or not swings:
+        return []
+    closes = frame["close"].to_numpy(dtype=float) if "close" in frame.columns else None
+    enriched: list[dict[str, Any]] = []
+    for trade in swings:
+        item = dict(trade)
+        try:
+            entry_i = int(trade.get("entry_index") or -1)
+            exit_i = int(trade.get("exit_index") or -1)
+        except (TypeError, ValueError):
+            continue
+        if entry_i < 0 or exit_i < 0 or entry_i >= len(frame) or exit_i >= len(frame):
+            continue
+        item["entry_time"] = item.get("entry_time") or _bar_time(frame, entry_i)
+        item["exit_time"] = item.get("exit_time") or _bar_time(frame, exit_i)
+        if closes is not None:
+            item["entry_price"] = float(closes[entry_i])
+            item["exit_price"] = float(closes[exit_i])
+        item.setdefault("exit_reason", "oracle_swing")
+        if item.get("pnl_pct") is None:
+            ep = float(item.get("entry_price") or 0.0)
+            xp = float(item.get("exit_price") or 0.0)
+            if ep:
+                item["pnl_pct"] = round(((xp / ep) - 1.0) * 100.0, 4)
+        enriched.append(item)
+    return trade_hold_regions(enriched)
+
+
+def _bar_time(frame: pd.DataFrame, index: int) -> str:
+    try:
+        from trendalgo.backtest.ta_simulator import _bar_time as sim_bar_time
+
+        return str(sim_bar_time(frame, index))
+    except Exception:
+        ts = frame.index[index]
+        return str(getattr(ts, "isoformat", lambda: ts)())
 
 
 def overlay_summary(

@@ -78,3 +78,42 @@ def draft_from_nl(text: str) -> dict[str, Any]:
         base = rule_based_draft(text)
         return {**base, **ai}
     return rule_based_draft(text)
+
+
+def name_oracle_rule(rule_summary: str) -> dict[str, str] | None:
+    """Optional Ollama label for a mined GEN_ORACLE rule (never required)."""
+    host = os.environ.get("OLLAMA_HOST")
+    if not host:
+        return None
+    prompt = (
+        "Give a short trading-strategy display name and one-sentence rationale as JSON "
+        "keys name, rationale. Rule: "
+        f"{rule_summary}"
+    )
+    payload = {
+        "model": os.environ.get("OLLAMA_MODEL", "llama3.2"),
+        "prompt": prompt,
+        "stream": False,
+    }
+    try:
+        req = urllib.request.Request(
+            f"{host.rstrip('/')}/api/generate",
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            body = json.loads(resp.read().decode())
+            raw = str(body.get("response", "")).strip()
+            start = raw.find("{")
+            end = raw.rfind("}")
+            if start < 0 or end <= start:
+                return None
+            parsed = json.loads(raw[start : end + 1])
+            name = str(parsed.get("name") or "").strip()
+            rationale = str(parsed.get("rationale") or "").strip()
+            if not name:
+                return None
+            return {"name": name, "rationale": rationale}
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, TypeError, ValueError):
+        return None

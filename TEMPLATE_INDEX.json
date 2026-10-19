@@ -85,6 +85,27 @@
       "owner": "maintainer"
     },
     {
+      "path": "scripts/activate-cursor-mcp.sh",
+      "purpose": "Copy FOSS MCP example to gitignored .cursor/mcp.json",
+      "read_when": "bootstrap_session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/install-skills-lock.sh",
+      "purpose": "Install/verify skills-lock.json under .agents/skills/",
+      "read_when": "bootstrap_session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
+      "path": "scripts/activate-cursor-surface.sh",
+      "purpose": "One-shot MCP activate + skills-lock install for humans",
+      "read_when": "bootstrap_session_start",
+      "update_when": "milestone_boundary",
+      "owner": "maintainer"
+    },
+    {
       "path": "scripts/check-template-version-sync.sh",
       "purpose": "Fail when .template-version drifts from release-please manifest",
       "read_when": "validation",

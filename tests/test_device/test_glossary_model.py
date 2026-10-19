@@ -7,6 +7,7 @@ from pathlib import Path
 
 from trendalgo.device.glossary_model import (
     bundled_glossary_path,
+    clear_glossary_cache,
     filter_entries,
     find_glossary_entry,
     load_glossary,
@@ -53,3 +54,15 @@ def test_find_glossary_entry_by_id_and_star_suffix() -> None:
     assert rsi is not None
     assert rsi.id == "RSI"
     assert find_glossary_entry(entries, "no-such-ta-xyz") is None
+
+
+def test_oracle_max_baseline_glossary() -> None:
+    clear_glossary_cache()
+    entries, error = load_glossary()
+    assert error is None
+    entry = find_glossary_entry(entries, "Oracle max")
+    assert entry is not None
+    assert entry.id == "oracle-max"
+    assert entry.category == "Baselines"
+    blob = f"{entry.short} {entry.long}".casefold()
+    assert "ceiling" in blob or "flawless" in blob

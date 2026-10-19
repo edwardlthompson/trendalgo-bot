@@ -16,23 +16,25 @@ class DispatchPlan:
 
 
 def plan_for_event(event: AlertEvent, prefs: NotifyPrefs) -> DispatchPlan | None:
-    if event.kind == "qualified_enter":
-        if not prefs.qualified_alerts:
-            return None
-        return DispatchPlan(
-            events=[event],
-            toast=True,
-            telegram=prefs.telegram_enabled and prefs.telegram_qualified,
-        )
-    if event.kind == "watchlist_leave":
-        if not prefs.watchlist_alerts:
-            return None
-        return DispatchPlan(
-            events=[event],
-            toast=True,
-            telegram=prefs.telegram_enabled and prefs.telegram_watchlist,
-        )
-    return None
+    kind = event.kind
+    if kind == "qualified_enter":
+        toast = prefs.windows_entered
+        tg = prefs.telegram_enabled and prefs.telegram_entered
+    elif kind == "watchlist_leave":
+        toast = prefs.windows_left
+        tg = prefs.telegram_enabled and prefs.telegram_left
+    elif kind in {"scan_log", "backtest_log"}:
+        toast = prefs.windows_logs
+        tg = prefs.telegram_enabled and prefs.telegram_logs
+    elif kind == "trade_alert":
+        toast = prefs.windows_trades
+        tg = prefs.telegram_enabled and prefs.telegram_trades
+    else:
+        return None
+    if not toast and not tg:
+        # Still allow history append upstream; dispatch only for notify channels.
+        return None
+    return DispatchPlan(events=[event], toast=toast, telegram=tg)
 
 
 def plans_for(events: list[AlertEvent], prefs: NotifyPrefs) -> list[DispatchPlan]:
@@ -45,4 +47,4 @@ def plans_for(events: list[AlertEvent], prefs: NotifyPrefs) -> list[DispatchPlan
 
 
 def trade_telegram_enabled(prefs: NotifyPrefs) -> bool:
-    return prefs.trade_alerts and prefs.telegram_enabled and prefs.telegram_trades
+    return bool(prefs.telegram_enabled and prefs.telegram_trades)

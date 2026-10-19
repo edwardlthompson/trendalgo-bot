@@ -21,6 +21,7 @@ def test_backtest_headers_order() -> None:
         "TSL Hits",
         "TSL Hit %",
         "Strength",
+        "Show Chart",
         "Create Bot",
     )
     assert NET_COL == 3

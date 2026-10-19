@@ -11,9 +11,11 @@ from trendalgo.device.scanner_signal_sets import is_three_commas_indicator
 from trendalgo.device.trade_counts import open_trades, wins_losses
 
 _BH = "B&H"
-# Column indices matching BACKTEST_RESULT_HEADERS (Create Bot is last / widget).
+# Column indices matching BACKTEST_RESULT_HEADERS (Show Chart + Create Bot are widgets).
 NET_COL = 3
 STRENGTH_COL = 12
+SHOW_CHART_COL = 13
+CREATE_BOT_COL = 14
 # invert=True → lower is greener (fewer fees / open / losses / hits / hit%).
 HEAT_COLS: dict[int, tuple[str, bool]] = {
     3: ("net_pct", False),
@@ -72,10 +74,20 @@ def format_export_params(row: dict[str, Any], *, is_bh: bool = False) -> str:
     """Every setting a user would need to recreate the strategy manually."""
     if is_bh:
         return "—"
+    from trendalgo.backtest.secret_sauce_dossier import is_secret_sauce_indicator
+    from trendalgo.device import strings as S
+
+    indicator = str(row.get("indicator") or row.get("strategy_id") or "")
+    if is_secret_sauce_indicator(indicator):
+        if bool(row.get("ss_lab_pending")):
+            return str(S.SECRET_SAUCE_PENDING)
+        return str(S.SECRET_SAUCE_PARAMS_STUB)
     parts: list[str] = []
     params = row.get("params")
     if isinstance(params, dict):
         for key, value in params.items():
+            if key in {"heartbeat_dossier", "entry_conjuncts", "exit_conjuncts", "conjuncts"}:
+                continue
             if isinstance(value, bool):
                 parts.append(f"{key}={value}")
             elif isinstance(value, int | float):
@@ -104,8 +116,9 @@ def tsl_display_pct(raw: Any) -> int:
 
 
 def is_perfect_strategy(row: dict[str, Any]) -> bool:
-    """100% win rate and zero TSL hits (non-B&H)."""
-    if str(row.get("indicator") or "").strip() == _BH:
+    """100% win rate and zero TSL hits (non-B&H / non-Oracle)."""
+    name = str(row.get("indicator") or "").strip()
+    if name in {_BH, "Oracle max"}:
         return False
     hits = _as_int(row.get("tsl_hits"))
     if hits is None or hits != 0:
@@ -118,9 +131,10 @@ def is_perfect_strategy(row: dict[str, Any]) -> bool:
 
 
 def filter_perfect_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Keep Perfect Strategies plus B&H when present."""
+    """Keep Perfect Strategies plus B&H / Oracle max when present."""
+    keep = {_BH, "Oracle max"}
     return [
-        r for r in rows if is_perfect_strategy(r) or str(r.get("indicator") or "").strip() == _BH
+        r for r in rows if is_perfect_strategy(r) or str(r.get("indicator") or "").strip() in keep
     ]
 
 

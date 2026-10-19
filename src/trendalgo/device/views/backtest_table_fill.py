@@ -1,4 +1,4 @@
-"""Fill the Backtest results table (data rows + Create Bot widgets)."""
+"""Fill the Backtest results table (data rows + Show Chart / Create Bot widgets)."""
 
 from __future__ import annotations
 
@@ -18,7 +18,9 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import strings as S
 from trendalgo.device.backtest_results_ui import (
+    CREATE_BOT_COL,
     NET_COL,
+    SHOW_CHART_COL,
     STRENGTH_COL,
     heat_for_rows,
     net_tooltip,
@@ -77,21 +79,34 @@ def fill_backtest_table(
     theme = colors_for(active_mode())
     bh_bg = theme["secondaryContainer"]
     bh_fg = theme["onSecondaryContainer"]
+    ss_bg = theme["primaryContainer"]
+    ss_fg = theme["onPrimaryContainer"]
     heat = heat_for_rows(rows) if heatmap else {}
     for r, row in enumerate(rows):
         row_i = r + offset
-        is_bh = str(row.get("indicator") or "").strip() == _BH
+        name = str(row.get("indicator") or "").strip()
+        is_bh = name == _BH
+        from trendalgo.device.sauce_names import is_sauce
+
+        is_sauce = is_sauce(name)
+        is_oracle = name == "Oracle max"
         cells = row_cells(row, is_bh=is_bh)
         for c, text in enumerate(cells):
             item = QTableWidgetItem(text)
             if c == 0 and not is_bh:
-                tip = glossary_tooltip(str(row.get("indicator") or ""))
-                skip = skip_tooltip(row)
-                if skip:
-                    tip = f"{skip}\n\n{tip}" if tip else skip
+                if is_sauce:
+                    tip = S.SECRET_SAUCE_FORMULA
+                    dossier = row.get("heartbeat_dossier")
+                    if isinstance(dossier, dict) and dossier.get("formula_en"):
+                        tip = str(dossier.get("formula_en"))
+                else:
+                    tip = glossary_tooltip(name)
+                    skip = skip_tooltip(row)
+                    if skip:
+                        tip = f"{skip}\n\n{tip}" if tip else skip
                 if tip:
                     item.setToolTip(tip)
-                item.setData(Qt.ItemDataRole.UserRole, str(row.get("indicator") or ""))
+                item.setData(Qt.ItemDataRole.UserRole, name)
                 item.setForeground(QColor(theme["primary"]))
                 font = item.font()
                 font.setUnderline(True)
@@ -102,23 +117,78 @@ def fill_backtest_table(
                     item.setToolTip(tip)
             if c == STRENGTH_COL and not is_bh:
                 item.setToolTip(S.BACKTEST_STRENGTH_HELP)
-            if is_bh:
+            if is_bh or is_sauce or is_oracle:
                 font = item.font()
                 font.setBold(True)
                 item.setFont(font)
+            if is_bh:
                 item.setBackground(QColor(bh_bg))
                 item.setForeground(QColor(bh_fg))
+            elif is_sauce:
+                item.setBackground(QColor(ss_bg))
+                item.setForeground(QColor(ss_fg))
             elif c in heat:
                 bg = heat[c][r] if r < len(heat[c]) else None
                 if bg:
                     item.setBackground(QColor(bg))
                     item.setForeground(QColor(fg_for_bg(bg)))
             table.setItem(row_i, c, item)
+        _show_chart_cell(table, row_i, row, pair=pair, parent=table.window())
         _create_bot_cell(
-            table, row_i, row, is_bh=is_bh, pair=pair, on_open_plan=on_open_plan, on_note=on_note
+            table,
+            row_i,
+            row,
+            is_bh=is_bh and not is_sauce,
+            pair=pair,
+            on_open_plan=on_open_plan,
+            on_note=on_note,
         )
     fit_table_columns(table)
     filter_row.sync_control_widths(table)
+
+
+def _show_chart_cell(
+    table: QTableWidget,
+    row_i: int,
+    strategy: dict[str, Any],
+    *,
+    pair: str,
+    parent: QWidget,
+) -> None:
+    host = QWidget()
+    layout = QHBoxLayout(host)
+    layout.setContentsMargins(2, 2, 2, 2)
+    btn = QPushButton(S.BACKTEST_SHOW_CHART)
+    btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+    name = str(strategy.get("indicator") or "").strip()
+    from trendalgo.device.sauce_names import is_sauce_lab
+
+    pending = is_sauce_lab(name) and bool(strategy.get("ss_lab_pending"))
+    btn.setEnabled(not pending)
+
+    def _open(_checked: bool = False, data: dict[str, Any] = strategy) -> None:
+        from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
+
+        coin: dict[str, Any] = {
+            "symbol": pair.split("/", 1)[0] if "/" in pair else pair,
+            "pair": pair,
+        }
+        # Carry Strategy sheet fields so OHLCV resolve can use timeframe.
+        for key in ("timeframe", "params", "strategy_id", "net_pct", "trades"):
+            if key in data:
+                coin[key] = data[key]
+        is_bh = str(data.get("indicator") or "").strip() == _BH
+        show_scanner_chart_dialog(
+            parent if parent is not None else table,
+            coin,
+            window="30d",
+            price_only=is_bh,
+            strategy_row=None if is_bh else data,
+        )
+
+    btn.clicked.connect(_open)
+    layout.addWidget(btn)
+    table.setCellWidget(row_i, SHOW_CHART_COL, host)
 
 
 def _create_bot_cell(
@@ -152,4 +222,4 @@ def _create_bot_cell(
 
         btn.clicked.connect(_create)
         layout.addWidget(btn)
-    table.setCellWidget(row_i, len(S.BACKTEST_RESULT_HEADERS) - 1, host)
+    table.setCellWidget(row_i, CREATE_BOT_COL, host)

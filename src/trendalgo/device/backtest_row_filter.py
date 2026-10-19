@@ -8,6 +8,8 @@ from trendalgo.device.indicator_strength import strength_from_row
 from trendalgo.device.trade_counts import open_trades, wins_losses
 
 _BH = "B&H"
+_ORACLE = "Oracle max"
+_KEEP = {_BH, _ORACLE}
 
 
 def filter_rows(
@@ -20,8 +22,8 @@ def filter_rows(
 
 
 def row_matches(row: dict[str, Any], filters: dict[str, Any]) -> bool:
-    """True when row passes every active filter (B&H always kept)."""
-    if str(row.get("indicator") or "").strip() == _BH:
+    """True when row passes every active filter (B&H / Oracle max always kept)."""
+    if str(row.get("indicator") or "").strip() in _KEEP:
         return True
     needle = str(filters.get("indicator_contains") or "").strip().lower()
     if needle and needle not in str(row.get("indicator") or "").lower():

@@ -11,7 +11,14 @@ from collections.abc import Iterable
 from typing import Any
 
 _BH = "B&H"
+_ORACLE = "Oracle max"
+_BASELINES = frozenset({_BH, _ORACLE})
 EDGE_KEYS = ("bot_vs_bh_pct", "bot_best_net_pct", "buy_hold_net_pct", "bot_best_label")
+
+
+def is_baseline_indicator(indicator: object) -> bool:
+    """True for B&H / Oracle max ceilings (not eligible for Best BT)."""
+    return str(indicator or "").strip() in _BASELINES
 
 
 def _net(row: Any) -> float | None:
@@ -36,7 +43,7 @@ def bot_vs_bh_edge(
     best_net: float | None = None
     best_row: dict[str, Any] | None = None
     for row in strategies:
-        if not isinstance(row, dict) or str(row.get("indicator", "")).strip() == _BH:
+        if not isinstance(row, dict) or is_baseline_indicator(row.get("indicator")):
             continue
         net = _net(row)
         if net is None:

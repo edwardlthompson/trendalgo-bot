@@ -29,6 +29,12 @@ python3 scripts/agent-run.py check-github-ci --wait 300
 
 **Autonomous rule:** On gate failure, agent auto-fixes from JSON output within feature scope; re-run until pass or 3-strike. Push still requires human approval.
 
+## Ship scars (KB-016)
+
+- Keep `github/codeql-action@v4` (and Scorecard SARIF upload `@v4`). Reject unresolvable `vcodeql-bundle-*` pins from upd.
+- Never overwrite child `TEMPLATE_INDEX.json` with full-template module paths; index every new `scripts/*.sh`.
+- After Release Please merges a version bump: run `uv lock` and commit the lock sync.
+
 ## Do Not Mark Complete
 
 - BUILD_PLAN `[AUTO]` items while CI / Security Scan / CodeQL red

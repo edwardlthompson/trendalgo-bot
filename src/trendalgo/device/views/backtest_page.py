@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QProgressBar,
     QPushButton,
     QToolButton,
@@ -31,6 +32,7 @@ from trendalgo.device.backtest_sort import (
 )
 from trendalgo.device.context import DeviceContext
 from trendalgo.device.icons import nav_icon
+from trendalgo.device.pair_scan_partial import clear_partial_rows, read_partial_rows
 from trendalgo.device.pair_scan_progress import clear_progress, progress_line, read_progress
 from trendalgo.device.pair_strategy_scan_job import pair_strategy_scan_job
 from trendalgo.device.results_view_prefs import (
@@ -38,10 +40,16 @@ from trendalgo.device.results_view_prefs import (
     load_results_prefs,
     save_results_prefs,
 )
+from trendalgo.device.sauce_names import is_sauce
 from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.backtest_column_filter_row import FILTER_ROW, BacktestColumnFilterRow
-from trendalgo.device.views.backtest_page_job import apply_scan_result, fail_scan, fill_or_empty
+from trendalgo.device.views.backtest_page_job import (
+    apply_partial_rows,
+    apply_scan_result,
+    fail_scan,
+    fill_or_empty,
+)
 from trendalgo.device.views.backtest_share_dialog import run_backtest_share_dialog
 from trendalgo.device.views.glossary_popup import show_glossary_popup
 from trendalgo.device.views.searchable_picker import pair_picker
@@ -81,6 +89,7 @@ class BacktestPage(QWidget):
         self._sort_key = DEFAULT_SORT_KEY
         self._sort_dir = DEFAULT_SORT_DIR
         self._last_log = ""
+        self._last_partial_n = -1
         self._timer = QTimer(self)
         self._timer.setInterval(POLL_MS)
         self._timer.timeout.connect(self._poll)
@@ -110,6 +119,9 @@ class BacktestPage(QWidget):
         self._perfect = QCheckBox(S.BACKTEST_PERFECT_ONLY)
         self._perfect.setChecked(prefs.perfect_only)
         self._perfect.setToolTip(S.BACKTEST_PERFECT_HELP)
+        self._derive = QPushButton(S.BACKTEST_DERIVE_RULE)
+        self._derive.setToolTip(S.BACKTEST_DERIVE_RULE_HELP)
+        self._derive.clicked.connect(lambda _c=False: self._derive_oracle_rule())
         self._heatmap.toggled.connect(lambda _c: self._on_view_toggle())
         self._perfect.toggled.connect(lambda _c: self._on_view_toggle())
         self._status = QLabel()
@@ -144,6 +156,7 @@ class BacktestPage(QWidget):
             self._share,
             self._heatmap,
             self._perfect,
+            self._derive,
         ):
             toolbar.addWidget(widget, alignment=Qt.AlignmentFlag.AlignVCenter)
         toolbar.addStretch(1)
@@ -192,8 +205,11 @@ class BacktestPage(QWidget):
             return
         clear_problem(self._problem)
         clear_progress(self._root)
+        clear_partial_rows(self._root)
         self._last_log = ""
+        self._last_partial_n = -1
         self._rows = []
+        self._all_rows = []
         self._filters.prepare_for_refill()
         self._table.setRowCount(0)
         self._show_running()
@@ -207,11 +223,19 @@ class BacktestPage(QWidget):
         if line and line != self._last_log:
             self._last_log = line
             self._status.setText(line)
+        job = self._pending
         if raw:
             done = int(raw.get("done") or 0)
             total = max(1, int(raw.get("total") or 1))
-            self._bar.setValue(min(100, int(100 * done / total)))
-        job = self._pending
+            pct = int(100 * done / total)
+            # Never paint 100% until the worker finishes and results are sorted.
+            if job is not None and not job.ready():
+                pct = min(99, pct)
+            self._bar.setValue(min(100, pct))
+        partial = read_partial_rows(self._root)
+        if partial is not None and len(partial) != self._last_partial_n:
+            self._last_partial_n = len(partial)
+            apply_partial_rows(self, partial)
         if job is None:
             self._timer.stop()
             return
@@ -220,13 +244,19 @@ class BacktestPage(QWidget):
         self._timer.stop()
         self._pending = None
         self._set_running(False)
+        clear_partial_rows(self._root)
         try:
             rows = job.get(timeout=0)
         except ValueError as exc:
             fail_scan(self, self._problem, str(exc) or S.BACKTEST_PAIR_REQUIRED)
             return
-        except Exception:
-            fail_scan(self, self._problem, S.BACKTEST_FAILED)
+        except Exception as exc:
+            detail = str(exc).strip()
+            fail_scan(
+                self,
+                self._problem,
+                f"{S.BACKTEST_FAILED}" + (f" ({detail})" if detail else ""),
+            )
             return
         apply_scan_result(
             self, rows, problem=self._problem, empty=self._empty, status=self._status, bar=self._bar
@@ -311,9 +341,54 @@ class BacktestPage(QWidget):
             return
         data = self._rows[data_row]
         name = str(data.get("indicator") or "").strip()
-        if not name or name == _BH:
+        if not name or name == _BH or name.startswith(_BH):
+            return
+        if is_sauce(name):
+            from trendalgo.device.views.secret_sauce_study import show_secret_sauce_study
+
+            show_secret_sauce_study(
+                self,
+                data,
+                coin={"symbol": data.get("symbol"), "pair": self._pair.text().strip().upper()},
+                on_create_bot=self._sauce_create_bot,
+            )
             return
         show_glossary_popup(self, name)
+
+    def _sauce_create_bot(self, prefill: dict[str, str], _pair: str) -> str:
+        if self._on_open_plan is None:
+            return ""
+        self._on_open_plan(prefill)
+        return S.SECRET_SAUCE_CREATE_BOT
+
+    def _derive_oracle_rule(self) -> None:
+        from trendalgo.device.sauce_names import SAUCE_LAB, is_sauce_lab
+        from trendalgo.device.scanner_alerts_store import append_log_alert
+        from trendalgo.device.views.secret_sauce_study import show_secret_sauce_study
+
+        rows = self._all_rows or self._rows
+        sauce = next((r for r in rows if is_sauce_lab(r.get("indicator"))), None)
+        if sauce is None:
+            sauce = next((r for r in rows if str(r.get("indicator") or "") == SAUCE_LAB), None)
+        if sauce is not None and isinstance(sauce.get("heartbeat_dossier"), dict):
+            show_secret_sauce_study(
+                self,
+                sauce,
+                coin={"symbol": sauce.get("symbol"), "pair": self._pair.text().strip().upper()},
+                on_create_bot=self._sauce_create_bot,
+            )
+            return
+        QMessageBox.information(
+            self,
+            S.BACKTEST_DERIVE_RULE,
+            S.SECRET_SAUCE_STUDY_EMPTY,
+        )
+        if sauce is None:
+            append_log_alert(
+                self._root,
+                kind="backtest_log",
+                reason="Secret Sauce not in results — re-run All-TA to mine per-coin heartbeat.",
+            )
 
     def _fill_table(self) -> None:
         fill_or_empty(self)

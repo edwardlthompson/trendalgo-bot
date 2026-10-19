@@ -9,6 +9,7 @@ import pandas as pd
 
 from trendalgo.device.pair_scan_progress import progress_line, read_progress, write_progress
 from trendalgo.device.pair_strategy_scan import (
+    SAUCE_PROGRESS_STEPS,
     collapse_bh_rows,
     ensure_full_catalog,
     scan_pair_strategies,
@@ -45,6 +46,10 @@ def _ohlcv(n: int = 80) -> pd.DataFrame:
         },
         index=idx,
     )
+
+
+def test_sauce_progress_steps_constant() -> None:
+    assert SAUCE_PROGRESS_STEPS == 2
 
 
 def test_sort_rows_by_net_descending() -> None:
@@ -134,9 +139,18 @@ def test_scan_keeps_losers_and_bh(monkeypatch: Any) -> None:
             "timeframe": "1h",
         }
 
-    monkeypatch.setattr("trendalgo.device.pair_strategy_scan.backtest_one", fake_backtest_one)
+    monkeypatch.setattr("trendalgo.device.pair_strategy_pass2.backtest_one", fake_backtest_one)
+    monkeypatch.setattr("trendalgo.device.pair_strategy_pass2.pass2_worker_count", lambda: 1)
     monkeypatch.setattr("trendalgo.device.pair_strategy_scan.buy_and_hold_row", fake_bh)
+    monkeypatch.setattr(
+        "trendalgo.device.pair_strategy_scan.oracle_max_row",
+        lambda *_a, **_k: None,
+    )
     monkeypatch.setattr("trendalgo.device.pair_strategy_scan.deepen_seeds", lambda *_a, **_k: [])
+    monkeypatch.setattr(
+        "trendalgo.device.pair_strategy_scan.coincidence_sauce_row",
+        lambda *_a, **_k: None,
+    )
 
     loader = _FakeLoader(frame)
     rows = scan_pair_strategies(
@@ -217,7 +231,8 @@ def test_scan_full_catalog_length(monkeypatch: Any) -> None:
             None,
         )
 
-    monkeypatch.setattr("trendalgo.device.pair_strategy_scan.backtest_one", fake_backtest_one)
+    monkeypatch.setattr("trendalgo.device.pair_strategy_pass2.backtest_one", fake_backtest_one)
+    monkeypatch.setattr("trendalgo.device.pair_strategy_pass2.pass2_worker_count", lambda: 1)
     monkeypatch.setattr(
         "trendalgo.device.pair_strategy_scan.buy_and_hold_row",
         lambda *_a, **_k: {
@@ -230,7 +245,15 @@ def test_scan_full_catalog_length(monkeypatch: Any) -> None:
             "timeframe": "1h",
         },
     )
+    monkeypatch.setattr(
+        "trendalgo.device.pair_strategy_scan.oracle_max_row",
+        lambda *_a, **_k: None,
+    )
     monkeypatch.setattr("trendalgo.device.pair_strategy_scan.deepen_seeds", lambda *_a, **_k: [])
+    monkeypatch.setattr(
+        "trendalgo.device.pair_strategy_scan.coincidence_sauce_row",
+        lambda *_a, **_k: None,
+    )
     strat = ("RSI", "MACD", "ADD", "CDLDOJI")
     rows = scan_pair_strategies(
         symbol="ETH",
@@ -281,7 +304,8 @@ def test_short_window_keeps_lower_tf_when_24h_skipped(monkeypatch: Any) -> None:
             None,
         )
 
-    monkeypatch.setattr("trendalgo.device.pair_strategy_scan.backtest_one", fake_backtest_one)
+    monkeypatch.setattr("trendalgo.device.pair_strategy_pass2.backtest_one", fake_backtest_one)
+    monkeypatch.setattr("trendalgo.device.pair_strategy_pass2.pass2_worker_count", lambda: 1)
     monkeypatch.setattr(
         "trendalgo.device.pair_strategy_scan.buy_and_hold_row",
         lambda *_a, **_k: {
@@ -293,6 +317,14 @@ def test_short_window_keeps_lower_tf_when_24h_skipped(monkeypatch: Any) -> None:
             "trailing_stop_pct": 0.0,
             "timeframe": "1h",
         },
+    )
+    monkeypatch.setattr(
+        "trendalgo.device.pair_strategy_scan.oracle_max_row",
+        lambda *_a, **_k: None,
+    )
+    monkeypatch.setattr(
+        "trendalgo.device.pair_strategy_scan.coincidence_sauce_row",
+        lambda *_a, **_k: None,
     )
     monkeypatch.setattr("trendalgo.device.pair_strategy_scan.deepen_seeds", lambda *_a, **_k: [])
     rows = scan_pair_strategies(

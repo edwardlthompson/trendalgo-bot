@@ -32,6 +32,40 @@ def test_diff_enter_and_watchlist_leave() -> None:
     assert ("watchlist_leave", "BBB") not in kinds  # BBB left but not watchlisted
 
 
+def test_leave_reason_uses_floors_and_snapshot() -> None:
+    from trendalgo.device.scanner_alert_diff import leave_reason
+
+    reason = leave_reason(
+        "AAA",
+        {"volume_24h": 12_000, "uniformity_score": 0.41, "pair": "AAA/USD"},
+        floors={"min_volume_usd": 50_000, "min_uniformity": 0.55},
+    )
+    assert "Volume $12,000 below min $50,000" in reason
+    assert "Uniformity 0.41 < 0.55" in reason
+    assert "scan floors" not in reason.lower()
+
+
+def test_previous_coins_roundtrip(tmp_path: Path) -> None:
+    from trendalgo.device.scanner_alerts_store import load_previous_coins
+
+    save_previous_qualified(
+        tmp_path,
+        {"ETH"},
+        coins=[{"symbol": "ETH", "pair": "ETH/USD", "volume_24h": 99_000}],
+    )
+    coins = load_previous_coins(tmp_path)
+    assert coins["ETH"]["volume_24h"] == 99_000
+    events = diff_alerts(
+        previous={"ETH"},
+        current_coins=[],
+        watchlist={"ETH"},
+        previous_coins=coins,
+        floors={"min_volume_usd": 200_000},
+    )
+    assert events[0].kind == "watchlist_leave"
+    assert "Volume" in events[0].reason
+
+
 def test_alert_store_roundtrip(tmp_path: Path) -> None:
     save_previous_qualified(tmp_path, {"ETH", "BTC"})
     assert load_previous_qualified(tmp_path) == {"BTC", "ETH"}
@@ -46,7 +80,13 @@ def test_alert_store_roundtrip(tmp_path: Path) -> None:
 
 
 def test_prefs_gate_channels(tmp_path: Path) -> None:
-    prefs = NotifyPrefs(qualified_alerts=False, watchlist_alerts=True, telegram_enabled=True)
+    prefs = NotifyPrefs(
+        windows_entered=False,
+        windows_left=True,
+        telegram_enabled=True,
+        telegram_entered=False,
+        telegram_left=True,
+    )
     save_prefs(tmp_path, prefs)
     loaded = load_prefs(tmp_path)
     events = diff_alerts(
@@ -56,7 +96,9 @@ def test_prefs_gate_channels(tmp_path: Path) -> None:
     )
     plans = plans_for(events, loaded)
     assert all(p.events[0].kind == "watchlist_leave" for p in plans)
-    assert trade_telegram_enabled(NotifyPrefs(trade_alerts=True, telegram_enabled=True))
+    assert trade_telegram_enabled(
+        NotifyPrefs(windows_trades=True, telegram_enabled=True, telegram_trades=True)
+    )
 
 
 def test_clamp_interval() -> None:
@@ -112,7 +154,12 @@ def test_process_scan_alerts_persists(tmp_path: Path) -> None:
 
     save_prefs(
         tmp_path,
-        NotifyPrefs(qualified_alerts=True, watchlist_alerts=True, telegram_enabled=True),
+        NotifyPrefs(
+            windows_entered=True,
+            windows_left=True,
+            telegram_enabled=True,
+            telegram_entered=True,
+        ),
     )
     events, history = process_scan_alerts(
         tmp_path,

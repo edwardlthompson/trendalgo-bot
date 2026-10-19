@@ -5,6 +5,7 @@
   "tagline": "Self-hosted crypto trading you own end to end",
   "pitch": "TrendAlgo Bot is a self-hosted cryptocurrency trading platform you run on your own VPS. It combines algorithmic spot trading, a CoinStats-style portfolio tracker, opportunity scanning, and research tools behind a single progressive web app — without custodial accounts, proprietary SDKs, or default telemetry.",
   "features": [
+    "Secret Sauce Lab — per-coin causal Enter/Exit that earns its place under Oracle (no forced sort)",
     "Read-only portfolio sync across 9 CEX venues with performance charts vs a top-10 crypto index",
     "Native CCXT algo trading with dry-run default and explicit per-exchange go-live gates",
     "Opportunity scanner, backtests, and research tools in one offline-capable PWA",

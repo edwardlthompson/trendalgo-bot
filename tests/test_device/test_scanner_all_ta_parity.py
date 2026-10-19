@@ -68,7 +68,7 @@ def test_backtest_one_coin_keeps_losing_pass1_rows() -> None:
         }
 
     with (
-        patch("trendalgo.device.pair_strategy_scan.backtest_one", side_effect=fake_backtest_one),
+        patch("trendalgo.device.pair_strategy_pass2.backtest_one", side_effect=fake_backtest_one),
         patch("trendalgo.device.pair_strategy_scan.buy_and_hold_row", side_effect=fake_bh),
         patch("trendalgo.device.pair_strategy_scan.deepen_seeds", return_value=[]),
     ):

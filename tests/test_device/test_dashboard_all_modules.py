@@ -106,16 +106,24 @@ def test_customize_categories_and_cross_page(qtbot: QtBot) -> None:
 def test_coin_allocation_hides_legend_no_asset_name(qtbot: QtBot) -> None:
     from types import SimpleNamespace
 
-    from trendalgo.device.views.modules.allocation_modules import CoinAllocationModule
+    from trendalgo.device.views.modules.allocation_modules import (
+        CategoryAllocationModule,
+        CoinAllocationModule,
+    )
 
     widget = CoinAllocationModule()
     qtbot.addWidget(widget)
     chart = widget._view.chart()
     assert chart is not None
     assert chart.legend().isVisible() is False
+    assert not hasattr(widget, "_center")
     overview = SimpleNamespace(
         allocation=[{"asset": "SOL", "value_usd": 100.0, "pct": 100.0}],
     )
     widget.set_overview(overview, range_key="1y")  # type: ignore[arg-type]
-    assert "SOL" not in widget._center.text()
     assert "SOL" in widget._legend.text()
+    cat = CategoryAllocationModule()
+    qtbot.addWidget(cat)
+    assert cat.layout().stretch(0) == 3
+    assert cat.layout().stretch(1) == 1
+    assert cat._view.chart().legend().isVisible() is False

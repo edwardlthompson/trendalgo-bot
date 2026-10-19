@@ -75,14 +75,16 @@ def automate_crash_proxy_off(root: Path, _cfg: dict) -> AttemptResult:
 
 
 def automate_mcp_copy(root: Path, _cfg: dict) -> AttemptResult:
-    src = root / ".cursor" / "mcp.foss.example"
+    web = root / ".cursor" / "mcp.web.example"
+    foss = root / ".cursor" / "mcp.foss.example"
+    src = web if web.is_file() else foss
     dst = root / ".cursor" / "mcp.json"
     if not src.is_file():
         return AttemptResult(1, "mcp-copy", ".cursor/mcp.foss.example missing", True)
     if not dst.is_file():
         shutil.copyfile(src, dst)
     return AttemptResult(
-        0, "mcp-copy", "Gitignored .cursor/mcp.json present from FOSS example", False
+        0, "mcp-copy", f"Gitignored .cursor/mcp.json present from {src.name}", False
     )
 
 

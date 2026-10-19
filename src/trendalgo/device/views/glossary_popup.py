@@ -91,6 +91,8 @@ def glossary_tooltip(indicator: str) -> str:
 
 
 def pool_label_for(indicator_id: str) -> str:
+    if str(indicator_id or "").casefold() in {"oracle-max", "oracle max"}:
+        return "Baseline"
     from trendalgo.ta.strategy_pool import pool_label
 
     return pool_label(indicator_id)

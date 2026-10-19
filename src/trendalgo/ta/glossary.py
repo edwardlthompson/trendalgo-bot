@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from trendalgo.ta.baseline_glossary_data import BASELINE_GLOSSARY_ENTRIES
 from trendalgo.ta.catalog import all_ta_names
 from trendalgo.ta.categories import ta_category
 from trendalgo.ta.extended_glossary_data import EXTENDED_GLOSSARY_ENTRIES
@@ -33,7 +34,9 @@ def glossary_entry(fn_id: str) -> dict[str, Any]:
 
 
 def build_ta_glossary() -> list[dict[str, Any]]:
-    return [glossary_entry(fn_id) for fn_id in sorted(set(all_ta_names()))]
+    entries = [glossary_entry(fn_id) for fn_id in sorted(set(all_ta_names()))]
+    entries.extend(dict(row) for row in BASELINE_GLOSSARY_ENTRIES)
+    return entries
 
 
 def glossary_lookup() -> dict[str, dict[str, Any]]:

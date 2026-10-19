@@ -6,7 +6,10 @@ from trendalgo.ta.glossary_data import GLOSSARY_ENTRIES
 
 
 def test_glossary_has_full_ta_coverage() -> None:
-    assert len(build_ta_glossary()) == all_ta_count()
+    entries = build_ta_glossary()
+    # TA catalog + baseline concepts (Oracle max, …).
+    assert len(entries) >= all_ta_count()
+    assert any(e.get("id") == "oracle-max" for e in entries)
     assert len(GLOSSARY_ENTRIES) == len(TA_FUNCTION_NAMES)
 
 

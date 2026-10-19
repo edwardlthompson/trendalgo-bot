@@ -27,6 +27,7 @@ from trendalgo.backtest.ta_fleet import (
     buy_and_hold_row,
     filter_beats_buy_hold,
     merge_rank,
+    oracle_max_row,
 )
 from trendalgo.constants.timeframes import TRADINGVIEW_INTERVALS, timeframe_for_fetch
 from trendalgo.exchanges.fees import get_fee_schedule
@@ -274,6 +275,7 @@ class TaFleetBacktestRunner:
         ohlcv_by_tf: dict[str, list[dict[str, Any]]] = {}
         fetch_tf_map: dict[str, str] = {}
         buy_hold: dict[str, Any] | None = None
+        oracle_max: dict[str, Any] | None = None
         lookback = fleet_lookback_seconds()
         until = datetime.now(UTC)
         since = until - timedelta(seconds=lookback)
@@ -328,6 +330,12 @@ class TaFleetBacktestRunner:
                 if buy_hold is None:
                     df_bh = ohlcv_list_to_df(ohlcv, pair=job.pair, fetch_tf=fetch_tf)
                     buy_hold = buy_and_hold_row(
+                        df_bh,
+                        lookback_seconds=lookback,
+                        stake_usd=job.stake_usd,
+                        fee=fee,
+                    )
+                    oracle_max = oracle_max_row(
                         df_bh,
                         lookback_seconds=lookback,
                         stake_usd=job.stake_usd,
@@ -394,6 +402,7 @@ class TaFleetBacktestRunner:
                     "lookback_seconds": lookback,
                     "timeframes_tested": list(timeframes),
                     "buy_and_hold": buy_hold,
+                    "oracle_max": oracle_max,
                     "top10_pass1": top10_bh,
                     "optimized_top10": [],
                     "final_top10": top10_bh,
@@ -421,6 +430,7 @@ class TaFleetBacktestRunner:
                         "top5": _top5_for_bots(top10_bh, job.pair, job.exchange_id),
                         "best": top10_bh[0] if top10_bh else None,
                         "buy_and_hold": buy_hold,
+                        "oracle_max": oracle_max,
                     }
                 bh_net = buy_hold.get("net_profit") if buy_hold else None
                 fin_net = top10_bh[0]["net_profit"] if top10_bh else 0.0
@@ -522,6 +532,7 @@ class TaFleetBacktestRunner:
                 "lookback_seconds": lookback,
                 "timeframes_tested": list(timeframes),
                 "buy_and_hold": buy_hold,
+                "oracle_max": oracle_max,
                 "top10_pass1": top10_bh,
                 "optimized_top10": optimized_bh,
                 "final_top10": final_top10,
@@ -550,6 +561,7 @@ class TaFleetBacktestRunner:
                     if final_top10
                     else ((optimized or top10)[0] if (optimized or top10) else None),
                     "buy_and_hold": buy_hold,
+                    "oracle_max": oracle_max,
                 }
             bh_net = buy_hold.get("net_profit") if buy_hold else None
             fin_net = final_top10[0]["net_profit"] if final_top10 else 0.0

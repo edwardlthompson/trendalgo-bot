@@ -7,7 +7,7 @@ from typing import Any
 
 import pandas as pd
 from PySide6.QtCharts import QAreaSeries, QChart, QChartView, QDateTimeAxis, QLineSeries, QValueAxis
-from PySide6.QtCore import QDateTime, QPointF, Qt
+from PySide6.QtCore import QDateTime, QPointF, Qt, QTimer
 from PySide6.QtGui import QColor, QFont, QKeySequence, QPainter, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
@@ -43,9 +43,21 @@ def show_scanner_chart_dialog(
     *,
     window: str = "7d",
     candles_db: Path | None = None,
+    price_only: bool = False,
+    strategy_row: dict[str, Any] | None = None,
 ) -> None:
+    """Price chart dialog.
+
+    - ``price_only`` / B&H: no strategy radios, no trade overlays (Qualified spark default).
+    - ``strategy_row``: single-strategy overlays (Results / Backtest Show Chart).
+    - otherwise legacy multi-strategy radios from top_strategy_rows (kept for callers).
+    """
     symbol = str(coin.get("symbol") or coin.get("pair") or "")
     closes = _closes_for_window(coin, window)
+    name = str((strategy_row or {}).get("indicator") or "").strip()
+    if name == "B&H":
+        price_only = True
+        strategy_row = None
     dialog = QDialog(parent)
     dialog.setWindowTitle(S.SCANNER_CHART_TITLE.format(symbol=symbol))
     dialog.setWindowFlags(
@@ -58,14 +70,23 @@ def show_scanner_chart_dialog(
     hint.setObjectName("hint")
     hint.setWordWrap(True)
     show_trades = QCheckBox(S.SCANNER_CHART_SHOW_TRADES)
-    show_trades.setChecked(True)
+    single = strategy_row is not None and not price_only
+    show_trades.setChecked(bool(single) and not price_only)
+    show_trades.setVisible(not price_only)
     radios_host = QWidget()
     radios_row = QHBoxLayout(radios_host)
     radios_row.setContentsMargins(0, 0, 0, 0)
     group = QButtonGroup(dialog)
-    strategies = top_strategy_rows(coin, limit=None)
     strategy_buttons: list[tuple[QRadioButton, dict[str, Any]]] = []
-    if not strategies:
+    if price_only:
+        strategies: list[dict[str, Any]] = []
+    elif single and strategy_row is not None:
+        strategies = [strategy_row]
+    else:
+        strategies = top_strategy_rows(coin, limit=None)
+    if price_only:
+        pass
+    elif not strategies:
         radios_row.addWidget(QLabel(S.SCANNER_CHART_NO_STRATEGIES))
     else:
         for index, row in enumerate(strategies):
@@ -86,9 +107,12 @@ def show_scanner_chart_dialog(
     radios_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
     radios_scroll.setFixedHeight(44)
     radios_scroll.setEnabled(True)
+    radios_scroll.setVisible(not price_only and not single)
     chart = _OverlayChart()
-    layout.addWidget(show_trades)
-    layout.addWidget(radios_scroll)
+    if not price_only:
+        layout.addWidget(show_trades)
+    if not price_only and not single:
+        layout.addWidget(radios_scroll)
     layout.addWidget(hint)
     layout.addWidget(chart, 1)
     buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
@@ -179,9 +203,17 @@ def show_scanner_chart_dialog(
                             )
                         )
                     else:
-                        hint.setText(
-                            f"{row.get('indicator')}: {n_trades} trades ({tsl_n} TSL exits)"
-                        )
+                        formula = ""
+                        if str(row.get("indicator") or "").startswith("Secret Sauce"):
+                            dossier = row.get("heartbeat_dossier")
+                            if isinstance(dossier, dict):
+                                formula = str(dossier.get("formula_en") or "")
+                            if not formula and isinstance(row.get("params"), dict):
+                                dossier = row["params"].get("heartbeat_dossier")
+                                if isinstance(dossier, dict):
+                                    formula = str(dossier.get("formula_en") or "")
+                        base = f"{row.get('indicator')}: {n_trades} trades ({tsl_n} TSL exits)"
+                        hint.setText(f"{base}\n{formula}" if formula else base)
             else:
                 radios_scroll.setEnabled(False)
                 hint.clear()
@@ -324,9 +356,23 @@ class _OverlayChart(QWidget):
         self._axis_y.setLabelsColor(label)
         self._empty.hide()
         self._view.show()
-        # Labels need mapped chart positions after axes are set.
-        for region in regions:
-            self._add_region_label(region, colors)
+        # Labels need mapped chart positions after axes/layout settle.
+        pending = list(regions)
+
+        def _place_labels() -> None:
+            from shiboken6 import isValid
+
+            if not isValid(self) or not isValid(self._chart):
+                return
+            for region in pending:
+                if not isValid(self._chart):
+                    return
+                try:
+                    self._add_region_label(region, colors)
+                except RuntimeError:
+                    return
+
+        QTimer.singleShot(0, _place_labels)
 
     def _add_region(self, region: dict[str, Any], colors: dict[str, str]) -> QAreaSeries | None:
         start = timestamp_ms(region.get("entry_time"))
@@ -360,21 +406,31 @@ class _OverlayChart(QWidget):
         end = timestamp_ms(region.get("exit_time"))
         if start is None or end is None:
             return
-        text = str(region.get("label") or "")
+        text = str(region.get("label") or "").strip()
         if not text:
-            return
+            try:
+                pct = float(region.get("pnl_pct"))  # type: ignore[arg-type]
+                text = f"{pct:+.1f}%"
+            except (TypeError, ValueError):
+                return
         mid_ms = (start + end) / 2.0
-        mid_px = (float(region["entry_price"]) + float(region["exit_price"])) / 2.0
-        scene_pt = self._chart.mapToPosition(QPointF(mid_ms, mid_px), self._price)
+        lo = min(float(region["entry_price"]), float(region["exit_price"]))
+        hi = max(float(region["entry_price"]), float(region["exit_price"]))
+        profitable = bool(region.get("profitable"))
+        # Wins above the band; losses below — easier to read on dense overlays.
+        anchor_px = hi if profitable else lo
+        scene_pt = self._chart.mapToPosition(QPointF(mid_ms, anchor_px), self._price)
         item = QGraphicsSimpleTextItem(text)
         font = QFont(item.font())
         font.setBold(True)
         font.setPointSize(9)
         item.setFont(font)
-        fill = colors["gainUp"] if region.get("profitable") else colors["gainDown"]
+        fill = colors["gainUp"] if profitable else colors["gainDown"]
         item.setBrush(QColor(fill))
-        # Slight offset so text sits above the band center.
-        item.setPos(scene_pt.x() - 18, scene_pt.y() - 14)
+        # Center label on the hold band mid-point.
+        br = item.boundingRect()
+        y_off = -br.height() - 2 if profitable else 4
+        item.setPos(scene_pt.x() - br.width() / 2.0, scene_pt.y() + y_off)
         scene = self._chart.scene()
         if scene is not None:
             scene.addItem(item)

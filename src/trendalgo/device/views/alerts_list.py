@@ -32,9 +32,11 @@ class AlertsList(QWidget):
         for r, row in enumerate(rows):
             kind = str(row.get("kind") or "")
             label = {
-                "qualified_enter": "Qualified enter",
-                "watchlist_leave": "Watchlist leave",
+                "qualified_enter": "Entered",
+                "watchlist_leave": "Left",
                 "trade_alert": "Trade",
+                "scan_log": "Scan log",
+                "backtest_log": "Backtest log",
             }.get(kind, kind)
             values = (
                 str(row.get("at") or "")[:19],

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -16,7 +17,7 @@ def run_guard(root: Path, command: str) -> dict:
     payload = json.dumps({"command": command})
     guard = root / ".cursor/hooks/before_shell_guard.py"
     proc = subprocess.run(
-        ["python3", str(guard)],
+        [sys.executable, str(guard)],
         input=payload,
         capture_output=True,
         text=True,

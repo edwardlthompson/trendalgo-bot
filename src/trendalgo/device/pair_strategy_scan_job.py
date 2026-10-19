@@ -8,6 +8,7 @@ from typing import Any
 from trendalgo.backtest.heartbeat_tf import HEARTBEAT_TIMEFRAMES
 from trendalgo.backtest.sim_accel import accel_backend
 from trendalgo.backtest.ta_fleet import all_strategies
+from trendalgo.device.pair_scan_partial import clear_partial_rows, write_partial_rows
 from trendalgo.device.pair_scan_progress import clear_progress, write_progress
 from trendalgo.device.pair_strategy_scan import scan_pair_strategies
 from trendalgo.device.scan_stake import DEFAULT_SCAN_EXCHANGE, DEVICE_SCAN_STAKE_USD
@@ -17,6 +18,7 @@ from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
 def pair_strategy_scan_job(root: Path, pair: str) -> list[dict[str, Any]]:
     """Worker entry: All-TA settings + progress file under the profile."""
     clear_progress(root)
+    clear_partial_rows(root)
     text = str(pair or "").strip().upper()
     if not text or "/" not in text:
         write_progress(root, {"message": "Pair must look like BTC/USD", "phase": "error"})
@@ -63,4 +65,5 @@ def pair_strategy_scan_job(root: Path, pair: str) -> list[dict[str, Any]]:
         fee=fee,
         loader=loader,
         on_progress=lambda payload: write_progress(root, payload),
+        on_rows=lambda rows: write_partial_rows(root, rows),
     )

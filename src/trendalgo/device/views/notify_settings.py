@@ -1,11 +1,18 @@
-"""Settings section: alert channel toggles + Start with Windows + Telegram wizard."""
+"""Settings section: Windows × Telegram toggles per alert kind + Telegram wizard."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QGridLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from trendalgo.device import strings as S
 from trendalgo.device.autostart import set_enabled as set_autostart
@@ -28,15 +35,29 @@ class NotifySettingsSection(QWidget):
         super().__init__(parent)
         self._ctx = ctx
         self._on_saved = on_saved
-        self._watch = QCheckBox(S.NOTIFY_WATCHLIST)
-        self._qual = QCheckBox(S.NOTIFY_QUALIFIED)
-        self._trade = QCheckBox(S.NOTIFY_TRADES)
         self._tg = QCheckBox(S.NOTIFY_TELEGRAM)
-        self._tg_watch = QCheckBox(S.NOTIFY_TG_WATCHLIST)
-        self._tg_qual = QCheckBox(S.NOTIFY_TG_QUALIFIED)
-        self._tg_trade = QCheckBox(S.NOTIFY_TG_TRADES)
         self._autostart = QCheckBox(S.NOTIFY_START_WINDOWS)
         self._status = QLabel()
+        self._win: dict[str, QCheckBox] = {}
+        self._tg_kind: dict[str, QCheckBox] = {}
+        grid = QGridLayout()
+        grid.addWidget(QLabel(""), 0, 0)
+        grid.addWidget(QLabel(S.NOTIFY_COL_WINDOWS), 0, 1)
+        grid.addWidget(QLabel(S.NOTIFY_COL_TELEGRAM), 0, 2)
+        rows = (
+            ("logs", S.NOTIFY_KIND_LOGS),
+            ("entered", S.NOTIFY_KIND_ENTERED),
+            ("left", S.NOTIFY_KIND_LEFT),
+            ("trades", S.NOTIFY_KIND_TRADES),
+        )
+        for i, (key, title) in enumerate(rows, start=1):
+            grid.addWidget(QLabel(title), i, 0)
+            w = QCheckBox()
+            t = QCheckBox()
+            self._win[key] = w
+            self._tg_kind[key] = t
+            grid.addWidget(w, i, 1, alignment=Qt.AlignmentFlag.AlignCenter)
+            grid.addWidget(t, i, 2, alignment=Qt.AlignmentFlag.AlignCenter)
         help_lbl = QLabel(S.NOTIFY_SECTION_HELP)
         help_lbl.setObjectName("hint")
         help_lbl.setWordWrap(True)
@@ -52,17 +73,9 @@ class NotifySettingsSection(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(section_title(S.NOTIFY_SECTION))
         layout.addWidget(help_lbl)
-        for box in (
-            self._watch,
-            self._qual,
-            self._trade,
-            self._tg,
-            self._tg_watch,
-            self._tg_qual,
-            self._tg_trade,
-            self._autostart,
-        ):
-            layout.addWidget(box)
+        layout.addLayout(grid)
+        layout.addWidget(self._tg)
+        layout.addWidget(self._autostart)
         layout.addWidget(auto_help)
         layout.addWidget(wizard, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(save, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -71,25 +84,29 @@ class NotifySettingsSection(QWidget):
 
     def reload(self) -> None:
         prefs = load_prefs(self._ctx.root)
-        self._watch.setChecked(prefs.watchlist_alerts)
-        self._qual.setChecked(prefs.qualified_alerts)
-        self._trade.setChecked(prefs.trade_alerts)
+        self._win["logs"].setChecked(prefs.windows_logs)
+        self._win["entered"].setChecked(prefs.windows_entered)
+        self._win["left"].setChecked(prefs.windows_left)
+        self._win["trades"].setChecked(prefs.windows_trades)
         self._tg.setChecked(prefs.telegram_enabled)
-        self._tg_watch.setChecked(prefs.telegram_watchlist)
-        self._tg_qual.setChecked(prefs.telegram_qualified)
-        self._tg_trade.setChecked(prefs.telegram_trades)
+        self._tg_kind["logs"].setChecked(prefs.telegram_logs)
+        self._tg_kind["entered"].setChecked(prefs.telegram_entered)
+        self._tg_kind["left"].setChecked(prefs.telegram_left)
+        self._tg_kind["trades"].setChecked(prefs.telegram_trades)
         self._autostart.setChecked(prefs.start_with_windows)
         self._sync_tg_children(self._tg.isChecked())
 
     def save(self) -> None:
         prefs = NotifyPrefs(
-            watchlist_alerts=self._watch.isChecked(),
-            qualified_alerts=self._qual.isChecked(),
-            trade_alerts=self._trade.isChecked(),
+            windows_logs=self._win["logs"].isChecked(),
+            windows_entered=self._win["entered"].isChecked(),
+            windows_left=self._win["left"].isChecked(),
+            windows_trades=self._win["trades"].isChecked(),
             telegram_enabled=self._tg.isChecked(),
-            telegram_watchlist=self._tg_watch.isChecked(),
-            telegram_qualified=self._tg_qual.isChecked(),
-            telegram_trades=self._tg_trade.isChecked(),
+            telegram_logs=self._tg_kind["logs"].isChecked(),
+            telegram_entered=self._tg_kind["entered"].isChecked(),
+            telegram_left=self._tg_kind["left"].isChecked(),
+            telegram_trades=self._tg_kind["trades"].isChecked(),
             start_with_windows=self._autostart.isChecked(),
         )
         save_prefs(self._ctx.root, prefs)
@@ -110,15 +127,16 @@ class NotifySettingsSection(QWidget):
             {
                 "bot_token": token,
                 "chat_id": chat,
-                "trade_alerts": prefs.trade_alerts,
+                "trade_alerts": prefs.windows_trades,
                 "telegram_enabled": prefs.telegram_enabled,
                 "telegram_trades": prefs.telegram_trades,
             }
         )
 
     def _sync_tg_children(self, enabled: bool) -> None:
-        for box in (self._tg_watch, self._tg_qual, self._tg_trade):
+        for box in self._tg_kind.values():
             box.setEnabled(enabled)
 
     def _open_wizard(self) -> None:
-        TelegramWizardDialog(self._ctx, self).exec()
+        TelegramWizardDialog(self._ctx, parent=self).exec()
+        self.reload()

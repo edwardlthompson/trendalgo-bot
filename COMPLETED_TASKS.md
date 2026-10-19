@@ -2,6 +2,20 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint Oracle-SS — Glossary / Show Chart / SS bank (2026-10-18)
+
+Oracle Max glossary, Show Chart, Secret Sauce CDL/Fib bank, parallel All-TA Pass 2, Oracle×catalog Sauce TA, live ranked Results stream, Sauce TA vs Lab split. SS Lab #2 smokes BTC/ETH/SOL/AVAX 4/4; watch-agent-gates OK 8 stages; smoke-sprint PASS.
+
+1. ✅ [AGENT][LOCAL] Glossary Oracle Max + Results/Backtest click — glossary + results/backtest — scope: baseline_glossary / ta-glossary / scanner+backtest clicks
+2. ✅ [AGENT][LOCAL] SS row tint (B&H-parity) — results + backtest_table_fill + export — scope: scanner/backtest chrome
+3. ✅ [AGENT][LOCAL] Qualified empty shell keeps filters — scanner_page + ux3 — scope: device scanner
+4. ✅ [AGENT][LOCAL] Show Chart Results+Backtest+B&H + win/loss labels — strings + both tables + chart dialog — scope: device charts
+5. ✅ [AGENT][LOCAL] SS near-catalog bank (CDL/Fib/MOM/ROC) + Oracle-first refine + TSL grid — secret_sauce_* / lab / docs — scope: backtest SS Lab
+6. ✅ [AGENT][LOCAL] Parallel All-TA Pass 2 + Oracle×catalog coincidence Sauce — pair_strategy_pass2 / oracle_catalog_coincidence / scan — scope: device scan speed
+7. ✅ [AGENT][LOCAL] Live ranked Results stream + Secret Sauce TA vs Lab split — pair_scan_partial / backtest_page / sauce_names — scope: device UX
+8. ✅ [AGENT][LOCAL] Confirm SS Lab #2 smokes BTC/ETH/SOL/AVAX — tests/test_device/test_secret_sauce_smoke.py — scope: device SS smoke
+9. ✅ [AGENT][LOCAL] Green watch-agent-gates --once --autofix --scope python — scope: gates
+
 ## Sprint PF — Modular Dashboard (2026-10-16)
 
 Device Dashboard (ex-Portfolio): snap-to-grid multi-page modules, PNG export, Events Calendar + CoinMarketCal/Coindar wizard. Smoke-sprint PASS; watch-agent-gates OK; all-catalog module pack smoke green.

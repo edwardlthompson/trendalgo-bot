@@ -2,6 +2,7 @@
 description: UX/UI construction checklist when editing views, copy, nav, or forms
 alwaysApply: false
 globs:
+  - src/trendalgo/device/**
   - examples/web/**
   - examples/android/**
   - design-tokens/**
@@ -13,7 +14,7 @@ globs:
 
 # UX/UI construction (not a review-only doc)
 
-When adding or changing UI, **implement** [`docs/ux-ui-guidelines.md`](../../docs/ux-ui-guidelines.md). Tokens/chrome: [`docs/DESIGN_GUIDE.md`](../../docs/DESIGN_GUIDE.md) and `design-system.mdc`. `/ux-review` uses this same law.
+Primary product UI is **PySide6 device** under `src/trendalgo/device/` (Dashboard / Settings). When adding or changing UI, **implement** [`docs/ux-ui-guidelines.md`](../../docs/ux-ui-guidelines.md). Tokens/chrome: [`docs/DESIGN_GUIDE.md`](../../docs/DESIGN_GUIDE.md) and `design-system.mdc`. `/ux-review` uses this same law.
 
 ## Must do in the same slice
 

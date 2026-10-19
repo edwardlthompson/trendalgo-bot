@@ -24,12 +24,6 @@ def notify_fill(
     client: TelegramCommands | None = None,
 ) -> bool:
     """Return True when a message was sent (or dry-run client reported success)."""
-    if not live or not trade_notify_allowed(root):
-        return False
-    token, chat_id = load_creds(root)
-    tg = client or TelegramCommands(token=token, chat_id=chat_id)
-    if not tg.enabled:
-        return False
     text = format_trade(
         pair=pair,
         side=side,
@@ -39,7 +33,29 @@ def notify_fill(
         realized_pnl_usd=realized_pnl_usd,
         plan_version=plan_version,
     )
+    _append_device_trade_alert(root, pair=pair, reason=text)
+    if not live or not trade_notify_allowed(root):
+        return False
+    token, chat_id = load_creds(root)
+    tg = client or TelegramCommands(token=token, chat_id=chat_id)
+    if not tg.enabled:
+        return False
     return tg.send_message(text)
+
+
+def _append_device_trade_alert(root: Path, *, pair: str, reason: str) -> None:
+    """Bridge fills into device Alerts → Trades (best-effort)."""
+    try:
+        from trendalgo.device.scanner_alert_diff import AlertEvent
+        from trendalgo.device.scanner_alerts_store import append_alerts
+
+        symbol = pair.split("/", 1)[0].upper() if pair else ""
+        append_alerts(
+            root,
+            [AlertEvent(kind="trade_alert", symbol=symbol, pair=pair, reason=reason)],
+        )
+    except (OSError, ValueError, TypeError, ImportError):
+        return
 
 
 def outbox_payload(

@@ -25,7 +25,7 @@ from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
 
 _BH = "B&H"
-_EXPORT_COLS = len(S.BACKTEST_RESULT_HEADERS) - 1
+_EXPORT_COLS = len(S.BACKTEST_RESULT_HEADERS) - 2
 
 
 def build_export_panel(
@@ -92,13 +92,22 @@ def _filled_table(
     )
     heat = heat_for_rows(rows) if heatmap else {}
     bh_bg, bh_fg = theme["secondaryContainer"], theme["onSecondaryContainer"]
+    ss_bg, ss_fg = theme["primaryContainer"], theme["onPrimaryContainer"]
     for r, row in enumerate(rows):
-        is_bh = str(row.get("indicator") or "").strip() == _BH
+        name = str(row.get("indicator") or "").strip()
+        is_bh = name == _BH
+        is_sauce = name == "Secret Sauce"
         for c, text in enumerate(row_cells(row, is_bh=is_bh)[:_EXPORT_COLS]):
             item = QTableWidgetItem(text)
             if is_bh:
                 item.setBackground(QColor(bh_bg))
                 item.setForeground(QColor(bh_fg))
+                font = item.font()
+                font.setBold(True)
+                item.setFont(font)
+            elif is_sauce:
+                item.setBackground(QColor(ss_bg))
+                item.setForeground(QColor(ss_fg))
                 font = item.font()
                 font.setBold(True)
                 item.setFont(font)

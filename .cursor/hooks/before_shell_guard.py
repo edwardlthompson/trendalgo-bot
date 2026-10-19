@@ -47,6 +47,22 @@ def main() -> None:
             break
 
     cmd_lower = command.lower()
+    # Force-push stays denied even when session approved plain "git push" (destructive-ops.mdc).
+    force_needles = ("git push --force", "git push -f", "git push --force-with-lease")
+    if any(n in cmd_lower for n in force_needles):
+        print(
+            json.dumps(
+                {
+                    "permission": "deny",
+                    "user_message": f"Blocked destructive command (hook): {command[:120]}",
+                    "agent_message": (
+                        "git push --force is never session-approvable; rewrite history needs [HUMAN]."
+                    ),
+                }
+            )
+        )
+        return
+
     for pat in patterns:
         if pat in cmd_lower:
             for ok in approved:
