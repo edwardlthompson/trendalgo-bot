@@ -352,9 +352,7 @@ def test_masks_for_rsx_cross_period(monkeypatch: pytest.MonkeyPatch) -> None:
     n = 160
     # Deterministic synthetic RSX — avoid live TA engine / pandas-ta CI variance.
     # Rise through entry level then fall through exit level.
-    fake = np.concatenate(
-        [np.linspace(10.0, 85.0, n // 2), np.linspace(85.0, 20.0, n - n // 2)]
-    )
+    fake = np.concatenate([np.linspace(10.0, 85.0, n // 2), np.linspace(85.0, 20.0, n - n // 2)])
     monkeypatch.setattr(rsx_mod, "_rsx_series", lambda _df, _period: fake.copy())
     close = np.full(n, 50.0)
     df = pd.DataFrame(
