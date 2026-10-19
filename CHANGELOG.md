@@ -20,6 +20,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.0...v0.7.1) (2026-10-19)
+
+
+### Fixed
+
+* **ci:** restore codeql-action@v4 after invalid bundle pin ([4a5d310](https://github.com/edwardlthompson/trendalgo-bot/commit/4a5d31091834f17a481b424e43c9249efe957255))
+* **test:** stub RSX series in secret sauce cross-period mask test ([fc3e8d0](https://github.com/edwardlthompson/trendalgo-bot/commit/fc3e8d02cccd1858a1bd8640f0bd851db76727ca))
+
+
+### Changed
+
+* **release:** prepare v0.7.1 release ([4c60847](https://github.com/edwardlthompson/trendalgo-bot/commit/4c6084748860670c762ea1771edbd10d946c508e))
+* **release:** sync uv.lock to 0.7.0 on release PR ([4e8ea94](https://github.com/edwardlthompson/trendalgo-bot/commit/4e8ea9450ca0be137f15539a285202bacdd018a3))
+
+
+### Documentation
+
+* **kb:** record v0.7.0 ship CI pin and OpenVEX gap ([8ba0e76](https://github.com/edwardlthompson/trendalgo-bot/commit/8ba0e76ca83719b96254e3550535e414457cf378))
+* record v0.7.0 ship milestone in memory and decision log ([89b48f1](https://github.com/edwardlthompson/trendalgo-bot/commit/89b48f142de0ab3fb65d288ee3e59a79e11d9ed7))
+
 ## [0.7.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.2...v0.7.0) (2026-10-17)
 
 
