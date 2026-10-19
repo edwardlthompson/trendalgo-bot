@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from trendalgo.backtest.oracle_pattern_mine import CompositeRule, RuleConjunct
 from trendalgo.backtest.secret_sauce_cross import cross_up, osc_cross_columns
@@ -344,13 +345,18 @@ def test_feature_bank_includes_structure_keys() -> None:
     assert any(k.startswith("cdl_") for k in keys)
 
 
-def test_masks_for_rsx_cross_period() -> None:
+def test_masks_for_rsx_cross_period(monkeypatch: pytest.MonkeyPatch) -> None:
     """Entry/exit may use different RSX periods (fee-max toward Oracle)."""
-    from trendalgo.backtest.secret_sauce_lab.rsx_neighborhood import masks_for_rsx_rules
+    from trendalgo.backtest.secret_sauce_lab import rsx_neighborhood as rsx_mod
 
-    rng = np.random.default_rng(7)
     n = 160
-    close = 50.0 + np.cumsum(rng.normal(0, 0.8, size=n))
+    # Deterministic synthetic RSX — avoid live TA engine / pandas-ta CI variance.
+    # Rise through entry level then fall through exit level.
+    fake = np.concatenate(
+        [np.linspace(10.0, 85.0, n // 2), np.linspace(85.0, 20.0, n - n // 2)]
+    )
+    monkeypatch.setattr(rsx_mod, "_rsx_series", lambda _df, _period: fake.copy())
+    close = np.full(n, 50.0)
     df = pd.DataFrame(
         {
             "open": close,
@@ -370,11 +376,12 @@ def test_masks_for_rsx_cross_period() -> None:
         (RuleConjunct("rsx9_xdn_70", ">=", 1.0),),
         "xp",
     )
-    packed = masks_for_rsx_rules(df, er, xr)
+    packed = rsx_mod.masks_for_rsx_rules(df, er, xr)
     assert packed is not None
     em, xm = packed
     assert em.dtype == bool and xm.dtype == bool
     assert len(em) == n and len(xm) == n
+    assert bool(em.any()) and bool(xm.any())
 
 
 def test_search_prefers_higher_net_and_oracle_family_on_tie() -> None:
