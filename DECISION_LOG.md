@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-10-19 — Ship v0.7.1 Secret Sauce + CodeQL pin again
+- **Status:** Accepted
+- **Context:** `/ship` after Oracle-SS / Secret Sauce Lab; `update-deps` again rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`; CI pytest failed on live RSX compute in mask unit test.
+- **Decision:** Ship Secret Sauce Lab, fee-aware catalog coincidence, chart overlays; restore `codeql-action@v4` (+ Scorecard SARIF); stub `_rsx_series` in the cross-period mask test. Merge Release Please #48 → v0.7.1; sync `uv.lock` package version.
+- **Alternatives considered:** Keep upd CodeQL bundle tags (rejected — Actions cannot resolve); skip ship until pandas-ta RSX reliable on CI (rejected — unit test does not need live TA).
+- **Consequences:** Required checks green; `/regress` must confirm SBOM/Pages/upgrade sim (OpenVEX gap may remain as KB-015).
+
 ### 2026-10-17 — Ship v0.7.0 Dashboard grid + CodeQL pin
 - **Status:** Accepted
 - **Context:** `/ship` after modular Dashboard work; `update-deps` rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`; a full upstream `TEMPLATE_INDEX.json` briefly landed and failed child-repo path validation.
