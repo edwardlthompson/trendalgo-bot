@@ -20,6 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.7.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.1...v0.7.2) (2026-10-20)
+
+
+### Fixed
+
+* **test:** use low-entropy vault fixtures for gitleaks ([1a27a65](https://github.com/edwardlthompson/trendalgo-bot/commit/1a27a653336af8b77a849e2ee9c7e4fb415a0ce7))
+
+
+### Changed
+
+* **release:** prepare v0.7.2 release ([5767544](https://github.com/edwardlthompson/trendalgo-bot/commit/57675440905d725a7275b9b2b420ac77daf2331f))
+* **release:** sync uv.lock to 0.7.1 and record ship milestone ([d6cd83b](https://github.com/edwardlthompson/trendalgo-bot/commit/d6cd83b148c53a0851130ad21128b84f2a8b2645))
+
+
+### Documentation
+
+* **kb:** record v0.7.1 ship CodeQL pin and OpenVEX gap ([9011c65](https://github.com/edwardlthompson/trendalgo-bot/commit/9011c652f03a88e4dafb70d47971555db91046a9))
+
 ## [0.7.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.0...v0.7.1) (2026-10-19)
 
 
