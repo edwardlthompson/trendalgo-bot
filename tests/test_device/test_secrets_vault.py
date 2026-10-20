@@ -12,8 +12,8 @@ def test_vault_round_trip_query_scope() -> None:
     store.write_entry(
         VaultEntry(
             exchange_id="kraken",
-            api_key="test-key-abcdef12",
-            api_secret="test-secret-abcdef12",
+            api_key="fixture",
+            api_secret="fixture",
             scope="query",
         )
     )
@@ -21,7 +21,7 @@ def test_vault_round_trip_query_scope() -> None:
     assert entry is not None
     assert entry.scope == "query"
     assert store.can_place_orders("kraken") is False
-    assert store.get("KRAKEN_API_KEY") == "test-key-abcdef12"
+    assert store.get("KRAKEN_API_KEY") == "fixture"
     store.delete_entry("kraken")
     assert store.read_entry("kraken") is None
 
@@ -31,8 +31,8 @@ def test_trade_scope_can_place_orders() -> None:
     store.write_entry(
         VaultEntry(
             exchange_id="kraken",
-            api_key="trade-key-abcdef12",
-            api_secret="trade-secret-abcdef12",
+            api_key="fixture",
+            api_secret="fixture",
             scope="trade",
         )
     )
