@@ -80,6 +80,12 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-018 — Ship v0.7.2 gitleaks vault fixtures + CodeQL pin (2026-10-20)
+
+**Symptom:** Security Scan (Gitleaks) failed on `tests/test_device/test_secrets_vault.py` (`generic-api-key` on `api_key="test-key-abcdef12"`). Separately, `update-deps --apply` again rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`.
+
+**Fix:** Use low-entropy `fixture` strings in vault tests; restore `codeql-action@v4`; re-apply branch protection. Release Please #49 → `v0.7.2`; `uv lock` sync. OpenVEX still a known workflow gap (KB-015/016).
+
 ## KB-017 — Ship v0.7.1 Secret Sauce + CodeQL pin recurrence (2026-10-19)
 
 **Symptom:** `/ship` after Secret Sauce Lab; `update-deps` again pinned `github/codeql-action@vcodeql-bundle-v2.27.2`; CI pytest `test_masks_for_rsx_cross_period` got `None` from live RSX; `/regress` `wait-release-sbom --require` fails without `openvex.json`; `verify-branch-protection` needs admin (H-003).

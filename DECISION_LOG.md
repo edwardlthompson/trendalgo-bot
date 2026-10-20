@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-10-20 — Ship v0.7.2 device UX + vault fixture gitleaks
+- **Status:** Accepted
+- **Context:** `/ship` after window geometry, scanner cold-open schedule, local/UTC display, About/Venmo, and live-rails work; `update-deps` again proposed invalid `codeql-action@vcodeql-bundle-v2.27.2`; Security Scan failed on gitleaks `generic-api-key` in vault unit fixtures; branch protection had been missing on `main`.
+- **Decision:** Ship device UX + live rails; bump ccxt/fastapi/httpx2; keep `codeql-action@v4`; replace vault test keys with low-entropy `fixture`; re-apply branch protection via `setup-github-repo.sh`. Merge Release Please #49 → v0.7.2; sync `uv.lock` package version.
+- **Alternatives considered:** Allowlist the vault test path in `.gitleaks.toml` (rejected — prefer fixtures that never look like keys); keep upd CodeQL bundle tags (rejected — Actions cannot resolve).
+- **Consequences:** Required checks green on fix commit; `/regress` must confirm SBOM/Pages/upgrade sim (OpenVEX gap may remain as KB-015).
+
 ### 2026-10-19 — Ship v0.7.1 Secret Sauce + CodeQL pin again
 - **Status:** Accepted
 - **Context:** `/ship` after Oracle-SS / Secret Sauce Lab; `update-deps` again rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`; CI pytest failed on live RSX compute in mask unit test.

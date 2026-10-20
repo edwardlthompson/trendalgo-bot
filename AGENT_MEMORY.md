@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board clear of AGENT/AUTO after Sprint Oracle-SS archive + `/ship` v0.7.1. Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
+**Current sprint:** Board clear of AGENT/AUTO after `/ship` v0.7.2. Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
 
-**Tests:** watch-agent-gates OK; local pre-release-gate PASS; GitHub CI/CodeQL/Security Scan green @ `6d46a20` then Release Please #48 → `v0.7.1`.
+**Tests:** watch-agent-gates OK; local pre-release-gate PASS; GitHub CI/CodeQL/Security Scan green @ `1a27a65` then Release Please #49 → `v0.7.2`.
 
-**Recent:** `/ship` 2026-10-19 — Secret Sauce Lab + fee-aware coincidence + chart overlays; restore `codeql-action@v4` after upd invalid pin; stub RSX masks test for CI. Spec: `docs/features/secret-sauce.md`.
+**Recent:** `/ship` 2026-10-20 — window geometry + FlowLayout; scanner cold-open/hour-align; local/UTC time display; About updates/Venmo; live rails; ccxt/fastapi/httpx2 bumps; gitleaks fixture fix; restore `codeql-action@v4` after upd invalid pin again.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
