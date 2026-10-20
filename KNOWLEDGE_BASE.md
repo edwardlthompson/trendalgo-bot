@@ -82,7 +82,7 @@
 
 ## KB-018 — Ship v0.7.2 gitleaks vault fixtures + CodeQL pin (2026-10-20)
 
-**Symptom:** Security Scan (Gitleaks) failed on `tests/test_device/test_secrets_vault.py` (`generic-api-key` on `api_key="test-key-abcdef12"`). Separately, `update-deps --apply` again rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`.
+**Symptom:** Security Scan (Gitleaks) failed on `tests/test_device/test_secrets_vault.py` (`generic-api-key` on high-entropy vault fixture strings). Separately, `update-deps --apply` again rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`. Do not paste sample `api_key=` literals into KB notes — gitleaks scans docs too.
 
 **Fix:** Use low-entropy `fixture` strings in vault tests; restore `codeql-action@v4`; re-apply branch protection. Release Please #49 → `v0.7.2`; `uv lock` sync. OpenVEX still a known workflow gap (KB-015/016).
 
