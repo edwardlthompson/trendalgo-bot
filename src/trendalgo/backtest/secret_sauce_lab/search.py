@@ -18,7 +18,15 @@ _MAX_EXIT_FRAC = 0.80
 _MAX_TRADES = 200
 # Families fitted on Oracle/peer bars — prefer at equal Net % (Oracle geometry).
 _ORACLE_FAM = frozenset(
-    {"oracle_pattern", "peer_pattern", "rsx_neighborhood", "osc_cross", "peer_reexpress"}
+    {
+        "oracle_pattern",
+        "peer_pattern",
+        "rsx_neighborhood",
+        "osc_cross",
+        "peer_reexpress",
+        "residual_and",
+        "adaptive_exit",
+    }
 )
 
 
@@ -48,30 +56,11 @@ def search_best_pair(
     best_pos: tuple[CompositeRule, CompositeRule, float, str] | None = None
     best_vs_bh: tuple[CompositeRule, CompositeRule, float, str] | None = None
     best_vs_peer: tuple[CompositeRule, CompositeRule, float, str] | None = None
-    for er, xr, family in pairs:
-        if time.perf_counter() - t0 > time_budget_s:
-            break
-        em = mask_conjuncts(cols, er.conjuncts)
-        xm = mask_conjuncts(cols, xr.conjuncts)
-        if not em.any() or not xm.any():
-            continue
-        if (em.sum() / n) > _MAX_ENTRY_FRAC or (xm.sum() / n) > _MAX_EXIT_FRAC:
-            continue
-        # Small TSL grid — keep pair with best fee Net % (dossier still signal-first).
-        net = float("-inf")
-        for tsl in (0.0, 0.02, 0.03, 0.05):
-            stats = simulate_long_with_fees(
-                df, em, xm, stake_usd=stake_usd, fee=fee, trailing_stop_pct=tsl
-            )
-            trades = int(stats.get("trades") or 0)
-            if trades < 1 or trades > _MAX_TRADES:
-                continue
-            trial_net = float(stats.get("net_profit") or 0.0)
-            if trial_net > net:
-                net = trial_net
-        if net == float("-inf"):
-            continue
-        cand = (er, xr, net, family)
+
+    def _consider(cand: tuple[CompositeRule, CompositeRule, float, str]) -> None:
+        nonlocal overall, best_pos, best_vs_bh, best_vs_peer
+        er, xr, net, family = cand
+        del er, xr, family
         if overall is None or _better(cand, overall, direction):
             overall = cand
         if net > 0 and (best_pos is None or _better(cand, best_pos, direction)):
@@ -88,6 +77,57 @@ def search_best_pair(
             and (best_vs_peer is None or _better(cand, best_vs_peer, direction))
         ):
             best_vs_peer = cand
+
+    def _eval_pair(er: CompositeRule, xr: CompositeRule, family: str) -> None:
+        if time.perf_counter() - t0 > time_budget_s:
+            return
+        em = mask_conjuncts(cols, er.conjuncts)
+        xm = mask_conjuncts(cols, xr.conjuncts)
+        if not em.any() or not xm.any():
+            return
+        if (em.sum() / n) > _MAX_ENTRY_FRAC or (xm.sum() / n) > _MAX_EXIT_FRAC:
+            return
+        net = float("-inf")
+        for tsl in (0.0, 0.02, 0.03, 0.05):
+            stats = simulate_long_with_fees(
+                df, em, xm, stake_usd=stake_usd, fee=fee, trailing_stop_pct=tsl
+            )
+            trades = int(stats.get("trades") or 0)
+            if trades < 1 or trades > _MAX_TRADES:
+                continue
+            trial_net = float(stats.get("net_profit") or 0.0)
+            if trial_net > net:
+                net = trial_net
+        if net == float("-inf"):
+            return
+        _consider((er, xr, net, family))
+
+    # Primary pass: non-adaptive families first so exit pass has a strong entry.
+    primary = [(e, x, f) for e, x, f in pairs if f != "adaptive_exit"]
+    adaptive = [(e, x, f) for e, x, f in pairs if f == "adaptive_exit"]
+    for er, xr, family in primary + adaptive:
+        _eval_pair(er, xr, family)
+        if time.perf_counter() - t0 > time_budget_s:
+            break
+
+    # Exit-preferential pass: fixed champion entry × adaptive / diverse exits.
+    champ = best_vs_peer or best_vs_bh or best_pos or overall
+    if champ is not None and time.perf_counter() - t0 < time_budget_s:
+        exit_pool: list[CompositeRule] = []
+        seen_x: set[str] = set()
+        for _e, xr, _fam in adaptive + pairs:
+            sig = "|".join(f"{c.feature}{c.op}{c.value}" for c in xr.conjuncts)
+            if sig in seen_x:
+                continue
+            seen_x.add(sig)
+            exit_pool.append(xr)
+            if len(exit_pool) >= 12:
+                break
+        for xr in exit_pool:
+            if time.perf_counter() - t0 > time_budget_s:
+                break
+            _eval_pair(champ[0], xr, "adaptive_exit")
+
     if best_vs_peer is not None:
         return best_vs_peer
     if best_vs_bh is not None:

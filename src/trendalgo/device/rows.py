@@ -56,22 +56,44 @@ def sparkline(values: list[float]) -> str:
     return "".join(SPARK_LEVELS[round((v - low) / (high - low) * top)] for v in finite)
 
 
-def scan_caption(snapshot: QualifiedSnapshot | None) -> str:
+def scan_caption(
+    snapshot: QualifiedSnapshot | None,
+    *,
+    use_utc: bool = False,
+) -> str:
     if snapshot is None:
         return ""
+    from trendalgo.device.time_display import format_display_time  # noqa: PLC0415
+
     text = S.SCANNER_CAPTION.format(
         scan_id=snapshot.scan_id,
-        as_of=snapshot.as_of.isoformat(timespec="minutes"),
+        as_of=format_display_time(snapshot.as_of, use_utc=use_utc),
     )
     return text + (S.SCANNER_DEGRADED if snapshot.degraded else "")
 
 
-def backtest_trade_rows(trades: list[dict[str, Any]]) -> list[tuple[str, ...]]:
+def backtest_trade_rows(
+    trades: list[dict[str, Any]],
+    *,
+    use_utc: bool = False,
+) -> list[tuple[str, ...]]:
     """Table cells for the trades a backtest returned (already plain values)."""
+    from trendalgo.device.time_display import format_display_time  # noqa: PLC0415
+
+    def _when(raw: object) -> str:
+        from datetime import datetime  # noqa: PLC0415
+
+        if isinstance(raw, datetime):
+            return format_display_time(raw, use_utc=use_utc)
+        formatted = format_display_time(str(raw) if raw is not None else None, use_utc=use_utc)
+        if formatted:
+            return formatted
+        return str(raw)[:16].replace("T", " ")
+
     return [
         (
-            str(trade["entry_time"])[:16].replace("T", " "),
-            str(trade["exit_time"])[:16].replace("T", " "),
+            _when(trade["entry_time"]),
+            _when(trade["exit_time"]),
             f"{float(trade['entry_price']):,.4f}",
             f"{float(trade['exit_price']):,.4f}",
             f"{float(trade['pnl_pct']):+.2f}%",

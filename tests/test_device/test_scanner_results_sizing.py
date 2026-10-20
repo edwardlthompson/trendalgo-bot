@@ -22,8 +22,10 @@ def test_results_dialog_source_has_no_max_height_cap() -> None:
     assert "setMaximumHeight" not in body
     assert "AdjustToContents" in body
     assert "ScrollBarAsNeeded" in body
-    assert "fit_table_columns" in body
+    assert "fit_table_columns" in body or "populate_results_table" in body
     assert "WindowMinMaxButtonsHint" in body
     assert "results_dialog_width" in body or "load_results_prefs" in body
     assert "showMaximized" in body
     assert "finished.connect" in body
+    assert "BacktestColumnFilterRow" in body
+    assert "filter_rows" in body

@@ -201,9 +201,14 @@ def filter_coins(
     vol24_min: float | None = None,
 ) -> list[dict[str, Any]]:
     """Client-side display filters. Scan gate stays in scan_model."""
+    from trendalgo.device.portfolio_categories import is_stablecoin_base
+
     venue = exchange.strip().lower()
     out: list[dict[str, Any]] = []
     for coin in coins:
+        pair = str(coin.get("pair") or coin.get("symbol") or "")
+        if is_stablecoin_base(pair):
+            continue
         listed = [str(x).lower() for x in (coin.get("listed_on") or ["kraken"])]
         if venue not in ("", "all") and venue not in listed:
             continue

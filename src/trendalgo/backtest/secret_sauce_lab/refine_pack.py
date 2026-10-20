@@ -10,6 +10,7 @@ from trendalgo.backtest.secret_sauce_lab.catalog_reseed import is_exact_peer_clo
 from trendalgo.backtest.secret_sauce_lab.narrative import build_narrative
 from trendalgo.backtest.secret_sauce_lab.refine_ladder import ladder_accepts
 from trendalgo.backtest.secret_sauce_lab.regime_snapshot import RegimeSnapshot
+from trendalgo.backtest.secret_sauce_lab.residual_instrument import build_residual_fields
 from trendalgo.backtest.secret_sauce_lab.rsx_neighborhood import (
     is_rsx_neighborhood_rule,
     masks_for_rsx_rules,
@@ -54,17 +55,32 @@ def pack_refine_candidate(
     else:
         entry_mask = entries_for_secret_sauce(search_frame, entry_rule)
         exit_mask = entries_for_secret_sauce(search_frame, exit_rule)
+    swing_hits = tuple(bool(entry_mask[i]) for i in swings if 0 <= i < len(search_frame))
+    exit_hits = tuple(bool(exit_mask[i]) for i in exits if 0 <= i < len(search_frame))
+    residual = build_residual_fields(
+        search_frame,
+        entries=[i for i in swings if 0 <= i < len(search_frame)],
+        exits=[i for i in exits if 0 <= i < len(search_frame)],
+        swing_hits=swing_hits,
+        exit_hits=exit_hits,
+        sauce_net=search_net,
+        oracle_net=None,
+    )
     dossier = HeartbeatDossier(
         rule=entry_rule,
         exit_rule=exit_rule,
         formula_en=formula,
         train_coverage=float(hb0.get("train_coverage") or 0.0),
         holdout_coverage=float(hb0.get("holdout_coverage") or 0.0),
-        swing_hits=tuple(bool(entry_mask[i]) for i in swings if 0 <= i < len(search_frame)),
-        exit_hits=tuple(bool(exit_mask[i]) for i in exits if 0 <= i < len(search_frame)),
+        swing_hits=swing_hits,
+        exit_hits=exit_hits,
         oracle_entry_indexes=tuple(swings),
         oracle_exit_indexes=tuple(exits),
         anti_cheat=anti,
+        residual_entry_indexes=residual["residual_entry_indexes"],
+        residual_exit_indexes=residual["residual_exit_indexes"],
+        residual_feature_hits=residual["residual_feature_hits"],
+        oracle_gap_net_pct=residual["oracle_gap_net_pct"],
     )
     trial = eval_lab_trial(search_frame, dossier, fee=fee, stake_usd=stake, timeframe=search_tf)
     if trial is None:

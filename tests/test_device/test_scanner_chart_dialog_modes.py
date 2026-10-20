@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
 from pytestqt.qtbot import QtBot
 
 from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
+
+
+def test_chart_dialog_uses_windowed_open_and_min_width() -> None:
+    body = Path("src/trendalgo/device/views/scanner_chart_dialog.py").read_text(encoding="utf-8")
+    assert "_open_windowed" in body
+    assert "showFullScreen" not in body
+    assert "_CHART_MIN_WIDTH" in body
+    assert "ScrollBarAsNeeded" in body
 
 
 @pytest.fixture

@@ -31,11 +31,32 @@ def fleet_row_to_lts(
     stake = float(stake_usd) if stake_usd else 1.0
     net_pct = (net / stake) * 100.0
     fees_paid = float(row.get("fees_paid") or 0.0)
-    win_rate = row.get("win_rate")
-    try:
-        win_pct: float | str = float(win_rate) * 100.0 if win_rate is not None else "-"
-    except (TypeError, ValueError):
+    # Prefer explicit percent, then win_rate fraction, then wins/(trades−open).
+    # SS TA coincidence historically omitted win_rate and left win_pct as "-".
+    win_pct: float | str
+    existing = row.get("win_pct")
+    if existing not in (None, "-", ""):
+        try:
+            win_pct = float(existing)
+        except (TypeError, ValueError):
+            win_pct = "-"
+    else:
         win_pct = "-"
+    if win_pct == "-":
+        win_rate = row.get("win_rate")
+        if win_rate is None:
+            trades_n = int(row.get("trades") or 0)
+            wins_n = int(row.get("wins") or 0)
+            open_n = int(row.get("open_trades") or 0)
+            closed = max(0, trades_n - open_n)
+            if closed > 0:
+                win_rate = wins_n / closed
+            elif trades_n > 0:
+                win_rate = wins_n / trades_n
+        try:
+            win_pct = float(win_rate) * 100.0 if win_rate is not None else "-"
+        except (TypeError, ValueError):
+            win_pct = "-"
     tsl = float(row.get("trailing_stop_pct") or 0.0)
     # Fraction (0.01) → percent (1); allow 0% for signal-only winners.
     tsl_pct = tsl * 100.0 if 0.0 < tsl <= 1.0 else tsl
@@ -99,6 +120,10 @@ def fleet_row_to_lts(
     regime = row.get("regime")
     if is_secret and isinstance(regime, dict):
         out["regime"] = regime
+    if bool(row.get("protective_tsl")):
+        out["protective_tsl"] = True
+    if bool(row.get("tsl_breath")):
+        out["tsl_breath"] = True
     return out
 
 

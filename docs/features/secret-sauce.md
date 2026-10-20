@@ -11,6 +11,9 @@
 - ✅ Spectrum badge is independent — never force-sort Sauce to #2
 - ✅ Study shows regime chips, Oracle gap, English formula, anti-cheat note
 - ✅ README pitch + this lab notebook explain how Sauce is cooked
+- ✅ Phase 0: dossier residual entry/exit indexes + causal feature hits; Study residual line
+- ✅ Phase 1: residual AND conjunct (fee re-sim) + adaptive_exit family / exit-preferential search
+- 🔲 Phase 2+: holdout-gated search, lagged multi-TF arming, curated CCI/WILLR/MFI (data-driven)
 
 ## Smoke scenario
 
@@ -36,7 +39,6 @@ dip-in-uptrend math; quiet ranges want mean-reversion; chop is skim-and-admit.
 | Structural | Trend vs range / chop? |
 | Volatility | Calm vs stressed? |
 | Direction | Up / down / flat? |
-
 ### Structural votes (P0)
 
 | Pattern | Trend read |
@@ -46,7 +48,6 @@ dip-in-uptrend math; quiet ranges want mean-reversion; chop is skim-and-admit.
 | Choppiness Index | CHOP≤55 trend vote; ≥61.8 chop |
 | 2-of-3 ensemble | ≥2 of ADX/ER/CHOP agree → trending |
 | MA ribbon | SMA20/50/100 stack + SMA20 slope |
-
 ### Volatility (P0)
 
 | Pattern | Read |
@@ -54,7 +55,6 @@ dip-in-uptrend math; quiet ranges want mean-reversion; chop is skim-and-admit.
 | ATR percentile (~50 bars) | <25 low · >75 high |
 | BB width percentile | squeeze / expansion |
 | TTM-style squeeze | BB inside Keltner → squeeze flag |
-
 ### Direction (P0)
 
 DI dominance, close vs SMA50 + rising SMA20, optional MACD hist confirm.
@@ -69,7 +69,6 @@ DI dominance, close vs SMA50 + rising SMA20, optional MACD hist confirm.
 | squeeze (not down) | squeeze_breakout + structural winner | — |
 | choppy / high-vol range | skim (+ light osc_cross) | — |
 | volume_ok × trending up | volume_impulse co-boost | — |
-
 Soft budgets only — never exclusive hard-switch. Regime label uses majority of last ~48 bars.
 
 ## Cross events vs level-state
@@ -120,7 +119,6 @@ Anti-cheat: never “enter at oracle index”; only causal thresholds at those b
 | Device wire | `pair_strategy_secret_sauce.py`, `pair_strategy_scan.py` |
 | Study UI | `views/secret_sauce_study.py` |
 | Tests | `tests/test_backtest/test_secret_sauce*.py` |
-
 ## Definition of Done
 
 - Unit tests: cross edge-only; downtrend starves dip; reseed rejects clones; soft
@@ -136,6 +134,7 @@ Anti-cheat: never “enter at oracle index”; only causal thresholds at those b
 ```bash
 uv run python -m trendalgo.device --smoke-backtest ETH/USD
 uv run pytest tests/test_backtest/test_secret_sauce_lab.py tests/test_device/test_secret_sauce_smoke.py -q
+
 ```
 
 ## Notes

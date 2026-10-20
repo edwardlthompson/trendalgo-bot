@@ -63,7 +63,10 @@ def test_category_heuristics() -> None:
             {"asset": "USDT", "value_usd": 30},
         ]
     )
-    assert sum(r["value_usd"] for r in rows) == 100
+    valued = [r for r in rows if r.get("value_usd") is not None]
+    assert sum(float(r["value_usd"]) for r in valued) == 100
+    nft = next(r for r in rows if r["category"] == "NFTs")
+    assert nft.get("status") == "untracked"
     assert (
         cash_drag_pct([{"asset": "USDT", "value_usd": 50}, {"asset": "BTC", "value_usd": 50}])
         == 50.0

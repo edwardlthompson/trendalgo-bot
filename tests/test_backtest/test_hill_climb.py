@@ -136,7 +136,10 @@ def test_climb_seed_keeps_signal_when_trails_do_not_help(monkeypatch: Any) -> No
     )
     best = climb_seed(_ohlcv(), seed, fee=fee, stake_usd=1000.0, timeframe="1h")
     assert best is not None
-    assert float(best["trailing_stop_pct"]) == SIGNAL_TSL
+    # Signal-only still wins the net race, but Results never keep TSL=0 —
+    # plateau pick stamps the lowest unhit trail (+ breath when tied).
+    assert float(best["trailing_stop_pct"]) > 0.0
+    assert float(best["trailing_stop_pct"]) >= 0.01
 
 
 def test_climb_axes_cover_macd_and_bounded_levels() -> None:

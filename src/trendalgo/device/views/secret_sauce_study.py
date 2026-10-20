@@ -128,6 +128,9 @@ def show_secret_sauce_study(
     layout.addWidget(enter_lbl)
     layout.addWidget(exit_lbl)
     layout.addWidget(anti_lbl)
+    residual_lbl = _residual_label(dossier)
+    if residual_lbl is not None:
+        layout.addWidget(residual_lbl)
     layout.addWidget(QLabel(S.SECRET_SAUCE_COVERAGE))
     layout.addWidget(table, 1)
     layout.addWidget(nets)
@@ -191,6 +194,40 @@ def _side_line(label: str, conjuncts: object) -> str:
         if isinstance(c, dict):
             parts.append(f"{c.get('feature')} {c.get('op')} {c.get('value')}")
     return f"{label}: " + (" AND ".join(parts) if parts else "—")
+
+
+def _residual_label(dossier: dict[str, Any]) -> QLabel | None:
+    res_e = list(dossier.get("residual_entry_indexes") or [])
+    res_x = list(dossier.get("residual_exit_indexes") or [])
+    hits = list(dossier.get("residual_feature_hits") or [])
+    gap_raw = dossier.get("oracle_gap_net_pct")
+    if not res_e and not res_x and gap_raw is None:
+        return None
+    gap = ""
+    try:
+        if gap_raw is not None:
+            gap = f" · Oracle gap {float(gap_raw):.2f}"
+    except (TypeError, ValueError):
+        gap = ""
+    feat_bits: list[str] = []
+    for row in hits[:3]:
+        if not isinstance(row, dict):
+            continue
+        feats = row.get("features") if isinstance(row.get("features"), list) else []
+        if feats:
+            feat_bits.append(str(feats[0]))
+    features = f" · e.g. {', '.join(feat_bits)}" if feat_bits else ""
+    lbl = QLabel(
+        S.SECRET_SAUCE_RESIDUAL.format(
+            n_entry=len(res_e),
+            n_exit=len(res_x),
+            gap=gap,
+            features=features,
+        )
+    )
+    lbl.setObjectName("hint")
+    lbl.setWordWrap(True)
+    return lbl
 
 
 def _copy(text: str, parent: QWidget) -> None:

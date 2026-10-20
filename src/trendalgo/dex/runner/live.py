@@ -38,7 +38,7 @@ class LiveSwapRunner:
         nonce = self.nonce_store.next_nonce(venue_id)
         payload = f"{venue_id}:{sell_token}:{buy_token}:{sell_amount}:{nonce}:{slippage_bps}"
         signed_tx_hash = sign_swap_payload(payload)
-        result = plugin.execute_live_swap(
+        raw = plugin.execute_live_swap(
             sell_token,
             buy_token,
             sell_amount,
@@ -46,6 +46,7 @@ class LiveSwapRunner:
             nonce=nonce,
             signed_tx_hash=signed_tx_hash,
         )
+        result: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
         result["signer_fingerprint"] = signer_fingerprint()
         result["registry_version"] = load_venue_registry().version
         result["trading_enabled"] = entry.trading_enabled

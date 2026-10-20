@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from datetime import UTC, datetime
 from multiprocessing.pool import AsyncResult
@@ -39,8 +40,17 @@ from trendalgo.device.scan_model import (
     progress_pct,
     scan_store_path,
 )
-from trendalgo.device.scan_progress import clear_progress, read_progress
-from trendalgo.device.scanner_schedule import clamp_interval_minutes, minutes_until, next_run_at
+from trendalgo.device.scan_progress import (
+    clear_progress,
+    consume_progress_events,
+    read_progress,
+)
+from trendalgo.device.scanner_schedule import (
+    clamp_interval_minutes,
+    is_stale,
+    minutes_until,
+    next_aligned_run,
+)
 from trendalgo.device.scanner_share import default_scanner_export_path, export_scanner_list_png
 from trendalgo.device.scanner_sort import (
     COL_SORT_KEYS,
@@ -49,6 +59,7 @@ from trendalgo.device.scanner_sort import (
     sort_coins,
 )
 from trendalgo.device.stores import StoreReadError, read_snapshot
+from trendalgo.device.time_display import load_use_utc
 from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
 from trendalgo.device.views.scanner_column_filter_row import ScannerColumnFilterRow
 from trendalgo.device.views.scanner_compare import show_compare_dialog
@@ -136,6 +147,7 @@ class ScannerPage(QWidget):
         )
         self._logs = QPlainTextEdit()
         self._logs.setReadOnly(True)
+        self._log_seq = 0
         layout = QVBoxLayout(self)
         layout.addWidget(self._filters)
         layout.addWidget(self._tabs)
@@ -171,7 +183,7 @@ class ScannerPage(QWidget):
         self._filters.clear_btn.clicked.connect(lambda _c=False: self._clear_compare())
         self._filters.share.clicked.connect(lambda _c=False: self._share_png())
         self.reload()
-        self._schedule_autoscan(reset=True)
+        self._boot_after_restore()
         self._caption_timer.start()
 
     def _wire_filter_signals(self) -> None:
@@ -216,7 +228,8 @@ class ScannerPage(QWidget):
             self._empty.set_text(S.SCANNER_EMPTY_TITLE, S.SCANNER_EMPTY_BODY)
         elif snapshot is not None:
             source = S.SCANNER_FROM_PC if from_pc else S.SCANNER_FROM_BOT
-            self._caption.setText(f"{scan_caption(snapshot)} {source}")
+            caption = scan_caption(snapshot, use_utc=load_use_utc(self._root))
+            self._caption.setText(f"{caption} {source}")
             self._empty.set_text(S.SCANNER_NONE_TITLE, S.SCANNER_NONE_BODY)
         else:
             self._caption.setText(S.SCANNER_FROM_PC)
@@ -239,12 +252,33 @@ class ScannerPage(QWidget):
         self._caption_timer.stop()
         self._cancel_run()
 
+    def _boot_after_restore(self) -> None:
+        """Cold open: rescan if past the aligned slot; else countdown to the next hour/grid."""
+        if not self._autoscan_enabled:
+            return
+        minutes = clamp_interval_minutes(self._filters.every.value())
+        try:
+            snapshot, _from_pc = self._latest()
+        except StoreReadError:
+            snapshot = None
+        last = snapshot.generated_at if snapshot is not None else None
+        # Pytest constructs ScannerPage often; never kick a live network scan from unit tests.
+        under_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
+        if is_stale(last, minutes) and not under_pytest:
+            self._next_auto = None
+            self._auto_timer.stop()
+            self._refresh_auto_caption()
+            QTimer.singleShot(0, self.start_scan)
+            return
+        self._next_auto = next_aligned_run(minutes)
+        self._schedule_autoscan(reset=False)
+
     def _schedule_autoscan(self, *, reset: bool) -> None:
         if not self._autoscan_enabled:
             return
         minutes = clamp_interval_minutes(self._filters.every.value())
         if reset or self._next_auto is None:
-            self._next_auto = next_run_at(minutes)
+            self._next_auto = next_aligned_run(minutes)
         delay_ms = max(1_000, int((self._next_auto - datetime.now(tz=UTC)).total_seconds() * 1000))
         self._auto_timer.start(delay_ms)
         self._refresh_auto_caption()
@@ -460,6 +494,8 @@ class ScannerPage(QWidget):
         self._persist_filters()
         clear_problem(self._problem)
         clear_progress(self._root)
+        self._logs.clear()
+        self._log_seq = 0
         self._pending = self._pool.submit(scan_job, self._root)
         self._filters.set_running(True)
         self._status.setText(S.SCAN_STARTING)
@@ -476,7 +512,9 @@ class ScannerPage(QWidget):
         raw = read_progress(self._root)
         line = progress_line(raw) or S.SCAN_STARTING
         self._status.setText(line)
-        self._logs.appendPlainText(line)
+        new_lines, self._log_seq = consume_progress_events(raw, self._log_seq)
+        for entry in new_lines:
+            self._logs.appendPlainText(entry)
         pct = progress_pct(raw)
         if pct is not None:
             self._bar.setValue(pct)

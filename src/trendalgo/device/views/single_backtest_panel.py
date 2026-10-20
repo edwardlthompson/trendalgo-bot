@@ -27,6 +27,7 @@ from trendalgo.device.context import DeviceContext
 from trendalgo.device.fields import TIMEFRAMES
 from trendalgo.device.jobs import NoCandlesError, backtest_job, load_candles
 from trendalgo.device.rows import backtest_trade_rows
+from trendalgo.device.time_display import load_use_utc
 from trendalgo.device.views.candle_chart import CandleChart
 from trendalgo.device.views.searchable_picker import indicator_picker, pair_picker
 from trendalgo.device.views.widgets import (
@@ -54,6 +55,7 @@ class SingleBacktestPanel(QWidget):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
+        self._root = ctx.root
         self._candles = ctx.databases["candles"]
         self._pool = pool
         self._pending: tuple[AsyncResult[Any], BacktestRequest] | None = None
@@ -173,7 +175,7 @@ class SingleBacktestPanel(QWidget):
         self._summary.setText(
             "\n".join(f"{label}: {value}" for label, value in summary_rows(result)),
         )
-        trades = backtest_trade_rows(result["trades"])
+        trades = backtest_trade_rows(result["trades"], use_utc=load_use_utc(self._root))
         fill_table(self._trades, trades)
         self._summary.show()
         try:

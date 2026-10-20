@@ -13,7 +13,7 @@ from trendalgo.trading.multi_exchange import route_order
 
 def test_registry_s18_worldwide_phase1() -> None:
     registry = load_registry()
-    assert registry.version == 6
+    assert registry.version == 7
     assert registry.worldwide_trading_phase == 2
     trading_ids = {e.id for e in list_trading_exchanges()}
     assert {"binance", "bybit", "okx"}.issubset(trading_ids)

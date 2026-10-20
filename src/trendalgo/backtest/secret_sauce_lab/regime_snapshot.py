@@ -28,6 +28,7 @@ FAMILIES = (
     "momentum",
     "squeeze_breakout",
     "volume_impulse",
+    "adaptive_exit",
 )
 
 _MAJORITY_BARS = 48
@@ -203,4 +204,11 @@ def _family_weights(
         w["squeeze_breakout"] = min(w["squeeze_breakout"], 0.15)
     if volume_ok and structural == "trending" and direction == "up":
         w["volume_impulse"] = max(w["volume_impulse"], 0.65)
+    # Adaptive exits: always skim; fat when dip/momentum home (trending-up).
+    if structural == "trending" and direction == "up":
+        w["adaptive_exit"] = 0.55
+    elif direction == "down":
+        w["adaptive_exit"] = min(w.get("adaptive_exit", 0.15), 0.2)
+    else:
+        w["adaptive_exit"] = max(w.get("adaptive_exit", 0.15), 0.25)
     return {k: round(float(v), 3) for k, v in w.items()}

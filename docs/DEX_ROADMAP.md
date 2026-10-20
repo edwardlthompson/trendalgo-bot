@@ -5,7 +5,7 @@
 
 ## Goal
 
-Multi-chain DEX portfolio read and phased swap execution via a registry-driven plugin engine — separate from the CEX exchange program (ADR-0010).
+Multi-chain DEX portfolio read and phased swap execution via a registry-driven plugin engine — separate from the CEX exchange program (ADR-0010). RPC cadence and signer rules: [`docs/API_ACCESS_LIMITS.md`](API_ACCESS_LIMITS.md).
 
 ## S21 — Foundation ✅ AGENT
 

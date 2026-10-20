@@ -44,9 +44,14 @@ def _bottom(widget: QWidget, page: QWidget) -> int:
 
 def test_settings_content_sits_right_under_the_subtitle(qtbot: QtBot, ctx: DeviceContext) -> None:
     page = _shown(qtbot, SettingsPage(ctx))
-    header = page.layout().itemAt(0).widget()
+    # Settings uses a max-width form column; header + body live inside it.
+    column = page.layout().itemAt(0).widget()
+    assert column is not None
+    header = column.layout().itemAt(0).widget()
+    assert header is not None
     subtitle = header.findChildren(QLabel)[1]
-    first_content = page.layout().itemAt(1).widget()
+    first_content = column.layout().itemAt(1).widget()
+    assert first_content is not None
     gap = _top(first_content, page) - _bottom(subtitle, page)
     assert 0 <= gap <= 16
 

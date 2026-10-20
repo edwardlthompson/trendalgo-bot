@@ -1,4 +1,4 @@
-"""Deepen: params ±10 at signal-only (TSL=0) → TSL grid 1–20% (keep signal if better)."""
+"""Deepen: params ±10 at signal-only (TSL=0) → TSL grid 1–20% (plateau pick > 0)."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def climb_seed(
     frames_by_tf: dict[str, pd.DataFrame] | None = None,
     on_progress: ProgressFn | None = None,
 ) -> dict[str, Any] | None:
-    """Params ±10 at TSL=0 on the seed TF, then TSL 1–20%. Keeps signal-only if better."""
+    """Params ±10 at TSL=0 on the seed TF, then TSL 1–20% plateau pick (never TSL=0)."""
     del frames_by_tf  # Stage B already chose TF; no TF re-sweep under a trail.
     sid = str(seed.get("strategy_id") or "")
     if not sid:
@@ -78,7 +78,7 @@ def climb_seed(
         on_progress=on_progress,
         radius=10,
     )
-    # Stage D: trails only win when they beat this signal-only baseline.
+    # Stage D: grid 1–20%, then plateau-pick a protective TSL (> 0).
     signal_net = best_net
 
     if on_progress is not None:

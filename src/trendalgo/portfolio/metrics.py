@@ -12,6 +12,8 @@ class PlBreakdown:
     realized_usd: float
     unrealized_usd: float
     total_usd: float
+    # Realized stays unavailable until a trade journal backs it — never pretend $0 is profit.
+    realized_available: bool = False
 
 
 @dataclass(frozen=True)
@@ -44,12 +46,11 @@ def pl_breakdown(holdings: list[dict[str, Any]]) -> PlBreakdown:
         value = float(h.get("value_usd", 0))
         cost = float(h.get("cost_basis_usd", 0))
         unrealized += value - cost
-    realized = 0.0
-    total = realized + unrealized
     return PlBreakdown(
-        realized_usd=round(realized, 2),
+        realized_usd=0.0,
         unrealized_usd=round(unrealized, 2),
-        total_usd=round(total, 2),
+        total_usd=round(unrealized, 2),
+        realized_available=False,
     )
 
 

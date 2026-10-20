@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QSpinBox,
@@ -18,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from trendalgo.device import strings as S
+from trendalgo.device.flow_layout import FlowLayout
 from trendalgo.device.icons import nav_icon
 from trendalgo.device.lts_scan_model import EXCHANGES
 from trendalgo.device.scanner_signal_sets import (
@@ -86,8 +86,9 @@ class ScannerFilterBar(QWidget):
         self.compare_label = QLabel(S.SCANNER_COMPARE_EMPTY)
         self.compare_label.setObjectName("hint")
         self._min_uniformity = _DEFAULT_UNIT
-        row = QHBoxLayout(self)
-        row.setContentsMargins(0, 0, 0, 0)
+        self.compare_label.setWordWrap(True)
+        self.auto_status.setWordWrap(True)
+        row = FlowLayout(self, margin=0, h_spacing=8, v_spacing=4)
         for label, widget in (
             (S.SCANNER_FILTER_EXCHANGE, self.exchange),
             (S.SCANNER_FILTER_VOL, self.vol),
@@ -103,7 +104,7 @@ class ScannerFilterBar(QWidget):
         row.addWidget(self.compare_btn)
         row.addWidget(self.clear_btn)
         row.addWidget(self.share)
-        row.addWidget(self.compare_label, 1)
+        row.addWidget(self.compare_label)
         row.addWidget(self.auto_status)
         self.vol.setValue(_DEFAULT_VOL)
         self.every.setValue(_DEFAULT_EVERY)

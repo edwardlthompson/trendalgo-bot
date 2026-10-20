@@ -98,6 +98,40 @@ def _family_pairs(sid: str, family: str) -> list[tuple[CompositeRule, CompositeR
             ),
             _pair(sid, (("up_vol_impulse", ">=", 1.0),), (("peak_confirm", ">=", 1.0),)),
         ]
+    if family == "adaptive_exit":
+        # Richer exits: peak confirm, oscillator xdn, lose SMA20 structure.
+        return [
+            _pair(
+                sid,
+                (("rsi_xup_30", ">=", 1.0), ("above_sma50", ">=", 1.0)),
+                (("peak_confirm", ">=", 1.0),),
+            ),
+            _pair(
+                sid,
+                (("rsi_xup_30", ">=", 1.0), ("above_sma20", ">=", 1.0)),
+                (("rsi_xdn_70", ">=", 1.0), ("peak_confirm", ">=", 1.0)),
+            ),
+            _pair(
+                sid,
+                (("rsx_xup_30", ">=", 1.0), ("above_sma50", ">=", 1.0)),
+                (("rsx_xdn_70", ">=", 1.0),),
+            ),
+            _pair(
+                sid,
+                (("rsi_14", "<=", 40.0), ("above_sma50", ">=", 1.0)),
+                (("above_sma20", "<=", 0.0),),
+            ),
+            _pair(
+                sid,
+                (("stoch_xup_20", ">=", 1.0),),
+                (("stoch_xdn_80", ">=", 1.0), ("peak_confirm", ">=", 1.0)),
+            ),
+            _pair(
+                sid,
+                (("macd_hist", ">=", 0.0), ("above_sma20", ">=", 1.0)),
+                (("macd_hist", "<=", 0.0), ("peak_confirm", ">=", 1.0)),
+            ),
+        ]
     return []
 
 

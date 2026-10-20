@@ -25,6 +25,7 @@ def test_the_look_is_saved_with_the_owner_and_the_host() -> None:
         "host_url": "",
         "theme": "dark",
         "accent": "#2563eb",
+        "use_utc": False,
     }
 
 

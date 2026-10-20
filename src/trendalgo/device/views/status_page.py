@@ -14,6 +14,7 @@ from trendalgo.device.host_actions import host_health_linked, post_bot_command
 from trendalgo.device.host_client import UNREACHABLE, HostRefusedError
 from trendalgo.device.host_session import try_open_host_client
 from trendalgo.device.rows import BotRow, bot_rows, trade_rows
+from trendalgo.device.secrets_vault import VaultSecretStore
 from trendalgo.device.stores import StoreReadError, read_bots, read_trades
 from trendalgo.device.views.bot_cards import BotCardList
 from trendalgo.device.views.widgets import (
@@ -29,6 +30,8 @@ from trendalgo.device.views.widgets import (
     tint_signed,
 )
 from trendalgo.device.wizard.credentials import CredentialStore
+from trendalgo.trading.panic import run_panic
+from trendalgo.trading.safety_lights import compute_safety_lights
 
 
 class StatusPage(QWidget):
@@ -50,8 +53,14 @@ class StatusPage(QWidget):
         self._host_status = QLabel()
         self._host_status.setObjectName("hint")
         self._host_status.setWordWrap(True)
+        self._lights = QLabel(S.STATUS_LIGHTS)
+        self._lights.setObjectName("hint")
         self._reload = QPushButton(S.RELOAD)
         self._reload.clicked.connect(lambda _checked=False: self.reload())
+        self._panic = QPushButton(S.STATUS_PANIC)
+        self._panic.setToolTip(S.STATUS_PANIC_TIP)
+        self._panic.setAccessibleDescription(S.STATUS_PANIC_TIP)
+        self._panic.clicked.connect(lambda _checked=False: self._run_panic())
         self._bots_empty = EmptyState(
             S.STATUS_BOTS_EMPTY_TITLE,
             S.STATUS_BOTS_EMPTY_BODY,
@@ -64,6 +73,8 @@ class StatusPage(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(page_header(S.STATUS_TITLE, S.STATUS_SUBTITLE))
         layout.addWidget(self._reload, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self._panic, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self._lights)
         layout.addWidget(self._problem)
         layout.addWidget(self._host_status)
         layout.addWidget(section_title(S.STATUS_BOTS))
@@ -96,7 +107,60 @@ class StatusPage(QWidget):
         self._journal.setVisible(bool(trades))
         self._fill.update(bool(trades))
         self._journal_empty.setVisible(not trades)
+        self._refresh_lights()
         self._poll_host()
+
+    def _refresh_lights(self) -> None:
+        vault = VaultSecretStore(self._vault)
+        vault.bind_registry()
+        has_key = any(
+            vault.read_entry(eid) is not None for eid in ("kraken", "binanceus", "coinbaseadvanced")
+        )
+        lights = compute_safety_lights(
+            vault_unlocked=True,
+            has_query_key=has_key,
+            sync_ok=has_key,
+            go_live_approved=False,
+            live_requested=False,
+        )
+        self._lights.setText(
+            S.STATUS_LIGHTS_FMT.format(
+                vault=lights.vault.value,
+                sync=lights.sync.value,
+                live=lights.live.value,
+            )
+        )
+
+    def _run_panic(self) -> None:
+        """Local panic: pause every bot in bots.db. Host flatten runs when linked."""
+        from trendalgo.bots.orchestrator import BotOrchestrator
+        from trendalgo.trading.order_journal import OrderJournal
+
+        try:
+            orch = BotOrchestrator(self._ctx.databases["bots"])
+            journal = OrderJournal(self._ctx.databases["journal"])
+
+            def _flatten(action: str, bot_id: str) -> None:
+                client = try_open_host_client(self._ctx.settings_path, store=self._vault)
+                if client is None:
+                    return
+                post_bot_command(client, action, bot_id, secrets.token_urlsafe(12))
+
+            result = run_panic(
+                guard=journal,
+                orchestrator=orch,
+                post_flatten=_flatten,
+                reason="panic_ui",
+            )
+        except Exception as exc:  # noqa: BLE001
+            show_problem(self._problem, str(exc))
+            return
+        clear_problem(self._problem)
+        self._host_status.setText(
+            f"Panic: halted {', '.join(result.halted_exchanges)}; "
+            f"paused {len(result.paused_bots)} bots"
+        )
+        self.reload()
 
     def _poll_host(self) -> None:
         client = try_open_host_client(self._ctx.settings_path, store=self._vault)

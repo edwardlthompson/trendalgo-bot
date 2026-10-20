@@ -1,15 +1,16 @@
 # Feature: donations-updates
 
-> Quiet donate in About; one optional note after a version change; silent daily GitHub installer check.
+> Quiet donate in About; one optional note after a version change; every cold-open GitHub installer check with changelog preview; Settings About Check for updates + Changelog.
 
 ## Acceptance criteria
 
 - ✅ Quiet donate links in Settings → About only (not the header)
 - ✅ First run records the installed version with no donate popup
 - ✅ After a later launch where the installed version changed: one optional note (Donate | Not now)
-- ✅ Once per 24 hours, fetch latest GitHub release; compare installer filenames
-- ✅ Newer matching asset and not dismissed: Install | Later
-- ✅ Failed fetch / timeout / placeholder repo: stay silent
+- ✅ Every cold open, fetch latest GitHub release; compare installer filenames
+- ✅ Newer matching asset and not dismissed: Download and install | Later, with changelog preview
+- ✅ Settings → About: Check for updates + Changelog link next to version
+- ✅ Failed fetch / timeout / placeholder repo: stay silent on launch; About shows status on manual check
 - ✅ Prefs are device-local (`update_prefs.json`)
 - ✅ No dark patterns
 

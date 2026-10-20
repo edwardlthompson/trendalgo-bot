@@ -96,6 +96,22 @@ def test_filter_coins_by_exchange_and_gains() -> None:
     assert [c["symbol"] for c in high] == ["BTC"]
 
 
+def test_filter_coins_excludes_stablecoin_bases() -> None:
+    from trendalgo.device.portfolio_categories import is_stablecoin_base
+
+    assert is_stablecoin_base("USDC/USD")
+    assert is_stablecoin_base("USDT/USD")
+    assert is_stablecoin_base("dai")
+    assert not is_stablecoin_base("BTC/USD")
+    assert not is_stablecoin_base("ETH/USD")
+    coins = [
+        {"symbol": "BTC", "pair": "BTC/USD", "listed_on": ["kraken"]},
+        {"symbol": "USDC", "pair": "USDC/USD", "listed_on": ["kraken"]},
+        {"symbol": "USDT", "pair": "USDT/USD", "listed_on": ["kraken"]},
+    ]
+    assert [c["symbol"] for c in filter_coins(coins)] == ["BTC"]
+
+
 def test_filter_coins_best_bt_and_bot_vs_bh() -> None:
     coins = [
         {"symbol": "BOT", "bot_best_net_pct": 80.0, "bot_vs_bh_pct": 12.0},

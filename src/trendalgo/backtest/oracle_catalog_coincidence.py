@@ -29,6 +29,22 @@ def oracle_indexes_from_row(oracle: dict[str, Any], *, n: int) -> tuple[list[int
     return indexes_from_trades(list(oracle.get("oracle_swings") or []), n=n)
 
 
+def _win_rate_from_stats(stats: dict[str, Any]) -> float:
+    raw = stats.get("win_rate")
+    if raw is not None:
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            pass
+    trades = int(stats.get("trades") or 0)
+    wins = int(stats.get("wins") or 0)
+    open_n = int(stats.get("open_trades") or 0)
+    closed = max(0, trades - open_n)
+    if closed > 0:
+        return wins / closed
+    return (wins / trades) if trades > 0 else 0.0
+
+
 def hit_rate(fires: np.ndarray, labels: list[int], *, window: int = 1) -> float:
     """Fraction of labels with a fire within ±window bars."""
     if not labels or fires.size == 0:
@@ -201,16 +217,31 @@ def coincidence_sauce_row(
     exits = cands[x_sid][1]
     te, tx = indexes_from_trades(list(stats.get("trade_list") or []), n=len(df))
     dossier = _dossier(e_sid, x_sid, e_lab, x_lab, te, tx, entries, exits)
+    from trendalgo.backtest.hill_climb_tsl import assign_protective_tsl_from_masks
     from trendalgo.device.scanner_all_ta_prune import fleet_row_to_lts
 
+    signal_net = float(stats.get("net_profit") or 0.0)
+    tsl_pick = assign_protective_tsl_from_masks(
+        df,
+        entries,
+        exits,
+        fee=fee,
+        stake=stake,
+        signal_net=signal_net,
+    )
+    use = tsl_pick if tsl_pick is not None else stats
     hb = dossier.to_dict()
     trial = {
         "strategy_id": _SID,
-        "net_profit": float(stats.get("net_profit") or 0.0),
-        "gross_profit": float(stats.get("gross_profit") or 0.0),
-        "fees_paid": float(stats.get("fees_paid") or 0.0),
-        "trades": int(stats.get("trades") or 0),
-        "wins": int(stats.get("wins") or 0),
+        "net_profit": float(use.get("net_profit") or 0.0),
+        "gross_profit": float(use.get("gross_profit") or stats.get("gross_profit") or 0.0),
+        "fees_paid": float(use.get("fees_paid") or stats.get("fees_paid") or 0.0),
+        "trades": int(use.get("trades") or 0),
+        "wins": int(use.get("wins") or 0),
+        "open_trades": int(use.get("open_trades") or 0),
+        "win_rate": _win_rate_from_stats(use if tsl_pick is not None else stats),
+        "tsl_hits": int(use.get("tsl_hits") or 0),
+        "trailing_stop_pct": float(use.get("trailing_stop_pct") or 0.0),
         "timeframe": tf,
         "bar_count": len(df),
         "heartbeat_dossier": hb,
@@ -223,6 +254,8 @@ def coincidence_sauce_row(
         "indicator": _SAUCE_TA,
         "ss_lab_pending": False,
         "ss_coincidence": True,
+        "protective_tsl": bool(use.get("protective_tsl")),
+        "tsl_breath": bool(use.get("tsl_breath")),
     }
     row = fleet_row_to_lts(trial, symbol=symbol, stake_usd=stake)
     row["indicator"] = _SAUCE_TA

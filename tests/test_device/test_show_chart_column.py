@@ -10,7 +10,7 @@ from pytestqt.qtbot import QtBot
 
 from trendalgo.device import strings as S
 from trendalgo.device.backtest_results_ui import CREATE_BOT_COL, SHOW_CHART_COL
-from trendalgo.device.views.scanner_results import _show_chart_cell
+from trendalgo.device.views.scanner_results_fill import _show_chart_cell
 
 
 def test_header_indices_match_show_chart_column() -> None:

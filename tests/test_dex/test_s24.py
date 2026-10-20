@@ -30,7 +30,7 @@ def _live_env(monkeypatch, tmp_path: Path) -> tuple[DexVenueControlStore, NonceS
 
 def test_registry_v4_live_phase() -> None:
     registry = load_venue_registry()
-    assert registry.version == 4
+    assert registry.version == 5
     assert registry.dex_live_phase == 1
     base = get_venue("base")
     assert base.trading_enabled is True

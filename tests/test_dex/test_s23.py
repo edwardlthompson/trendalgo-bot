@@ -20,7 +20,7 @@ from trendalgo.venues.registry import get_swap_plugin, load_venue_registry
 
 def test_registry_v3_swap_plugins() -> None:
     registry = load_venue_registry()
-    assert registry.version == 4
+    assert registry.version == 5
     eth = get_swap_plugin("ethereum")
     assert eth.protocol == "uniswap_v3"
     jup = get_swap_plugin("solana")

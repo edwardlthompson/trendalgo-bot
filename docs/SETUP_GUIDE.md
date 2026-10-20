@@ -10,17 +10,17 @@ Trading can lose money. Start in shadow mode. Shadow mode records what the bot w
 
 Never type a password, seed phrase, card number, or withdrawal address into TrendAlgo. This guide and the wizard never ask for them.
 
-## W1: Create a Kraken API key for trading
+## W1: Create a Kraken API key (query-only first)
 
 Sign in to Kraken. Open Settings, select the API tab, and click Create API key.
 
-Tick only these permissions: Query Funds, Query Open Orders & Trades, Query Closed Orders & Trades, Modify Orders, and Cancel/Close Orders.
+Start with query-only: Query Funds, Query Open Orders & Trades, Query Closed Orders & Trades. Add Modify Orders and Cancel/Close Orders only when you are ready to trade after shadow mode.
 
 Leave Withdraw Funds unticked. Leave Deposit Funds and Export Data unticked too.
 
-Set the IP restriction to the static public IP address of your host (Step W3). Keep the other optional settings at their defaults.
+Set the IP restriction to this PC (or your host). Keep optional settings at defaults.
 
-Store the key in an encrypted vault, not in a chat or a plain text file. The host keeps the key encrypted. This PC does not hold it.
+Store the key in the encrypted vault in Settings on this PC (or on the host). Never paste keys into a chat. Saving keys does not enable live trading.
 
 Sources:
 

@@ -15,7 +15,7 @@ from trendalgo.trading.multi_exchange import list_supported_exchanges, route_ord
 
 def test_registry_loads_tier_a_exchanges() -> None:
     registry = load_registry()
-    assert registry.version == 6
+    assert registry.version == 7
     ids = {e.id for e in list_portfolio_exchanges()}
     assert "kraken" in ids
     assert "binanceus" in ids
@@ -55,7 +55,7 @@ def test_binanceus_adapter_dry_run(tmp_path: Path) -> None:
 def test_sync_all_exchanges_registry(tmp_path: Path) -> None:
     store = PortfolioStore(tmp_path / "portfolio.db")
     result = sync_all_exchanges(store, dry_run=True)
-    assert result["registry_version"] == 6
+    assert result["registry_version"] == 7
     assert result["kraken"]["mode"] == "dry-run"
     assert result["binanceus"]["mode"] == "dry-run"
     assert result["binance"]["exchange"] == "binance"

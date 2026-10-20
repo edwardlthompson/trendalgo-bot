@@ -72,7 +72,20 @@ def test_seed_params_are_integers() -> None:
     params = seed_params("RSI", {"timeperiod": 14.7, "entry_level": 30.2})
     assert all(isinstance(v, int) for v in params.values())
     assert params["timeperiod"] == 15
+    assert params["entry_level"] == 30
     assert MIN_TSL == 0.01
+
+
+def test_seed_params_willr_uses_oscillator_levels() -> None:
+    params = seed_params("WILLR", {"timeperiod": 14})
+    assert params["entry_level"] == -80
+    assert params["exit_level"] == -20
+
+
+def test_seed_params_strips_rsi_levels_from_willr() -> None:
+    params = seed_params("WILLR", {"timeperiod": 14, "entry_level": 30, "exit_level": 70})
+    assert params["entry_level"] == -80
+    assert params["exit_level"] == -20
 
 
 def test_scanner_headers_match_backtest() -> None:

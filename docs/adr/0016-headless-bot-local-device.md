@@ -1,9 +1,9 @@
 # ADR-0016 — Headless bot host with a local device app
 
-- **Status:** Accepted (2026-10-09; owner approved the plan, and the live host was decided the same day)
+- **Status:** Accepted (2026-10-09; amended 2026-10-19 for optional device-local live + on-device vault)
 - **Date:** 2026-10-09
 - **Relates to:** ADR-0002 (hosting; decision 5 superseded), ADR-0005 and ADR-0008 (monetization), ADR-0012 (hosted URL), ADR-0013 (LTS vendor), ADR-0014 and ADR-0015 (desktop path; amended), ADR-0017 (tenant boundary and license terms)
-- **Plan:** `local_device_headless_bot` (approved 2026-10-09). Risk items cited here are in [docs/RISK_REGISTER.md](../RISK_REGISTER.md), section "Local device and headless bot register".
+- **Plan:** `local_device_headless_bot` (approved 2026-10-09); go-live readiness `portfolio_bots_go-live_ready` (2026-10-19). Risk items cited here are in [docs/RISK_REGISTER.md](../RISK_REGISTER.md), section "Local device and headless bot register".
 
 ## Context
 
@@ -19,8 +19,9 @@
 ## Decision
 
 1. **Two components.**
-   - **Device** (this PC): PySide6 app with Scanner, Backtests, Plan builder, Bot status and Journal, Settings, and the setup wizard. The device never holds exchange keys.
-   - **Host** (a VPS the owner controls): new headless package `src/trendalgo/botd/`. It runs the approved plan 24/7, holds exchange keys in its own encrypted SecretStore, and has no UI.
+   - **Device** (this PC): PySide6 app with Scanner, Backtests, Plan builder, Bot status and Journal, Settings, and the setup wizard. The device **may** hold exchange keys in an encrypted Credential Manager vault when the owner opts into “keys on this PC” (query-only first). Keys never imply live trading.
+   - **Host** (a VPS the owner controls): new headless package `src/trendalgo/botd/`. It remains the **recommended** 24/7 execution venue, holds exchange keys in its own encrypted SecretStore, and has no UI.
+1b. **Execution venue (amended 2026-10-19).** `host` (default/recommended) or `device` (explicit opt-in). Device-local live requires a one-time risk disclosure (sleep / reboot / power / ISP → missed entries/exits). Choice is persisted; the app does not re-nag. After app restart, bots wake **paused**. Live still requires the owner-signed LiveGate. Query-scoped vault keys never place orders.
 2. **Device-initiated sync only.** The device sends `PUT /api/v1/plan` and `POST /api/v1/commands`, and pulls `GET /api/v1/events` and `GET /api/v1/status`. Nothing calls back into the PC, so the PC needs no inbound port. Each request carries an HMAC over method, path, timestamp, nonce, body, and `owner_id`. The device pins the host's TLS certificate fingerprint.
 3. **The host runs the LTS engine.** A streaming port of the LTS trade loop (`src/trendalgo/lts_vendor/backtesting/engine.py`) and its indicators (`signals.py`, `SIGNAL_REGISTRY`) runs on the host, so live trading executes what was backtested. Native strategies stay backtest-only in v1.
 4. **Exit policy.** Exits are the bot's trade signals plus an optional per-bot trailing stop. Entry guards (risk, exchange, entitlements) block new entries only. Exits, stops, and flatten are never gated (R5). There are no exchange-side stop orders in v1 (accepted risk R-STOP).
@@ -51,7 +52,7 @@ These take effect on acceptance, 2026-10-09.
 ## Alternatives considered
 
 - **Keep the bot in the API process on a VPS (ADR-0002 as written).** Rejected. The UI and the runtime stay coupled, and live runs native strategies, not the backtested engine.
-- **Run the bot on the PC.** Rejected. The PC sleeps, restarts, and can lose power or network. That is the reliability problem ADR-0002 was written to avoid.
+- **Run the bot on the PC as the only path.** Rejected as default. Amended 2026-10-19: device-local live is an explicit opt-in with one-time disclosure; host remains recommended because the PC sleeps, restarts, and can lose power or network.
 - **Exchange-side stop orders in v1.** Deferred. They can be added later as a per-bot option.
 - **Caddy for TLS.** Not used. Uvicorn terminates TLS with a self-signed certificate that the device pins.
 - **Third-party scripts that retry Oracle capacity.** Rejected. They hold cloud credentials.

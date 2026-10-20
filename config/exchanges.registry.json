@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "worldwide_trading_phase": 2,
   "default_sync_interval_sec": 15,
   "exchanges": [
@@ -15,7 +15,9 @@
       "us_retail": true,
       "quote_currency": "USD",
       "usd_aliases": ["USD", "ZUSD"],
-      "sync_interval_sec": 15
+      "sync_interval_sec": 15,
+      "min_sync_interval_sec": 15,
+      "max_private_calls_per_min": 15
     },
     {
       "id": "binanceus",
@@ -28,7 +30,9 @@
       "env_secret": "BINANCEUS_API_SECRET",
       "us_retail": true,
       "quote_currency": "USD",
-      "sync_interval_sec": 15
+      "sync_interval_sec": 15,
+      "min_sync_interval_sec": 15,
+      "max_private_calls_per_min": 20
     },
     {
       "id": "coinbaseadvanced",
@@ -41,7 +45,9 @@
       "env_secret": "COINBASEADVANCED_API_SECRET",
       "us_retail": true,
       "quote_currency": "USD",
-      "sync_interval_sec": 20
+      "sync_interval_sec": 20,
+      "min_sync_interval_sec": 20,
+      "max_private_calls_per_min": 10
     },
     {
       "id": "gemini",
@@ -54,7 +60,9 @@
       "env_secret": "GEMINI_API_SECRET",
       "us_retail": true,
       "quote_currency": "USD",
-      "sync_interval_sec": 20
+      "sync_interval_sec": 20,
+      "min_sync_interval_sec": 20,
+      "max_private_calls_per_min": 10
     },
     {
       "id": "bitstamp",
@@ -67,7 +75,9 @@
       "env_secret": "BITSTAMP_API_SECRET",
       "us_retail": true,
       "quote_currency": "USD",
-      "sync_interval_sec": 20
+      "sync_interval_sec": 20,
+      "min_sync_interval_sec": 20,
+      "max_private_calls_per_min": 10
     },
     {
       "id": "cryptocom",
@@ -80,7 +90,9 @@
       "env_secret": "CRYPTOCOM_API_SECRET",
       "us_retail": true,
       "quote_currency": "USD",
-      "sync_interval_sec": 20
+      "sync_interval_sec": 20,
+      "min_sync_interval_sec": 20,
+      "max_private_calls_per_min": 10
     },
     {
       "id": "binance",
@@ -94,7 +106,9 @@
       "us_retail": false,
       "us_restricted": true,
       "quote_currency": "USDT",
-      "sync_interval_sec": 25
+      "sync_interval_sec": 25,
+      "min_sync_interval_sec": 25,
+      "max_private_calls_per_min": 20
     },
     {
       "id": "bybit",
@@ -108,7 +122,9 @@
       "us_retail": false,
       "us_restricted": true,
       "quote_currency": "USDT",
-      "sync_interval_sec": 25
+      "sync_interval_sec": 25,
+      "min_sync_interval_sec": 25,
+      "max_private_calls_per_min": 20
     },
     {
       "id": "okx",
@@ -122,7 +138,9 @@
       "us_retail": false,
       "us_restricted": true,
       "quote_currency": "USDT",
-      "sync_interval_sec": 25
+      "sync_interval_sec": 25,
+      "min_sync_interval_sec": 25,
+      "max_private_calls_per_min": 20
     }
   ]
 }

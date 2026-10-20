@@ -125,11 +125,14 @@ def plan_prefill_from_row(
             f"Timeframe {timeframe_label(tv)} is not on the device plan list "
             f"({' or '.join(TIMEFRAMES)})."
         )
+    from trendalgo.device.fields import TRAILING_STOP_MIN
+
     tsl = row.get("trailing_stop_pct")
     if isinstance(tsl, (int, float)) and tsl > 0:
         stop = f"{float(tsl) * 100:g}"
     else:
-        stop = "5"
+        # Last resort when a fleet row still lacks a trail (Results should stamp one).
+        stop = f"{int(TRAILING_STOP_MIN)}"
     rank = row.get("rank", "?")
     name = f"Fleet #{rank} {indicator}"[:40]
     return {

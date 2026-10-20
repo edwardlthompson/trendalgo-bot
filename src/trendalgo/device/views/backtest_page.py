@@ -10,7 +10,6 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (
     QCheckBox,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -31,6 +30,7 @@ from trendalgo.device.backtest_sort import (
     sort_rows,
 )
 from trendalgo.device.context import DeviceContext
+from trendalgo.device.flow_layout import FlowLayout
 from trendalgo.device.icons import nav_icon
 from trendalgo.device.pair_scan_partial import clear_partial_rows, read_partial_rows
 from trendalgo.device.pair_scan_progress import clear_progress, progress_line, read_progress
@@ -144,9 +144,7 @@ class BacktestPage(QWidget):
         self._create_note.setObjectName("hint")
         self._create_note.setWordWrap(True)
 
-        toolbar = QHBoxLayout()
-        toolbar.setContentsMargins(0, 0, 0, 0)
-        toolbar.setSpacing(8)
+        toolbar = FlowLayout(margin=0, h_spacing=8, v_spacing=4)
         pair_label = QLabel(S.BACKTEST_PAIR)
         for widget in (
             pair_label,
@@ -158,8 +156,7 @@ class BacktestPage(QWidget):
             self._perfect,
             self._derive,
         ):
-            toolbar.addWidget(widget, alignment=Qt.AlignmentFlag.AlignVCenter)
-        toolbar.addStretch(1)
+            toolbar.addWidget(widget)
 
         layout = QVBoxLayout(self)
         layout.addLayout(toolbar)

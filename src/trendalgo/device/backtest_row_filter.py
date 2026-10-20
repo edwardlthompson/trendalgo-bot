@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from trendalgo.device.indicator_strength import strength_from_row
-from trendalgo.device.trade_counts import open_trades, wins_losses
+from trendalgo.device.trade_counts import open_trades, win_pct, wins_losses
 
 _BH = "B&H"
 _ORACLE = "Oracle max"
@@ -72,9 +72,9 @@ def num_field(row: dict[str, Any], key: str) -> float:
         hits = _num(row.get("tsl_hits"), missing=0.0)
         return hits / trades * 100.0 if trades > 0 else float("-inf")
     if key == "win_pct":
-        raw = _num(row.get("win_pct"), missing=float("-inf"))
-        if raw == float("-inf"):
-            return raw
+        raw = win_pct(row)
+        if raw is None:
+            return float("-inf")
         return raw * 100.0 if 0.0 <= raw <= 1.0 else raw
     if key == "open_trades":
         raw = open_trades(row)

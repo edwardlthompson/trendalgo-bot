@@ -32,6 +32,7 @@ class Settings:
     cert_sha256: str = ""
     theme: str = "system"
     accent: str = ""
+    use_utc: bool = False
 
 
 def validate_settings(
@@ -40,6 +41,8 @@ def validate_settings(
     theme: str = "system",
     accent: str = "",
     cert_pin_text: str = "",
+    *,
+    use_utc: bool = False,
 ) -> tuple[Settings | None, list[str]]:
     errors: list[str] = []
     owner = owner_text.strip()
@@ -60,7 +63,7 @@ def validate_settings(
     if errors:
         return None, errors
     pin_value = "" if pin is None else str(pin)
-    return Settings(owner, host, pin_value, picked_theme, picked_accent), []
+    return Settings(owner, host, pin_value, picked_theme, picked_accent, bool(use_utc)), []
 
 
 def _is_https_url(url: str) -> bool:
@@ -97,6 +100,7 @@ def settings_to_document(settings: Settings) -> dict[str, Any]:
         "host_url": settings.host_url,
         "theme": settings.theme,
         "accent": settings.accent,
+        "use_utc": bool(settings.use_utc),
     }
     if settings.cert_sha256:
         doc["cert_sha256"] = settings.cert_sha256
@@ -118,10 +122,19 @@ def settings_from_document(document: dict[str, Any] | None) -> Settings | None:
         theme,
         accent,
         str(document.get("cert_sha256", "")),
+        use_utc=_as_bool(document.get("use_utc"), False),
     )
     if settings is None:
         raise ProfileError(BAD_SETTINGS)
     return settings
+
+
+def _as_bool(raw: object, default: bool) -> bool:
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, str):
+        return raw.strip().lower() in {"1", "true", "yes", "on"}
+    return default
 
 
 def _choice(value: object, choices: tuple[str, ...], default: str) -> str:

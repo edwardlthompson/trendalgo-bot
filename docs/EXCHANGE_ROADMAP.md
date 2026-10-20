@@ -7,7 +7,7 @@
 
 1. **Portfolio (worldwide):** Aggregate read-only balances across all CCXT-supported CEXs via a registry-driven adapter layer.
 2. **Bot trading (phased):** Native CCXT order runner — US-accessible CEXs first (S15–S17), then major worldwide venues (S18–S20).
-3. **Security:** Trade+query API keys only; dry-run default; per-exchange go-live gates (H-010/H-028).
+3. **Security:** Trade+query API keys only; dry-run default; per-exchange go-live gates (H-010/H-028). Rate limits and key scopes: [`docs/API_ACCESS_LIMITS.md`](API_ACCESS_LIMITS.md).
 
 **Non-goals:** Robinhood/PayPal without algo APIs; custodial SaaS; auto-withdraw; Freqtrade dependency (removed S15 CM-4).
 
@@ -30,13 +30,13 @@ flowchart LR
   PWA --> Runner
   Runner --> Strategies
   Runner --> Adapters
+
 ```
 
 | Lane | Technology | Scope |
 |------|------------|--------|
 | **Portfolio** | CCXT `fetch_balance` + tickers | All registry venues (worldwide CCXT CEXs) |
 | **Trading** | Native runner + strategy runtime | **Complete:** 9 US + worldwide venues (S13–S20) |
-
 Registry v6 drives portfolio and trading for all nine venues. See [`docs/RUNBOOK.md`](RUNBOOK.md) § Multi-venue trading ops.
 
 ---
@@ -49,7 +49,6 @@ Registry v6 drives portfolio and trading for all nine venues. See [`docs/RUNBOOK
 |---------|-------|-----------|-------------|-------|
 | `kraken` | Kraken | ✅ | ✅ MVP | USD pairs; rate limits R-001 |
 | `binanceus` | Binance.US | ✅ | ✅ S15 | **Not** `binance.com` for US |
-
 ### Tier B — US portfolio (S13–S14)
 
 | CCXT ID | Brand | Portfolio | Bot trading |
@@ -58,7 +57,6 @@ Registry v6 drives portfolio and trading for all nine venues. See [`docs/RUNBOOK
 | `gemini` | Gemini | ✅ S14 | ✅ S16 |
 | `bitstamp` | Bitstamp | ✅ S17 | ✅ S19 |
 | `cryptocom` | Crypto.com | ✅ S17 | ✅ S19 |
-
 ### Tier C — Worldwide portfolio + Phase 1 trading (S14 / S18)
 
 | CCXT ID | Brand | Portfolio | Bot trading |
@@ -66,7 +64,6 @@ Registry v6 drives portfolio and trading for all nine venues. See [`docs/RUNBOOK
 | `binance` | Binance | ✅ S14 | ✅ S18 P1 |
 | `bybit` | Bybit | ✅ S14 | ✅ S18 P1 |
 | `okx` | OKX | ✅ S14 | ✅ S18 P1 |
-
 Registry v6 sets `worldwide_trading_phase: 2`. Venues flag `us_restricted: true` — live trading requires `WORLDWIDE_TRADING_ACK=1` plus per-exchange go-live.
 
 ### Tier D — Complete (S19–S20) ✅
@@ -79,7 +76,6 @@ Exchange program Tier D deliverables (H-032 still required for **live** worldwid
 | Multi-venue arbitrage detector (informational) | S19 | ✅ |
 | N-exchange ops runbook + worldwide ack workflow | S20 | ✅ |
 | CM-6 scale gate (9+ venues sync + trading status) | S20 | ✅ |
-
 Additional worldwide CEX venues beyond the current nine remain **H-032** gated and out of scope until founder approval.
 
 ### Out of scope
@@ -88,7 +84,6 @@ Additional worldwide CEX venues beyond the current nine remain **H-032** gated a
 |-------|--------|
 | DEX / on-chain | S12 `onchain.py` lane — separate from CEX |
 | US-blocked retail venues | Operator responsibility; registry flags `us_restricted` |
-
 ---
 
 ## Module layout
@@ -109,6 +104,7 @@ src/trendalgo/trading/
     live.py
   backtest/native_adapter.py
 src/trendalgo/strategies/runtime/   # CM-2, CM-4 ports
+
 ```
 
 **Env pattern:**
@@ -117,6 +113,7 @@ src/trendalgo/strategies/runtime/   # CM-2, CM-4 ports
 KRAKEN_API_KEY=...
 BINANCEUS_API_KEY=...
 # Trade + query only — never Withdraw
+
 ```
 
 ---
@@ -133,7 +130,6 @@ BINANCEUS_API_KEY=...
 | **S18** | Worldwide Phase 1 trading (binance/bybit/okx) | H-032 |
 | **S19** | Phase 2 US trading + multi-venue arbitrage | — |
 | **S20** | N-exchange ops hardening (runbook, CM-6 @ 9 venues) | — |
-
 Detail: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active DEX S21–S24; exchange S13–S20 complete in [`COMPLETED_TASKS.md`](../COMPLETED_TASKS.md)).
 
 ---
@@ -149,7 +145,6 @@ Detail: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active DEX S21–S24; exchange S13�
 | CM-5 | Scope cap S13–S20; H-030 | ongoing |
 | CM-6 | Staggered sync + N-exchange load test | S14, S17, S20 |
 | CM-7 | No `withdraw` in `trading/` | S15 |
-
 ---
 
 ## Human gates
@@ -160,7 +155,6 @@ Detail: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active DEX S21–S24; exchange S13�
 | H-031 | ADR-0010 + approve FT removal | hard | S15 |
 | H-032 | Worldwide bot trading phases | hard | S18 |
 | H-034 | Local preview sign-off | soft | S13+ commits |
-
 ---
 
 ## Success criteria
@@ -184,5 +178,4 @@ Detail: [`BUILD_PLAN.md`](../BUILD_PLAN.md) (active DEX S21–S24; exchange S13�
 | Worldwide scope creep | H-032 hard gate; S18–S20 phased |
 | VPS sync load | CM-6 stagger; H-027 monthly |
 | Wrong CCXT ID | Registry + CI grep |
-
 **Recommendation:** Exchange program AGENT lane complete (S13–S20). Clear H-030–H-034 per [`docs/HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md); next AGENT lane is **S21** DEX foundation (blocked on H-035).

@@ -21,7 +21,12 @@ from trendalgo.device.scan_model import (
     scan_store_path,
 )
 from trendalgo.device.scan_offline import OFFLINE_PAIRS, offline_listings, offline_market
-from trendalgo.device.scan_progress import ProgressReporter, clear_progress, read_progress
+from trendalgo.device.scan_progress import (
+    ProgressReporter,
+    clear_progress,
+    consume_progress_events,
+    read_progress,
+)
 from trendalgo.device.stores import read_snapshot
 from trendalgo.scanner.config import default_scanner_settings
 from trendalgo.scanner.listings import DEFAULT_KRAKEN_SPOT
@@ -108,6 +113,39 @@ def test_the_progress_file_carries_the_latest_message_and_state(ctx: DeviceConte
     assert "status" in progress["state"]
     clear_progress(ctx.root)
     assert read_progress(ctx.root) is None
+
+
+def test_progress_file_keeps_event_ring_for_log_append(ctx: DeviceContext) -> None:
+    progress = get_scan_progress()
+    progress.log("alpha event")
+    progress.log("beta event")
+    reporter = ProgressReporter(ctx.root, interval_s=0.05)
+    reporter.start()
+    reporter.stop()
+    raw = read_progress(ctx.root)
+    assert raw is not None
+    assert int(raw.get("last_seq") or 0) >= 2
+    lines, cursor = consume_progress_events(raw, 0)
+    assert "alpha event" in lines
+    assert "beta event" in lines
+    again, cursor2 = consume_progress_events(raw, cursor)
+    assert again == []
+    assert cursor2 == cursor
+    clear_progress(ctx.root)
+
+
+def test_consume_progress_events_skips_seen_seq() -> None:
+    raw = {
+        "events": [
+            {"seq": 1, "message": "one"},
+            {"seq": 2, "message": "two"},
+            {"seq": 3, "message": "three"},
+        ],
+        "last_seq": 3,
+    }
+    first, mid = consume_progress_events(raw, 1)
+    assert first == ["two", "three"]
+    assert mid == 3
 
 
 def test_the_progress_line_names_the_phase_the_count_and_the_message() -> None:

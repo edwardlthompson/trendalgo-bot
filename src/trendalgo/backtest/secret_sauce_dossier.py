@@ -22,6 +22,11 @@ class HeartbeatDossier:
     oracle_entry_indexes: tuple[int, ...]
     oracle_exit_indexes: tuple[int, ...]
     anti_cheat: str
+    # Phase 0 residual instrumentation (additive; consumers use .get / defaults).
+    residual_entry_indexes: tuple[int, ...] = ()
+    residual_exit_indexes: tuple[int, ...] = ()
+    residual_feature_hits: tuple[dict[str, Any], ...] = ()
+    oracle_gap_net_pct: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -37,6 +42,10 @@ class HeartbeatDossier:
             "oracle_entry_indexes": list(self.oracle_entry_indexes),
             "oracle_exit_indexes": list(self.oracle_exit_indexes),
             "anti_cheat": self.anti_cheat,
+            "residual_entry_indexes": list(self.residual_entry_indexes),
+            "residual_exit_indexes": list(self.residual_exit_indexes),
+            "residual_feature_hits": [dict(x) for x in self.residual_feature_hits],
+            "oracle_gap_net_pct": self.oracle_gap_net_pct,
             "requires_backtest": True,
         }
 
@@ -61,6 +70,24 @@ def _conjuncts_from(raw: list[Any] | None) -> tuple[RuleConjunct, ...]:
                 op=str(item.get("op") or ">="),
                 value=float(item.get("value") or 0.0),
             )
+        )
+    return tuple(out)
+
+
+def _residual_hits_from(raw: object) -> tuple[dict[str, Any], ...]:
+    if not isinstance(raw, list):
+        return ()
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        feats = item.get("features")
+        out.append(
+            {
+                "side": str(item.get("side") or ""),
+                "index": int(item.get("index") or 0),
+                "features": [str(x) for x in feats] if isinstance(feats, list) else [],
+            }
         )
     return tuple(out)
 
@@ -93,6 +120,12 @@ def dossier_from_dict(raw: dict[str, Any] | None) -> HeartbeatDossier | None:
         rationale=str((exit_raw or {}).get("rationale") or "exit"),
         requires_backtest=True,
     )
+    gap_raw = raw.get("oracle_gap_net_pct")
+    gap: float | None
+    try:
+        gap = float(gap_raw) if gap_raw is not None else None
+    except (TypeError, ValueError):
+        gap = None
     return HeartbeatDossier(
         rule=entry_rule,
         exit_rule=exit_rule,
@@ -104,6 +137,10 @@ def dossier_from_dict(raw: dict[str, Any] | None) -> HeartbeatDossier | None:
         oracle_entry_indexes=tuple(int(x) for x in (raw.get("oracle_entry_indexes") or [])),
         oracle_exit_indexes=tuple(int(x) for x in (raw.get("oracle_exit_indexes") or [])),
         anti_cheat=str(raw.get("anti_cheat") or ""),
+        residual_entry_indexes=tuple(int(x) for x in (raw.get("residual_entry_indexes") or [])),
+        residual_exit_indexes=tuple(int(x) for x in (raw.get("residual_exit_indexes") or [])),
+        residual_feature_hits=_residual_hits_from(raw.get("residual_feature_hits")),
+        oracle_gap_net_pct=gap,
     )
 
 

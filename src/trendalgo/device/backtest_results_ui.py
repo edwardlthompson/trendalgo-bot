@@ -8,7 +8,7 @@ from trendalgo.device.indicator_strength import strength_from_row
 from trendalgo.device.lts_scan_model import dash
 from trendalgo.device.scanner_heat import rank_hex_colors
 from trendalgo.device.scanner_signal_sets import is_three_commas_indicator
-from trendalgo.device.trade_counts import open_trades, wins_losses
+from trendalgo.device.trade_counts import open_trades, win_pct, wins_losses
 
 _BH = "B&H"
 # Column indices matching BACKTEST_RESULT_HEADERS (Show Chart + Create Bot are widgets).
@@ -61,13 +61,21 @@ def net_tooltip(row: dict[str, Any], *, is_bh: bool) -> str:
     """Show signal-only baseline next to final Net % when they differ."""
     if is_bh:
         return ""
+    parts: list[str] = []
+    if bool(row.get("protective_tsl")) or bool(row.get("tsl_breath")):
+        parts.append(
+            "Protective TSL: lowest safe trail from the 1–20% grid (+1% breath when tied)."
+        )
     signal = _as_float(row.get("signal_net_pct"))
     final = _as_float(row.get("net_pct"))
-    if signal is None or final is None:
-        return ""
-    if abs(signal - final) < 1e-6:
-        return "Signal-only Net % (no trailing stop) matches the final result."
-    return f"Signal-only Net % (before TSL): {signal:.2f}%. Final includes trailing-stop tune."
+    if signal is not None and final is not None:
+        if abs(signal - final) < 1e-6:
+            parts.append("Signal-only Net % matches the final result.")
+        else:
+            parts.append(
+                f"Signal-only Net % (before TSL): {signal:.2f}%. Final includes trailing-stop tune."
+            )
+    return " ".join(parts)
 
 
 def format_export_params(row: dict[str, Any], *, is_bh: bool = False) -> str:
@@ -179,7 +187,7 @@ def row_cells(row: dict[str, Any], *, is_bh: bool) -> list[str]:
         open_cell,
         wins_cell,
         losses_cell,
-        "—" if is_bh else dash(row.get("win_pct"), pct=True),
+        "—" if is_bh else dash(win_pct(row), pct=True),
         tsl_cell,
         "—" if is_bh or hits is None else str(hits),
         "—" if is_bh else dash(hit_pct, pct=True),
@@ -217,6 +225,8 @@ def _metric(row: dict[str, Any], key: str) -> float | None:
     if key == "tsl_hits":
         raw = _as_int(row.get("tsl_hits"))
         return float(raw) if raw is not None else None
+    if key == "win_pct":
+        return win_pct(row)
     return _as_float(row.get(key))
 
 

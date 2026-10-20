@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QFrame,
     QGraphicsSimpleTextItem,
     QHBoxLayout,
     QLabel,
@@ -35,6 +36,8 @@ from trendalgo.device.scanner_chart_trades import (
 )
 from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
+
+_CHART_MIN_WIDTH = 720
 
 
 def show_scanner_chart_dialog(
@@ -109,12 +112,19 @@ def show_scanner_chart_dialog(
     radios_scroll.setEnabled(True)
     radios_scroll.setVisible(not price_only and not single)
     chart = _OverlayChart()
+    chart.setMinimumWidth(_CHART_MIN_WIDTH)
+    chart_scroll = QScrollArea()
+    chart_scroll.setWidget(chart)
+    chart_scroll.setWidgetResizable(True)
+    chart_scroll.setFrameShape(QFrame.Shape.NoFrame)
+    chart_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+    chart_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
     if not price_only:
         layout.addWidget(show_trades)
     if not price_only and not single:
         layout.addWidget(radios_scroll)
     layout.addWidget(hint)
-    layout.addWidget(chart, 1)
+    layout.addWidget(chart_scroll, 1)
     buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
     buttons.rejected.connect(dialog.reject)
     buttons.accepted.connect(dialog.accept)
@@ -228,15 +238,16 @@ def show_scanner_chart_dialog(
     show_trades.toggled.connect(_refresh)
     group.idToggled.connect(lambda _id, on: _refresh() if on else None)
     _refresh()
-    _open_fullscreen(dialog)
+    _open_windowed(dialog)
     dialog.exec()
 
 
-def _open_fullscreen(dialog: QDialog) -> None:
+def _open_windowed(dialog: QDialog) -> None:
+    """Fill the available screen as a normal maximizable window (split-screen friendly)."""
     screen = dialog.screen() or QApplication.primaryScreen()
     if screen is not None:
-        dialog.setGeometry(screen.geometry())
-    dialog.showFullScreen()
+        dialog.setGeometry(screen.availableGeometry())
+    dialog.showMaximized()
 
 
 def _closes_for_window(coin: dict[str, Any], window: str) -> list[float]:

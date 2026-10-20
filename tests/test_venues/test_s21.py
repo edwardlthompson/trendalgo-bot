@@ -15,7 +15,7 @@ SOL_ADDR = "7EcDhSYGxXyscesiyR6Y3Gf4zEWLUsRms95TMPMXLKm"
 
 def test_venue_registry_s21() -> None:
     registry = load_venue_registry()
-    assert registry.version == 4
+    assert registry.version == 5
     ids = {v.id for v in list_wallet_venues()}
     assert ids == {"ethereum", "base", "arbitrum", "solana"}
     eth = get_venue("ethereum")
@@ -41,7 +41,7 @@ def test_onchain_delegates_to_plugins(tmp_path: Path) -> None:
     assert preview["venue"] == "base"
     synced = sync_onchain_wallet(store, EVM_ADDR, chain="arbitrum", dry_run=True)
     assert synced["dry_run"] is True
-    assert synced["registry_version"] == 4
+    assert synced["registry_version"] == 5
     assert synced["holdings"]
 
 
@@ -62,7 +62,7 @@ def test_venues_registry_api() -> None:
     resp = client.get("/api/v1/platform/venues/registry")
     body = resp.json()
     assert resp.status_code == 200
-    assert body["version"] == 4
+    assert body["version"] == 5
     assert len(body["venues"]) == 4
     sync = client.post(
         "/api/v1/platform/onchain/sync",

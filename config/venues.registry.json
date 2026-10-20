@@ -1,7 +1,7 @@
 {
-  "version": 4,
+  "version": 5,
   "dex_live_phase": 1,
-  "default_sync_interval_sec": 2,
+  "default_sync_interval_sec": 60,
   "venues": [
     {
       "id": "ethereum",
@@ -14,7 +14,8 @@
       "rpc_env": "ETH_RPC_URL",
       "portfolio_plugins": ["uniswap_v3"],
       "swap_plugins": ["uniswap_v3"],
-      "sync_interval_sec": 2
+      "sync_interval_sec": 60,
+      "min_sync_interval_sec": 60
     },
     {
       "id": "base",
@@ -27,7 +28,8 @@
       "rpc_env": "BASE_RPC_URL",
       "portfolio_plugins": ["uniswap_v3"],
       "swap_plugins": ["uniswap_v3"],
-      "sync_interval_sec": 2
+      "sync_interval_sec": 60,
+      "min_sync_interval_sec": 60
     },
     {
       "id": "arbitrum",
@@ -40,7 +42,8 @@
       "rpc_env": "ARB_RPC_URL",
       "portfolio_plugins": ["uniswap_v3"],
       "swap_plugins": ["uniswap_v3"],
-      "sync_interval_sec": 2
+      "sync_interval_sec": 60,
+      "min_sync_interval_sec": 60
     },
     {
       "id": "solana",
@@ -52,7 +55,8 @@
       "rpc_env": "SOLANA_RPC_URL",
       "portfolio_plugins": [],
       "swap_plugins": ["jupiter"],
-      "sync_interval_sec": 2
+      "sync_interval_sec": 60,
+      "min_sync_interval_sec": 60
     }
   ]
 }

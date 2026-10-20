@@ -19,6 +19,13 @@ from utils.provider_rate_limit import MinIntervalGate
 from .params import BacktestLoaderParams, loader_params_from_settings
 
 
+def _trim_lookback(frame: pd.DataFrame, days: int) -> pd.DataFrame:
+    """Apples-to-apples calendar window; cache may still hold longer history."""
+    from trendalgo.backtest.load_days import trim_ohlcv_frame
+
+    return trim_ohlcv_frame(frame, days)
+
+
 @dataclass
 class LoadResult:
     symbol: str
@@ -155,7 +162,7 @@ class BacktestDataLoader:
             frame = self._rows_to_frame(cached_rows)
             ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1h")
             if ok and len(frame) >= expected_points:
-                return frame, _origin_label(cached_rows, "cache"), None
+                return _trim_lookback(frame, days), _origin_label(cached_rows, "cache"), None
 
         # TrendAlgo host: shim prefers Kraken USD spot by trade symbol, else synthetic.
         lookup_id = gecko_id or symbol.lower()
@@ -172,7 +179,7 @@ class BacktestDataLoader:
             if not ok:
                 return None, label, reason
 
-            return frame, label, None
+            return _trim_lookback(frame, days), label, None
 
         found_polygon, cached_polygon_rows = self.cache.get_ohlcv_rows(
             "polygon",
@@ -184,7 +191,7 @@ class BacktestDataLoader:
             frame = self._rows_to_frame(cached_polygon_rows)
             ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1h")
             if ok and len(frame) >= expected_points:
-                return frame, "cache", None
+                return _trim_lookback(frame, days), "cache", None
 
         polygon_rows = self.price_fallback.get_polygon_30d_hourly_ohlcv(symbol)
         if polygon_rows:
@@ -195,7 +202,7 @@ class BacktestDataLoader:
                 frame = self._rows_to_frame(polygon_rows)
                 ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1h")
                 if ok and len(frame) >= expected_points:
-                    return frame, "polygon_api", None
+                    return _trim_lookback(frame, days), "polygon_api", None
 
         found_cmc, cached_cmc_rows = self.cache.get_ohlcv_rows(
             "cmc",
@@ -207,7 +214,7 @@ class BacktestDataLoader:
             frame = self._rows_to_frame(cached_cmc_rows)
             ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1h")
             if ok and len(frame) >= expected_points:
-                return frame, "cache", None
+                return _trim_lookback(frame, days), "cache", None
 
         cmc_rows = self.price_fallback.get_cmc_hourly_ohlcv(symbol, days=days)
         if cmc_rows:
@@ -220,7 +227,7 @@ class BacktestDataLoader:
                 return None, "cmc_api", reason
             if len(frame) < expected_points:
                 return None, "cmc_api", "insufficient_hourly_bars"
-            return frame, "cmc_api", None
+            return _trim_lookback(frame, days), "cmc_api", None
 
         return None, "none", "no_intraday_ohlcv"
 
@@ -239,7 +246,7 @@ class BacktestDataLoader:
             frame = self._rows_to_frame_daily(cached_rows)
             ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1d")
             if ok and len(frame) >= expected_points:
-                return frame, "cache", None
+                return _trim_lookback(frame, days), "cache", None
 
         if gecko_id:
             ohlc_rows = self.coingecko.get_ohlc(coin_id=gecko_id, days=max(30, days))
@@ -271,7 +278,7 @@ class BacktestDataLoader:
                 if len(frame) < expected_points:
                     return None, "coingecko_api", "insufficient_daily_bars"
 
-                return frame, "coingecko_api", None
+                return _trim_lookback(frame, days), "coingecko_api", None
 
         found_poly_d, cached_poly_d = self.cache.get_ohlcv_rows(
             "polygon",
@@ -283,7 +290,7 @@ class BacktestDataLoader:
             frame = self._rows_to_frame_daily(cached_poly_d)
             ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1d")
             if ok and len(frame) >= expected_points:
-                return frame, "cache", None
+                return _trim_lookback(frame, days), "cache", None
 
         polygon_daily = self.price_fallback.get_polygon_30d_daily_ohlcv(symbol)
         if polygon_daily:
@@ -294,7 +301,7 @@ class BacktestDataLoader:
                 frame = self._rows_to_frame_daily(polygon_daily)
                 ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1d")
                 if ok and len(frame) >= expected_points:
-                    return frame, "polygon_api", None
+                    return _trim_lookback(frame, days), "polygon_api", None
 
         daily_prices = self.price_fallback.get_cmc_daily_closes(symbol)
         if daily_prices and len(daily_prices) >= expected_points:
@@ -313,7 +320,7 @@ class BacktestDataLoader:
                 frame = self._rows_to_frame_daily(synthetic)
                 ok, reason = self.validate_ohlcv_frame(frame, expected_timeframe="1d")
                 if ok and len(frame) >= expected_points:
-                    return frame, "cmc_api", None
+                    return _trim_lookback(frame, days), "cmc_api", None
 
         return None, "none", "no_coingecko_ohlc"
 
@@ -339,6 +346,8 @@ class BacktestDataLoader:
         frame_1h, source, reason = self._get_or_fetch_1h(
             symbol=symbol, gecko_id=gecko_id, days=days
         )
+        if frame_1h is not None:
+            frame_1h = _trim_lookback(frame_1h, days)
 
         if frame_1h is None:
             if timeframe != "1d":
@@ -367,7 +376,7 @@ class BacktestDataLoader:
                 symbol=symbol,
                 timeframe=timeframe,
                 source=daily_source,
-                frame=frame_1d,
+                frame=_trim_lookback(frame_1d, days),
                 skip_reason=None,
             )
 

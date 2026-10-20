@@ -11,7 +11,7 @@ from trendalgo.exchanges.load_test import (
 def test_trading_status_nine_venues_phase2() -> None:
     report = run_trading_status_check()
     assert report["ok"] is True
-    assert report["registry_version"] == 6
+    assert report["registry_version"] == 7
     assert report["worldwide_trading_phase"] == 2
     assert int(report["trading_exchange_count"]) == 9
     assert set(report["worldwide_exchanges"]) == {"binance", "bybit", "okx"}

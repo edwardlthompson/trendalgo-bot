@@ -19,6 +19,7 @@ from trendalgo.portfolio.metrics import (
     enrich_holdings,
     pl_breakdown,
 )
+from trendalgo.portfolio.multi_exchange import aggregate_holdings
 from trendalgo.portfolio.performance import PERFORMANCE_RANGES
 from trendalgo.portfolio.rebalance import rebalance_suggestions
 
@@ -45,6 +46,8 @@ class PortfolioOverview:
     accounts: tuple[dict[str, Any], ...] = ()
     tags: dict[str, str] | None = None
     rebalance: tuple[dict[str, Any], ...] = ()
+    realized_available: bool = False
+    nft_status: str = "untracked"
 
 
 def portfolio_db_path(root: Path) -> Path | None:
@@ -71,13 +74,38 @@ def load_overview(path: Path, *, as_of_date: str | None = None) -> PortfolioOver
     account_id = _primary_account_id(store)
     if account_id is None:
         return None
-    snap = _snapshot_for_date(store, account_id, as_of_date)
-    if snap is None:
-        return None
-    holdings = enrich_holdings(list(snap["holdings"]))
+    aggregated = aggregate_holdings(store)
+    accounts_raw = list(store.list_accounts())
+    use_agg = len(accounts_raw) >= 2 and as_of_date is None
+    if use_agg and aggregated.get("holdings"):
+        net = float(aggregated["total_usd"])
+        raw_holdings = list(aggregated["holdings"])
+        source = "multi_exchange"
+        captured_at = datetime.now(UTC).replace(microsecond=0).isoformat()
+    else:
+        snap = _snapshot_for_date(store, account_id, as_of_date)
+        if snap is None:
+            return None
+        if str(snap.get("source") or "").startswith("dry-run") and len(accounts_raw) > 1:
+            # Prefer live multi-account over a dry-run BTC fixture masking real sync.
+            if aggregated.get("holdings"):
+                net = float(aggregated["total_usd"])
+                raw_holdings = list(aggregated["holdings"])
+                source = "multi_exchange"
+                captured_at = datetime.now(UTC).replace(microsecond=0).isoformat()
+            else:
+                net = float(snap["total_usd"])
+                raw_holdings = list(snap["holdings"])
+                source = str(snap["source"])
+                captured_at = str(snap["captured_at"])
+        else:
+            net = float(snap["total_usd"])
+            raw_holdings = list(snap["holdings"])
+            source = str(snap["source"])
+            captured_at = str(snap["captured_at"])
+    holdings = enrich_holdings(raw_holdings)
     pl = pl_breakdown(holdings)
-    net = float(snap["total_usd"])
-    equity = _equity_curve(store, account_id, net, str(snap["captured_at"]))
+    equity = _equity_curve(store, account_id, net, captured_at)
     daily_usd, daily_pct = daily_pnl_from_curve(equity)
     top10, buy_hold = local_comparison_curves(equity)
     dates = tuple(store.list_snapshot_dates(account_id, limit=90))
@@ -99,7 +127,7 @@ def load_overview(path: Path, *, as_of_date: str | None = None) -> PortfolioOver
             "exchange": str(a.get("exchange") or ""),
             "label": str(a.get("label") or ""),
         }
-        for a in store.list_accounts()
+        for a in accounts_raw
     )
     return PortfolioOverview(
         net_worth_usd=net,
@@ -110,8 +138,8 @@ def load_overview(path: Path, *, as_of_date: str | None = None) -> PortfolioOver
         total_pl_usd=pl.total_usd,
         health=health,
         max_drawdown_pct=dd,
-        captured_at=str(snap["captured_at"]),
-        source=str(snap["source"]),
+        captured_at=captured_at,
+        source=source,
         holdings=holdings,
         allocation=allocation,
         equity=equity,
@@ -122,6 +150,8 @@ def load_overview(path: Path, *, as_of_date: str | None = None) -> PortfolioOver
         accounts=accounts,
         tags=tags,
         rebalance=rebalance,
+        realized_available=pl.realized_available,
+        nft_status="untracked",
     )
 
 

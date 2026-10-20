@@ -9,7 +9,6 @@ from PySide6.QtGui import QAction, QCloseEvent, QResizeEvent
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
-    QHBoxLayout,
     QLabel,
     QMainWindow,
     QMenu,
@@ -26,6 +25,7 @@ from trendalgo.device import strings as S
 from trendalgo.device.autostart import is_enabled as autostart_is_enabled
 from trendalgo.device.autostart import set_enabled as set_autostart
 from trendalgo.device.context import DeviceContext
+from trendalgo.device.flow_layout import FlowLayout
 from trendalgo.device.icons import nav_icon, window_icon
 from trendalgo.device.nav_layout import NAV_CATALOG, SCANNER, NavItem, pack_nav
 from trendalgo.device.notify_prefs import load_prefs
@@ -43,6 +43,7 @@ from trendalgo.device.views.portfolio_page import PortfolioPage
 from trendalgo.device.views.scanner_page import ScannerPage
 from trendalgo.device.views.settings_page import SettingsPage
 from trendalgo.device.views.tray_controller import TrayController, install_quit_on_last_window
+from trendalgo.device.window_geometry import restore_window_geometry, save_window_geometry
 from trendalgo.device.workers import WorkerPool
 
 # Re-export page indices / legacy nav constants for tests and deep-links.
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(S.APP_TITLE)
         self.setWindowIcon(window_icon())
+        self.setMinimumSize(480, 360)
         self.resize(1100, 720)
         self._ctx = ctx
         self._tray: TrayController | None = None
@@ -154,12 +156,10 @@ class MainWindow(QMainWindow):
         self._more_actions: dict[int, QAction] = {}
         self._navbar = QWidget()
         self._navbar.setObjectName("navRow")
-        nav_row = QHBoxLayout(self._navbar)
-        nav_row.setContentsMargins(0, 0, 0, 0)
+        nav_row = FlowLayout(self._navbar, margin=0, h_spacing=8, v_spacing=4)
         nav_row.addWidget(self._nav)
         nav_row.addWidget(self._more)
-        nav_row.addStretch(1)
-        nav_row.addWidget(self._badge, alignment=Qt.AlignmentFlag.AlignVCenter)
+        nav_row.addWidget(self._badge)
         body = QWidget()
         column = QVBoxLayout(body)
         column.setContentsMargins(16, 12, 16, 16)
@@ -171,6 +171,8 @@ class MainWindow(QMainWindow):
         if {"scanner", "bots", "journal"} & ctx.shared:
             notes.append(S.DATA_NOTE.format(path=ctx.databases["scanner"].parent))
         self.statusBar().addWidget(QLabel("  ".join(notes)))
+        if not restore_window_geometry(ctx.root, self):
+            self.resize(1100, 720)
         self._rebuild_nav(force=True)
         self.show_page(default_nav_page(ctx.root))
         self._install_tray()
@@ -294,6 +296,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         save_nav_page(self._ctx.root, self._page_index)
+        save_window_geometry(self._ctx.root, self)
         if self._tray is not None and self._tray.available:
             event.ignore()
             self.hide()

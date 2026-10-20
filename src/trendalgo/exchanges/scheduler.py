@@ -32,11 +32,17 @@ def stagger_delay_sec(entry: ExchangeEntry, *, default: int | None = None) -> fl
     override = os.environ.get("TRENDALGO_SYNC_STAGGER_SEC")
     if override is not None:
         return float(override)
-    if entry.sync_interval_sec is not None:
-        return float(entry.sync_interval_sec)
-    registry = load_registry()
-    base = default if default is not None else registry.default_sync_interval_sec
-    return float(base)
+    configured = entry.sync_interval_sec
+    floor = entry.min_sync_interval_sec
+    if configured is not None:
+        delay = float(configured)
+    else:
+        registry = load_registry()
+        base = default if default is not None else registry.default_sync_interval_sec
+        delay = float(base)
+    if floor is not None:
+        delay = max(delay, float(floor))
+    return delay
 
 
 def sync_portfolio_staggered(

@@ -113,6 +113,7 @@ def test_settings_refuses_bad_values_then_saves(qtbot: QtBot, ctx: DeviceContext
         "host_url": "",
         "theme": "system",
         "accent": "",
+        "use_utc": False,
     }
     assert page._status.text() == S.SETTINGS_SAVED
     assert page._problem.isHidden()

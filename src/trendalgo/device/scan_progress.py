@@ -12,6 +12,7 @@ from trendalgo.scanner.progress import get_scan_progress
 
 PROGRESS_FILE = "scan_progress.json"
 WRITE_EVERY_S = 0.5
+_EVENT_LIMIT = 300
 
 
 class ProgressReporter:
@@ -39,13 +40,51 @@ class ProgressReporter:
             self._write()
 
     def _write(self) -> None:
-        latest = get_scan_progress().snapshot(after=0, limit=1)
-        events = latest["events"]
+        # Full recent ring so the UI can catch up if a poll missed a write.
+        latest = get_scan_progress().snapshot(after=0, limit=_EVENT_LIMIT)
+        events = list(latest.get("events") or [])
+        last_seq = int(latest.get("last_seq") or 0)
         message = str(events[-1]["message"]) if events else ""
+        slim = [{"seq": int(e["seq"]), "message": str(e.get("message") or "")} for e in events]
         try:
-            write_json(self._path, {"state": latest["state"], "message": message})
+            write_json(
+                self._path,
+                {
+                    "state": latest["state"],
+                    "message": message,
+                    "last_seq": last_seq,
+                    "events": slim,
+                },
+            )
         except OSError:
             pass  # a locked or full disk must not stop the scan; the window keeps the last good copy
+
+
+def consume_progress_events(
+    progress: dict[str, Any] | None, after_seq: int
+) -> tuple[list[str], int]:
+    """New log lines with ``seq > after_seq``, plus the highest seq seen (cursor)."""
+    if not progress:
+        return [], after_seq
+    events = progress.get("events")
+    if not isinstance(events, list):
+        return [], after_seq
+    lines: list[str] = []
+    cursor = int(after_seq)
+    for raw in events:
+        if not isinstance(raw, dict):
+            continue
+        try:
+            seq = int(raw.get("seq") or 0)
+        except (TypeError, ValueError):
+            continue
+        if seq <= cursor:
+            continue
+        message = str(raw.get("message") or "").strip()
+        if message:
+            lines.append(message)
+        cursor = max(cursor, seq)
+    return lines, cursor
 
 
 def read_progress(root: Path) -> dict[str, Any] | None:

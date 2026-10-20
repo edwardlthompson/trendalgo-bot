@@ -17,8 +17,12 @@ def stagger_delay_sec(entry: VenueEntry) -> float:
     if override is not None:
         return float(override)
     if entry.sync_interval_sec is not None:
-        return float(entry.sync_interval_sec)
-    return float(load_venue_registry().default_sync_interval_sec)
+        delay = float(entry.sync_interval_sec)
+    else:
+        delay = float(load_venue_registry().default_sync_interval_sec)
+    if entry.min_sync_interval_sec is not None:
+        delay = max(delay, float(entry.min_sync_interval_sec))
+    return delay
 
 
 def _address_for_venue(address: str, entry: VenueEntry) -> str | None:

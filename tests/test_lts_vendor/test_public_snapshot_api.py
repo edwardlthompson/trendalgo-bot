@@ -80,9 +80,9 @@ def test_publish_without_backtest_writes_coins(
     assert coin["symbol"] == "BTC"
     assert len(coin["closes_1h"]) == 180
     assert len(coin["closes_1d"]) == 30
-    # Real OHLCV gains — not the scan sparkline's short-horizon gain_pct.
+    # Real OHLCV gains from trimmed 1h window — not daily[-30:] or scan sparkline.
     assert coin["gains"]["7d"] == pytest.approx(((279.0 / 112.0) - 1.0) * 100.0)
-    assert coin["gains"]["30d"] == pytest.approx(((129.0 / 100.0) - 1.0) * 100.0)
+    assert coin["gains"]["30d"] == pytest.approx(((279.0 / 100.0) - 1.0) * 100.0)
 
 
 def test_merge_backtest_fields_shape(data_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:

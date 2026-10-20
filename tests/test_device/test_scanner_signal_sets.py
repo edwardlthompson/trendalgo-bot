@@ -99,6 +99,18 @@ def test_indicator_asterisk_only_for_all_ta() -> None:
     assert "buy & hold" in indicator_display_label("B&H", bt_signal_set=BT_SET_ALL_TA, is_bh=True)
 
 
+def test_indicator_display_keeps_sauce_ta_and_lab_distinct() -> None:
+    from trendalgo.device import strings as S
+
+    ta = indicator_display_label("Secret Sauce TA", bt_signal_set=BT_SET_ALL_TA)
+    lab = indicator_display_label("Secret Sauce Lab", bt_signal_set=BT_SET_ALL_TA)
+    legacy = indicator_display_label("Secret Sauce", bt_signal_set=BT_SET_ALL_TA)
+    assert ta == S.SECRET_SAUCE_TA_LABEL
+    assert lab == S.SECRET_SAUCE_LABEL
+    assert legacy == S.SECRET_SAUCE_LABEL
+    assert ta != lab
+
+
 def test_fleet_row_to_lts_preserves_net_and_trades() -> None:
     mapped = fleet_row_to_lts(
         {
@@ -122,6 +134,27 @@ def test_fleet_row_to_lts_preserves_net_and_trades() -> None:
     assert mapped["trades"] == 4
     assert mapped["win_pct"] == pytest.approx(75.0)
     assert mapped["tsl_hits"] == 1
+
+
+def test_fleet_row_to_lts_derives_win_pct_for_sauce_ta_without_win_rate() -> None:
+    """Secret Sauce TA coincidence trials set wins/trades but often omit win_rate."""
+    mapped = fleet_row_to_lts(
+        {
+            "strategy_id": "GEN_SECRET_1",
+            "indicator": "Secret Sauce TA",
+            "timeframe": "1h",
+            "net_profit": 40.0,
+            "trades": 8,
+            "wins": 6,
+            "open_trades": 0,
+            "params": {"ss_ta_fee_aware": True},
+        },
+        symbol="ETH",
+        stake_usd=100.0,
+    )
+    assert mapped["indicator"] == "Secret Sauce TA"
+    assert mapped["win_pct"] == pytest.approx(75.0)
+    assert mapped["wins"] == 6
 
 
 def test_merge_routes_all_ta(tmp_path: Path) -> None:

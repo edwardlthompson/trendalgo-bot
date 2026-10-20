@@ -21,6 +21,7 @@ class VenueEntry:
     portfolio_plugins: tuple[str, ...] = ()
     swap_plugins: tuple[str, ...] = ()
     sync_interval_sec: int | None = None
+    min_sync_interval_sec: int | None = None
 
     def to_public_dict(self) -> dict[str, Any]:
         return {

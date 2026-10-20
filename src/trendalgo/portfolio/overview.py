@@ -36,8 +36,12 @@ from trendalgo.portfolio.tags import tag_holdings
 def build_portfolio_overview(state: AppState) -> dict[str, Any]:
     store = state.portfolio_store
     primary_id = store.get_or_create_account("kraken", "default")
+    # Only seed the BTC dry-run fixture when dry-run and no live-sourced snapshot exists.
     if state.bot.dry_run:
-        ensure_btc_dry_run_fixture(store, primary_id)
+        snap = store.latest_snapshot(primary_id)
+        source = str(snap.get("source") or "") if snap is not None else ""
+        if not source or source.startswith("dry-run"):
+            ensure_btc_dry_run_fixture(store, primary_id)
     aggregated = aggregate_holdings(store)
     accounts = aggregated["accounts"]
     use_aggregated = len(accounts) >= 2

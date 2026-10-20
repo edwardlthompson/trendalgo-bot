@@ -144,4 +144,19 @@ def prepare_databases(ctx: DeviceContext) -> list[str]:
             enable_wal(path)
         except sqlite3.Error:
             notices.append(S.WAL_NOTICE.format(name=path.name))
+    _wake_pause_bots(ctx)
     return notices
+
+
+def _wake_pause_bots(ctx: DeviceContext) -> None:
+    """Bots resume paused after app start — no silent live resume (Phase 0)."""
+    from trendalgo.bots.orchestrator import BotOrchestrator
+    from trendalgo.trading.wake_policy import pause_all_bots_on_wake
+
+    path = ctx.databases.get("bots")
+    if path is None or not path.is_file():
+        return
+    try:
+        pause_all_bots_on_wake(BotOrchestrator(path))
+    except Exception:
+        pass

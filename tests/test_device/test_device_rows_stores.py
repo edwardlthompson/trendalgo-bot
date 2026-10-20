@@ -61,8 +61,8 @@ def test_scan_rows_and_caption_describe_the_snapshot() -> None:
         "Yes",
     )
     assert rows[0].trend == "▁█"
-    assert "Scan 3 as of 2026-10-09T12:00" in scan_caption(_snapshot())
-    assert S.SCANNER_DEGRADED in scan_caption(_snapshot(degraded=True))
+    assert "Scan 3 as of 2026-10-09 12:00 UTC" in scan_caption(_snapshot(), use_utc=True)
+    assert S.SCANNER_DEGRADED in scan_caption(_snapshot(degraded=True), use_utc=True)
     assert scan_rows(None) == []
     assert scan_caption(None) == ""
 
@@ -97,17 +97,25 @@ def test_backtest_trade_rows_format_prices_and_percent() -> None:
     rows = backtest_trade_rows(
         [
             {
-                "entry_time": "2026-10-09T12:00:00",
-                "exit_time": "2026-10-09T15:00:00",
+                "entry_time": "2026-10-09T12:00:00+00:00",
+                "exit_time": "2026-10-09T15:00:00+00:00",
                 "entry_price": 100.0,
                 "exit_price": 102.5,
                 "pnl_pct": 2.5,
                 "exit_reason": "take profit",
             },
         ],
+        use_utc=True,
     )
     assert rows == [
-        ("2026-10-09 12:00", "2026-10-09 15:00", "100.0000", "102.5000", "+2.50%", "take profit"),
+        (
+            "2026-10-09 12:00 UTC",
+            "2026-10-09 15:00 UTC",
+            "100.0000",
+            "102.5000",
+            "+2.50%",
+            "take profit",
+        ),
     ]
 
 

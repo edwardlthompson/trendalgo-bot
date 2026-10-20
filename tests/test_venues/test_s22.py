@@ -19,7 +19,7 @@ SOL_ADDR = "7EcDhSYGxXyscesiyR6Y3Gf4zEWLUsRms95TMPMXLKm"
 
 def test_registry_v2_portfolio_plugins() -> None:
     registry = load_venue_registry()
-    assert registry.version == 4
+    assert registry.version == 5
     eth = get_venue("ethereum")
     assert "uniswap_v3" in eth.portfolio_plugins
     sol = get_venue("solana")

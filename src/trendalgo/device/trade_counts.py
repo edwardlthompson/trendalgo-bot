@@ -17,6 +17,23 @@ def wins_losses(row: dict[str, Any]) -> tuple[int | None, int | None]:
     return wins, max(0, closed - wins)
 
 
+def win_pct(row: dict[str, Any]) -> float | None:
+    """Win rate as percent (0–100). Derives from wins/losses when win_pct is missing/−."""
+    raw = row.get("win_pct")
+    if raw not in (None, "-", ""):
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            pass
+    wins, losses = wins_losses(row)
+    if wins is None or losses is None:
+        return None
+    closed = wins + losses
+    if closed <= 0:
+        return None
+    return (wins / closed) * 100.0
+
+
 def open_trades(row: dict[str, Any]) -> int | None:
     """Trades still open at the last bar (force-settled for P&L, not a real exit)."""
     raw = row.get("open_trades")

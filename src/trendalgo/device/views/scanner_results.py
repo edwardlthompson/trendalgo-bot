@@ -6,48 +6,38 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QCursor
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QAbstractScrollArea,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
     QFrame,
-    QHBoxLayout,
     QLabel,
     QMessageBox,
-    QPushButton,
     QScrollArea,
     QTableWidget,
-    QTableWidgetItem,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
 from trendalgo.device import strings as S
-from trendalgo.device.backtest_results_ui import (
-    CREATE_BOT_COL,
-    SHOW_CHART_COL,
-    filter_perfect_rows,
-    heat_for_rows,
-    row_cells,
-    skip_tooltip,
-)
+from trendalgo.device.backtest_results_ui import filter_perfect_rows
+from trendalgo.device.backtest_row_filter import filter_rows
 from trendalgo.device.icons import nav_icon
 from trendalgo.device.results_view_prefs import load_results_prefs, save_results_prefs
-from trendalgo.device.scanner_heat import fg_for_bg
-from trendalgo.device.scanner_plan_prefill import plan_prefill_from_scanner_row
 from trendalgo.device.scanner_share import default_scanner_export_path, export_strategy_sheet_png
 from trendalgo.device.scanner_signal_sets import BT_SET_ALL_TA, is_three_commas_indicator
-from trendalgo.device.table_fit import fit_table_columns
 from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
-from trendalgo.device.views.glossary_popup import glossary_tooltip, show_glossary_popup
+from trendalgo.device.views.backtest_column_filter_row import BacktestColumnFilterRow
+from trendalgo.device.views.glossary_popup import show_glossary_popup
+from trendalgo.device.views.scanner_results_fill import data_row_index, populate_results_table
 
 _COLUMNS = S.BACKTEST_RESULT_HEADERS
 _BH = "B&H"
+_FILTER_DEBOUNCE_MS = 2000
 CreateBotCb = Callable[[dict[str, str], str], str]
 
 
@@ -108,9 +98,11 @@ def indicator_display_label(
         return f"{_BH}  ← buy & hold" if text == _BH else text
     if text == "Oracle max":
         return S.BACKTEST_ORACLE_LABEL
-    from trendalgo.device.sauce_names import is_sauce
+    from trendalgo.device.sauce_names import is_sauce_lab, is_sauce_ta
 
-    if is_sauce(text):
+    if is_sauce_ta(text):
+        return S.SECRET_SAUCE_TA_LABEL
+    if is_sauce_lab(text):
         return S.SECRET_SAUCE_LABEL
     if bt_signal_set == BT_SET_ALL_TA and is_three_commas_indicator(text):
         return f"{text} *"
@@ -125,6 +117,7 @@ def show_results_dialog(
     perfect_only: bool = False,
     on_create_bot: CreateBotCb | None = None,
     export_root: Path | None = None,
+    initial_filters: dict[str, Any] | None = None,
 ) -> None:
     symbol = str(coin.get("symbol") or coin.get("pair") or "")
     pair = str(coin.get("pair") or symbol)
@@ -141,96 +134,83 @@ def show_results_dialog(
     status = QLabel()
     status.setObjectName("hint")
     status.setWordWrap(True)
-    rows = strategy_sheet_rows(coin, perfect_only=perfect_only)
+    all_rows = strategy_sheet_rows(coin, perfect_only=perfect_only)
+    # Same list object so cellClicked / share always see the latest filtered rows.
+    visible: list[dict[str, Any]] = list(all_rows)
     body = QWidget()
     body_layout = QVBoxLayout(body)
     body_layout.setContentsMargins(0, 0, 0, 0)
-    if not rows:
+    table: QTableWidget | None = None
+    filters: BacktestColumnFilterRow | None = None
+    if not all_rows:
         body_layout.addWidget(QLabel(S.SCANNER_RESULTS_EMPTY))
     else:
-        table = QTableWidget(len(rows), len(_COLUMNS))
+        table = QTableWidget(0, len(_COLUMNS))
         table.setHorizontalHeaderLabels(list(_COLUMNS))
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         table.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-        heat = heat_for_rows(rows) if heatmap else {}
-        theme = colors_for(active_mode())
-        bh_bg = theme["secondaryContainer"]
-        bh_fg = theme["onSecondaryContainer"]
-        ss_bg = theme["primaryContainer"]
-        ss_fg = theme["onPrimaryContainer"]
-        signal_set = str(coin.get("bt_signal_set") or "")
-        for r, row in enumerate(rows):
-            name = str(row.get("indicator") or "").strip()
-            is_bh = name == _BH
-            from trendalgo.device.sauce_names import is_sauce as _is_sauce
+        filters = BacktestColumnFilterRow()
+        filters.attach(table)
+        if initial_filters:
+            _apply_initial_filters(filters, initial_filters)
+            visible[:] = filter_rows(all_rows, filters.dump())
+        populate_results_table(
+            table,
+            visible,
+            coin=coin,
+            pair=pair,
+            heatmap=heatmap,
+            status=status,
+            parent=dialog,
+            filter_row=filters,
+            on_create_bot=on_create_bot,
+            indicator_label=indicator_display_label,
+        )
+        filter_timer = QTimer(dialog)
+        filter_timer.setSingleShot(True)
+        filter_timer.setInterval(_FILTER_DEBOUNCE_MS)
 
-            is_sauce = _is_sauce(name)
-            is_baseline = name in {_BH, "Oracle max"}
-            values = row_cells(row, is_bh=is_bh)
-            for c, text in enumerate(values):
-                label = (
-                    indicator_display_label(
-                        name,
-                        bt_signal_set=signal_set,
-                        is_bh=is_bh,
-                    )
-                    if c == 0
-                    else text
-                )
-                item = QTableWidgetItem(label)
-                if c == 0 and not is_bh:
-                    if is_sauce:
-                        tip = S.SECRET_SAUCE_FORMULA
-                        dossier = row.get("heartbeat_dossier")
-                        if isinstance(dossier, dict) and dossier.get("formula_en"):
-                            tip = str(dossier.get("formula_en"))
-                    else:
-                        tip = glossary_tooltip(name)
-                        skip = skip_tooltip(row)
-                        if skip:
-                            tip = f"{skip}\n\n{tip}" if tip else skip
-                    if tip:
-                        item.setToolTip(tip)
-                    item.setData(Qt.ItemDataRole.UserRole, name)
-                    item.setData(Qt.ItemDataRole.UserRole + 1, r)
-                    item.setForeground(QColor(theme["primary"]))
-                    font = item.font()
-                    font.setUnderline(True)
-                    item.setFont(font)
-                if is_baseline or is_sauce:
-                    font = item.font()
-                    font.setBold(True)
-                    item.setFont(font)
-                color = heat.get(c, [None] * len(rows))[r] if heatmap else None
-                if color:
-                    item.setBackground(QColor(color))
-                    item.setForeground(QColor(fg_for_bg(color)))
-                elif is_bh:
-                    item.setBackground(QColor(bh_bg))
-                    item.setForeground(QColor(bh_fg))
-                elif is_sauce:
-                    item.setBackground(QColor(ss_bg))
-                    item.setForeground(QColor(ss_fg))
-                table.setItem(r, c, item)
-            _show_chart_cell(table, r, row, coin=coin, parent=dialog)
-            _create_bot_cell(
+        def _refill() -> None:
+            if table is None or filters is None:
+                return
+            visible[:] = filter_rows(all_rows, filters.dump())
+            populate_results_table(
                 table,
-                r,
-                row,
-                is_bh=is_bh and not is_sauce,
+                visible,
+                coin=coin,
                 pair=pair,
+                heatmap=heatmap,
                 status=status,
+                parent=dialog,
+                filter_row=filters,
                 on_create_bot=on_create_bot,
+                indicator_label=indicator_display_label,
             )
+
+        def _on_filter_changed(_text: str = "") -> None:
+            filter_timer.start()
+
+        filter_timer.timeout.connect(_refill)
+        from PySide6.QtWidgets import QLineEdit
+
+        for control in filters._by_col.values():  # noqa: SLF001 — same as BacktestPage
+            if isinstance(control, QLineEdit):
+                control.textChanged.connect(_on_filter_changed)
         table.cellClicked.connect(
             lambda row_i, col: _on_indicator_click(
-                table, row_i, col, dialog, rows=rows, coin=coin, on_create_bot=on_create_bot
+                table,
+                row_i,
+                col,
+                dialog,
+                rows=visible,
+                coin=coin,
+                on_create_bot=on_create_bot,
+                has_filter_row=True,
             )
         )
-        fit_table_columns(table)
         body_layout.addWidget(table)
     scroll = QScrollArea()
     scroll.setWidgetResizable(True)
@@ -244,10 +224,11 @@ def show_results_dialog(
     share.setIcon(nav_icon("share", colors_for(active_mode())["onSurfaceVariant"], 20))
     share.setToolTip(S.SCANNER_RESULTS_SHARE_TIP)
     share.setAccessibleName(S.SCANNER_SHARE)
-    share.setEnabled(bool(rows) and export_root is not None)
+    share.setEnabled(bool(all_rows) and export_root is not None)
 
     def _share(_checked: bool = False) -> None:
-        if export_root is None or not rows:
+        export_rows = visible if visible else all_rows
+        if export_root is None or not export_rows:
             return
         suggested = str(default_scanner_export_path(export_root, label=symbol or "pair"))
         chosen, _flt = QFileDialog.getSaveFileName(
@@ -257,7 +238,7 @@ def show_results_dialog(
             return
         out = Path(chosen) if chosen.lower().endswith(".png") else Path(f"{chosen}.png")
         try:
-            export_strategy_sheet_png(out, pair=pair or symbol, rows=rows, heatmap=heatmap)
+            export_strategy_sheet_png(out, pair=pair or symbol, rows=export_rows, heatmap=heatmap)
         except (OSError, ValueError) as exc:
             QMessageBox.warning(dialog, S.SCANNER_SHARE, str(exc))
             return
@@ -292,6 +273,36 @@ def show_results_dialog(
     dialog.exec()
 
 
+def _apply_initial_filters(filters: BacktestColumnFilterRow, raw: dict[str, Any]) -> None:
+    if raw.get("indicator_contains"):
+        filters.indicator.setText(str(raw["indicator_contains"]))
+    if raw.get("timeframe"):
+        filters.timeframe.setText(str(raw["timeframe"]))
+    if raw.get("params_contains"):
+        filters.params.setText(str(raw["params_contains"]))
+    _set_num(filters.min_net, raw.get("min_net_pct"))
+    _set_num(filters.max_fees, raw.get("max_fees"))
+    _set_num(filters.max_open, raw.get("max_open"), allow_zero=True)
+    _set_num(filters.min_wins, raw.get("min_wins"))
+    _set_num(filters.max_losses, raw.get("max_losses"), allow_zero=True)
+    _set_num(filters.min_win, raw.get("min_win_pct"))
+    _set_num(filters.max_tsl, raw.get("max_tsl_pct"))
+    _set_num(filters.max_hits, raw.get("max_tsl_hits"), allow_zero=True)
+    _set_num(filters.max_hit_pct, raw.get("max_tsl_hit_pct"))
+    _set_num(filters.min_strength, raw.get("min_strength"))
+
+
+def _set_num(edit: Any, value: object, *, allow_zero: bool = False) -> None:
+    if value is None or value == "":
+        return
+    try:
+        number = int(float(value))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return
+    if number > 0 or (allow_zero and number == 0):
+        edit.setText(str(number))
+
+
 def _on_indicator_click(
     table: QTableWidget,
     row: int,
@@ -301,8 +312,11 @@ def _on_indicator_click(
     rows: list[dict[str, Any]],
     coin: dict[str, Any],
     on_create_bot: CreateBotCb | None = None,
+    has_filter_row: bool = False,
 ) -> None:
     if col != 0:
+        return
+    if has_filter_row and data_row_index(row, has_filter_row=True) < 0:
         return
     item = table.item(row, 0)
     if item is None:
@@ -321,76 +335,6 @@ def _on_indicator_click(
         show_secret_sauce_study(parent, data, coin=coin, on_create_bot=on_create_bot)
         return
     show_glossary_popup(parent, name)
-
-
-def _show_chart_cell(
-    table: QTableWidget,
-    row: int,
-    strategy: dict[str, Any],
-    *,
-    coin: dict[str, Any],
-    parent: QWidget,
-) -> None:
-    host = QWidget()
-    layout = QHBoxLayout(host)
-    layout.setContentsMargins(2, 2, 2, 2)
-    btn = QPushButton(S.BACKTEST_SHOW_CHART)
-    btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-    name = str(strategy.get("indicator") or "").strip()
-    from trendalgo.device.sauce_names import is_sauce_lab
-
-    pending = is_sauce_lab(name) and bool(strategy.get("ss_lab_pending"))
-    btn.setEnabled(not pending)
-
-    def _open(_checked: bool = False, data: dict[str, Any] = strategy) -> None:
-        from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
-
-        show_scanner_chart_dialog(
-            parent,
-            coin,
-            window="30d",
-            price_only=str(data.get("indicator") or "").strip() == _BH,
-            strategy_row=None if str(data.get("indicator") or "").strip() == _BH else data,
-        )
-
-    btn.clicked.connect(_open)
-    layout.addWidget(btn)
-    table.setCellWidget(row, SHOW_CHART_COL, host)
-
-
-def _create_bot_cell(
-    table: QTableWidget,
-    row: int,
-    strategy: dict[str, Any],
-    *,
-    is_bh: bool,
-    pair: str,
-    status: QLabel,
-    on_create_bot: CreateBotCb | None,
-) -> None:
-    host = QWidget()
-    layout = QHBoxLayout(host)
-    layout.setContentsMargins(2, 2, 2, 2)
-    if is_bh or on_create_bot is None:
-        layout.addWidget(QLabel("—"))
-    else:
-        btn = QPushButton(S.SCANNER_CREATE_BOT)
-        btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-
-        def _create(_checked: bool = False, row_data: dict[str, Any] = strategy) -> None:
-            fields, note = plan_prefill_from_scanner_row(row_data, pair=pair)
-            if fields is None:
-                status.setText(note)
-                return
-            message = on_create_bot(fields, note)
-            if message:
-                status.setText(message)
-            elif note:
-                status.setText(note)
-
-        btn.clicked.connect(_create)
-        layout.addWidget(btn)
-    table.setCellWidget(row, CREATE_BOT_COL, host)
 
 
 def _net(row: dict[str, Any]) -> float | None:

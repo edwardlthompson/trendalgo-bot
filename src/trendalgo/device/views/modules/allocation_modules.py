@@ -79,10 +79,15 @@ class CategoryAllocationModule(QWidget):
         rows = category_totals(overview.holdings)
         lines = []
         for row in rows:
-            if row["value_usd"] <= 0:
+            value = row.get("value_usd")
+            if value is None:
+                lines.append(f"{row['category']}  {S.PORTFOLIO_NFT_UNTRACKED}")
                 continue
-            self._series.append(row["category"], max(row["pct"], 0.01))
-            lines.append(f"{row['category']}  {row['pct']:.2f}%  {money(row['value_usd'])}")
+            if float(value) <= 0:
+                continue
+            pct = float(row.get("pct") or 0.0)
+            self._series.append(row["category"], max(pct, 0.01))
+            lines.append(f"{row['category']}  {pct:.2f}%  {money(float(value))}")
         self._legend.setText("\n".join(lines) or S.PORTFOLIO_MODULE_EMPTY)
 
 

@@ -216,6 +216,9 @@ def scan_pair_strategies(
 
     out = dedupe_indicator_tf(out)
     out = ensure_full_catalog(out, strat_list, symbol=symbol, stake_usd=stake, skips=skip_best)
+    from trendalgo.device.scanner_protective_tsl import stamp_rows_protective_tsl
+
+    out = stamp_rows_protective_tsl(out, frames_by_tf, fee=fee, stake=stake)
     publish()
     # Catalog budget used; Sauce steps still pending (bar must stay < 100%).
     done = min(done, catalog_budget)
@@ -282,6 +285,8 @@ def scan_pair_strategies(
         if not ok:
             base["spectrum_note"] = reason
         out = upsert_secret_sauce(out, base)
+        # Lab often lands at TSL=0 (signal-only mine); stamp protective trail now.
+        out = stamp_rows_protective_tsl(out, frames_by_tf, fee=fee, stake=stake)
         publish()
         if ok:
             emit("Secret Sauce Lab recorded", phase="sauce")

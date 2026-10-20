@@ -7,10 +7,12 @@ import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from trendalgo.dex.plugins.base import SwapPlugin
 from trendalgo.venues.base import LpReadPlugin, VenueEntry, WalletReadPlugin
+
+if TYPE_CHECKING:
+    pass
 
 __all__ = [
     "VenueEntry",
@@ -47,6 +49,7 @@ def _parse_entry(raw: dict[str, Any]) -> VenueEntry:
     plugins = raw.get("portfolio_plugins") or []
     swap_plugins = raw.get("swap_plugins") or []
     sync_sec = raw.get("sync_interval_sec")
+    min_sync = raw.get("min_sync_interval_sec")
     return VenueEntry(
         id=str(raw["id"]),
         brand=str(raw["brand"]),
@@ -59,6 +62,7 @@ def _parse_entry(raw: dict[str, Any]) -> VenueEntry:
         portfolio_plugins=tuple(str(p) for p in plugins),
         swap_plugins=tuple(str(p) for p in swap_plugins),
         sync_interval_sec=int(sync_sec) if sync_sec is not None else None,
+        min_sync_interval_sec=int(min_sync) if min_sync is not None else None,
     )
 
 
@@ -66,7 +70,7 @@ def _parse_entry(raw: dict[str, Any]) -> VenueEntry:
 class VenueRegistry:
     version: int
     venues: tuple[VenueEntry, ...]
-    default_sync_interval_sec: int = 2
+    default_sync_interval_sec: int = 60
     dex_live_phase: int = 0
 
     def by_id(self, venue_id: str) -> VenueEntry | None:
@@ -84,7 +88,7 @@ def load_venue_registry(path: Path | None = None) -> VenueRegistry:
     return VenueRegistry(
         version=int(data.get("version", 1)),
         venues=entries,
-        default_sync_interval_sec=int(data.get("default_sync_interval_sec", 2)),
+        default_sync_interval_sec=int(data.get("default_sync_interval_sec", 60)),
         dex_live_phase=int(data.get("dex_live_phase", 0)),
     )
 
@@ -139,7 +143,7 @@ def get_lp_plugin(venue_id: str, protocol: str = "uniswap_v3") -> LpReadPlugin:
     raise KeyError(f"unsupported portfolio plugin: {protocol}")
 
 
-def get_swap_plugin(venue_id: str, protocol: str | None = None) -> SwapPlugin:
+def get_swap_plugin(venue_id: str, protocol: str | None = None) -> Any:
     from trendalgo.dex.plugins.jupiter import JupiterSwapPlugin
     from trendalgo.dex.plugins.uniswap_v3_swap import UniswapV3SwapPlugin
 

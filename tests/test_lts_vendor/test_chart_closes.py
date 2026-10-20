@@ -111,6 +111,24 @@ def test_attach_chart_closes_no_synthetic() -> None:
     assert out[0]["closes_1h"][0] == 50.0
 
 
+def test_attach_chart_closes_30d_from_trimmed_1h_not_full_series() -> None:
+    from trendalgo.backtest.load_days import SCAN_LOOKBACK_HOURS
+    from trendalgo.lts_vendor.chart_closes import _apply_closes
+
+    # Crash early then late rally — full-series gain differs from last-30d 1h gain.
+    early = [100.0 - i * 0.1 for i in range(500)]
+    late_start = early[-1]
+    late = [late_start + i * 0.05 for i in range(SCAN_LOOKBACK_HOURS)]
+    h1 = early + late
+    coin: dict = {"gains": {}, "identity": {}}
+    _apply_closes(coin, h1, [20.0, 25.0])  # daily would imply +25% if used for 30d
+    assert len(coin["closes_1h"]) == SCAN_LOOKBACK_HOURS
+    expect = gain_pct_from_closes(h1[-SCAN_LOOKBACK_HOURS:])
+    assert coin["gains"]["30d"] == pytest.approx(expect)
+    full = gain_pct_from_closes(h1)
+    assert abs(float(coin["gains"]["30d"]) - float(full or 0.0)) > 1.0
+
+
 def test_opportunities_to_final_results_uses_pair_and_fetcher(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

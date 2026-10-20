@@ -26,10 +26,16 @@ from trendalgo.device.views.scanner_table import (  # noqa: E402
 from trendalgo.device.views.widgets import read_only_table  # noqa: E402
 
 
-def test_coin_listing_url_precedence() -> None:
+def test_coin_listing_url_precedence(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TRENDALGO_OFFLINE", "1")
     assert "currencies/bitcoin" in coin_listing_url({"cmc_slug": "bitcoin", "symbol": "BTC"})
-    assert "coingecko.com/en/coins/eth" in coin_listing_url({"slug": "eth", "symbol": "ETH"})
-    assert "search/?q=XYZ" in coin_listing_url({"symbol": "XYZ"})
+    # Bare ticker slug → API id path (ethereum), never /coins/eth or search.
+    assert coin_listing_url({"slug": "eth", "symbol": "ETH"}).endswith("/coins/ethereum")
+    avax = coin_listing_url({"symbol": "AVAX", "slug": "avax"})
+    assert avax.endswith("/coins/avalanche-2")
+    assert "%2D" not in avax
+    assert "/search" not in avax
+    assert coin_listing_url({"symbol": "ETH/USD", "slug": "eth"}).endswith("/coins/ethereum")
 
 
 def test_hourly_7d_30d_dist_match_when_high_in_last_week() -> None:

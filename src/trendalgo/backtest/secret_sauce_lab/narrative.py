@@ -22,6 +22,8 @@ _FAMILY_BLURB = {
         "fee-max toward Oracle, never an exact same-period photocopy."
     ),
     "peer_reexpress": "Catalog-parity re-sim of top peer edge in Sauce language — interim when no superior distinct recipe clears Results #2.",
+    "residual_and": "Residual AND — one extra causal conjunct on missed Oracle bars; fee re-sim required.",
+    "adaptive_exit": "Adaptive exit — peak/structure/oscillator exits searched against a strong entry.",
 }
 
 

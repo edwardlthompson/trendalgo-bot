@@ -117,7 +117,10 @@ class PlInsightsModule(QWidget):
         self._unreal.set_value(
             signed_money(overview.unrealized_usd), signed=overview.unrealized_usd
         )
-        self._real.set_value(signed_money(overview.realized_usd), signed=overview.realized_usd)
+        if overview.realized_available:
+            self._real.set_value(signed_money(overview.realized_usd), signed=overview.realized_usd)
+        else:
+            self._real.set_value(S.PORTFOLIO_REALIZED_UNAVAILABLE)
         self._all.set_value(signed_money(overview.total_pl_usd), signed=overview.total_pl_usd)
 
 

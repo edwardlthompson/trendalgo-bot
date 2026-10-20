@@ -20,6 +20,14 @@ _STABLE = frozenset(
     }
 )
 _FIAT = frozenset({"USD", "EUR", "GBP", "JPY", "CAD", "AUD"})
+# Scanner excludes these bases (USDC/USD, USDT/USD, …) — not the USD quote.
+_STABLE_BASES = frozenset(s for s in _STABLE if s != "USD")
+
+
+def is_stablecoin_base(pair_or_symbol: str) -> bool:
+    """True when the asset base is a stablecoin (e.g. USDC of USDC/USD)."""
+    sym = (pair_or_symbol or "").upper().split("/")[0].split("-")[0].strip()
+    return bool(sym) and sym in _STABLE_BASES
 
 
 def categorize_holding(asset: str) -> str:
@@ -35,7 +43,6 @@ def category_totals(holdings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     buckets: dict[str, float] = {
         "Tokens": 0.0,
         "Stablecoins": 0.0,
-        "NFTs": 0.0,
         "DeFi": 0.0,
         "Fiat": 0.0,
     }
@@ -44,10 +51,20 @@ def category_totals(holdings: list[dict[str, Any]]) -> list[dict[str, Any]]:
         value = float(row.get("value_usd") or 0.0)
         buckets[categorize_holding(asset)] += value
     total = sum(buckets.values()) or 1.0
-    return [
+    rows = [
         {"category": name, "value_usd": round(val, 2), "pct": round(100.0 * val / total, 2)}
         for name, val in buckets.items()
     ]
+    # Honest empty: NFTs are not valued yet — never show $0 as if complete.
+    rows.append(
+        {
+            "category": "NFTs",
+            "value_usd": None,
+            "pct": None,
+            "status": "untracked",
+        }
+    )
+    return rows
 
 
 def cash_drag_pct(holdings: list[dict[str, Any]]) -> float:

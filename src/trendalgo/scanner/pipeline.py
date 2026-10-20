@@ -74,9 +74,15 @@ def run_pipeline(
     sample: bool = False,
     fetcher: MarketFetcher | None = None,
 ) -> QualifiedSnapshot:
+    from trendalgo.device.portfolio_categories import is_stablecoin_base
+
     progress = get_scan_progress()
-    pairs = verify_kraken_listings()
+    listed = verify_kraken_listings()
+    pairs = [p for p in listed if not is_stablecoin_base(p)]
+    skipped_stables = len(listed) - len(pairs)
     progress.log(f"Universe: {len(pairs)} Kraken USD pairs (filter: {settings.universe_filter})")
+    if skipped_stables:
+        progress.log(f"Excluded {skipped_stables} stablecoin pair(s)")
     use_sample = sample or os.environ.get("TRENDALGO_MARKET_SOURCE", "").lower() == "synthetic"
     if use_sample:
         progress.log("Using synthetic sample market (not live Kraken data)", level="warn")

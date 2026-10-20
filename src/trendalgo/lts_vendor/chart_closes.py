@@ -13,13 +13,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from trendalgo.backtest.load_days import SCAN_LOOKBACK_HOURS
 from trendalgo.market.types import OhlcvPoint
 from trendalgo.scanner.progress import get_scan_progress
 from trendalgo.scanner.volume_acceleration import apply_volume_acceleration
 
 FetchOhlcv = Callable[..., list[OhlcvPoint]]
 
-_HOUR_CAP = 30 * 24
+_HOUR_CAP = SCAN_LOOKBACK_HOURS
 _DAY_CAP = 35
 
 
@@ -109,18 +110,20 @@ def fetch_chart_closes_for_pair(
 
 
 def _apply_closes(coin: dict[str, Any], h1: list[float], d1: list[float]) -> None:
-    if h1:
-        coin["closes_1h"] = h1
+    from trendalgo.backtest.load_days import trim_closes
+
+    # Same last-30d 1h window Results/Backtest B&H uses (before fees).
+    h1_win = trim_closes(h1, hours=SCAN_LOOKBACK_HOURS)
+    if h1_win:
+        coin["closes_1h"] = h1_win
     else:
         coin.pop("closes_1h", None)
     if d1:
         coin["closes_1d"] = d1
     else:
         coin.pop("closes_1d", None)
-    g7 = gain_pct_from_closes(h1[-168:]) if len(h1) >= 168 else gain_pct_from_closes(h1)
-    g30 = gain_pct_from_closes(d1[-30:]) if len(d1) >= 2 else None
-    if g30 is None and len(h1) >= 2:
-        g30 = gain_pct_from_closes(h1)
+    g7 = gain_pct_from_closes(h1_win[-168:]) if len(h1_win) >= 168 else gain_pct_from_closes(h1_win)
+    g30 = gain_pct_from_closes(h1_win) if len(h1_win) >= 2 else None
     gains = dict(coin.get("gains") or {})
     if g7 is not None:
         gains["7d"] = round(g7, 6)

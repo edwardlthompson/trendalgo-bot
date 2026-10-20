@@ -15,10 +15,18 @@ from trendalgo.device.github_feedback.issue_form_url import is_placeholder_repo
 class GithubRelease:
     html_url: str
     assets: tuple[NamedAsset, ...]
+    body: str = ""
 
 
 def release_page_url(repo: str) -> str:
     return f"https://github.com/{repo.strip()}/releases/latest"
+
+
+def changelog_url(repo: str) -> str:
+    cleaned = repo.strip()
+    if not cleaned:
+        return ""
+    return f"https://github.com/{cleaned}/blob/main/CHANGELOG.md"
 
 
 def fetch_latest_github_release(
@@ -44,6 +52,8 @@ def fetch_latest_github_release(
         return None
     html = data.get("html_url")
     html_url = html if isinstance(html, str) else release_page_url(release_repo)
+    raw_body = data.get("body")
+    body = raw_body if isinstance(raw_body, str) else ""
     assets: list[NamedAsset] = []
     for row in data.get("assets") or []:
         if not isinstance(row, dict):
@@ -51,4 +61,4 @@ def fetch_latest_github_release(
         name, browser = row.get("name"), row.get("browser_download_url")
         if isinstance(name, str) and isinstance(browser, str):
             assets.append(NamedAsset(name, browser))
-    return GithubRelease(html_url, tuple(assets))
+    return GithubRelease(html_url, tuple(assets), body)

@@ -32,6 +32,28 @@ def test_three_commas_asterisk() -> None:
     assert "buy & hold" in indicator_label("B&H", is_bh=True)
 
 
+def test_row_cells_derives_win_pct_when_dash() -> None:
+    cells = row_cells(
+        {
+            "indicator": "Secret Sauce TA",
+            "timeframe": "1h",
+            "params": {},
+            "net_pct": 21.8,
+            "fees_paid": 1.0,
+            "trades": 8,
+            "open_trades": 0,
+            "wins": 5,
+            "win_pct": "-",
+            "trailing_stop_pct": 0.0,
+            "tsl_hits": 0,
+        },
+        is_bh=False,
+    )
+    assert cells[6] == "5"
+    assert cells[7] == "3"
+    assert cells[8] == "+62.5%"
+
+
 def test_row_cells_params_and_order() -> None:
     cells = row_cells(
         {

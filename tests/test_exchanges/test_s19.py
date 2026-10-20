@@ -14,7 +14,7 @@ from trendalgo.trading.multi_exchange import list_supported_exchanges, route_ord
 
 def test_registry_s19_phase2_tier_b_trading() -> None:
     registry = load_registry()
-    assert registry.version == 6
+    assert registry.version == 7
     assert registry.worldwide_trading_phase == 2
     trading_ids = {entry.id for entry in list_trading_exchanges()}
     assert {"bitstamp", "cryptocom"}.issubset(trading_ids)

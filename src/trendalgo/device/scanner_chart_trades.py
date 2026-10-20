@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from trendalgo.backtest.load_days import SCAN_LOOKBACK_DAYS
 from trendalgo.backtest.ta_fleet import backtest_one, prepare_signals
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees, trade_hold_regions
 from trendalgo.device.sauce_names import is_sauce, is_sauce_ta
@@ -20,7 +21,6 @@ from trendalgo.device.scan_stake import DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scanner_all_ta_prune import fee_for_bps
 
 _BH = "B&H"
-_SCAN_LOOKBACK_DAYS = 30
 _DEFAULT_FEE_BPS = 52.0
 _SECRET_SID = "GEN_SECRET_1"
 
@@ -337,7 +337,7 @@ def _load_scan_frame(coin: dict[str, Any], *, timeframe: str) -> pd.DataFrame:
         loaded = loader.load(
             symbol=load_symbol,
             timeframe=timeframe,
-            days=_SCAN_LOOKBACK_DAYS,
+            days=SCAN_LOOKBACK_DAYS,
             gecko_id=gecko_id,
         )
     except Exception:

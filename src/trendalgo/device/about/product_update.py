@@ -82,3 +82,20 @@ def should_prompt_update(
     if dismissed_version and dismissed_version == latest_version:
         return False
     return True
+
+
+def preview_release_notes(body: str, *, limit: int = 800) -> str:
+    """Plain-text preview of GitHub release notes for the update dialog."""
+    text = body.replace("\r\n", "\n").strip()
+    if not text:
+        return ""
+    # Light markdown noise strip (headers, bold/italic markers, links).
+    text = re.sub(r"^#+\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = re.sub(r"\*([^*]+)\*", r"\1", text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"\n{3,}", "\n\n", text).strip()
+    if len(text) <= limit:
+        return text
+    cut = text[: max(0, limit - 1)].rstrip()
+    return f"{cut}…"

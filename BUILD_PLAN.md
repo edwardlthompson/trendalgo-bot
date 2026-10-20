@@ -25,14 +25,23 @@
 
 ## Now
 
-> **Sprint Oracle-SS** archived in COMPLETED_TASKS.md @ `8ba0e76`.
-> Board clear of AGENT/AUTO. Open HUMAN: PF-H1 (optional calendar keys) + carry-forward / R-Audit-8.9.
+> **Sprint Sauce-Oracle-Gap** — close Oracle gap (phased). Spec: [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md).
+> Prior **Sprint Oracle-SS** archived in COMPLETED_TASKS.md @ `8ba0e76`.
+> Open HUMAN: PF-H1 (optional calendar keys) + carry-forward / R-Audit-8.9.
 
 | Marker | State |
 |--------|-------|
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
+### Sequential — Sauce Oracle gap
+
+✅ [AGENT][LOCAL] Phase 0 residual instrumentation — dossier residual indexes + feature hits + Study surface — scope: `src/trendalgo/backtest/secret_sauce_dossier.py`, `src/trendalgo/backtest/secret_sauce_lab/residual_instrument.py`, `src/trendalgo/backtest/secret_sauce_lab/run.py`, `src/trendalgo/backtest/secret_sauce_lab/refine_pack.py`, `src/trendalgo/device/views/secret_sauce_study.py`, `tests/test_backtest/test_residual_instrument.py`
+
+✅ [AGENT][LOCAL] Phase 1 residual miner + adaptive exits — AND residual conjunct + `adaptive_exit` family + exit-preferential search — scope: `src/trendalgo/backtest/secret_sauce_lab/residual_mine.py`, `src/trendalgo/backtest/secret_sauce_lab/families.py`, `src/trendalgo/backtest/secret_sauce_lab/search.py`, `src/trendalgo/backtest/secret_sauce_lab/regime_snapshot.py`, `tests/test_backtest/test_residual_mine.py`, `tests/test_backtest/test_adaptive_exit_family.py`
+
+> Phase 2–4 backlog (holdout-aware search, multi-TF arming, CCI/WILLR/MFI, ensemble) documented in [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md) — not scheduled.
+
 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
 
 > **R-BA-17** / template FOSS surface archived in COMPLETED_TASKS. Alignment: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) (`upstream_aligned_version` 1.10.0). Skills: [`docs/SKILLS_RECIPES.md`](docs/SKILLS_RECIPES.md).

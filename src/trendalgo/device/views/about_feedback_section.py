@@ -21,6 +21,7 @@ class AboutFeedbackSection(QWidget):
         self._kind.addItem(C.BUG_TITLE, "bug")
         self._kind.addItem(C.FEATURE_TITLE, "feature")
         self._kind.setAccessibleName("Feedback")
+        self._kind.setMaximumWidth(520)
         open_btn = QPushButton("Open")
         open_btn.setMinimumHeight(44)
         open_btn.clicked.connect(lambda _c=False: self._open())

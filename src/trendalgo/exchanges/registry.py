@@ -44,6 +44,8 @@ class ExchangeEntry:
     quote_currency: str = "USD"
     usd_aliases: tuple[str, ...] = ("USD", "ZUSD", "USDT")
     sync_interval_sec: int | None = None
+    min_sync_interval_sec: int | None = None
+    max_private_calls_per_min: int | None = None
 
     def has_api_keys(self, store: SecretStore | None = None) -> bool:
         """True when both key names resolve to a value in the store (default: the environment)."""
@@ -95,6 +97,12 @@ def _parse_entry(raw: dict[str, Any]) -> ExchangeEntry:
         quote_currency=str(raw.get("quote_currency", "USD")),
         usd_aliases=tuple(str(a) for a in aliases),
         sync_interval_sec=int(raw["sync_interval_sec"]) if raw.get("sync_interval_sec") else None,
+        min_sync_interval_sec=(
+            int(raw["min_sync_interval_sec"]) if raw.get("min_sync_interval_sec") else None
+        ),
+        max_private_calls_per_min=(
+            int(raw["max_private_calls_per_min"]) if raw.get("max_private_calls_per_min") else None
+        ),
     )
 
 

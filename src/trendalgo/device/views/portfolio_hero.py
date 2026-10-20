@@ -40,7 +40,10 @@ class PortfolioHero(QFrame):
         self._total.set_value(signed_money(overview.total_pl_usd))
         self._health.set_value(str(overview.health))
         self._dd.set_value(f"{overview.max_drawdown_pct:.2%}")
-        self._realized.set_value(signed_money(overview.realized_usd))
+        if overview.realized_available:
+            self._realized.set_value(signed_money(overview.realized_usd))
+        else:
+            self._realized.set_value(S.PORTFOLIO_REALIZED_UNAVAILABLE)
         self._unrealized.set_value(signed_money(overview.unrealized_usd))
 
 
