@@ -80,6 +80,12 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-020 — Ship v0.8.0 CodeQL pin + OpenVEX + pillow major (2026-10-21)
+
+**Symptom:** `update-deps --apply` rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.3` (CI CodeQL red). `upd audit` reported Critical/High on certifi + pillow; Pillow fix is **13.0.0** (major). `/regress` `wait-release-sbom --require` still fails without `openvex.json` while CycloneDX + MSI/setup assets are present. Local feature-gate pytest can flake at the 86% coverage edge.
+
+**Fix:** Restore `codeql-action@v4` (+ Scorecard SARIF); bump certifi→2026.10.19 and pillow→13.0.0 for CVEs; Release Please #50 → `v0.8.0`; `uv lock` sync. Treat OpenVEX as known gap (KB-015). Prefer GitHub CI green over a single local coverage flake when re-checking regress.
+
 ## KB-019 — Windows EXE/MSI release assets (2026-10-20)
 
 **Symptom:** `/ship` / `release.yml` uploaded only SBOMs; no `TrendAlgo-X.Y.Z-x64-setup.exe` or `.msi` on the GitHub Release. Local packaging existed (`build-windows-desktop.ps1 -Device`) but nothing harvested into WiX or uploaded.

@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** `/ship` toward v0.8.0 (Settings ribbon + keys inventory + 48-col square grid). Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
+**Current sprint:** Board clear of AGENT/AUTO after `/ship` **v0.8.0**. Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
 
-**Tests:** watch-agent-gates OK; local pre-release-gate PASS (9 stages); audit 0 vulns after certifi/pillow bumps.
+**Tests:** GitHub CI/CodeQL/Security Scan green @ ship HEAD; Release Please #50 → `v0.8.0`; SBOM CycloneDX + MSI/setup on release (OpenVEX still KB-015/020).
 
-**Recent:** `/ship` 2026-10-21 — Settings ribbon (Save/Setup/Telegram); saved-keys inventory; Settings layout v3 48-col squares; multi-exchange scanner helpers; CVE bumps certifi+pillow; allowlist `device-no-console` alwaysApply.
+**Recent:** `/ship` 2026-10-21 — Settings ribbon + keys inventory + 48-col square grid; CVE bumps certifi/pillow; restore `codeql-action@v4` after invalid upd pin; Windows installers on release.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
