@@ -2,6 +2,16 @@
 
 > **Device app (current):** build with `.\scripts\packaging\build-windows-desktop.ps1 -Device`, then install Start Menu / Desktop / taskbar shortcuts with `.\scripts\packaging\install-windows-device.ps1` ([ADR-0016](../adr/0016-headless-bot-local-device.md)). Use `-SkipBuild` when `dist\windows-device\TrendAlgoDevice\TrendAlgoDevice.exe` is already current.
 >
+> **Release installers (MSI + setup.exe):** requires [WiX 5.x](https://wixtoolset.org/) (`dotnet tool install -g wix --version 5.0.2`). Then:
+>
+> ```powershell
+> .\scripts\packaging\build-windows-msi.ps1          # or -BuildDevice to freeze first
+> # outputs: dist\windows-msi\TrendAlgo-X.Y.Z-x64.msi
+> #          dist\windows-msi\TrendAlgo-X.Y.Z-x64-setup.exe
+> ```
+>
+> GitHub Release job `windows-device-installers` (in `release.yml`) uploads those assets on publish / `workflow_dispatch`. Assets are **unsigned** (SmartScreen may warn) until HUMAN code signing. Do not use WiX 7+ here (OSMF EULA).
+>
 > **Retired 2026-10-10 (BUILD_PLAN row 23, p7-retire-pwa).** The browser and pywebview launchers are removed. The rest of this page is history.
 
 > ADR: [`0015`](../adr/0015-desktop-shell-pywebview.md) · [`0014`](../adr/0014-local-windows-first.md) · [`0012`](../adr/0012-grandma-distribution.md) · User: [`FIRST_RUN_USER`](../help/FIRST_RUN_USER.md)
@@ -39,12 +49,13 @@ Native window on `http://127.0.0.1:8000/` (`TRENDALGO_SERVE_WEB=1`). Browser fal
 
 **Coin icons (optional):** [`restore-lts-coin-icons.ps1`](../../scripts/packaging/restore-lts-coin-icons.ps1) soft-fails when no pack is present (PNGs under `examples/web/public/lts-dashboard/icons/coins` are gitignored). Set `TRENDALGO_LTS_ICONS_SRC` to seed a local folder of `*.png`; otherwise the Scan dashboard uses CDN + monogram fallbacks. Slim mode: [`slim-lts-icons.ps1`](../../scripts/packaging/slim-lts-icons.ps1).
 
-**Release asset names** (About update checker):
+**Release asset names** (About update checker / `select_product_asset`):
 
 | Format | GitHub Release asset pattern |
 |--------|------------------------------|
-| `win-setup` | `TrendAlgo-X.Y.Z-x64-setup.exe` |
-| `linux-appimage` | `TrendAlgo-X.Y.Z-x86_64.AppImage` |
+| `win-setup` | `TrendAlgo-X.Y.Z-x64-setup.exe` (Burn; primary for `kind=exe`) |
+| `win-msi` | `TrendAlgo-X.Y.Z-x64.msi` |
+| `linux-appimage` | `TrendAlgo-X.Y.Z-x86_64.AppImage` (not built yet) |
 | `pwa` | (browser / Vite preview — no desktop asset) |
 
-Signed NSIS/AppImage CI and winget submission stay deferred until prototypes ship binaries.
+Code signing and winget submission stay deferred ([ADR-0012](../adr/0012-grandma-distribution.md)); unsigned MSI/setup ship from CI.

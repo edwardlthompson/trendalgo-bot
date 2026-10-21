@@ -171,3 +171,80 @@ jobs:
           [ -f sbom-rust.cyclonedx.json ] && FILES="$FILES sbom-rust.cyclonedx.json"
           [ -f sbom-go.cyclonedx.json ] && FILES="$FILES sbom-go.cyclonedx.json"
           gh release upload "$TAG" $FILES --clobber
+
+  # Device EXE/MSI (unsigned). WiX 5.x only — not 7+ (OSMF EULA).
+  windows-device-installers:
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    name: Windows device installers
+    runs-on: windows-latest
+    steps:
+      - name: Resolve release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ inputs.tag }}" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag != '' && github.ref || steps.tag.outputs.tag || github.ref }}
+
+      - name: Finalize release tag from .template-version
+        if: steps.tag.outputs.tag == ''
+        id: tag_ver
+        shell: bash
+        run: echo "tag=v$(tr -d '[:space:]' < .template-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag matches .template-version
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            EFFECTIVE="${{ inputs.tag }}"
+          else
+            EFFECTIVE="${{ steps.tag.outputs.tag || steps.tag_ver.outputs.tag }}"
+          fi
+          TAG="${EFFECTIVE#v}"
+          VERSION=$(tr -d '[:space:]' < .template-version)
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "Tag v$TAG does not match .template-version ($VERSION)"
+            exit 1
+          fi
+          echo "EFFECTIVE_TAG=v${VERSION}" >> "$GITHUB_ENV"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install WiX 5.0.2 + Burn BA extension
+        shell: pwsh
+        run: |
+          dotnet tool install -g wix --version 5.0.2
+          wix extension add -g WixToolset.BootstrapperApplications.wixext/5.0.2
+          wix --version
+
+      - name: Build device onedir + MSI + setup.exe
+        shell: pwsh
+        run: |
+          .\scripts\packaging\build-windows-msi.ps1 -BuildDevice
+
+      - name: Upload Windows installers to GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${EFFECTIVE_TAG}"
+          VER="${TAG#v}"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "FAIL: release $TAG not found (merge Release Please PR first)"
+            exit 1
+          fi
+          MSI="dist/windows-msi/TrendAlgo-${VER}-x64.msi"
+          SETUP="dist/windows-msi/TrendAlgo-${VER}-x64-setup.exe"
+          test -f "$MSI" && test -f "$SETUP"
+          gh release upload "$TAG" "$MSI" "$SETUP" --clobber

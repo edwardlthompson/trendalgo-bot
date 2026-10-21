@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-user device app MSI: harvests PyInstaller onedir into LocalAppData\Programs\TrendAlgo. -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="TrendAlgo"
+    Manufacturer="TrendAlgo"
+    Version="$(ProductVersion)"
+    UpgradeCode="8f3a2b1c-4d5e-6f70-8192-a3b4c5d6e7f8"
+    Scope="perUser"
+    Compressed="yes"
+  >
+    <MajorUpgrade DowngradeErrorMessage="A newer version of TrendAlgo is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="TrendAlgo" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="TrendAlgo" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder" />
+
+    <Feature Id="Main" Title="TrendAlgo" Level="1">
+      <!-- Explicit main exe so shortcuts have a stable File Id. -->
+      <Component Id="MainExe" Directory="INSTALLFOLDER" Guid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+        <File Id="TrendAlgoDeviceExe" Source="!(bindpath.Payload)\TrendAlgoDevice.exe" KeyPath="yes">
+          <Shortcut
+            Id="StartMenuShortcut"
+            Name="TrendAlgo"
+            Directory="ApplicationProgramsFolder"
+            WorkingDirectory="INSTALLFOLDER"
+            Advertise="no"
+          />
+          <Shortcut
+            Id="DesktopShortcut"
+            Name="TrendAlgo"
+            Directory="DesktopFolder"
+            WorkingDirectory="INSTALLFOLDER"
+            Advertise="no"
+          />
+        </File>
+        <RemoveFolder Id="RemoveAppProgramsFolder" Directory="ApplicationProgramsFolder" On="uninstall" />
+      </Component>
+
+      <!-- Rest of the PyInstaller onedir (_internal, etc.). -->
+      <Files Directory="INSTALLFOLDER" Include="!(bindpath.Payload)\**">
+        <Exclude Files="!(bindpath.Payload)\TrendAlgoDevice.exe" />
+      </Files>
+    </Feature>
+  </Package>
+</Wix>

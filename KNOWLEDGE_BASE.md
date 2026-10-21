@@ -80,6 +80,12 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-019 — Windows EXE/MSI release assets (2026-10-20)
+
+**Symptom:** `/ship` / `release.yml` uploaded only SBOMs; no `TrendAlgo-X.Y.Z-x64-setup.exe` or `.msi` on the GitHub Release. Local packaging existed (`build-windows-desktop.ps1 -Device`) but nothing harvested into WiX or uploaded.
+
+**Fix:** `scripts/packaging/build-windows-msi.ps1` + WiX 5 `Files` harvest + Burn setup.exe; upload to `v0.7.2`; `windows-device-installers` job on `windows-latest` in `release.yml`. Pin WiX **5.0.2** (4.x lacks `Files`; 7+ requires OSMF EULA). Assets unsigned until HUMAN signing. OpenVEX gap unchanged (KB-015).
+
 ## KB-018 — Ship v0.7.2 gitleaks vault fixtures + CodeQL pin (2026-10-20)
 
 **Symptom:** Security Scan (Gitleaks) failed on `tests/test_device/test_secrets_vault.py` (`generic-api-key` on high-entropy vault fixture strings). Separately, `update-deps --apply` again rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.2`. Do not paste sample key assignment literals into KB notes — gitleaks scans docs too.

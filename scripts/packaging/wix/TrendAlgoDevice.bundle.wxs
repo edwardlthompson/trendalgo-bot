@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Burn bootstrapper: wraps the device MSI as TrendAlgo-X.Y.Z-x64-setup.exe -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle
+    Name="TrendAlgo"
+    Manufacturer="TrendAlgo"
+    Version="$(ProductVersion)"
+    UpgradeCode="9e2b3c4d-5f60-7182-93a4-b5c6d7e8f901"
+    Compressed="yes"
+  >
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication
+        Theme="hyperlinkLicense"
+        LicenseUrl="https://github.com/edwardlthompson/trendalgo-bot/blob/main/LICENSE"
+        SuppressOptionsUI="yes"
+      />
+    </BootstrapperApplication>
+
+    <Chain>
+      <MsiPackage
+        Id="TrendAlgoDeviceMsi"
+        SourceFile="$(var.MsiPath)"
+        Vital="yes"
+        Visible="yes"
+      />
+    </Chain>
+  </Bundle>
+</Wix>
