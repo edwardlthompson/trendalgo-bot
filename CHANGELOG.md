@@ -20,6 +20,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.2...v0.8.0) (2026-10-21)
+
+
+### Added
+
+* **packaging:** ship Windows MSI and setup.exe on release ([61857a0](https://github.com/edwardlthompson/trendalgo-bot/commit/61857a0d0ab9dfe81dd7caffe5756e8045b92ec2))
+
+
+### Fixed
+
+* **ci:** restore codeql-action@v4 after invalid upd pin ([be7e407](https://github.com/edwardlthompson/trendalgo-bot/commit/be7e4073ad2afc234fe1cbb09fb3e4a372ae9b67))
+
+
+### Changed
+
+* **release:** prepare v0.8.0 release ([f872160](https://github.com/edwardlthompson/trendalgo-bot/commit/f872160bcde9c491f015f783b013bdbc80308978))
+* **release:** sync uv.lock to 0.7.2 and record ship milestone ([5690112](https://github.com/edwardlthompson/trendalgo-bot/commit/56901129487542abe4a8a17458590007421a6b0b))
+
+
+### Documentation
+
+* **kb:** avoid gitleaks-triggering sample key literals ([70a3b0a](https://github.com/edwardlthompson/trendalgo-bot/commit/70a3b0afeab4106dc71154158ad617ec3a8b0ffa))
+* **kb:** drop key-assignment substring from ship note ([f10aa38](https://github.com/edwardlthompson/trendalgo-bot/commit/f10aa38c303bd75ede7bb6f1a0a0dc0df912afa4))
+
 ## [0.7.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.1...v0.7.2) (2026-10-20)
 
 
