@@ -195,15 +195,44 @@ STATUS_LIGHTS = "Vault · Sync · Live"
 STATUS_LIGHTS_FMT = "Vault: {vault} · Sync: {sync} · Live: {live}"
 SETTINGS_KEYS = "Exchange API keys"
 SETTINGS_KEYS_HELP = (
-    "Keys stay in Windows Credential Manager on this PC. Start with query-only. "
-    "Live trading still needs a separate go-live approval."
+    "Keys stay in Windows Credential Manager on this PC. They are not part of Save settings. "
+    "Start with query-only. Live trading still needs a separate go-live approval."
+)
+SETTINGS_KEYS_SAVED = "Saved keys"
+SETTINGS_KEYS_EMPTY = "No exchange keys saved yet. Add one below."
+SETTINGS_KEYS_COL_EXCHANGE = "Exchange"
+SETTINGS_KEYS_COL_SCOPE = "Use"
+SETTINGS_KEYS_COL_STATE = "Status"
+SETTINGS_KEYS_UPDATE = "Update"
+SETTINGS_KEYS_ADD = "Add or rotate key"
+SETTINGS_KEYS_EXCHANGE = "Exchange"
+SETTINGS_KEYS_SCOPE = "Key use"
+SETTINGS_KEYS_SCOPE_HELP = (
+    "Query can only read balances. Trade can place orders when go-live is approved."
 )
 SETTINGS_KEYS_SCOPE_QUERY = "Query (read-only)"
 SETTINGS_KEYS_SCOPE_TRADE = "Trade + query"
+SETTINGS_KEYS_PUBLIC = "Public API key"
+SETTINGS_KEYS_PUBLIC_HELP = "The public key or API key ID from your exchange."
+SETTINGS_KEYS_PUBLIC_PLACEHOLDER = "Paste public API key"
+SETTINGS_KEYS_PRIVATE = "Private API secret"
+SETTINGS_KEYS_PRIVATE_HELP = "The private secret. Never share it or paste it into chat."
+SETTINGS_KEYS_PRIVATE_PLACEHOLDER = "Paste private API secret"
 SETTINGS_KEYS_TEST = "Test connection"
 SETTINGS_KEYS_SAVE = "Save key"
 SETTINGS_KEYS_DELETE = "Remove key"
+SETTINGS_KEYS_DELETE_CONFIRM = "Remove the saved API key for {brand} from this PC?"
 SETTINGS_KEYS_OK_TITLE = "Keys work"
+SETTINGS_KEYS_NONE = "No key saved for this exchange"
+SETTINGS_KEYS_REQUIRED = "Public and private keys are both required"
+SETTINGS_KEYS_SAVE_FIRST = "Save a key first"
+SETTINGS_KEYS_VERIFIED = "verified"
+SETTINGS_KEYS_UNVERIFIED = "saved (not verified)"
+SETTINGS_KEYS_STATUS = "{scope} · {state}"
+SETTINGS_DATA_HELP = (
+    "Export plans, journal CSV, and scan snapshots from the Export page. "
+    "Settings stay on this PC in settings.json."
+)
 SETTINGS_VENUE = "Trading venue"
 SETTINGS_VENUE_HOST = "Host (recommended)"
 SETTINGS_VENUE_DEVICE = "This PC (opt-in)"
@@ -262,12 +291,38 @@ SAVE_FAILED = "Could not save: {reason}. The file on disk was not changed."
 
 SCANNER_TITLE = "Opportunity scanner"
 SCANNER_SUBTITLE = (
-    "Scan Kraken USD pairs on this PC, or read the latest saved scan. Public data only, no keys."
+    "Scan the exchanges you select (API keys required). Each venue gets its own rows; "
+    "volume is that venue’s notional, not CoinMarketCap."
 )
 SCANNER_EMPTY_TITLE = "No scan results on this PC yet"
 SCANNER_EMPTY_BODY = (
-    "Press Run scan to check Kraken USD pairs. The result is saved on this PC only."
+    "Add exchange API keys in Settings, check venues in the Exchange list, then press Run scan."
 )
+SCANNER_EXCHANGES_NEED_KEYS = "Add API keys…"
+SCANNER_EXCHANGES_NONE = "No exchanges"
+SCANNER_EXCHANGES_ALL = "All keyed"
+SCANNER_EXCHANGES_N = "{n} exchanges"
+SCANNER_NO_EXCHANGES = (
+    "No exchanges selected (or no API keys saved). Open Settings → Exchange API keys, "
+    "then check venues here."
+)
+SETTINGS_KEYS_RATE = "API calls this minute: {used} / {max}"
+SETTINGS_KEYS_RATE_EMPTY = "API calls this minute: —"
+SETTINGS_LAYOUT_EDIT = "Arrange modules"
+SETTINGS_LAYOUT_EDIT_TIP = "Drag and resize Settings modules like the Dashboard."
+SCAN_BT_SETTINGS = "Settings"
+SCAN_BT_SETTINGS_TIP = "Timeframes, strategies, and scan-time estimate"
+SCAN_BT_SETTINGS_TITLE = "Scan & backtest settings"
+SCAN_BT_SETTINGS_SAVED = "Scan settings saved."
+SCAN_BT_TF_TITLE = "Timeframes"
+SCAN_BT_TF_SUBHOUR = "Sub-hour"
+SCAN_BT_TF_HOURS = "Hours (1h–24h)"
+SCAN_BT_TA_TITLE = "Strategies (All TA)"
+SCAN_BT_TA_SEARCH = "Search strategies…"
+SCAN_BT_SELECT_ALL = "All"
+SCAN_BT_SELECT_NONE = "None"
+SCAN_BT_NO_TFS = "Select at least one timeframe in Settings."
+SCAN_BT_NO_STRATEGIES = "Enable at least one strategy in Settings."
 SCANNER_NONE_TITLE = "The last scan qualified no pairs"
 SCANNER_NONE_BODY = "Nothing passed the filters in that scan. Press Run scan to check again."
 SCANNER_FILTER_NONE_TITLE = "No coins match these column filters"
@@ -283,7 +338,6 @@ SCANNER_FROM_BOT = "Saved by the bot."
 SCANNER_HEADERS = ("Rank", "Pair", "Gain", "Volume score", "Entry signal", "Trend")
 SCANNER_LTS_HEADERS = (
     "Watch",
-    "Cmp",
     "Logo",
     "Name",
     "7D%",
@@ -304,7 +358,6 @@ SCANNER_LTS_HEADERS = (
 # Match retired LTS dashboard column titles (hover help for new users).
 SCANNER_LTS_HEADER_TIPS = (
     "Pin this pair to the Watchlist",
-    "Select up to two rows, then Compare",
     "Coin logo",
     "Asset name (opens listing) with ticker",
     "Seven-day percent gain from snapshot",
@@ -319,7 +372,7 @@ SCANNER_LTS_HEADER_TIPS = (
     "Peak-to-trough drawdown over about 30d of hourly closes",
     "Volume acceleration vs baseline window",
     "Listing venue for this row",
-    "Approximate 24h USD volume on this row venue",
+    "Approximate 24h USD volume on Kraken spot for this base (all quotes; not CoinMarketCap global)",
     "Open optimizer results when a pass-1 backtest is saved for this pair",
 )
 SCANNER_COLOR_RANKS = "Color ranks"
@@ -403,12 +456,6 @@ SCANNER_CHIP_QUALIFIED = "Qualified coins"
 SCANNER_CHIP_COINBASE = "Coinbase coins"
 SCANNER_CHIP_KRAKEN = "Kraken coins"
 SCANNER_CHIP_COUNT = "{n}"
-SCANNER_COMPARE = "Compare: {pairs}"
-SCANNER_COMPARE_EMPTY = "Compare: check Cmp on up to two pairs."
-SCANNER_COMPARE_BTN = "Compare"
-SCANNER_COMPARE_CLEAR = "Clear"
-SCANNER_COMPARE_NEED_TWO = "Select two pairs with Cmp, then press Compare."
-SCANNER_COMPARE_DIALOG = "Compare pairs"
 SCANNER_SHARE = "Share"
 SCANNER_SHARE_TIP = "Export the filtered scanner list as a PNG image."
 SCANNER_SHARE_DIALOG = "Export scanner results"
@@ -631,7 +678,7 @@ SETTINGS_CERT_PIN_HELP = (
 )
 
 SETTINGS_TITLE = "Settings"
-SETTINGS_SUBTITLE = "Who owns the bots on this PC, and where the host runs."
+SETTINGS_SUBTITLE = "Owner, host, appearance, exchange keys, and privacy for this PC."
 SETTINGS_OWNER = "Owner ID"
 SETTINGS_OWNER_HELP = "Letters, numbers, dashes, or underscores. 1 to 64 characters."
 SETTINGS_HOST = "Host address (optional)"

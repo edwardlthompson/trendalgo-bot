@@ -1,6 +1,10 @@
 # Windows desktop shell + launcher
 
-> **Retired 2026-10-10 (BUILD_PLAN row 23, p7-retire-pwa).** The pywebview shell (`src/trendalgo/desktop/`) and `scripts/packaging/launch-windows.ps1` are removed. Run the device app with `uv run --extra device python -m trendalgo.device`, or build it with `.\scripts\packaging\build-windows-desktop.ps1 -Device` ([ADR-0016](../adr/0016-headless-bot-local-device.md)). The sections below are history.
+> **Retired 2026-10-10 (BUILD_PLAN row 23, p7-retire-pwa).** The pywebview shell (`src/trendalgo/desktop/`) and `scripts/packaging/launch-windows.ps1` are removed.
+>
+> **Device GUI (current):** `.\scripts\packaging\launch-device.ps1` — no console. Frozen build: `.\scripts\packaging\build-windows-desktop.ps1 -Device` ([ADR-0016](../adr/0016-headless-bot-local-device.md)). Do **not** use `uv run python -m trendalgo.device` for normal GUI runs (that attaches a console; closing it kills the app). Testing only: `-KeepConsole` or `TRENDALGO_KEEP_CONSOLE=1`.
+>
+> The sections below are history.
 
 ## User story
 
@@ -15,6 +19,7 @@ ADR: [0015-desktop-shell-pywebview](../adr/0015-desktop-shell-pywebview.md) (ame
 .\scripts\packaging\build-windows-desktop.ps1 -ShortcutsOnly   # Desktop + Start Menu (no console)
 # Debug with console:
 uv run --extra desktop trendalgo-desktop-console
+
 ```
 
 Desktop shortcut runs `launch-windows-desktop.vbs` (hidden console) and uses `branding/assets/app-icon.ico`.
@@ -32,6 +37,7 @@ TrendAlgo/
   examples/web/dist/
   data/launcher/                         # TRENDALGO_DATA_DIR
   .env.example → .env
+
 ```
 
 ## Process model (desktop)
@@ -53,6 +59,7 @@ TrendAlgo/
 .\scripts\packaging\install-windows-desktop.ps1          # Desktop + Start Menu\TrendAlgo + Apps list
 .\scripts\packaging\install-windows-desktop.ps1 -Msi     # also build dist\windows-msi\TrendAlgo-*-x64.msi (needs wix)
 .\scripts\packaging\install-windows-desktop.ps1 -Uninstall
+
 ```
 
 Installs a silent launcher under `%LOCALAPPDATA%\Programs\TrendAlgo\` (points at this repo). Search Start for **TrendAlgo**.

@@ -13,8 +13,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("PySide6")
 pytest.importorskip("pytestqt")
 
-from pytestqt.qtbot import QtBot  # noqa: E402
-
 from trendalgo.device.scanner_all_ta_bt import fleet_row_to_lts  # noqa: E402
 from trendalgo.device.scanner_signal_sets import (  # noqa: E402
     BT_SET_3COMMAS,
@@ -23,7 +21,6 @@ from trendalgo.device.scanner_signal_sets import (  # noqa: E402
     is_three_commas_indicator,
     normalize_bt_signal_set,
 )
-from trendalgo.device.views.scanner_filters import ScannerFilterBar  # noqa: E402
 from trendalgo.device.views.scanner_results import indicator_display_label  # noqa: E402
 
 
@@ -44,16 +41,19 @@ def test_is_three_commas_catalog_and_lts_names() -> None:
     assert not is_three_commas_indicator("B&H")
 
 
-def test_filter_bar_persists_bt_signal_set(qtbot: QtBot) -> None:
-    bar = ScannerFilterBar()
-    qtbot.addWidget(bar)
-    assert bar.dump()["bt_signal_set"] == BT_SET_3COMMAS
-    assert bar.signals.minimumHeight() >= 28
-    assert bar.signals.maxVisibleItems() >= 2
-    bar.load({"bt_signal_set": BT_SET_ALL_TA})
-    assert bar.dump()["bt_signal_set"] == BT_SET_ALL_TA
-    bar.load({})
-    assert bar.dump()["bt_signal_set"] == BT_SET_3COMMAS
+def test_scan_bt_prefs_persists_bt_signal_set(tmp_path: Path) -> None:
+    from trendalgo.device.scan_bt_prefs import ScanBtPrefs, load_scan_bt_prefs, save_scan_bt_prefs
+
+    save_scan_bt_prefs(
+        tmp_path,
+        ScanBtPrefs(timeframes=["1h"], strategy_denylist=[], bt_signal_set=BT_SET_ALL_TA),
+    )
+    assert load_scan_bt_prefs(tmp_path).bt_signal_set == BT_SET_ALL_TA
+    save_scan_bt_prefs(
+        tmp_path,
+        ScanBtPrefs(timeframes=["1h"], strategy_denylist=[], bt_signal_set=BT_SET_3COMMAS),
+    )
+    assert load_scan_bt_prefs(tmp_path).bt_signal_set == BT_SET_3COMMAS
 
 
 def test_select_bh_beaters_keeps_all_beaters() -> None:

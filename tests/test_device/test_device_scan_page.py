@@ -177,22 +177,20 @@ def test_scanner_page_has_progress_bar(qtbot: QtBot, ctx: DeviceContext) -> None
     assert page._bar.value() == 0
 
 
-def test_scanner_page_has_pwa_filter_strip_and_compare_clear(
+def test_scanner_page_has_pwa_filter_strip(
     qtbot: QtBot,
     ctx: DeviceContext,
 ) -> None:
     page = ScannerPage(ctx)
     qtbot.addWidget(page)
-    assert page._filters.exchange.count() >= 3
+    assert hasattr(page._filters.exchange, "selected_ids")
+    assert hasattr(page._filters.exchange, "filter_ids")
+    assert page._filters.settings.text() == S.SCAN_BT_SETTINGS
     assert page._col_filters.gain_7d.suffix() == "%"
     assert page._col_filters.gain_30d.placeholderText() == "min%"
-    page._compare.add("BTC/USD")
-    page._compare.add("ETH/USD")
-    page._show_tab()
-    page._filters.clear_btn.click()
-    assert page._compare == set()
     assert page._filters.share.objectName() == "shareButton"
     assert page._filters.share.toolTip() == S.SCANNER_SHARE_TIP
+    assert not hasattr(page, "_compare")
 
 
 def test_filter_bar_keeps_zero_gains_as_integers(qtbot: QtBot) -> None:
@@ -206,7 +204,7 @@ def test_filter_bar_keeps_zero_gains_as_integers(qtbot: QtBot) -> None:
     cols.load({"min_gain_pct": 30})  # legacy only — must not force 7d back to 30
     assert actions.vol.decimals() == 0
     assert isinstance(cols.gain_7d, GainMinEdit)
-    assert cols.gain_7d.value() == 0
+    assert cols.gain_7d.value() is None
     assert cols.gain_30d.value() == 30
     cols.gain_7d.setValue(0)
     cols.gain_30d.setValue(0)
@@ -217,4 +215,23 @@ def test_filter_bar_keeps_zero_gains_as_integers(qtbot: QtBot) -> None:
     assert saved["min_volume_usd"] == 500_000.0
     cols.load(saved)
     assert cols.gain_7d.value() == 0
-    assert cols.gain_30d.value() == 0
+    assert cols.gain_7d.text() == "0"
+    cols.gain_7d.setValue(None)
+    cols.gain_30d.setValue(None)
+    cleared = cols.dump()
+    assert cleared["min_gain_7d"] is None
+    assert cleared["min_gain_30d"] is None
+    assert cols.gain_30d.value() is None
+    assert cols.gain_30d.text() == ""
+    # Crash repro: prefs with explicit null floors must not float(None).
+    cols.load(
+        {
+            "min_gain_7d": None,
+            "min_gain_30d": None,
+            "min_best_bt": None,
+            "min_gain_pct": None,
+        }
+    )
+    assert cols.gain_7d.value() is None
+    assert cols.gain_30d.value() is None
+    assert cols.best_bt.value() is None

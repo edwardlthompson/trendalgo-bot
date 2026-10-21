@@ -11,13 +11,16 @@ uv sync --extra device
 $env:TRENDALGO_DATA_DIR = "$PWD\data"
 # Optional: coin logos for the Scanner (or junction branding/assets/coins/from-retired-web-backup)
 # $env:TRENDALGO_COIN_ICONS = "C:\Users\edwar\trendalgo-retired-pwa-2026-10-10\examples\web\public\icons\coins"
-uv run --extra device python -m trendalgo.device
+.\scripts\packaging\launch-device.ps1
+# Testing only (shows a console): .\scripts\packaging\launch-device.ps1 -KeepConsole
+
 ```
 
 **Start Menu / taskbar (Windows):** after a device build, refresh shortcuts so they no longer point at the retired desktop shell:
 
 ```powershell
 .\scripts\packaging\install-windows-device.ps1
+
 ```
 
 Use `-SkipBuild` if `dist\windows-device\TrendAlgoDevice\TrendAlgoDevice.exe` is already built. If a pinned taskbar icon still fails, unpin it and pin **TrendAlgo** from the Start Menu again.
@@ -50,7 +53,6 @@ Run this checklist with **three first-time users** before you sign off wizard us
 | 8 | **Bot** | Cards readable; user understands controls need a host |
 | 9 | **More** → Glossary, Export, Research, **AI strategies** | Each page loads; AI shows curated presets; suggestions after a scan |
 | 10 | Theme + accent in Settings | Change persists after save and restart |
-
 Record the **top three failure points** (where users stall or mis-tap) and file fixes before row 20 sign-off.
 
 ## Share with others later: hosted link
@@ -69,6 +71,7 @@ No install on their device. Until that URL exists, prefer the Windows launcher a
 
 ```powershell
 .\scripts\dev-local.ps1
+
 ```
 
 → **http://localhost:5173/**
@@ -77,6 +80,7 @@ No install on their device. Until that URL exists, prefer the Windows launcher a
 
 ```powershell
 .\scripts\preview-local.ps1
+
 ```
 
 → **http://127.0.0.1:4173/**

@@ -75,7 +75,6 @@ def test_watch_column_checkbox(qtbot: QtBot) -> None:
     fill_lts_table(
         table,
         [{"symbol": "BTC", "pair": "BTC/USD", "listed_on": ["kraken"]}],
-        compare=set(),
         watch={"BTC/USD"},
         on_watch=lambda _p, _c: None,
     )
@@ -98,11 +97,10 @@ def test_header_chevron_on_active_sort(qtbot: QtBot) -> None:
     fill_lts_table(
         table,
         [{"symbol": "BTC", "pair": "BTC/USD", "listed_on": ["kraken"]}],
-        compare=set(),
         sort_key="health",
         sort_dir=-1,
     )
-    item = table.horizontalHeaderItem(11)
+    item = table.horizontalHeaderItem(10)
     assert item is not None
     assert "▼" in item.text()
 

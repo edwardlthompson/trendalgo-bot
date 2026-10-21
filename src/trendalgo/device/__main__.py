@@ -27,15 +27,15 @@ def main(argv: list[str] | None = None) -> int:
         help="run one All-TA pair scan (e.g. BTC/USD) and print a row summary, then exit",
     )
     args = parser.parse_args(argv)
-    if args.selftest or args.smoke_backtest:
-        if sys.platform == "win32":
-            # Windowed frozen builds have no console; attach one for the report.
-            try:
-                import ctypes
+    testing = bool(args.selftest or args.smoke_backtest)
+    if testing and sys.platform == "win32":
+        # Windowed frozen builds have no console; attach one for the report.
+        try:
+            import ctypes
 
-                ctypes.windll.kernel32.AllocConsole()
-            except Exception:
-                pass
+            ctypes.windll.kernel32.AllocConsole()
+        except Exception:
+            pass
     if args.selftest:
         from trendalgo.device.selftest import run_selftest
 
@@ -44,6 +44,9 @@ def main(argv: list[str] | None = None) -> int:
         from trendalgo.device.smoke_backtest import run_smoke_backtest
 
         return run_smoke_backtest(args.smoke_backtest)
+    from trendalgo.device.console_detach import detach_console_if_needed
+
+    detach_console_if_needed(testing=False)
     from trendalgo.device.app import run
 
     return run()

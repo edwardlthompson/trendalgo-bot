@@ -16,6 +16,7 @@ ALLOW = frozenset(
         "feature-modules",
         "repo-hygiene",
         "product-brief",
+        "device-no-console",
     }
 )
 # On-demand (description/globs); foss/commercial stay mutually exclusive when always-on

@@ -10,6 +10,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QBoxLayout,
+    QComboBox,
     QFrame,
     QHeaderView,
     QLabel,
@@ -84,6 +85,20 @@ def mark_primary(button: QPushButton) -> QPushButton:
     """Mark the one action a view is for. The stylesheet gives it the emphasis."""
     button.setProperty("role", "primary")
     return button
+
+
+def configure_combo_popup(box: QComboBox, *, visible: int | None = None) -> None:
+    """Keep closed text and popup rows tall enough that labels are not clipped."""
+    count = max(box.count(), 1)
+    show = count if visible is None else max(1, min(visible, count))
+    row_h = max(28, box.fontMetrics().height() + 14)
+    box.setMinimumHeight(row_h)
+    box.setMaxVisibleItems(show)
+    box.view().setMinimumHeight(row_h * show + 8)
+    box.setStyleSheet(
+        f"QComboBox {{ min-height: {row_h}px; padding-top: 4px; padding-bottom: 4px; }}"
+        f"QComboBox QAbstractItemView::item {{ min-height: {row_h}px; }}"
+    )
 
 
 def section_title(text: str) -> QLabel:

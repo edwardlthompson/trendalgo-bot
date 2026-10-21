@@ -47,6 +47,8 @@ class GridPrefs:
     gap_px: int = 8
     magnet_px: int = 16
     show_grid: bool = False
+    # 0 → square cells (Dashboard). >0 → fixed row pitch in px (Settings forms).
+    row_px: float = 0.0
 
 
 @dataclass
@@ -117,12 +119,17 @@ def active_page(prefs: LayoutPrefs) -> PageLayout:
 
 def _parse(raw: dict[str, Any]) -> LayoutPrefs:
     grid_raw = raw.get("grid") if isinstance(raw.get("grid"), dict) else {}
+    try:
+        row_px = float(grid_raw.get("row_px") or 0.0)
+    except (TypeError, ValueError):
+        row_px = 0.0
     grid = GridPrefs(
         cols=_clamp(int(grid_raw.get("cols", 24)), _COLS_MIN, _COLS_MAX),
         rows=_clamp(int(grid_raw.get("rows", 24)), _ROWS_MIN, _ROWS_MAX),
         gap_px=_clamp(int(grid_raw.get("gap_px", 8)), _GAP_MIN, _GAP_MAX),
         magnet_px=_clamp(int(grid_raw.get("magnet_px", 16)), _MAGNET_MIN, _MAGNET_MAX),
         show_grid=bool(grid_raw.get("show_grid", False)),
+        row_px=max(0.0, row_px),
     )
     module_mins = _parse_module_mins(raw.get("module_mins"))
     pages_raw = raw.get("pages")

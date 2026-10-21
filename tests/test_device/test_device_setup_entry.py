@@ -31,7 +31,6 @@ def test_settings_hides_the_wizard_button_when_no_opener_is_given(
     page = SettingsPage(ctx)
     qtbot.addWidget(page)
     assert page._setup.isHidden()
-    assert page._setup_help.isHidden()
 
 
 def test_the_wizard_button_calls_the_opener_once(qtbot: QtBot, ctx: DeviceContext) -> None:

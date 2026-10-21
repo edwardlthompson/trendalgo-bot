@@ -106,6 +106,11 @@ class BacktestPage(QWidget):
             self._pair.setText(prefs.last_pair)
         self._run = mark_primary(QPushButton(S.BACKTEST_RUN))
         self._run.setDefault(True)
+        self._settings = QToolButton()
+        self._settings.setObjectName("scanBtSettings")
+        self._settings.setText(S.SCAN_BT_SETTINGS)
+        self._settings.setToolTip(S.SCAN_BT_SETTINGS_TIP)
+        self._settings.clicked.connect(lambda _c=False: self._open_scan_settings())
         self._cancel = QPushButton(S.CANCEL)
         self._cancel.setEnabled(False)
         self._share = QToolButton()
@@ -149,6 +154,7 @@ class BacktestPage(QWidget):
         for widget in (
             pair_label,
             self._pair,
+            self._settings,
             self._run,
             self._cancel,
             self._share,
@@ -193,12 +199,31 @@ class BacktestPage(QWidget):
             persist=False,
         )
 
+    def _open_scan_settings(self) -> None:
+        from trendalgo.device.views.scan_bt_settings_dialog import open_scan_bt_settings
+
+        if open_scan_bt_settings(self._root, show_signal_set=False, n_coins=1, parent=self):
+            self._status.setText(S.SCAN_BT_SETTINGS_SAVED)
+
     def _start(self) -> None:
         if self._pending is not None:
             return
         pair = self._pair.text().strip().upper()
         if "/" not in pair or len(pair.split("/", 1)[0].strip()) < 1:
             show_problem(self._problem, S.BACKTEST_PAIR_REQUIRED)
+            return
+        from trendalgo.device.scan_bt_prefs import (
+            enabled_strategies,
+            load_scan_bt_prefs,
+            selected_timeframes,
+        )
+
+        prefs = load_scan_bt_prefs(self._root)
+        if not selected_timeframes(prefs):
+            show_problem(self._problem, S.SCAN_BT_NO_TFS)
+            return
+        if not enabled_strategies(prefs.strategy_denylist):
+            show_problem(self._problem, S.SCAN_BT_NO_STRATEGIES)
             return
         clear_problem(self._problem)
         clear_progress(self._root)

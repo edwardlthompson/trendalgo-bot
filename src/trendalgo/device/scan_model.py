@@ -19,25 +19,23 @@ class ScanUnavailableError(RuntimeError):
 
 
 def device_scan_settings(root: Path | None = None) -> ScannerSettings:
-    """Defaults, with optional filter overrides saved on this PC (min volume, min gain, interval)."""
+    """Device scan gates: top-bar volume / interval / uniformity only.
+
+    Column filters (7d%/30d% mins, chart-dist, etc.) narrow the Qualified *table*
+    after a scan — they must not starve the live pipeline of candidates.
+    """
     base = default_scanner_settings()
     if root is None:
         return base
+    payload = base.model_dump()
+    # Volume-first device scans: column 7d/30d mins never gate the pipeline.
+    payload["min_gain_pct"] = 0.0
+    payload["min_gain_7d_pct"] = 0.0
     saved = load_filters(root)
     if not saved:
-        return base
-    payload = base.model_dump()
+        return ScannerSettings.model_validate(payload)
     if "min_volume_usd" in saved:
         payload["min_volume_usd"] = float(saved["min_volume_usd"])
-    # Scan gate uses the 30d floor. Fall back to legacy min_gain_pct.
-    gain_key = "min_gain_30d" if "min_gain_30d" in saved else "min_gain_pct"
-    if gain_key in saved:
-        # UI stores percent (30); ScannerSettings uses a fraction (0.30).
-        gain = float(saved[gain_key])
-        payload["min_gain_pct"] = gain / 100.0 if gain > 1 else gain
-    if "min_gain_7d" in saved:
-        gain7 = float(saved["min_gain_7d"])
-        payload["min_gain_7d_pct"] = gain7 / 100.0 if gain7 > 1 else gain7
     if "min_uniformity" in saved:
         payload["min_uniformity"] = float(saved["min_uniformity"])
     if "interval_minutes" in saved:

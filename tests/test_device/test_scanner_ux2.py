@@ -20,7 +20,6 @@ from pytestqt.qtbot import QtBot  # noqa: E402
 from trendalgo.device import strings as S  # noqa: E402
 from trendalgo.device.views.scanner_results import show_results_dialog  # noqa: E402
 from trendalgo.device.views.scanner_table import (  # noqa: E402
-    COL_CMP,
     COL_LOGO,
     COL_NAME,
     COL_WATCH,
@@ -30,9 +29,9 @@ from trendalgo.device.views.sparkline import Sparkline  # noqa: E402
 from trendalgo.device.views.widgets import read_only_table  # noqa: E402
 
 
-def test_column_order_watch_cmp_logo_name() -> None:
-    assert (COL_WATCH, COL_CMP, COL_LOGO, COL_NAME) == (0, 1, 2, 3)
-    assert S.SCANNER_LTS_HEADERS[:4] == ("Watch", "Cmp", "Logo", "Name")
+def test_column_order_watch_logo_name() -> None:
+    assert (COL_WATCH, COL_LOGO, COL_NAME) == (0, 1, 2)
+    assert S.SCANNER_LTS_HEADERS[:3] == ("Watch", "Logo", "Name")
 
 
 def test_series_gain_and_spark_colors(qtbot: QtBot) -> None:
@@ -66,7 +65,6 @@ def test_watch_click_invokes_callback(qtbot: QtBot) -> None:
     fill_lts_table(
         table,
         [{"symbol": "BTC", "pair": "BTC/USD", "listed_on": ["kraken"]}],
-        compare=set(),
         watch=set(),
         on_watch=lambda p, c: seen.append((p, c)),
     )
@@ -75,7 +73,7 @@ def test_watch_click_invokes_callback(qtbot: QtBot) -> None:
     box = host.findChild(QCheckBox)
     assert box is not None
     box.setChecked(True)
-    assert seen == [("BTC/USD", True)]
+    assert seen == [("kraken:BTC", True)]
 
 
 def test_results_dialog_no_scrollbars(qtbot: QtBot) -> None:

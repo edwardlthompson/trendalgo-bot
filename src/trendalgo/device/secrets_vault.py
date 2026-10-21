@@ -126,6 +126,17 @@ class VaultSecretStore:
         entry = self.read_entry(exchange_id)
         return entry is not None and entry.scope == "trade"
 
+    def list_entries(self) -> list[VaultEntry]:
+        """Registry exchanges that currently have a vault key pair."""
+        from trendalgo.exchanges.registry import load_registry
+
+        out: list[VaultEntry] = []
+        for reg in load_registry().exchanges:
+            entry = self.read_entry(reg.id)
+            if entry is not None:
+                out.append(entry)
+        return out
+
 
 def memory_vault_for_tests() -> tuple[VaultSecretStore, MemoryCredentialStore]:
     mem = MemoryCredentialStore()

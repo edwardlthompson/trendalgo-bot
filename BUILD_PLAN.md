@@ -100,3 +100,13 @@ Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python sc
 ## Archived sprints
 
 Finished sprint task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Post-delivery checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md).
+
+<!-- ux-inventory -->
+| ID | Change | Status |
+|----|--------|--------|
+| UX-001 | Settings Exchange keys: tall Query/Trade + Exchange combo popups (no clipped rows) | done |
+| UX-002 | Settings Exchange keys: visible Public API key / Private API secret labels + help | done |
+| UX-003 | Settings IA: Connection → Appearance → Save → Keys (expanded) → Venue → rest; keys save copy | done |
+| UX-004 | Settings: danger-styled Remove key + confirm before delete | planned |
+| UX-005 | Settings: scroll-to / deep-link section from empty-state CTAs | planned |
+<!-- /ux-inventory -->

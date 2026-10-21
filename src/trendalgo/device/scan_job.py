@@ -1,4 +1,4 @@
-"""Scan job (D-02): one Kraken USD spot scan on this PC, run in a worker. Public data only; no keys.
+"""Scan job (D-02): multi-venue spot scan on this PC (keyed exchanges).
 
 A plain function with no Qt. It returns plain values, and the window reads the saved scan from the
 profile folder. After a live scan, pass-1 fleet backtests merge into LTS rows (Best BT / Results).
@@ -13,25 +13,25 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.device.db import enable_wal
-from trendalgo.device.lts_scan_model import build_lts_rows, save_lts_rows
+from trendalgo.device.lts_scan_model import build_lts_rows, load_filters, save_lts_rows
+from trendalgo.device.scan_identity import row_key
 from trendalgo.device.scan_model import ScanUnavailableError, device_scan_settings, scan_store_path
 from trendalgo.device.scan_progress import ProgressReporter
-from trendalgo.scanner import listings
-from trendalgo.scanner.listings import DEFAULT_KRAKEN_SPOT
+from trendalgo.device.scan_venues import resolve_scan_exchange_ids
+from trendalgo.device.secrets_vault import VaultSecretStore
+from trendalgo.exchanges.private_client import ccxt_client, set_secret_store
+from trendalgo.exchanges.registry import load_registry
 from trendalgo.scanner.pipeline import MarketFetcher, run_pipeline
 from trendalgo.scanner.progress import get_scan_progress
 from trendalgo.scanner.snapshot import QualifiedSnapshot
 from trendalgo.scanner.store import ScannerStore
+from trendalgo.scanner.venue_market import run_venue_pipeline
 
 SCAN_LABEL = "Scan on this PC"
 
 
 def scan_job(root: Path, fetcher: MarketFetcher | None = None) -> dict[str, Any]:
-    """Run one scan and save it to this PC's scanner database. Returns the saved scan id and pair count.
-
-    Raises ScanUnavailableError when Kraken's pair list or market data is missing. Nothing is saved
-    then, so the scanner's synthetic fallback never reaches the database or the screen.
-    """
+    """Run scans for selected keyed venues and save merged Qualified rows."""
     progress = get_scan_progress()
     progress.begin_job(SCAN_LABEL)
     reporter = ProgressReporter(root)
@@ -39,59 +39,111 @@ def scan_job(root: Path, fetcher: MarketFetcher | None = None) -> dict[str, Any]
     t0 = time.perf_counter()
     try:
         reporter.start()
-        t = time.perf_counter()
-        if tuple(listings.verify_kraken_listings()) == DEFAULT_KRAKEN_SPOT:
-            raise ScanUnavailableError("the Kraken pair list was not available")
-        timings["listings_s"] = round(time.perf_counter() - t, 3)
-        t = time.perf_counter()
-        try:
-            snapshot = run_pipeline(device_scan_settings(root), fetcher=fetcher)
-        except RuntimeError as exc:
-            raise ScanUnavailableError(
-                str(exc) or "the Kraken market data was not available"
-            ) from exc
-        timings["pipeline_s"] = round(time.perf_counter() - t, 3)
-        if snapshot.degraded:
-            raise ScanUnavailableError("the Kraken market data was not available")
-        t = time.perf_counter()
-        scan_id = _save(root, snapshot)
-        timings["save_scan_s"] = round(time.perf_counter() - t, 3)
-        # Live scans enrich charts + pass-1 BT; offline tests pass a fetcher and skip both.
-        live = fetcher is None
-        t = time.perf_counter()
-        rows = build_lts_rows(snapshot, enrich_charts=live)
-        timings["build_rows_s"] = round(time.perf_counter() - t, 3)
-        bt_meta: dict[str, Any] = {}
-        if live and rows:
-            from trendalgo.device.lts_scan_model import coins_for_backtest, load_filters
+        settings = device_scan_settings(root)
+        saved = load_filters(root)
+        vault = VaultSecretStore()
+        vault.bind_registry()
+        set_secret_store(vault)
 
-            saved = load_filters(root)
-            bt_candidates = coins_for_backtest(rows, saved)
-            skipped = len(rows) - len(bt_candidates)
-            if skipped:
-                progress.log(
-                    f"Pre-BT filters skip {skipped} of {len(rows)} coins "
-                    "(volume / 7D / 30D / enrich floors)"
-                )
-            progress.log(f"Pass-1 backtest queue: {len(bt_candidates)} coins after filters")
+        # Offline tests: single Kraken pipeline with injected fetcher.
+        if fetcher is not None:
+            from trendalgo.scanner import listings
+            from trendalgo.scanner.listings import DEFAULT_KRAKEN_SPOT
+
+            if tuple(listings.verify_kraken_listings()) == DEFAULT_KRAKEN_SPOT:
+                raise ScanUnavailableError("the Kraken pair list was not available")
+            try:
+                snapshot = run_pipeline(settings, fetcher=fetcher)
+            except RuntimeError as exc:
+                raise ScanUnavailableError(
+                    str(exc) or "the Kraken market data was not available"
+                ) from exc
+            if snapshot.degraded:
+                raise ScanUnavailableError("the Kraken market data was not available")
+            rows = build_lts_rows(snapshot, enrich_charts=False, exchange_id="kraken")
+            scan_id = _save(root, snapshot)
+            save_lts_rows(root, rows)
+            return {
+                "scan_id": scan_id,
+                "pairs": len(snapshot.opportunities),
+                "timings": {"total_s": round(time.perf_counter() - t0, 3)},
+                "backtest": {},
+                "rows": len(rows),
+            }
+
+        venues = resolve_scan_exchange_ids(saved, store=vault)
+        if not venues:
+            raise ScanUnavailableError(
+                "no exchanges selected — save API keys in Settings and check venues to scan"
+            )
+
+        all_rows: list[dict[str, Any]] = []
+        last_snap: QualifiedSnapshot | None = None
+        registry = load_registry()
+        for eid in venues:
+            entry = registry.by_id(eid)
+            if entry is None:
+                progress.log(f"Venue {eid}: unknown registry id", level="warn")
+                continue
+            if vault.read_entry(eid) is None:
+                progress.log(f"Venue {eid}: no API key — skipped", level="warn")
+                continue
             t = time.perf_counter()
-            bt_rows, bt_meta = _merge_pass1_backtests(bt_candidates, root)
-            timings["backtest_s"] = round(time.perf_counter() - t, 3)
-            bt_meta["pre_bt_skipped"] = skipped
-            by_sym = {str(c.get("symbol") or "").upper(): c for c in bt_rows}
-            rows = [by_sym.get(str(c.get("symbol") or "").upper(), c) for c in rows]
+            try:
+                client = ccxt_client(entry, store=vault)
+                snap = run_venue_pipeline(settings, entry, client=client)
+            except Exception as exc:
+                progress.log(f"Venue {eid}: failed ({exc})", level="error")
+                continue
+            timings[f"pipeline_{eid}_s"] = round(time.perf_counter() - t, 3)
+            last_snap = snap
+            t = time.perf_counter()
+            # Chart enrich still hits public OHLCV; keep False for non-Kraken speed/safety,
+            # True only for kraken to preserve prior spark behavior when possible.
+            enrich = eid == "kraken"
+            venue_rows = build_lts_rows(snap, enrich_charts=enrich, exchange_id=eid)
+            timings[f"build_{eid}_s"] = round(time.perf_counter() - t, 3)
+            all_rows.extend(venue_rows)
+
+        if not all_rows:
+            raise ScanUnavailableError("no venues returned qualified pairs")
+
+        assert last_snap is not None
+        t = time.perf_counter()
+        scan_id = _save(root, last_snap)
+        timings["save_scan_s"] = round(time.perf_counter() - t, 3)
+
+        bt_meta: dict[str, Any] = {}
+        from trendalgo.device.lts_scan_model import coins_for_backtest
+
+        bt_candidates = coins_for_backtest(all_rows, saved)
+        skipped = len(all_rows) - len(bt_candidates)
+        if skipped:
+            progress.log(
+                f"Pre-BT volume floor skips {skipped} of {len(all_rows)} coins "
+                "(column gain filters do not skip BT)"
+            )
+        progress.log(f"Pass-1 backtest queue: {len(bt_candidates)} qualified coins")
+        t = time.perf_counter()
+        bt_rows, bt_meta = _merge_pass1_backtests(bt_candidates, root)
+        timings["backtest_s"] = round(time.perf_counter() - t, 3)
+        bt_meta["pre_bt_skipped"] = skipped
+        by_key = {row_key(c): c for c in bt_rows}
+        rows = [by_key.get(row_key(c), c) for c in all_rows]
         t = time.perf_counter()
         save_lts_rows(root, rows)
         timings["save_rows_s"] = round(time.perf_counter() - t, 3)
         timings["total_s"] = round(time.perf_counter() - t0, 3)
         return {
             "scan_id": scan_id,
-            "pairs": len(snapshot.opportunities),
+            "pairs": len(rows),
             "timings": timings,
             "backtest": bt_meta,
             "rows": len(rows),
+            "venues": venues,
         }
     finally:
+        set_secret_store(None)
         progress.end_job()
         reporter.stop()
 
@@ -102,18 +154,17 @@ def _merge_pass1_backtests(
     """Pass-1 backtest on every qualified coin; merge Best BT / Bot vs B&H / Results."""
     progress = get_scan_progress()
     meta: dict[str, Any] = {}
-    # Nested ProcessPool inside the device WorkerPool often fails on Windows — stay single-worker.
     if multiprocessing.current_process().name != "MainProcess":
         os.environ["BACKTEST_PARALLEL_WORKERS"] = "1"
     try:
-        from trendalgo.device.lts_scan_model import load_filters
+        from trendalgo.device.scan_bt_prefs import load_scan_bt_prefs
         from trendalgo.device.scanner_signal_sets import (
             BT_SET_ALL_TA,
             normalize_bt_signal_set,
         )
         from trendalgo.lts_vendor.bridge import merge_backtest_into_coins, run_lts_backtest_sweep
 
-        signal_set = normalize_bt_signal_set(load_filters(root).get("bt_signal_set"))
+        signal_set = normalize_bt_signal_set(load_scan_bt_prefs(root).bt_signal_set)
         meta["signal_set"] = signal_set
         progress.phase("Backtest…", total=len(rows), unit="coins")
         label = "All TA" if signal_set == BT_SET_ALL_TA else "3Commas"
@@ -122,7 +173,7 @@ def _merge_pass1_backtests(
         if signal_set == BT_SET_ALL_TA:
             from trendalgo.device.scanner_all_ta_bt import run_all_ta_scan_backtests
 
-            summary = run_all_ta_scan_backtests(rows)
+            summary = run_all_ta_scan_backtests(rows, prefs_root=root)
         else:
             summary = run_lts_backtest_sweep(rows)
         meta["sweep_s"] = round(time.perf_counter() - t, 3)

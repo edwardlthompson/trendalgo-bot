@@ -8,10 +8,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
-from trendalgo.backtest.heartbeat_tf import HEARTBEAT_TIMEFRAMES
+from trendalgo.backtest.heartbeat_tf import needs_1m_base
 from trendalgo.backtest.sim_accel import accel_backend
-from trendalgo.backtest.ta_fleet import all_strategies
+from trendalgo.device.scan_bt_prefs import (
+    enabled_strategies,
+    load_scan_bt_prefs,
+    selected_timeframes,
+)
 from trendalgo.device.scan_stake import DEFAULT_SCAN_EXCHANGE, DEVICE_SCAN_STAKE_USD
+from trendalgo.device.scan_time_history import TimingSample, record_sample
 from trendalgo.device.scanner_all_ta_coin import backtest_one_coin
 from trendalgo.device.scanner_all_ta_prune import fee_for_exchange, fleet_row_to_lts
 from trendalgo.scanner.progress import get_scan_progress
@@ -33,6 +38,8 @@ def run_all_ta_scan_backtests(
     coins: list[dict[str, Any]],
     *,
     strategies: tuple[str, ...] | None = None,
+    timeframes: tuple[str, ...] | None = None,
+    prefs_root: Path | None = None,
 ) -> dict[str, Any] | None:
     """Catalog defaults + deepen — same keep rules as the Backtest tab."""
     if not coins:
@@ -48,14 +55,21 @@ def run_all_ta_scan_backtests(
     from trendalgo.lts_vendor.shims.database_cache import PriceCache
 
     rp = runner_params_from_settings()
-    strat_list = strategies or all_strategies()
+    root = prefs_root or Path(rp.base_dir)
+    prefs = load_scan_bt_prefs(root)
+    strat_list = strategies or enabled_strategies(prefs.strategy_denylist)
+    tf_list = timeframes or selected_timeframes(prefs)
+    if not strat_list or not tf_list:
+        return None
     stake = DEVICE_SCAN_STAKE_USD
     fee = fee_for_exchange(DEFAULT_SCAN_EXCHANGE, rp.backtest_fee_bps_round_trip)
     db_path = Path(rp.scanner_db_path)
     progress = get_scan_progress()
+    subhour = needs_1m_base(tf_list)
     progress.log(
         f"All-TA stake=${stake:.0f} · fees={fee.exchange_id} "
-        f"taker={fee.taker_pct * 100:.2f}% · accel={accel_backend()}"
+        f"taker={fee.taker_pct * 100:.2f}% · accel={accel_backend()} · "
+        f"{len(tf_list)} TFs · {len(strat_list)} strategies" + (" · 1m base" if subhour else "")
     )
 
     def loader_factory() -> Any:
@@ -80,10 +94,11 @@ def run_all_ta_scan_backtests(
                 backtest_one_coin,
                 c,
                 loader_factory=loader_factory,
-                timeframes=HEARTBEAT_TIMEFRAMES,
+                timeframes=tf_list,
                 strat_list=strat_list,
                 stake=stake,
                 fee=fee,
+                fee_bps_round_trip=rp.backtest_fee_bps_round_trip,
             ): c
             for c in coins
         }
@@ -102,9 +117,22 @@ def run_all_ta_scan_backtests(
             load_s += float(stats.get("load_s", 0.0))
             pass1_s += float(stats.get("pass1_s", 0.0))
             deepen_s += float(stats.get("deepen_s", 0.0))
-            per_coin.append(
-                {"symbol": symbol, "elapsed_s": round(float(stats.get("elapsed_s", 0)), 3)}
-            )
+            elapsed_coin = float(stats.get("elapsed_s", 0))
+            per_coin.append({"symbol": symbol, "elapsed_s": round(elapsed_coin, 3)})
+            try:
+                record_sample(
+                    root,
+                    TimingSample(
+                        elapsed_s=elapsed_coin,
+                        n_strategies=len(strat_list),
+                        n_timeframes=len(tf_list),
+                        had_subhour=subhour,
+                        bars_base=int(stats.get("bars_base", 0) or 0),
+                        ts=time.time(),
+                    ),
+                )
+            except OSError:
+                pass
             progress.step(done)
 
     elapsed = time.perf_counter() - started

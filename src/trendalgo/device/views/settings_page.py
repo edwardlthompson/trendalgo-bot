@@ -1,4 +1,4 @@
-"""Settings page: connection, Appearance, Privacy, Data, About — readable form column."""
+"""Settings page: top action ribbon + drag-and-drop module grid."""
 
 from __future__ import annotations
 
@@ -21,7 +21,16 @@ from PySide6.QtWidgets import (
 from trendalgo.device import strings as S
 from trendalgo.device.about.donations import load_donations, primary_donate_url
 from trendalgo.device.context import DeviceContext
+from trendalgo.device.portfolio_layout_prefs import Placement
 from trendalgo.device.profile import ProfileError, read_json, write_json
+from trendalgo.device.settings_layout_prefs import (
+    SECTION_IDS,
+    SECTION_MINS,
+    SettingsLayoutPrefs,
+    factory_defaults,
+    load_settings_layout,
+    save_settings_layout,
+)
 from trendalgo.device.settings_model import (
     ACCENT_CHOICES,
     THEME_CHOICES,
@@ -32,11 +41,12 @@ from trendalgo.device.settings_model import (
 from trendalgo.device.theme import apply_theme
 from trendalgo.device.views.about_feedback_section import AboutFeedbackSection
 from trendalgo.device.views.about_updates_section import AboutUpdatesSection
-from trendalgo.device.views.collapsible_section import CollapsibleSection
 from trendalgo.device.views.crash_privacy_settings import CrashPrivacySection
 from trendalgo.device.views.dashboard_modules_settings import DashboardModulesSection
 from trendalgo.device.views.exchange_keys_section import ExchangeKeysSection
 from trendalgo.device.views.notify_settings import NotifySettingsSection
+from trendalgo.device.views.settings_grid_canvas import SettingsGridCanvas
+from trendalgo.device.views.telegram_wizard import TelegramWizardDialog
 from trendalgo.device.views.venue_section import VenueSection
 from trendalgo.device.views.widgets import (
     clear_problem,
@@ -49,12 +59,19 @@ from trendalgo.device.views.widgets import (
 
 THEME_LABELS = (S.THEME_SYSTEM, S.THEME_LIGHT, S.THEME_DARK)
 ACCENT_LABELS = (S.ACCENT_DEFAULT, *S.ACCENT_NAMES)
-DATA_HELP = (
-    "Export plans, journal CSV, and scan snapshots from the Export page. "
-    "Settings stay on this PC in settings.json."
-)
-_FORM_MAX = 560
 _EDITOR_MAX = 520
+
+_SECTION_TITLES: dict[str, str] = {
+    "connection": S.SETTINGS_CONNECTION,
+    "appearance": S.SETTINGS_APPEARANCE,
+    "keys": S.SETTINGS_KEYS,
+    "venue": S.SETTINGS_VENUE,
+    "dashboard": S.SETTINGS_DASHBOARD_MODULES,
+    "privacy": S.SETTINGS_PRIVACY,
+    "data": S.SETTINGS_DATA,
+    "notify": S.NOTIFY_SECTION,
+    "about": S.ABOUT_TITLE,
+}
 
 
 class SettingsPage(QWidget):
@@ -85,128 +102,175 @@ class SettingsPage(QWidget):
         self._first_run = QLabel(S.SETTINGS_FIRST_RUN)
         self._problem = problem_label()
         self._status = QLabel()
+        self._status.setObjectName("hint")
         self._save = mark_primary(QPushButton(S.SETTINGS_SAVE))
         self._save.setMinimumHeight(44)
+        self._save.setObjectName("settingsRibbonSave")
         self._save.clicked.connect(lambda _checked=False: self.save())
         self._setup = QPushButton(S.SETTINGS_WIZARD)
         self._setup.setMinimumHeight(44)
+        self._setup.setObjectName("settingsRibbonSetup")
         self._setup.clicked.connect(lambda _checked=False: self._open_wizard())
-        self._setup_help = QLabel(S.SETTINGS_WIZARD_HELP)
-        self._setup_help.setObjectName("hint")
-        self._setup_help.setWordWrap(True)
-        offered = on_setup_wizard is not None
-        self._setup.setVisible(offered)
-        self._setup_help.setVisible(offered)
+        self._setup.setVisible(on_setup_wizard is not None)
+        self._telegram = QPushButton(S.NOTIFY_TELEGRAM_WIZARD)
+        self._telegram.setMinimumHeight(44)
+        self._telegram.setObjectName("settingsRibbonTelegram")
+        self._telegram.clicked.connect(lambda _checked=False: self._open_telegram())
 
-        column = QWidget()
-        column.setMaximumWidth(_FORM_MAX)
-        column.setObjectName("settingsFormColumn")
-        col = QVBoxLayout(column)
-        col.setContentsMargins(0, 0, 0, 0)
-        col.setSpacing(12)
-        col.addWidget(page_header(S.SETTINGS_TITLE, S.SETTINGS_SUBTITLE))
-        col.addWidget(self._first_run)
-        col.addWidget(self._problem)
+        self._edit = QCheckBox(S.SETTINGS_LAYOUT_EDIT)
+        self._edit.setToolTip(S.SETTINGS_LAYOUT_EDIT_TIP)
+        self._layout_prefs = load_settings_layout(ctx.root)
+        self._edit.setChecked(bool(self._layout_prefs.edit_mode))
+        self._edit.toggled.connect(self._on_edit_toggled)
 
-        connection = CollapsibleSection(S.SETTINGS_CONNECTION, expanded=True)
-        connection.setObjectName("settingsSectionConnection")
-        connection.add_widget(field(S.SETTINGS_OWNER, self._owner, S.SETTINGS_OWNER_HELP))
-        connection.add_widget(field(S.SETTINGS_HOST, self._host, S.SETTINGS_HOST_HELP))
-        connection.add_widget(field(S.SETTINGS_CERT_PIN, self._cert_pin, S.SETTINGS_CERT_PIN_HELP))
-        col.addWidget(connection)
+        ribbon = QHBoxLayout()
+        ribbon.setSpacing(6)
+        ribbon.addWidget(self._save, 0, Qt.AlignmentFlag.AlignVCenter)
+        ribbon.addWidget(self._setup, 0, Qt.AlignmentFlag.AlignVCenter)
+        ribbon.addWidget(self._telegram, 0, Qt.AlignmentFlag.AlignVCenter)
+        ribbon.addWidget(self._status, 0, Qt.AlignmentFlag.AlignVCenter)
+        ribbon.addStretch(1)
 
-        keys = CollapsibleSection(S.SETTINGS_KEYS, expanded=False)
-        keys.setObjectName("settingsSectionKeys")
-        keys.add_widget(ExchangeKeysSection())
-        col.addWidget(keys)
+        header = QWidget()
+        head = QVBoxLayout(header)
+        head.setContentsMargins(0, 0, 0, 0)
+        head.setSpacing(6)
+        head.addWidget(page_header(S.SETTINGS_TITLE, S.SETTINGS_SUBTITLE))
+        head.addWidget(self._first_run)
+        head.addWidget(self._problem)
+        head.addLayout(ribbon)
+        head.addWidget(self._edit)
+        no_secret = QLabel(S.SETTINGS_NO_SECRET)
+        no_secret.setObjectName("hint")
+        no_secret.setWordWrap(True)
+        head.addWidget(no_secret)
 
-        venue = CollapsibleSection(S.SETTINGS_VENUE, expanded=False)
-        venue.setObjectName("settingsSectionVenue")
-        venue.add_widget(VenueSection(ctx.root))
-        col.addWidget(venue)
+        self._canvas = SettingsGridCanvas(
+            titles=_SECTION_TITLES,
+            on_placements_changed=self._on_placements_changed,
+        )
+        self._canvas.set_grid(self._layout_prefs.grid)
+        self._canvas.set_module_mins(SECTION_MINS)
+        self._bodies = self._build_section_bodies()
+        self._apply_modules()
+        self._canvas.set_edit_mode(self._edit.isChecked())
 
-        appearance = CollapsibleSection(S.SETTINGS_APPEARANCE, expanded=False)
-        appearance.setObjectName("settingsSectionAppearance")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(header)
+        layout.addWidget(self._canvas, 1)
+        self._load()
+
+    def _build_section_bodies(self) -> dict[str, QWidget]:
+        # Flat card bodies — ModuleChrome owns the title (no nested CollapsibleSection).
+        connection, conn_lay = _card_body("settingsSectionConnection")
+        conn_lay.addWidget(field(S.SETTINGS_OWNER, self._owner, S.SETTINGS_OWNER_HELP))
+        conn_lay.addWidget(field(S.SETTINGS_HOST, self._host, S.SETTINGS_HOST_HELP))
+        conn_lay.addWidget(field(S.SETTINGS_CERT_PIN, self._cert_pin, S.SETTINGS_CERT_PIN_HELP))
+
+        appearance, app_lay = _card_body("settingsSectionAppearance")
         pair = QWidget()
         pair_row = QHBoxLayout(pair)
         pair_row.setContentsMargins(0, 0, 0, 0)
         pair_row.setSpacing(12)
         pair_row.addWidget(field(S.SETTINGS_THEME, self._theme, S.SETTINGS_THEME_HELP), 1)
         pair_row.addWidget(field(S.SETTINGS_ACCENT, self._accent, S.SETTINGS_ACCENT_HELP), 1)
-        appearance.add_widget(pair)
-        appearance.add_widget(field(S.SETTINGS_USE_UTC, self._use_utc, S.SETTINGS_USE_UTC_HELP))
-        col.addWidget(appearance)
+        app_lay.addWidget(pair)
+        app_lay.addWidget(field(S.SETTINGS_USE_UTC, self._use_utc, S.SETTINGS_USE_UTC_HELP))
 
-        actions = QWidget()
-        actions.setObjectName("settingsActions")
-        act = QVBoxLayout(actions)
-        act.setContentsMargins(0, 4, 0, 4)
-        act.setSpacing(8)
-        act.addWidget(self._save, alignment=Qt.AlignmentFlag.AlignLeft)
-        act.addWidget(self._status)
-        act.addWidget(QLabel(S.SETTINGS_NO_SECRET))
-        act.addWidget(self._setup, alignment=Qt.AlignmentFlag.AlignLeft)
-        act.addWidget(self._setup_help)
-        col.addWidget(actions)
+        keys, keys_lay = _card_body("settingsSectionKeys")
+        keys_lay.addWidget(ExchangeKeysSection())
 
-        dashboard = CollapsibleSection(S.SETTINGS_DASHBOARD_MODULES, expanded=False)
-        dashboard.setObjectName("settingsSectionDashboard")
-        dashboard.add_widget(DashboardModulesSection(ctx, on_saved=self._on_module_mins_saved))
-        col.addWidget(dashboard)
+        venue, venue_lay = _card_body("settingsSectionVenue")
+        venue_lay.addWidget(VenueSection(self._ctx.root))
 
-        privacy_wrap = CollapsibleSection(S.SETTINGS_PRIVACY, expanded=False)
-        privacy_wrap.setObjectName("settingsSectionPrivacy")
-        privacy_wrap.add_widget(CrashPrivacySection(ctx))
-        col.addWidget(privacy_wrap)
+        dashboard, dash_lay = _card_body("settingsSectionDashboard")
+        dash_lay.addWidget(
+            DashboardModulesSection(
+                self._ctx,
+                on_saved=self._on_module_mins_saved,
+                on_layout_change=self._canvas.schedule_fit_to_content,
+            )
+        )
 
-        data = CollapsibleSection(S.SETTINGS_DATA, expanded=False)
-        data.setObjectName("settingsSectionData")
-        data_help = QLabel(DATA_HELP)
+        privacy_wrap, priv_lay = _card_body("settingsSectionPrivacy")
+        priv_lay.addWidget(CrashPrivacySection(self._ctx))
+
+        data, data_lay = _card_body("settingsSectionData")
+        data_help = QLabel(S.SETTINGS_DATA_HELP)
         data_help.setObjectName("hint")
         data_help.setWordWrap(True)
-        data.add_widget(data_help)
-        col.addWidget(data)
+        data_lay.addWidget(data_help)
 
-        notify_wrap = CollapsibleSection(S.NOTIFY_SECTION, expanded=False)
-        notify_wrap.add_widget(NotifySettingsSection(ctx))
-        col.addWidget(notify_wrap)
+        notify_wrap, notify_lay = _card_body("settingsSectionNotify")
+        notify_lay.addWidget(NotifySettingsSection(self._ctx))
 
-        about = CollapsibleSection(S.ABOUT_TITLE, expanded=False)
-        about.setObjectName("settingsSectionAbout")
-        about.add_widget(AboutUpdatesSection(ctx))
+        about, about_lay = _card_body("settingsSectionAbout")
+        about_lay.addWidget(AboutUpdatesSection(self._ctx))
         about_body = QLabel(S.ABOUT_BODY)
         about_body.setWordWrap(True)
         about_body.setObjectName("hint")
         about_donate = QLabel(S.ABOUT_DONATE)
         about_donate.setWordWrap(True)
         about_donate.setObjectName("hint")
-        about.add_widget(about_body)
-        about.add_widget(about_donate)
+        about_lay.addWidget(about_body)
+        about_lay.addWidget(about_donate)
         donations = load_donations()
         venmo = QPushButton(S.ABOUT_VENMO)
         venmo.setMinimumHeight(44)
         venmo.setAccessibleName(S.ABOUT_VENMO)
         donate_url = primary_donate_url(donations)
         venmo.clicked.connect(lambda _c=False, url=donate_url: webbrowser.open(url, new=2))
-        about.add_widget(venmo)
+        about_lay.addWidget(venmo)
         if donations.enabled:
             for link in donations.links:
                 if link.url.rstrip("/") == donate_url.rstrip("/"):
                     continue
-                about.add_widget(QLabel(f"{link.label}: {link.url}"))
-        about.add_widget(AboutFeedbackSection(ctx))
-        col.addWidget(about)
-        col.addStretch(1)
+                about_lay.addWidget(QLabel(f"{link.label}: {link.url}"))
+        about_lay.addWidget(AboutFeedbackSection(self._ctx))
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(column, 0, Qt.AlignmentFlag.AlignTop)
-        layout.addStretch(1)
-        self._load()
+        return {
+            "connection": connection,
+            "appearance": appearance,
+            "keys": keys,
+            "venue": venue,
+            "dashboard": dashboard,
+            "privacy": privacy_wrap,
+            "data": data,
+            "notify": notify_wrap,
+            "about": about,
+        }
+
+    def _apply_modules(self) -> None:
+        placements = list(self._layout_prefs.placements)
+        known = {p.id for p in placements}
+        defaults = {p.id: p for p in factory_defaults().placements}
+        for sid in SECTION_IDS:
+            if sid not in known:
+                placements.append(defaults[sid])
+        placements = [p for p in placements if p.id in SECTION_IDS]
+        self._canvas.set_modules(placements, self._bodies)
+
+    def _on_edit_toggled(self, checked: bool) -> None:
+        self._canvas.set_edit_mode(checked)
+        self._layout_prefs.edit_mode = bool(checked)
+        save_settings_layout(self._ctx.root, self._layout_prefs)
+
+    def _on_placements_changed(self, placements: list[Placement]) -> None:
+        self._layout_prefs = SettingsLayoutPrefs(
+            grid=self._layout_prefs.grid,
+            placements=list(placements),
+            layout_version=self._layout_prefs.layout_version,
+            edit_mode=self._edit.isChecked(),
+        )
+        save_settings_layout(self._ctx.root, self._layout_prefs)
 
     def _open_wizard(self) -> None:
         if self._on_setup_wizard is not None:
             self._on_setup_wizard()
+
+    def _open_telegram(self) -> None:
+        TelegramWizardDialog(self._ctx, parent=self).exec()
 
     def _load(self) -> None:
         try:
@@ -250,6 +314,17 @@ class SettingsPage(QWidget):
         app = QApplication.instance()
         if isinstance(app, QApplication):
             apply_theme(app, settings.theme, settings.accent)
+
+
+def _card_body(object_name: str) -> tuple[QWidget, QVBoxLayout]:
+    """Settings module body: chrome owns the title; keep content tight to the top."""
+    host = QWidget()
+    host.setObjectName(object_name)
+    lay = QVBoxLayout(host)
+    lay.setContentsMargins(0, 0, 0, 0)
+    lay.setSpacing(10)
+    lay.setAlignment(Qt.AlignmentFlag.AlignTop)
+    return host, lay
 
 
 def _choice_box(labels: tuple[str, ...], values: tuple[str, ...]) -> QComboBox:

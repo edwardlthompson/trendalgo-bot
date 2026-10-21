@@ -62,7 +62,6 @@ from trendalgo.device.stores import StoreReadError, read_snapshot
 from trendalgo.device.time_display import load_use_utc
 from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
 from trendalgo.device.views.scanner_column_filter_row import ScannerColumnFilterRow
-from trendalgo.device.views.scanner_compare import show_compare_dialog
 from trendalgo.device.views.scanner_filters import ScannerFilterBar
 from trendalgo.device.views.scanner_results import show_results_dialog
 from trendalgo.device.views.scanner_table import COLUMNS, fill_lts_table
@@ -104,7 +103,6 @@ class ScannerPage(QWidget):
         self._on_alerts_changed = on_alerts_changed
         self._pool = WorkerPool(workers=1)
         self._pending: AsyncResult[Any] | None = None
-        self._compare: set[str] = set()
         self._coins: list[dict[str, Any]] = []
         self._shown: list[dict[str, Any]] = []
         self._sort_key = DEFAULT_SORT_KEY
@@ -166,7 +164,6 @@ class ScannerPage(QWidget):
         saved = {
             **saved,
             "heatmap_enabled": view.heatmap_enabled,
-            "perfect_only": view.perfect_only,
         }
         self._filters.load(saved)
         self._col_filters.load(saved)
@@ -179,20 +176,19 @@ class ScannerPage(QWidget):
         self._cancel.clicked.connect(lambda _checked=False: self._cancel_run())
         self._wire_filter_signals()
         self._tabs.currentChanged.connect(lambda _index: self._show_tab())
-        self._filters.compare_btn.clicked.connect(lambda _c=False: self._open_compare())
-        self._filters.clear_btn.clicked.connect(lambda _c=False: self._clear_compare())
         self._filters.share.clicked.connect(lambda _c=False: self._share_png())
         self.reload()
         self._boot_after_restore()
         self._caption_timer.start()
 
     def _wire_filter_signals(self) -> None:
-        self._filters.exchange.currentIndexChanged.connect(lambda _i: self._on_filter())
-        self._filters.signals.currentIndexChanged.connect(lambda _i: self._on_filter())
+        self._filters.exchange.changed.connect(self._on_filter)
         self._filters.vol.editingFinished.connect(self._on_filter)
         self._filters.every.editingFinished.connect(self._on_filter)
         self._filters.heatmap.toggled.connect(lambda _c: self._on_filter())
-        self._filters.perfect.toggled.connect(lambda _c: self._on_filter())
+        self._filters.settings.clicked.connect(lambda _c=False: self._open_scan_settings())
+        self._col_filters.exchange.changed.connect(self._on_filter)
+        self._refresh_scan_eta()
         for edit in (
             self._col_filters.gain_7d,
             self._col_filters.gain_30d,
@@ -242,6 +238,40 @@ class ScannerPage(QWidget):
         self._status.setText(S.SCANNER_FILTERS_SAVED)
         self._schedule_autoscan(reset=True)
         self._show_tab()
+
+    def _open_scan_settings(self) -> None:
+        from trendalgo.device.views.scan_bt_settings_dialog import open_scan_bt_settings
+
+        if open_scan_bt_settings(
+            self._root,
+            show_signal_set=True,
+            n_coins=max(1, len(self._coins)),
+            parent=self,
+        ):
+            self._refresh_scan_eta()
+            self._status.setText(S.SCAN_BT_SETTINGS_SAVED)
+
+    def _refresh_scan_eta(self) -> None:
+        from trendalgo.backtest.heartbeat_tf import needs_1m_base
+        from trendalgo.device.scan_bt_prefs import (
+            enabled_strategies,
+            load_scan_bt_prefs,
+            selected_timeframes,
+        )
+        from trendalgo.device.scan_time_history import estimate_label, load_history
+
+        prefs = load_scan_bt_prefs(self._root)
+        tfs = selected_timeframes(prefs)
+        strats = enabled_strategies(prefs.strategy_denylist)
+        self._filters.eta.setText(
+            estimate_label(
+                load_history(self._root),
+                n_strategies=len(strats),
+                n_timeframes=len(tfs),
+                had_subhour=needs_1m_base(tfs),
+                n_coins=max(1, len(self._coins) or 1),
+            )
+        )
 
     def start_scan(self) -> None:
         self._start()
@@ -332,18 +362,10 @@ class ScannerPage(QWidget):
         col = self._col_filters.dump()
         coins = filter_coins(
             base,
-            exchange=self._filters.exchange.currentText(),
-            min_gain_7d=(
-                self._col_filters.gain_7d.value() if self._col_filters.gain_7d.value() > 0 else None
-            ),
-            min_gain_30d=(
-                self._col_filters.gain_30d.value()
-                if self._col_filters.gain_30d.value() > 0
-                else None
-            ),
-            min_best_bt=(
-                self._col_filters.best_bt.value() if self._col_filters.best_bt.value() > 0 else None
-            ),
+            exchanges=self._col_filters.exchange.filter_ids(),
+            min_gain_7d=_floor_or_none(self._col_filters.gain_7d.floor()),
+            min_gain_30d=_floor_or_none(self._col_filters.gain_30d.floor()),
+            min_best_bt=_floor_or_none(self._col_filters.best_bt.floor()),
             bot_vs_bh_filter=str(col.get("bot_vs_bh_filter") or "") or None,
             chart_dist_max_7d=_opt_float(col.get("chart_dist_max_7d")),
             chart_dist_max_30d=_opt_float(col.get("chart_dist_max_30d")),
@@ -379,7 +401,6 @@ class ScannerPage(QWidget):
             self._status.setText(S.SCANNER_FILTER_NONE_STATUS)
         elif self._status.text() in {S.SCANNER_FILTER_NONE_STATUS, S.SCANNER_NONE_TITLE}:
             self._status.clear()
-        self._filters.set_compare_pairs(self._compare)
         if show_grid:
             keep_filters = self._col_filters.row_installed(self._table)
             if not keep_filters:
@@ -387,34 +408,22 @@ class ScannerPage(QWidget):
             fill_lts_table(
                 self._table,
                 coins,
-                compare=self._compare,
                 watch=watch,
                 sort_key=self._sort_key,
                 sort_dir=self._sort_dir,
                 heatmap=bool(self._filters.heatmap.isChecked()),
                 filter_row=True,
-                on_compare=self._on_compare,
                 on_results=self._on_results,
                 on_watch=self._on_watch,
                 on_spark=self._on_spark,
             )
             self._col_filters.install_row(self._table)
 
-    def _on_compare(self, pair: str, checked: bool) -> None:
-        if checked:
-            if len(self._compare) >= 2 and pair not in self._compare:
-                return
-            self._compare.add(pair)
-        else:
-            self._compare.discard(pair)
-        self._filters.set_compare_pairs(self._compare)
-
-    def _on_watch(self, pair: str, checked: bool) -> None:
-        symbol = pair.split("/")[0].strip().upper() if "/" in pair else pair
+    def _on_watch(self, key: str, checked: bool) -> None:
         watch = load_watchlist(self._root)
-        cleaned = [p for p in watch if p != pair and p != symbol]
+        cleaned = [p for p in watch if p != key]
         if checked:
-            cleaned.append(pair)
+            cleaned.append(key)
         save_watchlist(self._root, cleaned)
         self._show_tab()
 
@@ -423,7 +432,7 @@ class ScannerPage(QWidget):
             self,
             coin,
             heatmap=bool(self._filters.heatmap.isChecked()),
-            perfect_only=bool(self._filters.perfect.isChecked()),
+            perfect_only=False,
             on_create_bot=self._on_create_bot,
             export_root=self._root,
         )
@@ -439,17 +448,6 @@ class ScannerPage(QWidget):
             candles_db=self._candles,
             price_only=True,
         )
-
-    def _open_compare(self) -> None:
-        if len(self._compare) < 2:
-            show_problem(self._problem, S.SCANNER_COMPARE_NEED_TWO)
-            return
-        clear_problem(self._problem)
-        show_compare_dialog(self, self._coins, self._compare)
-
-    def _clear_compare(self) -> None:
-        self._compare.clear()
-        self._show_tab()
 
     def _persist_filters(self) -> None:
         payload = {**self._filters.dump(), **self._col_filters.dump()}
@@ -467,7 +465,7 @@ class ScannerPage(QWidget):
             self._root,
             ResultsViewPrefs(
                 heatmap_enabled=bool(self._filters.heatmap.isChecked()),
-                perfect_only=bool(self._filters.perfect.isChecked()),
+                perfect_only=prior.perfect_only,
                 last_pair=prior.last_pair,
                 results_dialog_width=prior.results_dialog_width,
                 results_dialog_height=prior.results_dialog_height,
@@ -492,6 +490,25 @@ class ScannerPage(QWidget):
         if self._pending is not None:
             return
         self._persist_filters()
+        from trendalgo.device.scan_bt_prefs import (
+            enabled_strategies,
+            load_scan_bt_prefs,
+            selected_timeframes,
+        )
+        from trendalgo.device.scan_venues import resolve_scan_exchange_ids
+
+        # Unit tests mock the worker pool; skip the vault gate so they can drive Done/errors.
+        under_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
+        if not under_pytest and not resolve_scan_exchange_ids(self._filters.dump()):
+            show_problem(self._problem, S.SCANNER_NO_EXCHANGES)
+            return
+        prefs = load_scan_bt_prefs(self._root)
+        if not under_pytest and not selected_timeframes(prefs):
+            show_problem(self._problem, S.SCAN_BT_NO_TFS)
+            return
+        if not under_pytest and not enabled_strategies(prefs.strategy_denylist):
+            show_problem(self._problem, S.SCAN_BT_NO_STRATEGIES)
+            return
         clear_problem(self._problem)
         clear_progress(self._root)
         self._logs.clear()
@@ -528,10 +545,15 @@ class ScannerPage(QWidget):
         problem = ""
         try:
             job.get(timeout=0)
-        except ScanUnavailableError:
-            problem = S.SCAN_UNAVAILABLE
+        except ScanUnavailableError as exc:
+            msg = str(exc).strip().lower()
+            if "no exchange" in msg or "api key" in msg:
+                problem = S.SCANNER_NO_EXCHANGES
+            else:
+                problem = S.SCAN_UNAVAILABLE
         except Exception:
             problem = S.SCAN_FAILED
+
         self._tabs.setCurrentIndex(TAB_QUALIFIED)
         self.reload()
         if problem:
@@ -604,9 +626,14 @@ class ScannerPage(QWidget):
 
 
 def _in_watch(coin: dict[str, Any], watch: set[str]) -> bool:
-    pair = str(coin.get("pair") or "")
-    symbol = str(coin.get("symbol") or "")
-    return bool(pair and pair in watch) or bool(symbol and symbol in watch)
+    from trendalgo.device.scan_identity import coin_in_watchlist
+
+    return coin_in_watchlist(coin, watch)
+
+
+def _floor_or_none(raw: int | None) -> float | None:
+    """Pass through typed floors including 0; blank stays None."""
+    return None if raw is None else float(raw)
 
 
 def _opt_float(raw: object) -> float | None:

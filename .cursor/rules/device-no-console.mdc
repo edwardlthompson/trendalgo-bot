@@ -1,0 +1,26 @@
+---
+description: Device GUI must never own a Windows console except explicit testing
+alwaysApply: true
+---
+
+# Device: no console window
+
+**Rule:** Unless the human asked for testing/debug (`--selftest`, `--smoke-backtest`, or `-KeepConsole`), the device GUI must never show a console. Closing a console must never kill the app.
+
+## Do
+
+- Launch with `.\scripts\packaging\launch-device.ps1` (pythonw / frozen / MSI, `CreateNoWindow`)
+- Or Start Menu / Desktop / MSI shortcuts (`launch-device.vbs` → windowed `TrendAlgoDevice.exe`)
+- Autostart already prefers `pythonw.exe` (`autostart.default_command`)
+
+## Do not
+
+- `Start-Process uv run python -m trendalgo.device` for a normal GUI relaunch
+- `uv run python -m trendalgo.device` as the product launch path (console `python.exe` owns a console; closing it kills the process)
+- Attach a console for GUI runs
+
+## Testing only
+
+- `.\scripts\packaging\launch-device.ps1 -KeepConsole`
+- `TRENDALGO_KEEP_CONSOLE=1` (skips `FreeConsole` safety net in `console_detach.py`)
+- `--selftest` / `--smoke-backtest` (may `AllocConsole` on frozen builds)

@@ -1,4 +1,4 @@
-"""Settings section: Windows × Telegram toggles per alert kind + Telegram wizard."""
+"""Settings section: Windows × Telegram toggles per alert kind."""
 
 from __future__ import annotations
 
@@ -20,8 +20,7 @@ from trendalgo.device.context import DeviceContext
 from trendalgo.device.host_session import try_open_host_client
 from trendalgo.device.notify_prefs import NotifyPrefs, load_prefs, save_prefs
 from trendalgo.device.telegram_vault import load_telegram_creds
-from trendalgo.device.views.telegram_wizard import TelegramWizardDialog
-from trendalgo.device.views.widgets import mark_primary, section_title
+from trendalgo.device.views.widgets import mark_primary
 
 
 class NotifySettingsSection(QWidget):
@@ -66,18 +65,14 @@ class NotifySettingsSection(QWidget):
         auto_help.setWordWrap(True)
         save = mark_primary(QPushButton(S.SETTINGS_SAVE))
         save.clicked.connect(lambda _c=False: self.save())
-        wizard = QPushButton(S.NOTIFY_TELEGRAM_WIZARD)
-        wizard.clicked.connect(lambda _c=False: self._open_wizard())
         self._tg.toggled.connect(self._sync_tg_children)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(section_title(S.NOTIFY_SECTION))
         layout.addWidget(help_lbl)
         layout.addLayout(grid)
         layout.addWidget(self._tg)
         layout.addWidget(self._autostart)
         layout.addWidget(auto_help)
-        layout.addWidget(wizard, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(save, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self._status)
         self.reload()
@@ -136,7 +131,3 @@ class NotifySettingsSection(QWidget):
     def _sync_tg_children(self, enabled: bool) -> None:
         for box in self._tg_kind.values():
             box.setEnabled(enabled)
-
-    def _open_wizard(self) -> None:
-        TelegramWizardDialog(self._ctx, parent=self).exec()
-        self.reload()

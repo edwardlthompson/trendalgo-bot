@@ -15,9 +15,9 @@ from pytestqt.qtbot import QtBot  # noqa: E402
 
 from trendalgo.device import strings as S  # noqa: E402
 from trendalgo.device.views.scanner_table import (  # noqa: E402
-    COL_CMP,
     COL_RESULTS,
     COL_SPARK7,
+    COL_WATCH,
     COLUMNS,
     fill_lts_table,
 )
@@ -25,7 +25,7 @@ from trendalgo.device.views.sparkline import Sparkline  # noqa: E402
 from trendalgo.device.views.widgets import read_only_table  # noqa: E402
 
 
-def test_fill_lts_table_wires_cmp_and_disabled_results(qtbot: QtBot) -> None:
+def test_fill_lts_table_wires_watch_and_disabled_results(qtbot: QtBot) -> None:
     table = read_only_table(S.SCANNER_LTS_HEADERS, S.SCANNER_TITLE)
     qtbot.addWidget(table)
     toggled: list[tuple[str, bool]] = []
@@ -42,17 +42,17 @@ def test_fill_lts_table_wires_cmp_and_disabled_results(qtbot: QtBot) -> None:
                 "is_new": True,
             }
         ],
-        compare=set(),
-        on_compare=lambda pair, checked: toggled.append((pair, checked)),
+        on_watch=lambda pair, checked: toggled.append((pair, checked)),
     )
     assert table.columnCount() == COLUMNS
     assert table.rowCount() == 1
-    cmp_host = table.cellWidget(0, COL_CMP)
-    assert cmp_host is not None
-    box = cmp_host.findChild(QCheckBox)
+    assert "Cmp" not in S.SCANNER_LTS_HEADERS
+    watch_host = table.cellWidget(0, COL_WATCH)
+    assert watch_host is not None
+    box = watch_host.findChild(QCheckBox)
     assert box is not None
     box.setChecked(True)
-    assert toggled == [("BTC/USD", True)]
+    assert toggled == [("kraken:BTC", True)]
     results = table.cellWidget(0, COL_RESULTS)
     assert isinstance(results, QPushButton)
     assert not results.isEnabled()
@@ -77,7 +77,6 @@ def test_results_enabled_when_bot_best_present(qtbot: QtBot) -> None:
                 "listed_on": ["kraken"],
             }
         ],
-        compare=set(),
         on_results=lambda coin: opened.append(str(coin["symbol"])),
     )
     btn = table.cellWidget(0, COL_RESULTS)

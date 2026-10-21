@@ -23,7 +23,7 @@ QLabel#pageTitle, QLabel#brandName { font-size: ${title_pt}pt; font-weight: 600;
 QLabel#status, QLabel#subtitle, QLabel#hint { color: ${onSurfaceVariant}; }
 QLabel#sectionTitle, QLabel#emptyTitle { font-size: 11pt; font-weight: 600; color: ${onSurface}; }
 QLabel#collapseChevron { font-size: 11pt; color: ${onSurfaceVariant}; }
-QFrame#collapseHeader { border-bottom: 1px solid ${outline}; padding: 4px 2px; }
+QFrame#collapseHeader { border-bottom: 1px solid ${outline}; padding: 2px 0; }
 QFrame#collapseHeader:hover { background: ${surfaceVariant}; border-radius: ${radius_sm}px; }
 QLabel#problem { font-weight: 600; color: ${error}; }
 QLabel#badge { background: ${secondaryContainer}; color: ${onSecondaryContainer};

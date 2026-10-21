@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-10-21 — Ship toward v0.8.0 Settings ribbon + CVE lock bumps
+- **Status:** Accepted
+- **Context:** `/ship` after Settings ribbon (Save/Setup/Telegram), saved-keys inventory, 48-col square Settings grid; `upd audit` reported Critical/High on certifi and pillow; `device-no-console.mdc` alwaysApply failed cursor-rule allowlist.
+- **Decision:** Ship Settings UX + scanner/grid work; bump certifi→2026.10.19 and pillow→13.0.0 (security major for Pillow); fastapi/httpx2 minor; allowlist `device-no-console` in `cursor_rule_audit.ALLOW`; keep CodeQL `@v4` style pins from upd where valid.
+- **Alternatives considered:** Leave pillow on 12.x (rejected — Critical CVE only fixed in 13); demote device-no-console to globs (rejected — product rule must stay always-on).
+- **Consequences:** Layout prefs v3 resets user Settings arrangement once; Release Please dry-run targets 0.8.0.
+
 ### 2026-10-20 — Ship v0.7.2 device UX + vault fixture gitleaks
 - **Status:** Accepted
 - **Context:** `/ship` after window geometry, scanner cold-open schedule, local/UTC display, About/Venmo, and live-rails work; `update-deps` again proposed invalid `codeql-action@vcodeql-bundle-v2.27.2`; Security Scan failed on gitleaks `generic-api-key` in vault unit fixtures; branch protection had been missing on `main`.

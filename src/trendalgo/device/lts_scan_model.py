@@ -6,11 +6,17 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.device.profile import read_json, write_json
+from trendalgo.device.scan_identity import (
+    coin_exchange_id,
+    row_key,
+    stamp_exchange,
+)
 from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
 
 LTS_ROWS_FILE = "lts_scan_rows.json"
 WATCHLIST_FILE = "scanner_watchlist.json"
 FILTERS_FILE = "scanner_filters.json"
+# Legacy single-select labels (tests / old filters). Prefer scan_exchanges ids.
 EXCHANGES = ("All", "Kraken", "Coinbase")
 
 
@@ -19,9 +25,10 @@ def lts_rows_path(root: Path) -> Path:
 
 
 def save_lts_rows(root: Path, rows: list[dict[str, Any]]) -> None:
-    prior = {str(r.get("symbol") or "") for r in load_lts_rows(root)}
+    prior = {row_key(r) for r in load_lts_rows(root)}
     write_json(
-        lts_rows_path(root), {"rows": [normalize_coin(r, prior_symbols=prior) for r in rows]}
+        lts_rows_path(root),
+        {"rows": [normalize_coin(r, prior_keys=prior) for r in rows]},
     )
 
 
@@ -35,13 +42,21 @@ def load_lts_rows(root: Path) -> list[dict[str, Any]]:
     return [normalize_coin(r) for r in rows if isinstance(r, dict)]
 
 
-def build_lts_rows(snapshot: QualifiedSnapshot, *, enrich_charts: bool) -> list[dict[str, Any]]:
-    """Map a snapshot to LTS coin dicts. Optional chart enrich hits Kraken (live scans only)."""
+def build_lts_rows(
+    snapshot: QualifiedSnapshot,
+    *,
+    enrich_charts: bool,
+    exchange_id: str = "kraken",
+) -> list[dict[str, Any]]:
+    """Map a snapshot to LTS coin dicts stamped with one venue."""
+    eid = exchange_id.strip().lower() or "kraken"
     if enrich_charts:
         from trendalgo.lts_vendor.bridge import opportunities_to_final_results
 
-        return [normalize_coin(r) for r in opportunities_to_final_results(snapshot)]
-    return [normalize_coin(_basic_row(row)) for row in snapshot.opportunities]
+        raw = opportunities_to_final_results(snapshot)
+    else:
+        raw = [_basic_row(row) for row in snapshot.opportunities]
+    return [normalize_coin(stamp_exchange(r, eid)) for r in raw]
 
 
 def _basic_row(row: OpportunityRow) -> dict[str, Any]:
@@ -53,6 +68,7 @@ def _basic_row(row: OpportunityRow) -> dict[str, Any]:
         "symbol": symbol,
         "name": symbol,
         "pair": row.pair,
+        "exchange_id": "kraken",
         "gains": {"7d": gain, "30d": gain},
         "uniformity_score": float(row.uniformity) * 100.0,
         "volume_24h": float(row.volume_score),
@@ -84,9 +100,13 @@ def normalize_coin(
     coin: dict[str, Any],
     *,
     prior_symbols: set[str] | None = None,
+    prior_keys: set[str] | None = None,
 ) -> dict[str, Any]:
     """Flatten risk_context, dual chart keys, chart-dist %, and optional NEW badge."""
     out = dict(coin)
+    eid = coin_exchange_id(out)
+    out["exchange_id"] = eid
+    out["listed_on"] = [eid]
     closes_1h = cell_closes(out, "closes_1h")
     risk = out.get("risk_context")
     if not isinstance(risk, dict) and len(closes_1h) >= 8:
@@ -110,9 +130,13 @@ def normalize_coin(
     from trendalgo.device.coin_health import compute_coin_health
 
     out["health_score"] = compute_coin_health(out)
-    if prior_symbols is not None:
-        symbol = str(out.get("symbol") or "")
-        out["is_new"] = bool(symbol) and symbol not in prior_symbols and bool(prior_symbols)
+    keys = prior_keys
+    if keys is None and prior_symbols is not None:
+        # Legacy callers passed bare symbols.
+        keys = set(prior_symbols)
+    if keys is not None:
+        key = row_key(out)
+        out["is_new"] = bool(key) and key not in keys and bool(keys)
     return out
 
 
@@ -140,28 +164,19 @@ def save_filters(root: Path, filters: dict[str, Any]) -> None:
 def coins_for_backtest(
     coins: list[dict[str, Any]], filters: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    """Scan + enrich floors before pass-1 BT (skip BT, keep row in table).
+    """Pass-1 BT queue: every Qualified coin that still clears the scan volume floor.
 
-    Re-applies volume / 7D / 30D from the filter strip so All-TA never runs on
-    coins the user already disqualified — even when live gates were weaker.
+    Column 7d/30d / chart-dist / health filters only narrow the *table* view
+    (`scanner_page`). Re-applying them here left Qualified rows with empty
+    Results after a volume-first scan.
     """
     return filter_coins(
         coins,
-        min_gain_7d=_positive_floor(filters.get("min_gain_7d")),
-        min_gain_30d=_positive_floor(
-            filters.get("min_gain_30d")
-            if filters.get("min_gain_30d") not in (None, "")
-            else filters.get("min_gain_pct")
-        ),
         vol24_min=_positive_floor(
             filters.get("vol24_min")
             if filters.get("vol24_min") not in (None, "")
             else filters.get("min_volume_usd")
         ),
-        chart_dist_max_7d=_opt_filter_float(filters.get("chart_dist_max_7d")),
-        chart_dist_max_30d=_opt_filter_float(filters.get("chart_dist_max_30d")),
-        health_min=_opt_filter_float(filters.get("health_min")),
-        vol_accel_filter=str(filters.get("vol_accel_filter") or "") or None,
     )
 
 
@@ -189,6 +204,7 @@ def filter_coins(
     coins: list[dict[str, Any]],
     *,
     exchange: str = "All",
+    exchanges: list[str] | None = None,
     min_gain_7d: float | None = None,
     min_gain_30d: float | None = None,
     min_best_bt: float | None = None,
@@ -203,25 +219,23 @@ def filter_coins(
     """Client-side display filters. Scan gate stays in scan_model."""
     from trendalgo.device.portfolio_categories import is_stablecoin_base
 
-    venue = exchange.strip().lower()
+    allowed = _exchange_allow_set(exchange=exchange, exchanges=exchanges)
     out: list[dict[str, Any]] = []
     for coin in coins:
         pair = str(coin.get("pair") or coin.get("symbol") or "")
         if is_stablecoin_base(pair):
             continue
-        listed = [str(x).lower() for x in (coin.get("listed_on") or ["kraken"])]
-        if venue not in ("", "all") and venue not in listed:
+        eid = coin_exchange_id(coin)
+        if allowed is not None and eid not in allowed:
             continue
         g7 = cell_gain(coin, "7d")
         g30 = cell_gain(coin, "30d")
-        if min_gain_7d is not None and (g7 is None or g7 < min_gain_7d):
+        if not _pass_min_floor(g7, min_gain_7d):
             continue
-        if min_gain_30d is not None and (g30 is None or g30 < min_gain_30d):
+        if not _pass_min_floor(g30, min_gain_30d):
             continue
-        if min_best_bt is not None:
-            best = _as_float(coin.get("bot_best_net_pct"))
-            if best is None or best < min_best_bt:
-                continue
+        if not _pass_min_floor(_as_float(coin.get("bot_best_net_pct")), min_best_bt):
+            continue
         if not _pass_bot_vs_bh(coin.get("bot_vs_bh_pct"), bot_vs_bh_filter):
             continue
         if not _pass_chart_dist(coin.get("chart_dist_7d_pct"), chart_dist_max_7d):
@@ -244,6 +258,37 @@ def filter_coins(
                 continue
         out.append(coin)
     return out
+
+
+def _exchange_allow_set(*, exchange: str, exchanges: list[str] | None) -> set[str] | None:
+    """None = allow all venues; empty set = allow none; else allow listed ids."""
+    if exchanges is not None:
+        cleaned = {str(x).strip().lower() for x in exchanges if str(x).strip()}
+        # Empty checklist means "show none" only when explicitly provided as [].
+        return cleaned
+    venue = exchange.strip().lower()
+    if venue in ("", "all"):
+        return None
+    # Legacy brand labels → registry-ish ids.
+    aliases = {
+        "kraken": "kraken",
+        "coinbase": "coinbaseadvanced",
+        "coinbaseadvanced": "coinbaseadvanced",
+        "binance.us": "binanceus",
+        "binanceus": "binanceus",
+    }
+    return {aliases.get(venue, venue)}
+
+
+def _pass_min_floor(value: float | None, floor: float | None) -> bool:
+    """None floor = off; 0 = strictly positive; N>0 = value >= N."""
+    if floor is None:
+        return True
+    if value is None:
+        return False
+    if floor == 0:
+        return value > 0
+    return value >= floor
 
 
 def _pass_bot_vs_bh(raw: object, filt: str | None) -> bool:

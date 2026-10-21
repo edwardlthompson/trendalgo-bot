@@ -60,7 +60,8 @@ def _prune_pairs_by_ticker_volume(
         return list(pairs)
     kept = [p for p in pairs if volumes.get(p, 0.0) >= min_volume_usd]
     progress.log(
-        f"Ticker prefilter: {len(kept)} of {len(pairs)} pairs ≥ ${min_volume_usd / 1e6:.2f}M 24h"
+        f"Ticker prefilter: {len(kept)} of {len(pairs)} Kraken spot bases "
+        f"≥ ${min_volume_usd / 1e6:.2f}M (venue volume; not CMC)"
     )
     return kept
 
@@ -136,10 +137,15 @@ def fetch_live_market(
         backoff_seconds=backoff_seconds,
         errors=errors,
     )
-    after_gain = [(p, v, g) for p, v, g in gains if g >= min_gain_pct]
-    progress.log(
-        f"{len(after_gain)} of {len(gains)} pairs pass 30d gain ≥ {min_gain_pct * 100:.1f}%"
-    )
+    # Floor 0 (or negative) means "no 30d gain gate" — keep losers and winners alike.
+    if min_gain_pct > 0:
+        after_gain = [(p, v, g) for p, v, g in gains if g >= min_gain_pct]
+        progress.log(
+            f"{len(after_gain)} of {len(gains)} pairs pass 30d gain ≥ {min_gain_pct * 100:.1f}%"
+        )
+    else:
+        after_gain = list(gains)
+        progress.log(f"{len(after_gain)} of {len(gains)} pairs keep 30d gain (floor off)")
     if not after_gain:
         return []
 

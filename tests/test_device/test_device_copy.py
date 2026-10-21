@@ -19,12 +19,13 @@ def test_no_device_source_mentions_the_retired_main_app_or_pwa() -> None:
     assert offenders == []
 
 
-def test_the_scanner_copy_names_the_run_button_and_the_public_data() -> None:
-    assert "Public data only" in S.SCANNER_SUBTITLE
+def test_the_scanner_copy_names_the_run_button_and_keyed_venues() -> None:
+    assert "API keys" in S.SCANNER_SUBTITLE
     assert S.SCANNER_TITLE == "Opportunity scanner"
     assert "Run scan" in S.SCANNER_EMPTY_BODY
     assert "Run scan" in S.SCANNER_NONE_BODY
     assert "Qualified" in S.SCANNER_TAB_QUALIFIED
+    assert "API calls this minute" in S.SETTINGS_KEYS_RATE
 
 
 def test_the_settings_note_names_where_the_secret_lives_without_jargon() -> None:

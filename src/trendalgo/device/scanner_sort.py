@@ -6,22 +6,22 @@ from typing import Any
 
 from trendalgo.device.lts_scan_model import cell_gain
 
-# Column index → sort key (Watch=0 Cmp=1 Logo=2 Name=3 … Results=17).
+# Column index → sort key (Watch=0 Logo=1 Name=2 … Results=16).
 COL_SORT_KEYS: dict[int, str] = {
-    3: "symbol",
-    4: "g7pct",
-    5: "g7hi",
-    6: "g30pct",
-    7: "g30hi",
-    8: "btbest",
-    9: "btvbh",
-    10: "uniformity",
-    11: "health",
-    12: "hv7",
-    13: "mdd",
-    14: "volaccel",
-    15: "venue",
-    16: "vol24h",
+    2: "symbol",
+    3: "g7pct",
+    4: "g7hi",
+    5: "g30pct",
+    6: "g30hi",
+    7: "btbest",
+    8: "btvbh",
+    9: "uniformity",
+    10: "health",
+    11: "hv7",
+    12: "mdd",
+    13: "volaccel",
+    14: "venue",
+    15: "vol24h",
 }
 
 DEFAULT_SORT_KEY = "health"

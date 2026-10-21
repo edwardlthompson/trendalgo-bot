@@ -16,10 +16,10 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
-from trendalgo.device.views.scanner_table import COL_CMP, COL_RESULTS, COL_WATCH, fill_lts_table
+from trendalgo.device.views.scanner_table import COL_RESULTS, COL_WATCH, fill_lts_table
 from trendalgo.device.views.scanner_table_cells import COL_LOGO
 
-_HIDE = (COL_WATCH, COL_CMP, COL_RESULTS)
+_HIDE = (COL_WATCH, COL_RESULTS)
 
 
 def build_scanner_export_panel(
@@ -59,7 +59,6 @@ def build_scanner_export_panel(
     fill_lts_table(
         table,
         coins,
-        compare=set(),
         watch=set(),
         sort_key=sort_key,
         sort_dir=sort_dir,

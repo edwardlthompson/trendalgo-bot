@@ -9,9 +9,9 @@ from typing import Any
 
 import pandas as pd
 
-from trendalgo.backtest.heartbeat_tf import sort_timeframes
+from trendalgo.backtest.heartbeat_tf import needs_1m_base, sort_timeframes
 from trendalgo.backtest.load_days import days_for_timeframe
-from trendalgo.backtest.ohlcv_resample import frames_from_1h
+from trendalgo.backtest.ohlcv_resample import frames_from_base
 from trendalgo.backtest.oracle_catalog_coincidence import coincidence_sauce_row
 from trendalgo.backtest.ta_fleet import MIN_BARS_FLOOR, buy_and_hold_row, oracle_max_row
 from trendalgo.device import strings as S
@@ -34,6 +34,7 @@ from trendalgo.device.pair_strategy_secret_sauce import (
     upsert_secret_sauce_ta,
     validate_sauce_against_peers,
 )
+from trendalgo.device.scan_base_ohlcv import load_base_ohlcv_frame
 from trendalgo.device.scanner_all_ta_prune import deepen_seeds, fleet_row_to_lts
 from trendalgo.device.scanner_tsl_seeds import best_signal_per_strategy, select_tsl_seeds
 
@@ -77,6 +78,9 @@ def scan_pair_strategies(
     total = catalog_budget + SAUCE_PROGRESS_STEPS
     done = 0
     frames_by_tf: dict[str, pd.DataFrame] = {}
+    load_s = 0.0
+    base_tf = "1h"
+    base_frame: pd.DataFrame | None = None
 
     def emit(message: str, **extra: Any) -> None:
         if on_progress is not None:
@@ -87,19 +91,23 @@ def scan_pair_strategies(
             on_rows(list(out))
 
     lookback_days = days_for_timeframe("1h")
+    base_hint = "1m" if needs_1m_base(ordered_tf) else "1h"
     emit(
-        f"Loading {load_symbol} 1h ({lookback_days}d) once, then resampling…",
+        f"Loading {load_symbol} {base_hint} ({lookback_days}d) once, then resampling…",
         phase="load",
-        timeframe="1h",
+        timeframe=base_hint,
     )
-    loaded_1h = loader.load(
+    t_load = time.perf_counter()
+    base_frame, base_tf = load_base_ohlcv_frame(
         symbol=load_symbol,
-        timeframe="1h",
-        days=lookback_days,
+        pair=pair,
+        timeframes=ordered_tf,
+        loader=loader,
         gecko_id=gecko_id,
     )
-    if loaded_1h.frame is None or loaded_1h.frame.empty:
-        emit(f"No 1h candles for {load_symbol}", phase="load", timeframe="1h")
+    load_s = time.perf_counter() - t_load
+    if base_frame is None or base_frame.empty:
+        emit(f"No {base_tf} candles for {load_symbol}", phase="load", timeframe=base_tf)
         for sid in strat_list:
             remember_skip(skip_best, sid, "insufficient_bars")
         done = total
@@ -108,13 +116,13 @@ def scan_pair_strategies(
         emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
         return out
 
-    frame_1h = loaded_1h.frame
     emit(
-        f"Resampling {load_symbol} 1h ({len(frame_1h)} bars) → {len(ordered_tf)} timeframes…",
+        f"Resampling {load_symbol} {base_tf} ({len(base_frame)} bars) → "
+        f"{len(ordered_tf)} timeframes…",
         phase="load",
-        timeframe="1h",
+        timeframe=base_tf,
     )
-    resampled = frames_from_1h(frame_1h, ordered_tf)
+    resampled = frames_from_base(base_frame, ordered_tf)
 
     for timeframe in ordered_tf:
         frame = resampled.get(timeframe)
@@ -129,7 +137,7 @@ def scan_pair_strategies(
             continue
         frames_by_tf[timeframe] = frame
         emit(
-            f"{timeframe}: {len(frame)} bars (from 1h · {lookback_days}d)",
+            f"{timeframe}: {len(frame)} bars (from {base_tf} · {lookback_days}d)",
             phase="load",
             timeframe=timeframe,
         )
@@ -296,6 +304,16 @@ def scan_pair_strategies(
         emit("Secret Sauce Lab unavailable — pending stub left for honesty", phase="sauce")
     done = min(total, done + 1)
 
-    emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
+    emit(
+        f"Scan complete — {len(out)} rows",
+        phase="done",
+        done=total,
+        load_s=round(load_s, 3),
+        base_tf=base_tf,
+        bars_base=0 if base_frame is None else len(base_frame),
+        n_strategies=len(strat_list),
+        n_timeframes=len(ordered_tf),
+        had_subhour=needs_1m_base(ordered_tf),
+    )
     publish()
     return out

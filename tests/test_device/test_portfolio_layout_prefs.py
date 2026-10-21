@@ -44,6 +44,13 @@ def test_cell_size_is_square() -> None:
     assert cw > 1.0
 
 
+def test_cell_size_fixed_row_pitch() -> None:
+    cw, ch = cell_size(1200, 800, 24, 24, 8, fixed_row_px=32.0)
+    assert cw > 1.0
+    assert ch == 32.0
+    assert cw != ch
+
+
 def test_prefs_round_trip(tmp_path: Path) -> None:
     prefs = factory_defaults()
     prefs.grid.cols = 20

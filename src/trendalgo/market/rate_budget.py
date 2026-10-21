@@ -23,12 +23,31 @@ class RateBudget:
 
     def try_acquire(self, now: float) -> bool:
         """Take one call slot at time now. Returns False, taking nothing, when the window is full."""
-        while self._stamps and now - self._stamps[0] >= self.window_s:
-            self._stamps.popleft()
+        self._prune(now)
         if len(self._stamps) >= self.max_calls:
             return False
         self._stamps.append(now)
         return True
+
+    def used(self, now: float) -> int:
+        """Calls counted in the current window (read-only)."""
+        self._prune(now)
+        return len(self._stamps)
+
+    def remaining(self, now: float) -> int:
+        return max(0, self.max_calls - self.used(now))
+
+    def snapshot(self, now: float) -> dict[str, float | int]:
+        return {
+            "used": self.used(now),
+            "remaining": self.remaining(now),
+            "max_calls": self.max_calls,
+            "window_s": self.window_s,
+        }
+
+    def _prune(self, now: float) -> None:
+        while self._stamps and now - self._stamps[0] >= self.window_s:
+            self._stamps.popleft()
 
 
 def backoff_seconds(attempt: int, *, base: float = 1.0, cap: float = 60.0) -> float:

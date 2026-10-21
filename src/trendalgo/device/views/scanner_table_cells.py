@@ -1,4 +1,4 @@
-"""Cell builders for the dense LTS scanner table (Watch|Cmp|Logo|Name …)."""
+"""Cell builders for the dense LTS scanner table (Watch|Logo|Name …)."""
 
 from __future__ import annotations
 
@@ -29,8 +29,8 @@ from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.sparkline import Sparkline, series_gain_pct
 
 LOGO_PX = 36
-COL_WATCH, COL_CMP, COL_LOGO, COL_NAME = 0, 1, 2, 3
-COL_BEST, COL_EXCHANGE, COL_RESULTS = 8, 15, 17
+COL_WATCH, COL_LOGO, COL_NAME = 0, 1, 2
+COL_BEST, COL_EXCHANGE, COL_RESULTS = 7, 14, 16
 
 
 def logo_cell(table: QTableWidget, row: int, symbol: str, is_new: bool) -> None:
@@ -75,16 +75,6 @@ def watch_cell(
     on_watch: Callable[[str, bool], None] | None,
 ) -> None:
     _check_cell(table, row, COL_WATCH, pair, is_pinned, on_watch, tip=S.SCANNER_TAB_WATCH)
-
-
-def cmp_cell(
-    table: QTableWidget,
-    row: int,
-    pair: str,
-    checked: bool,
-    on_compare: Callable[[str, bool], None] | None,
-) -> None:
-    _check_cell(table, row, COL_CMP, pair, checked, on_compare, tip=S.SCANNER_COMPARE_BTN)
 
 
 def _check_cell(
@@ -231,8 +221,12 @@ def best_pill(
 
 
 def exchange_chip(table: QTableWidget, row: int, coin: dict[str, Any]) -> None:
-    listed = [str(x) for x in (coin.get("listed_on") or ["kraken"])]
-    text = ", ".join(x.title() for x in listed) or "Kraken"
+    from trendalgo.device.scan_identity import coin_exchange_id
+    from trendalgo.exchanges.registry import load_registry
+
+    eid = coin_exchange_id(coin)
+    entry = load_registry().by_id(eid)
+    text = entry.brand if entry is not None else eid.title()
     chip = QLabel(text)
     chip.setObjectName("exchangeChip")
     chip.setAlignment(Qt.AlignmentFlag.AlignCenter)

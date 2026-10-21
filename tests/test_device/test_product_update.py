@@ -157,7 +157,7 @@ def test_settings_about_update_strings_present() -> None:
 
     body = Path("src/trendalgo/device/views/settings_page.py").read_text(encoding="utf-8")
     assert "AboutUpdatesSection" in body
-    assert "settingsFormColumn" in body
+    assert "SettingsGridCanvas" in body
     about = Path("src/trendalgo/device/views/about_updates_section.py").read_text(encoding="utf-8")
     assert "ABOUT_CHECK_UPDATES" in about
     assert "ABOUT_CHANGELOG" in about

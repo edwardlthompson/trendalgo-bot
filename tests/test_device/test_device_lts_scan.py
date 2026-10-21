@@ -96,6 +96,17 @@ def test_filter_coins_by_exchange_and_gains() -> None:
     assert [c["symbol"] for c in high] == ["BTC"]
 
 
+def test_filter_coins_zero_floor_keeps_positive_gains_only() -> None:
+    coins = [
+        {"symbol": "UP", "listed_on": ["kraken"], "gains": {"7d": 1.0, "30d": 0.5}},
+        {"symbol": "FLAT", "listed_on": ["kraken"], "gains": {"7d": 0.0, "30d": 0.0}},
+        {"symbol": "DOWN", "listed_on": ["kraken"], "gains": {"7d": -2.0, "30d": -1.0}},
+    ]
+    assert [c["symbol"] for c in filter_coins(coins, min_gain_7d=0.0)] == ["UP"]
+    assert [c["symbol"] for c in filter_coins(coins, min_gain_30d=0.0)] == ["UP"]
+    assert len(filter_coins(coins)) == 3
+
+
 def test_filter_coins_excludes_stablecoin_bases() -> None:
     from trendalgo.device.portfolio_categories import is_stablecoin_base
 
@@ -130,20 +141,26 @@ def test_has_backtest_results() -> None:
     assert not has_backtest_results({})
 
 
-def test_filters_override_min_gain_percent(tmp_path: Path) -> None:
-    save_filters(tmp_path, {"min_gain_pct": 30, "min_volume_usd": 500_000})
+def test_filters_override_volume_not_column_gains(tmp_path: Path) -> None:
+    """Column 7d/30d mins are table-only; pipeline stays volume-first."""
+    save_filters(
+        tmp_path,
+        {"min_gain_pct": 30, "min_gain_7d": 100, "min_gain_30d": 50, "min_volume_usd": 500_000},
+    )
     settings = device_scan_settings(tmp_path)
-    assert settings.min_gain_pct == 0.3
+    assert settings.min_gain_pct == 0.0
+    assert settings.min_gain_7d_pct == 0.0
     assert settings.min_volume_usd == 500_000
 
 
-def test_filters_prefer_min_gain_30d(tmp_path: Path) -> None:
-    save_filters(tmp_path, {"min_gain_30d": 25, "min_gain_pct": 99})
+def test_filters_ignore_min_gain_30d_for_pipeline(tmp_path: Path) -> None:
+    save_filters(tmp_path, {"min_gain_30d": 25, "min_gain_pct": 99, "min_volume_usd": 1_000_000})
     settings = device_scan_settings(tmp_path)
-    assert settings.min_gain_pct == 0.25
+    assert settings.min_gain_pct == 0.0
+    assert settings.min_volume_usd == 1_000_000
 
 
-def test_coins_for_backtest_applies_volume_and_gain_floors() -> None:
+def test_coins_for_backtest_uses_volume_only_not_column_gains() -> None:
     from trendalgo.device.lts_scan_model import coins_for_backtest
 
     coins = [
@@ -154,7 +171,7 @@ def test_coins_for_backtest_applies_volume_and_gain_floors() -> None:
         },
         {
             "symbol": "COLD",
-            "gains": {"7d": 1.0, "30d": 40.0},
+            "gains": {"7d": 1.0, "30d": -5.0},
             "volume_24h": 2_000_000,
         },
         {
@@ -171,4 +188,5 @@ def test_coins_for_backtest_applies_volume_and_gain_floors() -> None:
             "min_volume_usd": 1_000_000,
         },
     )
-    assert [c["symbol"] for c in kept] == ["HOT"]
+    # Column gain floors must not starve pass-1 BT; volume floor still applies.
+    assert [c["symbol"] for c in kept] == ["HOT", "COLD"]

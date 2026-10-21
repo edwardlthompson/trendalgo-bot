@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtCore import QEvent, Qt, Signal
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 _CHEVRON_COLLAPSED = "▶"
 _CHEVRON_EXPANDED = "▼"
 
 
 class CollapsibleSection(QWidget):
+    toggled = Signal(bool)
+
     def __init__(
         self,
         title: str,
@@ -20,6 +22,7 @@ class CollapsibleSection(QWidget):
     ) -> None:
         super().__init__(parent)
         self._expanded = expanded
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._chevron = QLabel(_CHEVRON_EXPANDED if expanded else _CHEVRON_COLLAPSED)
         self._chevron.setObjectName("collapseChevron")
         self._chevron.setFixedWidth(22)
@@ -27,23 +30,24 @@ class CollapsibleSection(QWidget):
         self._title = QLabel(title)
         self._title.setObjectName("sectionTitle" if not nested else "hint")
         self._body = QWidget()
+        self._body.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self._body_layout = QVBoxLayout(self._body)
-        self._body_layout.setContentsMargins(18 if nested else 8, 8, 0, 8)
-        self._body_layout.setSpacing(12)
+        self._body_layout.setContentsMargins(12 if nested else 4, 6, 0, 6)
+        self._body_layout.setSpacing(8)
         self._body.setVisible(expanded)
 
         self._header = QFrame()
         self._header.setObjectName("collapseHeader")
         self._header.setCursor(Qt.CursorShape.PointingHandCursor)
         head = QHBoxLayout(self._header)
-        head.setContentsMargins(4, 8, 4, 8)
-        head.setSpacing(8)
+        head.setContentsMargins(2, 4, 2, 4)
+        head.setSpacing(6)
         head.addWidget(self._chevron)
         head.addWidget(self._title, 1)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 4, 0, 4)
-        layout.setSpacing(4)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
         layout.addWidget(self._header)
         layout.addWidget(self._body)
         self._header.installEventFilter(self)
@@ -61,9 +65,14 @@ class CollapsibleSection(QWidget):
         self._body_layout.addWidget(widget)
 
     def set_expanded(self, expanded: bool) -> None:
-        self._expanded = expanded
-        self._body.setVisible(expanded)
-        self._chevron.setText(_CHEVRON_EXPANDED if expanded else _CHEVRON_COLLAPSED)
+        changed = bool(expanded) != self._expanded
+        self._expanded = bool(expanded)
+        self._body.setVisible(self._expanded)
+        self._chevron.setText(_CHEVRON_EXPANDED if self._expanded else _CHEVRON_COLLAPSED)
+        self._body.updateGeometry()
+        self.updateGeometry()
+        if changed:
+            self.toggled.emit(self._expanded)
 
     def _flip(self) -> None:
         self.set_expanded(not self._expanded)

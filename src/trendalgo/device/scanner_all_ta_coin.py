@@ -16,8 +16,12 @@ def backtest_one_coin(
     strat_list: tuple[str, ...],
     stake: float,
     fee: Any,
+    fee_bps_round_trip: float | None = None,
 ) -> tuple[str, list[dict[str, Any]], dict[str, float]]:
     """Run the Backtest-tab All-TA path for one Opportunity coin."""
+    from trendalgo.device.scan_identity import coin_exchange_id
+    from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
+
     symbol = str(coin.get("symbol") or "").strip().upper()
     stats = {
         "tested": float(len(strat_list) * len(timeframes)),
@@ -34,13 +38,16 @@ def backtest_one_coin(
     gecko = coin.get("gecko_id")
     gecko_id = str(gecko) if gecko else None
     loader = loader_factory()
+    use_fee = fee
+    if fee_bps_round_trip is not None:
+        use_fee = fee_for_exchange(coin_exchange_id(coin), fee_bps_round_trip)
     rows = scan_pair_strategies(
         symbol=symbol,
         pair=pair,
         timeframes=timeframes,
         strat_list=strat_list,
         stake=stake,
-        fee=fee,
+        fee=use_fee,
         loader=loader,
         gecko_id=gecko_id,
     )

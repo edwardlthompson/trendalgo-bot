@@ -5,7 +5,15 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 from trendalgo.device import strings as S
 
@@ -23,6 +31,7 @@ class ModuleChrome(QFrame):
         on_export: Callable[[str], None] | None = None,
         on_remove: Callable[[str], None] | None = None,
         edit_mode: bool = False,
+        content_aware: bool = False,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
@@ -30,12 +39,18 @@ class ModuleChrome(QFrame):
         self._title = title
         self._has_export = on_export is not None
         self._has_remove = on_remove is not None
+        self._content_aware = content_aware
         self.setObjectName("dashModule")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._self_titled = module_id in _SELF_TITLED
+        if content_aware:
+            self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+            body.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
 
         header = QHBoxLayout()
-        header.setContentsMargins(0, 0, 0, 4 if self._self_titled else 6)
+        # Settings cards: title tight to the top edge; Dashboard keeps prior spacing.
+        head_bottom = 2 if content_aware else (4 if self._self_titled else 6)
+        header.setContentsMargins(0, 0, 0, head_bottom)
         header.setSpacing(6)
         self._handle = QLabel("⠿")
         self._handle.setObjectName("dashMuted")
@@ -74,10 +89,16 @@ class ModuleChrome(QFrame):
         foot.addWidget(self._resize_handle)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 10, 12, 6)
-        layout.setSpacing(6)
+        if content_aware:
+            layout.setContentsMargins(8, 4, 8, 4)
+            layout.setSpacing(4)
+        else:
+            layout.setContentsMargins(12, 10, 12, 6)
+            layout.setSpacing(6)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout.addWidget(self._header_host)
-        layout.addWidget(body, 1)
+        # Content-aware Settings modules must not stretch/compress the body.
+        layout.addWidget(body, 0 if content_aware else 1)
         layout.addLayout(foot)
         self.body = body
         self.set_edit_mode(edit_mode)

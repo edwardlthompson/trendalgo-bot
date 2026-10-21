@@ -108,10 +108,43 @@ def test_best_bt_and_bot_vs_bh_filters(qtbot: QtBot, ctx: DeviceContext) -> None
     QTest.keyClicks(page._col_filters.best_bt, "50")
     QTest.keyClick(page._col_filters.best_bt, Qt.Key.Key_Return)
     assert [c["symbol"] for c in page._shown] == ["BOT"]
-    page._col_filters.best_bt.setValue(0)
+    page._col_filters.best_bt.setValue(None)
     page._col_filters.bot_vs_bh.setCurrentIndex(page._col_filters.bot_vs_bh.findData("neg"))
     page._on_filter()
     assert [c["symbol"] for c in page._shown] == ["HOLD"]
+
+
+def test_typed_zero_keeps_positive_gains_only(qtbot: QtBot, ctx: DeviceContext) -> None:
+    page = ScannerPage(ctx)
+    qtbot.addWidget(page)
+    page.show()
+    page._coins = [
+        {
+            "symbol": "UP",
+            "pair": "UP/USD",
+            "listed_on": ["kraken"],
+            "gains": {"7d": 2.0, "30d": 3.0},
+        },
+        {
+            "symbol": "DOWN",
+            "pair": "DOWN/USD",
+            "listed_on": ["kraken"],
+            "gains": {"7d": -1.0, "30d": -4.0},
+        },
+        {
+            "symbol": "FLAT",
+            "pair": "FLAT/USD",
+            "listed_on": ["kraken"],
+            "gains": {"7d": 0.0, "30d": 0.0},
+        },
+    ]
+    page._show_tab()
+    edit = page._col_filters.gain_7d
+    edit.setFocus()
+    QTest.keyClicks(edit, "0")
+    QTest.keyClick(edit, Qt.Key.Key_Return)
+    assert edit.value() == 0
+    assert [c["symbol"] for c in page._shown] == ["UP"]
 
 
 def test_type_over_empty_without_select_all(qtbot: QtBot, ctx: DeviceContext) -> None:
@@ -122,7 +155,7 @@ def test_type_over_empty_without_select_all(qtbot: QtBot, ctx: DeviceContext) ->
     page._coins = _coins()
     page._show_tab()
     edit = page._col_filters.gain_7d
-    assert edit.value() == 0
+    assert edit.value() is None
     assert edit.text() == ""
     edit.setFocus()
     QTest.keyClicks(edit, "15")

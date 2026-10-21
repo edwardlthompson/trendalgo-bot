@@ -68,7 +68,6 @@ def test_pin_shows_pressed(qtbot: QtBot) -> None:
     fill_lts_table(
         table,
         [{"symbol": "BTC", "pair": "BTC/USD", "listed_on": ["kraken"]}],
-        compare=set(),
         watch={"BTC/USD"},
         on_watch=lambda _p, _c: None,
     )
@@ -93,7 +92,6 @@ def test_results_enabled_after_merge_fields(qtbot: QtBot) -> None:
                 "listed_on": ["kraken"],
             }
         ],
-        compare=set(),
     )
     btn = table.cellWidget(0, COL_RESULTS)
     assert isinstance(btn, QPushButton)

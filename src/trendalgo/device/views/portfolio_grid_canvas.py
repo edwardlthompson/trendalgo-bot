@@ -29,6 +29,7 @@ class GridCanvas(QScrollArea):
         on_placements_changed: Callable[[list[Placement]], None] | None = None,
         on_export_module: Callable[[str, QWidget], None] | None = None,
         on_remove_module: Callable[[str], None] | None = None,
+        on_interaction_end: Callable[[str | None], None] | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
@@ -39,11 +40,13 @@ class GridCanvas(QScrollArea):
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # Settings passes None for export/remove; Dashboard wires real handlers.
         self._surface = _GridSurface(
             on_placements_changed=on_placements_changed,
             on_export_module=on_export_module,
             on_remove_module=on_remove_module,
             on_need_size=self._fit_surface,
+            on_interaction_end=on_interaction_end,
         )
         self.setWidget(self._surface)
 
@@ -85,12 +88,14 @@ class _GridSurface(QFrame):
         on_export_module: Callable[[str, QWidget], None] | None,
         on_remove_module: Callable[[str], None] | None,
         on_need_size: Callable[[int, int], None],
+        on_interaction_end: Callable[[str | None], None] | None = None,
     ) -> None:
         super().__init__()
         self._on_changed = on_placements_changed
         self._on_export = on_export_module
         self._on_remove = on_remove_module
         self._on_need_size = on_need_size
+        self._on_interaction_end = on_interaction_end
         self._grid = GridPrefs()
         self._placements: dict[str, Placement] = {}
         self._chrome: dict[str, ModuleChrome] = {}
@@ -155,6 +160,7 @@ class _GridSurface(QFrame):
                 self._grid.cols,
                 max(1, max_bottom),
                 self._grid.gap_px,
+                fixed_row_px=self._grid.row_px,
             )
             for mid, placement in self._placements.items():
                 chrome = self._chrome.get(mid)
@@ -254,6 +260,7 @@ class _GridSurface(QFrame):
             self._grid.cols,
             self._grid.rows,
             self._grid.gap_px,
+            fixed_row_px=self._grid.row_px,
         )
         bottom = max((p.row + p.h for p in self._placements.values()), default=self._grid.rows)
         for c in range(self._grid.cols + 1):
@@ -279,6 +286,7 @@ class _GridSurface(QFrame):
             self._grid.cols,
             self._grid.rows,
             self._grid.gap_px,
+            fixed_row_px=self._grid.row_px,
         )
         self._ghost = snap_point(
             local.x(),
@@ -305,6 +313,8 @@ class _GridSurface(QFrame):
         self._ghost = None
         if ghost is None:
             self.relayout_for_width(max(self.width(), 400))
+            if self._on_interaction_end is not None:
+                self._on_interaction_end(mid)
             return
         occupied = [(i, Rect(p.col, p.row, p.w, p.h)) for i, p in self._placements.items()]
         final, swap_id = find_free_or_swap(
@@ -324,6 +334,8 @@ class _GridSurface(QFrame):
         self.relayout_for_width(max(self.width(), 400))
         if self._on_changed is not None:
             self._on_changed(list(self._placements.values()))
+        if self._on_interaction_end is not None:
+            self._on_interaction_end(mid)
 
     def _on_resize(self, global_pos: QPoint) -> None:
         if self._resize_id is None:
@@ -332,11 +344,16 @@ class _GridSurface(QFrame):
         placement = self._placements[mid]
         local = self.mapFromGlobal(global_pos)
         origin = Rect(placement.col, placement.row, placement.w, placement.h)
-        spec = effective_spec(mid, self._module_mins)
-        min_w = spec.min_w if spec else 2
-        min_h = spec.min_h if spec else 2
-        max_w = spec.max_w if spec else self._grid.cols
-        max_h = spec.max_h if spec else 16
+        # Settings sections are not in the Dashboard catalog; honor module_mins directly.
+        if mid in self._module_mins:
+            min_w, min_h = self._module_mins[mid]
+            max_w, max_h = self._grid.cols, 64
+        else:
+            spec = effective_spec(mid, self._module_mins)
+            min_w = spec.min_w if spec else 2
+            min_h = spec.min_h if spec else 2
+            max_w = spec.max_w if spec else self._grid.cols
+            max_h = spec.max_h if spec else 16
         rows = max(self._grid.rows, placement.row + max_h + 2, 24)
         cw, ch = cell_size(
             max(self.width(), 400),
@@ -344,6 +361,7 @@ class _GridSurface(QFrame):
             self._grid.cols,
             rows,
             self._grid.gap_px,
+            fixed_row_px=self._grid.row_px,
         )
         ghost = snap_resize(
             origin,
@@ -393,6 +411,8 @@ class _GridSurface(QFrame):
         self.relayout_for_width(max(self.width(), 400))
         if self._on_changed is not None:
             self._on_changed(list(self._placements.values()))
+        if self._on_interaction_end is not None:
+            self._on_interaction_end(mid)
 
     def _export(self, module_id: str) -> None:
         chrome = self._chrome.get(module_id)

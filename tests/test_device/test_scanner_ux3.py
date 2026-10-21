@@ -69,7 +69,6 @@ def test_watch_checkbox_persists(tmp_path: Path, qtbot: QtBot) -> None:
     fill_lts_table(
         table,
         [{"symbol": "BTC", "pair": "BTC/USD", "listed_on": ["kraken"]}],
-        compare=set(),
         watch=set(),
         on_watch=on_watch,
     )
@@ -79,13 +78,13 @@ def test_watch_checkbox_persists(tmp_path: Path, qtbot: QtBot) -> None:
     assert box is not None
     assert not box.isChecked()
     box.setChecked(True)
-    assert seen == [("BTC/USD", True)]
-    assert "BTC/USD" in load_watchlist(tmp_path)
+    assert seen == [("kraken:BTC", True)]
+    assert "kraken:BTC" in load_watchlist(tmp_path)
 
     seen.clear()
     box.setChecked(False)
-    assert seen == [("BTC/USD", False)]
-    assert "BTC/USD" not in load_watchlist(tmp_path)
+    assert seen == [("kraken:BTC", False)]
+    assert "kraken:BTC" not in load_watchlist(tmp_path)
 
 
 def test_scanner_page_omits_title_subtitle(qtbot: QtBot, ctx: DeviceContext) -> None:
@@ -124,7 +123,7 @@ def test_gain_spin_keeps_focus_widget_across_filter(qtbot: QtBot, ctx: DeviceCon
     edit.setValue(7)
     page._on_filter()
     assert [c["symbol"] for c in page._shown] == ["HIGH"]
-    assert page._table.cellWidget(FILTER_ROW, 4).findChild(type(edit)) is edit
+    assert page._table.cellWidget(FILTER_ROW, 3).findChild(type(edit)) is edit
     assert edit.value() == 7
 
 
@@ -146,10 +145,10 @@ def test_strict_column_filter_keeps_filter_row_visible(qtbot: QtBot, ctx: Device
     page._show_tab()
     assert page._shown == []
     assert not page._table.isHidden()
-    assert page._table.cellWidget(FILTER_ROW, 4) is not None
+    assert page._table.cellWidget(FILTER_ROW, 3) is not None
     assert page._col_filters.gain_7d.value() == 7
     assert S.SCANNER_FILTER_NONE_STATUS in page._status.text()
-    page._col_filters.gain_7d.setValue(0)
+    page._col_filters.gain_7d.setValue(None)
     page._show_tab()
     assert len(page._shown) == 1
     assert page._table.rowCount() >= 2
@@ -171,10 +170,10 @@ def test_column_filters_live_in_table_row_zero(qtbot: QtBot, ctx: DeviceContext)
     page._show_tab()
     table = page._table
     assert table.rowCount() >= 2
-    host = table.cellWidget(FILTER_ROW, 4)
+    host = table.cellWidget(FILTER_ROW, 3)
     assert host is not None
     assert host.findChild(GainMinEdit) is page._col_filters.gain_7d
-    spark_host = table.cellWidget(FILTER_ROW, 5)
+    spark_host = table.cellWidget(FILTER_ROW, 4)
     assert spark_host is not None
     assert spark_host.findChild(QComboBox) is page._col_filters.chart_dist_7d
     # Data row starts after the filter row.

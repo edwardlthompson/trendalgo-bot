@@ -28,13 +28,15 @@ def cell_size(
     rows: int,
     gap_px: int,
     *,
-    fixed_row_px: float = 56.0,
+    fixed_row_px: float = 0.0,
 ) -> tuple[float, float]:
-    """Square cell from canvas columns; fixed_row_px kept for call-site compat (unused)."""
-    del canvas_h, rows, fixed_row_px
+    """Column width from canvas; square cells unless fixed_row_px > 0 (Settings)."""
+    del canvas_h, rows
     cols = max(1, cols)
     gap_x = gap_px * (cols - 1)
     cw = max(1.0, (canvas_w - gap_x) / cols)
+    if fixed_row_px > 0:
+        return cw, float(fixed_row_px)
     return cw, cw
 
 

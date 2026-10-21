@@ -9,18 +9,18 @@ from trendalgo.device import design_tokens as T
 # Columns where algebraically higher = better (less risk).
 INVERT_KEYS = frozenset({"hv7", "mdd"})
 
-# Heat column key → table column index (Watch|Cmp|Logo|Name layout).
+# Heat column key → table column index (Watch|Logo|Name layout).
 HEAT_COL_KEYS: dict[int, str] = {
-    4: "g7pct",
-    6: "g30pct",
-    8: "btbest",
-    9: "btvbh",
-    10: "uniformity",
-    11: "health",
-    12: "hv7",
-    13: "mdd",
-    14: "volaccel",
-    16: "vol24h",
+    3: "g7pct",
+    5: "g30pct",
+    7: "btbest",
+    8: "btvbh",
+    9: "uniformity",
+    10: "health",
+    11: "hv7",
+    12: "mdd",
+    13: "volaccel",
+    15: "vol24h",
 }
 
 # RGB stops (no raw hex literals — device UI token rule).

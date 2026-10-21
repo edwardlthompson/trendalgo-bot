@@ -71,6 +71,7 @@ def test_ticker_prefilter_drops_low_volume_before_ohlcv(monkeypatch: pytest.Monk
     monkeypatch.setattr("trendalgo.scanner.live_market.fetch_ohlcv", fake_fetch)
     monkeypatch.setattr(
         "trendalgo.scanner.live_market.fetch_quote_volumes",
+        # Per-base Kraken venue sum (not CMC); SOL under floor, BTC over.
         lambda pairs, **_k: {"SOL/USD": 50.0, "BTC/USD": 5_000_000.0},
     )
     rows = fetch_live_market(
@@ -138,6 +139,34 @@ def test_gain_floor_skips_five_minute_after_volume_pass(
     assert any(c.endswith(":1h") for c in calls)
     assert any(c.endswith(":1d") for c in calls)
     assert not any(c.endswith(":5m") for c in calls)
+
+
+def test_zero_gain_floor_keeps_negative_30d_pairs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Volume-first scans must not treat min_gain_pct=0 as 'require non-negative'."""
+
+    def fake_fetch(pair: str, timeframe: str, *_a, **_k):
+        bars = _bars(35 if timeframe == "1d" else 180 if timeframe == "1h" else 25)
+        if timeframe == "1d":
+            # Descending closes → negative 30d gain.
+            return [
+                OhlcvPoint(
+                    time=b.time,
+                    open=200.0 - i,
+                    high=201.0 - i,
+                    low=199.0 - i,
+                    close=200.0 - i,
+                    volume=b.volume,
+                )
+                for i, b in enumerate(bars)
+            ]
+        return bars
+
+    monkeypatch.setattr("trendalgo.scanner.live_market.fetch_ohlcv", fake_fetch)
+    rows = fetch_live_market(["SOL/USD"], min_volume_usd=0.0, min_gain_pct=0.0)
+    assert len(rows) == 1
+    assert rows[0].gain_pct < 0
 
 
 def test_full_pass_fetches_volume_then_gain_then_five_m(

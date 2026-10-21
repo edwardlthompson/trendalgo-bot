@@ -26,30 +26,38 @@ class DashboardModulesSection(QWidget):
         ctx: DeviceContext,
         *,
         on_saved: Callable[[], None] | None = None,
+        on_layout_change: Callable[[], None] | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._ctx = ctx
         self._on_saved = on_saved
+        self._on_layout_change = on_layout_change
         self._spins: dict[str, tuple[QSpinBox, QSpinBox]] = {}
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
         help_lbl = QLabel(S.SETTINGS_DASHBOARD_MODULES_HELP)
         help_lbl.setObjectName("hint")
         help_lbl.setWordWrap(True)
         layout.addWidget(help_lbl)
         for category, specs in catalog_by_category():
+            # Human-readable category + module titles (Overview / Assets / …).
             group = CollapsibleSection(category, expanded=False, nested=True)
+            group.toggled.connect(self._emit_layout_change)
             for spec in specs:
                 row = QHBoxLayout()
                 label = QLabel(spec.title)
-                label.setMinimumWidth(160)
+                label.setMinimumWidth(180)
+                label.setToolTip(spec.title)
                 w_spin = QSpinBox()
                 w_spin.setRange(1, spec.max_w)
                 w_spin.setPrefix("W ")
+                w_spin.setToolTip(f"Minimum width for {spec.title}")
                 h_spin = QSpinBox()
                 h_spin.setRange(1, spec.max_h)
                 h_spin.setPrefix("H ")
+                h_spin.setToolTip(f"Minimum height for {spec.title}")
                 row.addWidget(label, 1)
                 row.addWidget(w_spin)
                 row.addWidget(h_spin)
@@ -68,6 +76,10 @@ class DashboardModulesSection(QWidget):
         self._status.setObjectName("hint")
         layout.addWidget(self._status)
         self.reload()
+
+    def _emit_layout_change(self, _expanded: bool = False) -> None:
+        if self._on_layout_change is not None:
+            self._on_layout_change()
 
     def reload(self) -> None:
         prefs = load_prefs(self._ctx.root)

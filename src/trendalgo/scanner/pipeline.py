@@ -80,7 +80,9 @@ def run_pipeline(
     listed = verify_kraken_listings()
     pairs = [p for p in listed if not is_stablecoin_base(p)]
     skipped_stables = len(listed) - len(pairs)
-    progress.log(f"Universe: {len(pairs)} Kraken USD pairs (filter: {settings.universe_filter})")
+    progress.log(
+        f"Universe: {len(pairs)} Kraken spot bases (canonical pairs; filter: {settings.universe_filter})"
+    )
     if skipped_stables:
         progress.log(f"Excluded {skipped_stables} stablecoin pair(s)")
     use_sample = sample or os.environ.get("TRENDALGO_MARKET_SOURCE", "").lower() == "synthetic"
@@ -121,7 +123,10 @@ def run_pipeline(
             continue
         gain = row.gain_pct
         volume_usd = row.volume_usd
-        if volume_usd < settings.min_volume_usd or gain < settings.min_gain_pct:
+        if volume_usd < settings.min_volume_usd:
+            continue
+        # min_gain_pct <= 0 disables the gain gate (volume-first device scans).
+        if settings.min_gain_pct > 0 and gain < settings.min_gain_pct:
             continue
         bars = [
             OhlcvBar(
@@ -138,7 +143,8 @@ def run_pipeline(
         if uni < settings.min_uniformity:
             continue
         spark = [round(b.close, 2) for b in bars[-12:]]
-        entry = uni >= settings.min_uniformity and gain >= settings.min_gain_pct
+        gain_ok = settings.min_gain_pct <= 0 or gain >= settings.min_gain_pct
+        entry = uni >= settings.min_uniformity and gain_ok
         candidates.append(
             OpportunityRow(
                 rank=0,

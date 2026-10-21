@@ -38,8 +38,29 @@ def test_the_selftest_flag_returns_its_exit_code(monkeypatch: pytest.MonkeyPatch
 
 
 def test_without_the_flag_the_window_entry_runs(monkeypatch: pytest.MonkeyPatch) -> None:
+    called: list[bool] = []
+
+    def _detach(*, testing: bool = False) -> bool:
+        called.append(testing)
+        return True
+
+    monkeypatch.setattr("trendalgo.device.console_detach.detach_console_if_needed", _detach)
     monkeypatch.setattr("trendalgo.device.app.run", lambda: 5)
     assert device_main.main([]) == 5
+    assert called == [False]
+
+
+def test_should_detach_console_skips_testing_and_keep_flag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from trendalgo.device.console_detach import should_detach_console
+
+    monkeypatch.setattr(device_main.sys, "platform", "win32")
+    assert should_detach_console(testing=True) is False
+    monkeypatch.setenv("TRENDALGO_KEEP_CONSOLE", "1")
+    assert should_detach_console(testing=False) is False
+    monkeypatch.delenv("TRENDALGO_KEEP_CONSOLE", raising=False)
+    assert should_detach_console(testing=False) is True
 
 
 def test_prepare_databases_switches_existing_device_files_only(ctx: DeviceContext) -> None:

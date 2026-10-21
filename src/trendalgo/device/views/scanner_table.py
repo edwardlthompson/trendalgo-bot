@@ -1,4 +1,4 @@
-"""Dense LTS scanner table: Watch|Cmp|Logo|Name, hourly sparks, optional heat ranks."""
+"""Dense LTS scanner table: Watch|Logo|Name, hourly sparks, optional heat ranks."""
 
 from __future__ import annotations
 
@@ -11,16 +11,15 @@ from PySide6.QtWidgets import QHeaderView, QTableWidget, QTableWidgetItem
 
 from trendalgo.device import strings as S
 from trendalgo.device.lts_scan_model import cell_gain, dash
+from trendalgo.device.scan_identity import coin_in_watchlist, row_key
 from trendalgo.device.scanner_heat import HEAT_COL_KEYS, INVERT_KEYS, fg_for_bg, rank_hex_colors
 from trendalgo.device.scanner_sort import header_label
 from trendalgo.device.views.scanner_table_cells import (
-    COL_CMP,
     COL_LOGO,
     COL_NAME,
     COL_WATCH,
     LOGO_PX,
     best_pill,
-    cmp_cell,
     exchange_chip,
     logo_cell,
     name_cell,
@@ -31,16 +30,16 @@ from trendalgo.device.views.scanner_table_cells import (
 from trendalgo.device.views.sparkline import SPARK_W
 from trendalgo.device.views.widgets import tint_signed
 
-# Watch, Cmp, Logo, Name, 7D%, 7D, 30D%, 30D, Best BT, Bot vs B&H,
+# Watch, Logo, Name, 7D%, 7D, 30D%, 30D, Best BT, Bot vs B&H,
 # Uniformity, Health, HV 7D, Max DD, Vol Δ%, Exchange, 24H Vol, Results
-COLUMNS = 18
+COLUMNS = 17
 ROW_PX = 80
-COL_SPARK7, COL_SPARK30 = 5, 7
-COL_BEST, COL_EXCHANGE, COL_RESULTS = 8, 15, 17
+COL_SPARK7, COL_SPARK30 = 4, 6
+COL_BEST, COL_EXCHANGE, COL_RESULTS = 7, 14, 16
+COL_GAIN7, COL_GAIN30, COL_BOT_VS_BH = 3, 5, 8
 
 __all__ = [
     "COL_BEST",
-    "COL_CMP",
     "COL_EXCHANGE",
     "COL_LOGO",
     "COL_NAME",
@@ -57,13 +56,11 @@ def fill_lts_table(
     table: QTableWidget,
     coins: list[dict[str, Any]],
     *,
-    compare: set[str],
     watch: set[str] | None = None,
     sort_key: str = "",
     sort_dir: int = -1,
     heatmap: bool = False,
     filter_row: bool = False,
-    on_compare: Callable[[str, bool], None] | None = None,
     on_results: Callable[[dict[str, Any]], None] | None = None,
     on_watch: Callable[[str, bool], None] | None = None,
     on_spark: Callable[[dict[str, Any], str], None] | None = None,
@@ -97,14 +94,12 @@ def fill_lts_table(
     for row, coin in enumerate(coins):
         r = row + offset
         symbol = str(coin.get("symbol") or "")
-        pair = str(coin.get("pair") or symbol)
         name = str(coin.get("name") or symbol)
         gain7 = cell_gain(coin, "7d")
         gain30 = cell_gain(coin, "30d")
         spark7 = list(coin.get("spark_closes_7d") or [])
         spark30 = list(coin.get("spark_closes_30d") or [])
         values = [
-            "",
             "",
             "",
             "",
@@ -126,7 +121,6 @@ def fill_lts_table(
         skip = {
             COL_LOGO,
             COL_WATCH,
-            COL_CMP,
             COL_NAME,
             COL_SPARK7,
             COL_SPARK30,
@@ -144,17 +138,16 @@ def fill_lts_table(
                 item.setBackground(QColor(heat))
                 item.setForeground(QColor(fg_for_bg(heat)))
             elif not heatmap:
-                if column == 4 and gain7 is not None:
+                if column == COL_GAIN7 and gain7 is not None:
                     tint_signed(item, gain7)
-                if column == 6 and gain30 is not None:
+                if column == COL_GAIN30 and gain30 is not None:
                     tint_signed(item, gain30)
-                if column == 9:
+                if column == COL_BOT_VS_BH:
                     try:
                         tint_signed(item, float(coin.get("bot_vs_bh_pct") or 0))
                     except (TypeError, ValueError):
                         pass
-        watch_cell(table, r, pair, pair in pinned or symbol in pinned, on_watch)
-        cmp_cell(table, r, pair, pair in compare or symbol in compare, on_compare)
+        watch_cell(table, r, row_key(coin), coin_in_watchlist(coin, pinned), on_watch)
         logo_cell(table, r, symbol, bool(coin.get("is_new")))
         name_cell(table, r, coin, symbol, name)
         spark7_click = _spark_handler(on_spark, coin, "7d")

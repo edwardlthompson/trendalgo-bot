@@ -31,6 +31,15 @@ def acquire_private_slot(exchange_id: str, *, max_per_min: int | None = None) ->
     return budget_for(exchange_id, max_per_min=max_per_min).try_acquire(time.monotonic())
 
 
+def budget_snapshot(
+    exchange_id: str, *, max_per_min: int | None = None, now: float | None = None
+) -> dict[str, float | int]:
+    """Read-only used/remaining for Settings meters."""
+    return budget_for(exchange_id, max_per_min=max_per_min).snapshot(
+        time.monotonic() if now is None else now
+    )
+
+
 def call_private[T](
     exchange_id: str,
     call: Callable[[], T],
