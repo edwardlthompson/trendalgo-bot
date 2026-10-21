@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.8.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.8.0...v0.8.1) (2026-10-21)
+
+
+### Changed
+
+* **release:** sync uv.lock to 0.8.0 after Release Please merge ([a13743f](https://github.com/edwardlthompson/trendalgo-bot/commit/a13743fa6fc993e0dd347a152d19d01ba38aeb0e))
+
+
+### Documentation
+
+* **kb:** record v0.8.0 ship CodeQL pin and OpenVEX gap ([7c18a7d](https://github.com/edwardlthompson/trendalgo-bot/commit/7c18a7d1ea793710107d99eec70320e8fefc6783))
+
 ## [0.8.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.2...v0.8.0) (2026-10-21)
 
 
