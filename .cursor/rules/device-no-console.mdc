@@ -9,12 +9,14 @@ alwaysApply: true
 
 ## Do
 
-- Launch with `.\scripts\packaging\launch-device.ps1` (pythonw / frozen / MSI, `CreateNoWindow`)
+- Day-to-day UI: `.\scripts\packaging\launch-device.ps1` or `.\scripts\packaging\relaunch-device.ps1` (source-first pythonw when `.venv` exists — picks up `src/` without a PyInstaller rebuild)
+- Packaging check: `.\scripts\packaging\launch-device.ps1 -Frozen` (or `-Frozen` on relaunch)
 - Or Start Menu / Desktop / MSI shortcuts (`launch-device.vbs` → windowed `TrendAlgoDevice.exe`)
 - Autostart already prefers `pythonw.exe` (`autostart.default_command`)
 
 ## Do not
 
+- Rebuild frozen / MSI just to see a Settings or wizard change — relaunch source instead
 - `Start-Process uv run python -m trendalgo.device` for a normal GUI relaunch
 - `uv run python -m trendalgo.device` as the product launch path (console `python.exe` owns a console; closing it kills the process)
 - Attach a console for GUI runs

@@ -19,6 +19,19 @@ On Windows, use **PowerShell** scripts (`scripts/dev-local.ps1`). Bash scripts w
 | **L1 — Dev hot reload** | Daily UI/API work | Vite HMR + live API on port 8000 |
 | **L2 — Production build** | Before PR / sprint sign-off | Built PWA + API (no HMR) |
 | **L3 — Docker stack** | Parity with prod compose | API in container (`docker compose --profile full`) |
+## Device GUI (Windows)
+
+UI iterate = relaunch source; do **not** rebuild the frozen app for Settings/wizard/view tweaks.
+
+```powershell
+.\scripts\packaging\relaunch-device.ps1
+# or: .\scripts\packaging\launch-device.ps1
+# packaging check only: .\scripts\packaging\launch-device.ps1 -Frozen
+
+```
+
+`launch-device.ps1` defaults to `.venv\Scripts\pythonw.exe -m trendalgo.device` when the venv exists (live `src/`). Rebuild with `build-windows-desktop.ps1 -Device` only for selftest, MSI, or ship.
+
 ## L1 — Quick start (recommended)
 
 ### Windows (PowerShell)

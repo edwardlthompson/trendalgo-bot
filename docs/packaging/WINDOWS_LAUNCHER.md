@@ -2,7 +2,7 @@
 
 > **Retired 2026-10-10 (BUILD_PLAN row 23, p7-retire-pwa).** The pywebview shell (`src/trendalgo/desktop/`) and `scripts/packaging/launch-windows.ps1` are removed.
 >
-> **Device GUI (current):** `.\scripts\packaging\launch-device.ps1` — no console. Frozen build: `.\scripts\packaging\build-windows-desktop.ps1 -Device` ([ADR-0016](../adr/0016-headless-bot-local-device.md)). Do **not** use `uv run python -m trendalgo.device` for normal GUI runs (that attaches a console; closing it kills the app). Testing only: `-KeepConsole` or `TRENDALGO_KEEP_CONSOLE=1`.
+> **Device GUI (current):** `.\scripts\packaging\launch-device.ps1` — no console, **source-first** (`.venv` pythonw → live `src/`). After UI edits use `.\scripts\packaging\relaunch-device.ps1` (stop + relaunch); do **not** rebuild PyInstaller for day-to-day checks. Packaging / MSI verification: `-Frozen`. Frozen build: `.\scripts\packaging\build-windows-desktop.ps1 -Device` ([ADR-0016](../adr/0016-headless-bot-local-device.md)). Do **not** use `uv run python -m trendalgo.device` for normal GUI runs (that attaches a console; closing it kills the app). Testing only: `-KeepConsole` or `TRENDALGO_KEEP_CONSOLE=1`.
 >
 > The sections below are history.
 

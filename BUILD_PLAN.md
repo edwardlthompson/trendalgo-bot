@@ -1,7 +1,7 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 <!-- remaining-tally -->
-**Remaining:** AGENT 0 · LOCAL 0 · CLOUD 0 · AUTO 0 · HUMAN 0 · ADB 0 · **0 open**
+**Remaining:** AGENT 3 · LOCAL 3 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **5 open**
 <!-- /remaining-tally -->
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
@@ -25,24 +25,27 @@
 
 ## Now
 
-> **Sprint Sauce-Oracle-Gap** — close Oracle gap (phased). Spec: [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md).
-> Prior **Sprint Oracle-SS** archived in COMPLETED_TASKS.md @ `8ba0e76`.
-> Open HUMAN: PF-H1 (optional calendar keys) + carry-forward / R-Audit-8.9.
+> **Sprint Device-Notify-Launch** — land uncommitted device UX + source-first relaunch (session 2026-10-21/22). Day-to-day: `.\scripts\packaging\relaunch-device.ps1` (no PyInstaller rebuild).
+> Prior **Sprint Sauce-Oracle-Gap** Phases 0–1 ✅; Phase 2–4 backlog in [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md) — not scheduled.
+> Open HUMAN: PF-H1 (optional calendar keys) + alert copy review + carry-forward / R-Audit-8.9.
 
 | Marker | State |
 |--------|-------|
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-### Sequential — Sauce Oracle gap
+### Sequential — Device notify + source-first launch
 
-✅ [AGENT][LOCAL] Phase 0 residual instrumentation — dossier residual indexes + feature hits + Study surface — scope: `src/trendalgo/backtest/secret_sauce_dossier.py`, `src/trendalgo/backtest/secret_sauce_lab/residual_instrument.py`, `src/trendalgo/backtest/secret_sauce_lab/run.py`, `src/trendalgo/backtest/secret_sauce_lab/refine_pack.py`, `src/trendalgo/device/views/secret_sauce_study.py`, `tests/test_backtest/test_residual_instrument.py`
-
-✅ [AGENT][LOCAL] Phase 1 residual miner + adaptive exits — AND residual conjunct + `adaptive_exit` family + exit-preferential search — scope: `src/trendalgo/backtest/secret_sauce_lab/residual_mine.py`, `src/trendalgo/backtest/secret_sauce_lab/families.py`, `src/trendalgo/backtest/secret_sauce_lab/search.py`, `src/trendalgo/backtest/secret_sauce_lab/regime_snapshot.py`, `tests/test_backtest/test_residual_mine.py`, `tests/test_backtest/test_adaptive_exit_family.py`
-
-> Phase 2–4 backlog (holdout-aware search, multi-TF arming, CCI/WILLR/MFI, ensemble) documented in [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md) — not scheduled.
-
-🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
+- ✅ [AGENT][LOCAL] MSI registries + null-safe scanner filter load + frozen config path — scope: `scripts/packaging/build-windows-desktop.ps1`, `src/trendalgo/bundled_config.py`, `src/trendalgo/exchanges/registry.py`, `src/trendalgo/venues/registry.py`, `src/trendalgo/device/views/scanner_filters.py`, `src/trendalgo/device/selftest.py`, `tests/test_device/test_device_scan_page.py`
+- ✅ [AGENT][LOCAL] Telegram BotFather copy-script wizard + Detect deleteWebhook→getUpdates — scope: `src/trendalgo/device/views/telegram_wizard.py`, `src/trendalgo/device/views/copy_snippet.py`, `src/trendalgo/device/telegram_botfather.py`, `src/trendalgo/notifications/telegram.py`, `src/trendalgo/device/strings.py`, `tests/test_device/test_telegram_wizard.py`, `tests/test_telegram.py`
+- ✅ [AGENT][LOCAL] Alerts notify ribbon (Entered/Left/Trades master toggles + preview + Test Windows/Telegram) — scope: `src/trendalgo/device/alert_preview.py`, `src/trendalgo/device/views/alerts_notify_ribbon.py`, `src/trendalgo/device/views/alerts_page.py`, `src/trendalgo/device/views/main_window.py`, `src/trendalgo/device/scan_alerts.py`, `tests/test_device/test_alert_preview.py`, `tests/test_device/test_alerts_notify_ribbon.py`
+- ✅ [AGENT][LOCAL] Source-first launch default + `-Frozen` + `relaunch-device.ps1` + docs/rule — scope: `scripts/packaging/launch-device.ps1`, `scripts/packaging/relaunch-device.ps1`, `scripts/lib/device_launch_prefer.py`, `.cursor/rules/device-no-console.mdc`, `docs/packaging/WINDOWS_LAUNCHER.md`, `docs/LOCAL_DEV.md`, `tests/test_scripts/test_device_launch_prefer.py`
+- ✅ [AGENT][LOCAL] Finish source-first gates — `watch-agent-gates --once --autofix --scope auto` green; smoke `relaunch-device.ps1` — scope: `scripts/packaging/`, `tests/test_scripts/test_device_launch_prefer.py`
+- 🔲 [AGENT][LOCAL] Commit + Conventional Commits for Device-Notify-Launch tree (explicit paths only; no `.cursor/*.txt` noise) — scope: listed files above + `src/trendalgo/bundled_config.py`
+- 🔲 [HUMAN] Review Alerts ribbon preview wording (Entered / Left / Trades Windows + Telegram samples); note desired copy in chat or BUILD_PLAN
+- 🔲 [AGENT][LOCAL] Apply alert title/body copy from HUMAN notes — scope: `src/trendalgo/device/strings.py`, `src/trendalgo/device/alert_preview.py`, `src/trendalgo/notifications/telegram_format.py`, `src/trendalgo/device/scan_alerts.py`
+- 🔲 [AGENT][LOCAL] Next MSI/ship: registries already in `--add-data`; verify frozen selftest `registries` OK on release build — scope: `scripts/packaging/build-windows-desktop.ps1`, `src/trendalgo/device/selftest.py`
+- 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
 
 > **R-BA-17** / template FOSS surface archived in COMPLETED_TASKS. Alignment: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) (`upstream_aligned_version` 1.10.0). Skills: [`docs/SKILLS_RECIPES.md`](docs/SKILLS_RECIPES.md).
 
@@ -109,4 +112,7 @@ Finished sprint task lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md). Post-del
 | UX-003 | Settings IA: Connection → Appearance → Save → Keys (expanded) → Venue → rest; keys save copy | done |
 | UX-004 | Settings: danger-styled Remove key + confirm before delete | planned |
 | UX-005 | Settings: scroll-to / deep-link section from empty-state CTAs | planned |
+| UX-006 | Alerts ribbon: Entered/Left/Trades master notify + preview + Test Win/TG | done |
+| UX-007 | Telegram wizard: BotFather copy boxes + deleteWebhook Detect | done |
+| UX-008 | Launch: source-first pythonw default; `-Frozen` for packaging | done (gates row open) |
 <!-- /ux-inventory -->

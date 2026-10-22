@@ -3,19 +3,27 @@
 # never `uv run python -m trendalgo.device` for normal GUI runs.
 #
 # Usage (repo root):
-#   .\scripts\packaging\launch-device.ps1
+#   .\scripts\packaging\launch-device.ps1              # source-first (pythonw) when .venv exists
+#   .\scripts\packaging\launch-device.ps1 -Source      # same as default when venv present
+#   .\scripts\packaging\launch-device.ps1 -Frozen      # packaging / MSI verification
+#   .\scripts\packaging\launch-device.ps1 -KeepConsole # testing only
 #   .\scripts\packaging\launch-device.ps1 -DataDir "$env:USERPROFILE\.trendalgo\device"
-#   .\scripts\packaging\launch-device.ps1 -KeepConsole   # testing only
-#   .\scripts\packaging\launch-device.ps1 -Source        # repo .venv pythonw (not frozen)
+#
+# Preference order is mirrored in scripts/lib/device_launch_prefer.py (keep in sync).
 param(
     [string]$DataDir = "",
     [switch]$KeepConsole,
-    [switch]$Source
+    [switch]$Source,
+    [switch]$Frozen
 )
 
 $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 Set-Location $Root
+
+if ($Source -and $Frozen) {
+    throw "Use only one of -Source or -Frozen."
+}
 
 if (-not $DataDir) {
     $profileDir = Join-Path $env:USERPROFILE ".trendalgo\device"
@@ -37,12 +45,15 @@ if ($KeepConsole) {
     Remove-Item Env:TRENDALGO_KEEP_CONSOLE -ErrorAction SilentlyContinue
 }
 
-$frozen = Join-Path $Root "dist\windows-device\TrendAlgoDevice\TrendAlgoDevice.exe"
+# Path vars must not collide with -[Ss]witch switches (PowerShell is case-insensitive).
+$frozenExe = Join-Path $Root "dist\windows-device\TrendAlgoDevice\TrendAlgoDevice.exe"
 $localApp = Join-Path $env:LOCALAPPDATA "Programs\TrendAlgo\app\TrendAlgoDevice.exe"
 $msiLike = Join-Path ${env:ProgramFiles(x86)} "TrendAlgo\TrendAlgoDevice.exe"
 if (-not (Test-Path $msiLike)) {
     $msiLike = Join-Path $env:ProgramFiles "TrendAlgo\TrendAlgoDevice.exe"
 }
+$pythonw = Join-Path $Root ".venv\Scripts\pythonw.exe"
+$python = Join-Path $Root ".venv\Scripts\python.exe"
 
 function Start-NoConsole([string]$File, [string]$Arguments = "") {
     $psi = New-Object System.Diagnostics.ProcessStartInfo
@@ -57,10 +68,10 @@ function Start-NoConsole([string]$File, [string]$Arguments = "") {
     [void][System.Diagnostics.Process]::Start($psi)
 }
 
-if (-not $Source -and -not $KeepConsole) {
-    if (Test-Path $frozen) {
-        Start-NoConsole $frozen
-        Write-Host "Launched frozen device (no console): $frozen"
+function Start-FrozenChain {
+    if (Test-Path $frozenExe) {
+        Start-NoConsole $frozenExe
+        Write-Host "Launched frozen device (no console): $frozenExe"
         exit 0
     }
     if (Test-Path $localApp) {
@@ -75,19 +86,35 @@ if (-not $Source -and -not $KeepConsole) {
     }
 }
 
-$pythonw = Join-Path $Root ".venv\Scripts\pythonw.exe"
-$python = Join-Path $Root ".venv\Scripts\python.exe"
 if ($KeepConsole) {
     if (-not (Test-Path $python)) {
         throw "Missing $python - run uv sync --extra device first."
     }
     Start-NoConsole $python "-m trendalgo.device"
     Write-Host "Launched with console (testing): $python"
+    Write-Host "DATA_DIR=$DataDir"
     exit 0
 }
-if (-not (Test-Path $pythonw)) {
-    throw "Missing $pythonw - run uv sync --extra device, or build the frozen app."
+
+if ($Frozen) {
+    Start-FrozenChain
+    if (Test-Path $pythonw) {
+        Start-NoConsole $pythonw "-m trendalgo.device"
+        Write-Host "No frozen build found; fell back to pythonw: $pythonw"
+        Write-Host "DATA_DIR=$DataDir"
+        exit 0
+    }
+    throw "Missing frozen/installed device. Run build-windows-desktop.ps1 -Device, or omit -Frozen."
 }
-Start-NoConsole $pythonw "-m trendalgo.device"
-Write-Host "Launched pythonw device (no console): $pythonw"
-Write-Host "DATA_DIR=$DataDir"
+
+# Source-first default (and -Source): live src/ via pythonw — no PyInstaller rebuild.
+if (Test-Path $pythonw) {
+    Start-NoConsole $pythonw "-m trendalgo.device"
+    Write-Host "Launched pythonw device (no console): $pythonw"
+    Write-Host "DATA_DIR=$DataDir"
+    exit 0
+}
+
+# No venv: fall back to any packaged binary.
+Start-FrozenChain
+throw "Missing $pythonw - run uv sync --extra device, or build the frozen app (-Frozen)."
