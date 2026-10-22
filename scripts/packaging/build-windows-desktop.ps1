@@ -56,6 +56,8 @@ uv run --no-sync pyinstaller `
     --add-data ((Join-Path $Root "branding\assets\app-icon-192.png") + ";branding/assets") `
     --add-data ((Join-Path $Root "branding\assets\splash-1280x720.png") + ";branding/assets") `
     --add-data ((Join-Path $Root "src\trendalgo\device\data\ta-glossary.json") + ";trendalgo/device/data") `
+    --add-data ((Join-Path $Root "config\exchanges.registry.json") + ";config") `
+    --add-data ((Join-Path $Root "config\venues.registry.json") + ";config") `
     (Join-Path $Root "src\trendalgo\device\__main__.py")
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed for the device app." }
 $exe = Join-Path $deviceOut "TrendAlgoDevice\TrendAlgoDevice.exe"

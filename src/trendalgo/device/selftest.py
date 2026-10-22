@@ -38,6 +38,7 @@ def run_selftest(*, include_window: bool = True) -> int:
         "talib": check_talib,
         "pandas_ta": check_pandas_ta,
         "glossary": check_glossary,
+        "registries": check_registries,
         "scan": check_scan,
         "charts": check_charts,
         "portfolio": check_portfolio,
@@ -114,6 +115,17 @@ def check_glossary() -> None:
         raise RuntimeError(error)
     if len(entries) < 100:
         raise RuntimeError(f"glossary too small: {len(entries)} entries")
+
+
+def check_registries() -> None:
+    """Exchange + venue JSON must resolve (dev tree or PyInstaller ``config/`` datas)."""
+    from trendalgo.exchanges.registry import load_registry
+    from trendalgo.venues.registry import load_venue_registry
+
+    if len(load_registry().exchanges) < 1:
+        raise RuntimeError("exchange registry empty")
+    if len(load_venue_registry().venues) < 1:
+        raise RuntimeError("venue registry empty")
 
 
 def check_scan() -> None:

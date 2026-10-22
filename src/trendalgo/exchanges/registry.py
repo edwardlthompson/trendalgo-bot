@@ -3,29 +3,25 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from trendalgo.bundled_config import config_candidates, first_existing
 from trendalgo.exchanges.secrets import EnvSecretStore, SecretStore
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_REGISTRY = _REPO_ROOT / "config" / "exchanges.registry.json"
+_REL = "config/exchanges.registry.json"
 
 
 def _registry_path(path: Path | None = None) -> Path:
     if path is not None:
         return path
-    env = os.environ.get("TRENDALGO_EXCHANGE_REGISTRY")
-    if env:
-        return Path(env)
-    for candidate in (_DEFAULT_REGISTRY, Path.cwd() / "config" / "exchanges.registry.json"):
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(
-        f"exchange registry not found (tried {_DEFAULT_REGISTRY} and cwd/config)"
+    return first_existing(
+        config_candidates(_REL, env_var="TRENDALGO_EXCHANGE_REGISTRY", default=_DEFAULT_REGISTRY),
+        label="exchange registry",
     )
 
 

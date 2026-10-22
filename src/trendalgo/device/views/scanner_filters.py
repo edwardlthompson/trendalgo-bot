@@ -92,10 +92,20 @@ class ScannerFilterBar(QWidget):
         raw = saved.get("scan_exchanges")
         selected = [str(x) for x in raw] if isinstance(raw, list) else None
         self.refresh_exchange_options(selected=selected)
-        self.vol.setValue(int(float(saved.get("min_volume_usd", _DEFAULT_VOL))))
-        self.every.setValue(int(saved.get("interval_minutes", _DEFAULT_EVERY)))
-        self._min_uniformity = float(saved.get("min_uniformity", _DEFAULT_UNIT))
+        self.vol.setValue(int(self._num(saved.get("min_volume_usd"), _DEFAULT_VOL)))
+        self.every.setValue(int(self._num(saved.get("interval_minutes"), _DEFAULT_EVERY)))
+        self._min_uniformity = self._num(saved.get("min_uniformity"), _DEFAULT_UNIT)
         self.heatmap.setChecked(bool(saved.get("heatmap_enabled", False)))
+
+    @staticmethod
+    def _num(raw: object, default: float) -> float:
+        """Prefs may store explicit null; ``dict.get`` then returns None, not the default."""
+        if raw is None or raw == "":
+            return default
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return default
 
     def dump(self) -> dict[str, Any]:
         self.vol.interpretText()

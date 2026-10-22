@@ -235,3 +235,13 @@ def test_filter_bar_keeps_zero_gains_as_integers(qtbot: QtBot) -> None:
     assert cols.gain_7d.value() is None
     assert cols.gain_30d.value() is None
     assert cols.best_bt.value() is None
+    actions.load(
+        {
+            "min_volume_usd": None,
+            "interval_minutes": None,
+            "min_uniformity": None,
+            "heatmap_enabled": False,
+        }
+    )
+    assert actions.vol.value() == 0
+    assert actions.every.value() == 60

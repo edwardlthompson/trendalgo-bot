@@ -7,12 +7,10 @@ import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from trendalgo.bundled_config import config_candidates, first_existing
 from trendalgo.venues.base import LpReadPlugin, VenueEntry, WalletReadPlugin
-
-if TYPE_CHECKING:
-    pass
 
 __all__ = [
     "VenueEntry",
@@ -30,18 +28,16 @@ __all__ = [
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_REGISTRY = _REPO_ROOT / "config" / "venues.registry.json"
+_REL = "config/venues.registry.json"
 
 
 def _registry_path(path: Path | None = None) -> Path:
     if path is not None:
         return path
-    env = os.environ.get("TRENDALGO_VENUE_REGISTRY")
-    if env:
-        return Path(env)
-    for candidate in (_DEFAULT_REGISTRY, Path.cwd() / "config" / "venues.registry.json"):
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(f"venue registry not found (tried {_DEFAULT_REGISTRY})")
+    return first_existing(
+        config_candidates(_REL, env_var="TRENDALGO_VENUE_REGISTRY", default=_DEFAULT_REGISTRY),
+        label="venue registry",
+    )
 
 
 def _parse_entry(raw: dict[str, Any]) -> VenueEntry:
