@@ -94,22 +94,26 @@ class TelegramCommands:
         except (error.URLError, TimeoutError, OSError):
             return self.send_message(caption) if caption else False
 
-    def detect_chat_id(self) -> str | None:
-        """Best-effort: last private chat from getUpdates after the user /start'd the bot."""
+    def api_url(self, method: str) -> str | None:
         if not self.token:
             return None
-        url = f"https://api.telegram.org/bot{self.token}/getUpdates"
-        try:
-            req = request.Request(url, method="GET")
-            with request.urlopen(req, timeout=15) as resp:
-                raw = resp.read().decode("utf-8")
-        except (error.URLError, TimeoutError, OSError, UnicodeDecodeError):
+        return f"https://api.telegram.org/bot{self.token}/{method}"
+
+    def delete_webhook(self) -> bool:
+        """Clear webhook so getUpdates works (noop success if already clear)."""
+        payload = self._api_json("deleteWebhook", http="POST")
+        return bool(payload and payload.get("ok"))
+
+    def detect_chat_id(self) -> str | None:
+        """deleteWebhook then last private chat from getUpdates (user must /start first)."""
+        if not self.token:
             return None
-        try:
-            payload = json.loads(raw)
-        except json.JSONDecodeError:
+        if not self.delete_webhook():
             return None
-        results = payload.get("result") if isinstance(payload, dict) else None
+        payload = self._api_json("getUpdates", http="GET")
+        if not payload:
+            return None
+        results = payload.get("result")
         if not isinstance(results, list):
             return None
         for item in reversed(results):
@@ -122,6 +126,22 @@ class TelegramCommands:
             if isinstance(chat, dict) and chat.get("id") is not None:
                 return str(chat["id"])
         return None
+
+    def _api_json(self, method: str, *, http: str) -> dict[str, object] | None:
+        url = self.api_url(method)
+        if not url:
+            return None
+        try:
+            req = request.Request(url, method=http, data=b"" if http == "POST" else None)
+            with request.urlopen(req, timeout=15) as resp:
+                raw = resp.read().decode("utf-8")
+        except (error.URLError, TimeoutError, OSError, UnicodeDecodeError):
+            return None
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+        return payload if isinstance(payload, dict) else None
 
     def notify_trade(self, pair: str, side: str, pnl_usd: float) -> bool:
         return self.send_message(f"Trade {side} {pair} pnl=${pnl_usd:.2f}")
