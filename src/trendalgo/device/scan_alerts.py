@@ -51,16 +51,15 @@ def process_scan_alerts(
 
 
 def toast_lines(events: list[AlertEvent], prefs_root: Path) -> list[tuple[str, str]]:
+    from trendalgo.device.alert_preview import windows_preview
+
     prefs = load_prefs(prefs_root)
     lines: list[tuple[str, str]] = []
     for plan in plans_for(events, prefs):
         if not plan.toast:
             continue
         for event in plan.events:
-            if event.kind == "qualified_enter":
-                lines.append((f"Qualified: {event.symbol}", event.reason))
-            elif event.kind == "watchlist_leave":
-                lines.append((f"Left: {event.symbol}", event.reason))
+            lines.append(windows_preview(event))
     return lines
 
 

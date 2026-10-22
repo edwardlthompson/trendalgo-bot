@@ -120,7 +120,7 @@ class MainWindow(QMainWindow):
             bots_page.reload_performance()
             return msg if ok else (note or msg)
 
-        alerts = AlertsPage(ctx.root)
+        alerts = AlertsPage(ctx.root, on_toast=self._toast)
         self._alerts_page = alerts
         scanner = ScannerPage(
             ctx,
