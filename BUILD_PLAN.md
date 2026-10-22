@@ -1,7 +1,7 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 <!-- remaining-tally -->
-**Remaining:** AGENT 3 · LOCAL 3 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **5 open**
+**Remaining:** AGENT 1 · LOCAL 1 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **3 open**
 <!-- /remaining-tally -->
 > **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
@@ -43,8 +43,8 @@
 - ✅ [AGENT][LOCAL] Finish source-first gates — `watch-agent-gates --once --autofix --scope auto` green; smoke `relaunch-device.ps1` — scope: `scripts/packaging/`, `tests/test_scripts/test_device_launch_prefer.py`
 - ✅ [AGENT][LOCAL] Commit + Conventional Commits for Device-Notify-Launch tree (explicit paths only; no `.cursor/*.txt` noise) — scope: listed files above + `src/trendalgo/bundled_config.py`
 - 🔲 [HUMAN] Review Alerts ribbon preview wording (Entered / Left / Trades Windows + Telegram samples); note desired copy in chat or BUILD_PLAN
-- 🔲 [AGENT][LOCAL] Apply alert title/body copy from HUMAN notes — scope: `src/trendalgo/device/strings.py`, `src/trendalgo/device/alert_preview.py`, `src/trendalgo/notifications/telegram_format.py`, `src/trendalgo/device/scan_alerts.py`
-- 🔲 [AGENT][LOCAL] Next MSI/ship: registries already in `--add-data`; verify frozen selftest `registries` OK on release build — scope: `scripts/packaging/build-windows-desktop.ps1`, `src/trendalgo/device/selftest.py`
+- ❌ [AGENT][LOCAL] Apply alert title/body copy from HUMAN notes — blocked until HUMAN preview review — scope: `src/trendalgo/device/strings.py`, `src/trendalgo/device/alert_preview.py`, `src/trendalgo/notifications/telegram_format.py`, `src/trendalgo/device/scan_alerts.py`
+- ✅ [AGENT][LOCAL] Next MSI/ship: registries already in `--add-data`; verify frozen selftest `registries` OK on release build — scope: `scripts/packaging/build-windows-desktop.ps1`, `src/trendalgo/device/selftest.py`
 - 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
 
 > **R-BA-17** / template FOSS surface archived in COMPLETED_TASKS. Alignment: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md) (`upstream_aligned_version` 1.10.0). Skills: [`docs/SKILLS_RECIPES.md`](docs/SKILLS_RECIPES.md).
