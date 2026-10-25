@@ -17,13 +17,16 @@ def test_save_and_load_last_pair_backtest(tmp_path: Path) -> None:
         {"indicator": "RSI", "net_pct": 12.0, "timeframe": "1h"},
         {"indicator": "B&H", "net_pct": 3.0, "timeframe": "1h"},
     ]
-    save_last_pair_backtest(tmp_path, "eth/usd", rows)
+    save_last_pair_backtest(
+        tmp_path, "eth/usd", rows, market_context={"ok": True, "regime_label": "Ranging"}
+    )
     loaded = load_last_pair_backtest(tmp_path)
     assert loaded is not None
-    pair, out = loaded
+    pair, out, ctx = loaded
     assert pair == "ETH/USD"
     assert len(out) == 2
     assert out[0]["indicator"] == "RSI"
+    assert ctx is not None and ctx.get("regime_label") == "Ranging"
 
 
 def test_load_missing_or_empty_returns_none(tmp_path: Path) -> None:

@@ -18,11 +18,13 @@ def run_smoke_backtest(pair: str) -> int:
     root = profile_dir()
     print(f"smoke-backtest {text} root={root}")
     try:
-        rows = pair_strategy_scan_job(root, text)
+        payload = pair_strategy_scan_job(root, text)
     except Exception as exc:
         print(f"FAIL scan: {exc}")
         return 1
-    if not rows:
+    rows = payload.get("rows") if isinstance(payload, dict) else payload
+    market_context = payload.get("market_context") if isinstance(payload, dict) else None
+    if not isinstance(rows, list) or not rows:
         print("FAIL no rows")
         return 1
     reasons: Counter[str] = Counter()
@@ -41,7 +43,12 @@ def run_smoke_backtest(pair: str) -> int:
             reasons["ok"] += 1
         else:
             reasons[skip or "empty"] += 1
-    save_last_pair_backtest(root, text, rows)
+    save_last_pair_backtest(
+        root,
+        text,
+        rows,
+        market_context=market_context if isinstance(market_context, dict) else None,
+    )
     print(f"OK rows={len(rows)} traded={traded}")
     print("skip_summary", dict(reasons.most_common(12)))
     return 0

@@ -182,7 +182,12 @@ def show_scanner_chart_dialog(
                     except Exception as exc:  # noqa: BLE001 — keep UI alive on TA failures
                         region_cache[checked_id] = []
                         hint.setText(f"Overlay failed for {row.get('indicator')}: {exc}")
-                        chart.set_frame(display if not display.empty else None, closes, [])
+                        chart.set_frame(
+                            display if not display.empty else None,
+                            closes,
+                            [],
+                            level_prices=_context_levels(coin),
+                        )
                         return
                 regions = region_cache[checked_id]
                 n_trades = len(regions)
@@ -231,7 +236,12 @@ def show_scanner_chart_dialog(
                 chart.clear()
                 hint.setText(S.SCANNER_CHART_EMPTY)
                 return
-            chart.set_frame(display if not display.empty else None, closes, regions)
+            chart.set_frame(
+                display if not display.empty else None,
+                closes,
+                regions,
+                level_prices=_context_levels(coin),
+            )
         finally:
             refreshing = False
 
@@ -256,6 +266,34 @@ def _closes_for_window(coin: dict[str, Any], window: str) -> list[float]:
     if not isinstance(raw, list):
         return []
     return [float(x) for x in raw if isinstance(x, (int, float))]
+
+
+def _context_levels(coin: dict[str, Any]) -> list[tuple[str, float]]:
+    """Pivot / VWAP / POC prices from Market Context for chart overlays."""
+    ctx = coin.get("market_context")
+    if not isinstance(ctx, dict) or not ctx.get("ok"):
+        return []
+    out: list[tuple[str, float]] = []
+    pivots = ctx.get("pivots") if isinstance(ctx.get("pivots"), dict) else {}
+    for level in pivots.get("levels") or []:
+        if not isinstance(level, dict):
+            continue
+        name = str(level.get("name") or "")
+        try:
+            price = float(level.get("price"))
+        except (TypeError, ValueError):
+            continue
+        if name in {"S1", "PP", "R1", "R2", "S2"}:
+            out.append((name, price))
+    struct = ctx.get("structure") if isinstance(ctx.get("structure"), dict) else {}
+    for key, label in (("vwap", "VWAP"), ("poc", "POC")):
+        try:
+            value = float(struct[key]) if struct.get(key) is not None else None
+        except (TypeError, ValueError, KeyError):
+            value = None
+        if value is not None:
+            out.append((label, value))
+    return out
 
 
 def _as_float(raw: object) -> float | None:
@@ -314,6 +352,7 @@ class _OverlayChart(QWidget):
         self._price.attachAxis(self._axis_y)
         self._areas: list[QAreaSeries] = []
         self._area_lines: list[QLineSeries] = []
+        self._level_lines: list[QLineSeries] = []
         self._labels: list[QGraphicsSimpleTextItem] = []
         self._view = QChartView(self._chart)
         self._view.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -334,6 +373,8 @@ class _OverlayChart(QWidget):
         frame: pd.DataFrame | None,
         closes: list[float],
         regions: list[dict[str, Any]],
+        *,
+        level_prices: list[tuple[str, float]] | None = None,
     ) -> None:
         self._clear_areas()
         self._price.clear()
@@ -354,8 +395,21 @@ class _OverlayChart(QWidget):
                 lows.append(float(region["exit_price"]))
                 highs.append(float(region["entry_price"]))
                 highs.append(float(region["exit_price"]))
-        self._price.setColor(QColor(colors["primary"]))
         first, last = points[0][0], points[-1][0]
+        for _name, price in level_prices or []:
+            line = QLineSeries()
+            line.append(float(first), float(price))
+            line.append(float(last), float(price))
+            pen_color = QColor(colors["outline"])
+            pen_color.setAlpha(160)
+            line.setColor(pen_color)
+            self._chart.addSeries(line)
+            line.attachAxis(self._axis_x)
+            line.attachAxis(self._axis_y)
+            self._level_lines.append(line)
+            lows.append(float(price))
+            highs.append(float(price))
+        self._price.setColor(QColor(colors["primary"]))
         self._axis_x.setRange(
             QDateTime.fromMSecsSinceEpoch(first), QDateTime.fromMSecsSinceEpoch(last)
         )
@@ -462,3 +516,11 @@ class _OverlayChart(QWidget):
             self._chart.removeSeries(area)
         self._areas.clear()
         self._area_lines.clear()
+        for line in self._level_lines:
+            try:
+                line.detachAxis(self._axis_x)
+                line.detachAxis(self._axis_y)
+            except RuntimeError:
+                pass
+            self._chart.removeSeries(line)
+        self._level_lines.clear()

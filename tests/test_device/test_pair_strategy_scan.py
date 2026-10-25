@@ -153,7 +153,7 @@ def test_scan_keeps_losers_and_bh(monkeypatch: Any) -> None:
     )
 
     loader = _FakeLoader(frame)
-    rows = scan_pair_strategies(
+    rows, _ctx = scan_pair_strategies(
         symbol="ETH",
         pair="ETH/USD",
         timeframes=("1h", "4h"),
@@ -255,7 +255,7 @@ def test_scan_full_catalog_length(monkeypatch: Any) -> None:
         lambda *_a, **_k: None,
     )
     strat = ("RSI", "MACD", "ADD", "CDLDOJI")
-    rows = scan_pair_strategies(
+    rows, _ctx = scan_pair_strategies(
         symbol="ETH",
         pair="ETH/USD",
         timeframes=("1h",),
@@ -327,7 +327,7 @@ def test_short_window_keeps_lower_tf_when_24h_skipped(monkeypatch: Any) -> None:
         lambda *_a, **_k: None,
     )
     monkeypatch.setattr("trendalgo.device.pair_strategy_scan.deepen_seeds", lambda *_a, **_k: [])
-    rows = scan_pair_strategies(
+    rows, _ctx = scan_pair_strategies(
         symbol="BTC",
         pair="BTC/USD",
         timeframes=("1h", "24h"),

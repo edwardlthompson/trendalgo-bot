@@ -17,7 +17,7 @@ def backtest_one_coin(
     stake: float,
     fee: Any,
     fee_bps_round_trip: float | None = None,
-) -> tuple[str, list[dict[str, Any]], dict[str, float]]:
+) -> tuple[str, list[dict[str, Any]], dict[str, float], dict[str, Any] | None]:
     """Run the Backtest-tab All-TA path for one Opportunity coin."""
     from trendalgo.device.scan_identity import coin_exchange_id
     from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
@@ -32,7 +32,7 @@ def backtest_one_coin(
         "deepen_s": 0.0,
     }
     if not symbol:
-        return symbol, [], {**stats, "elapsed_s": 0.0}
+        return symbol, [], {**stats, "elapsed_s": 0.0}, None
     t0 = time.perf_counter()
     pair = str(coin.get("pair") or "") or f"{symbol}/USD"
     gecko = coin.get("gecko_id")
@@ -41,7 +41,7 @@ def backtest_one_coin(
     use_fee = fee
     if fee_bps_round_trip is not None:
         use_fee = fee_for_exchange(coin_exchange_id(coin), fee_bps_round_trip)
-    rows = scan_pair_strategies(
+    rows, market_context = scan_pair_strategies(
         symbol=symbol,
         pair=pair,
         timeframes=timeframes,
@@ -54,4 +54,24 @@ def backtest_one_coin(
     deepened = sum(1 for r in rows if r.get("optimized"))
     stats["deepened"] = float(deepened)
     stats["elapsed_s"] = time.perf_counter() - t0
-    return symbol, rows, stats
+    bid = coin.get("bid")
+    ask = coin.get("ask")
+    if market_context and isinstance(market_context, dict) and (bid is not None or ask is not None):
+        try:
+            from trendalgo.analytics.market_structure import spread_pct
+
+            structure = market_context.get("structure")
+            if isinstance(structure, dict):
+                spr = spread_pct(
+                    float(bid) if bid is not None else None,
+                    float(ask) if ask is not None else None,
+                    float(market_context.get("last_price") or 0) or None,
+                )
+                if spr is not None:
+                    structure = dict(structure)
+                    structure["spread_pct"] = spr
+                    market_context = dict(market_context)
+                    market_context["structure"] = structure
+        except (TypeError, ValueError):
+            pass
+    return symbol, rows, stats, market_context

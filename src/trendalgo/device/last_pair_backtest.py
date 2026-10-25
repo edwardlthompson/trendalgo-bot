@@ -15,17 +15,25 @@ def has_tradable_results(rows: list[dict[str, Any]]) -> bool:
     return any(not str(row.get("skip_reason") or "").strip() for row in rows)
 
 
-def save_last_pair_backtest(root: Path, pair: str, rows: list[dict[str, Any]]) -> None:
+def save_last_pair_backtest(
+    root: Path,
+    pair: str,
+    rows: list[dict[str, Any]],
+    *,
+    market_context: dict[str, Any] | None = None,
+) -> None:
     text = str(pair or "").strip().upper()
     if not text or "/" not in text or not rows or not has_tradable_results(rows):
         return
-    write_json(
-        root / LAST_BACKTEST_FILE,
-        {"pair": text, "rows": list(rows)},
-    )
+    payload: dict[str, Any] = {"pair": text, "rows": list(rows)}
+    if isinstance(market_context, dict):
+        payload["market_context"] = market_context
+    write_json(root / LAST_BACKTEST_FILE, payload)
 
 
-def load_last_pair_backtest(root: Path) -> tuple[str, list[dict[str, Any]]] | None:
+def load_last_pair_backtest(
+    root: Path,
+) -> tuple[str, list[dict[str, Any]], dict[str, Any] | None] | None:
     data = read_json(root / LAST_BACKTEST_FILE)
     if not isinstance(data, dict):
         return None
@@ -36,4 +44,6 @@ def load_last_pair_backtest(root: Path) -> tuple[str, list[dict[str, Any]]] | No
     out = [row for row in rows if isinstance(row, dict)]
     if not out or not has_tradable_results(out):
         return None
-    return pair, out
+    ctx = data.get("market_context")
+    market_context = ctx if isinstance(ctx, dict) else None
+    return pair, out, market_context

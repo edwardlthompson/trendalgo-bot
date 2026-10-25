@@ -3,6 +3,9 @@
 Closing a parent console must not kill the app. Prefer pythonw / --windowed
 exe / launch-device.ps1; this module is a safety net when someone starts
 ``python -m trendalgo.device`` from a console by mistake.
+
+Spawn worker consoles (Scan / WorkerPool) are handled separately by
+``spawn_no_console`` — uv venvs re-exec spawn children as console ``python.exe``.
 """
 
 from __future__ import annotations

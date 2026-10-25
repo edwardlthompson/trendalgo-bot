@@ -68,6 +68,7 @@ def fill_backtest_table(
     filter_row: BacktestColumnFilterRow,
     on_open_plan: CreateBotCb | None,
     on_note: NoteCb,
+    market_context: dict[str, Any] | None = None,
 ) -> None:
     offset = 1
     filter_row.prepare_for_refill()
@@ -133,7 +134,14 @@ def fill_backtest_table(
                     item.setBackground(QColor(bg))
                     item.setForeground(QColor(fg_for_bg(bg)))
             table.setItem(row_i, c, item)
-        _show_chart_cell(table, row_i, row, pair=pair, parent=table.window())
+        _show_chart_cell(
+            table,
+            row_i,
+            row,
+            pair=pair,
+            parent=table.window(),
+            market_context=market_context,
+        )
         _create_bot_cell(
             table,
             row_i,
@@ -154,6 +162,7 @@ def _show_chart_cell(
     *,
     pair: str,
     parent: QWidget,
+    market_context: dict[str, Any] | None = None,
 ) -> None:
     host = QWidget()
     layout = QHBoxLayout(host)
@@ -173,6 +182,8 @@ def _show_chart_cell(
             "symbol": pair.split("/", 1)[0] if "/" in pair else pair,
             "pair": pair,
         }
+        if isinstance(market_context, dict):
+            coin["market_context"] = market_context
         # Carry Strategy sheet fields so OHLCV resolve can use timeframe.
         for key in ("timeframe", "params", "strategy_id", "net_pct", "trades"):
             if key in data:

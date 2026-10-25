@@ -33,6 +33,7 @@ from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.backtest_column_filter_row import BacktestColumnFilterRow
 from trendalgo.device.views.glossary_popup import show_glossary_popup
+from trendalgo.device.views.market_context_pane import MarketContextPane
 from trendalgo.device.views.scanner_results_fill import data_row_index, populate_results_table
 
 _COLUMNS = S.BACKTEST_RESULT_HEADERS
@@ -134,6 +135,19 @@ def show_results_dialog(
     status = QLabel()
     status.setObjectName("hint")
     status.setWordWrap(True)
+    prefs_for_ctx = load_results_prefs(export_root) if export_root is not None else None
+    market_pane = MarketContextPane(
+        expanded=not (prefs_for_ctx.market_context_collapsed if prefs_for_ctx else False),
+    )
+    raw_ctx = coin.get("market_context")
+    if isinstance(raw_ctx, dict):
+        market_pane.set_context(raw_ctx)
+    else:
+        market_pane.set_empty()
+    layout.addWidget(market_pane)
+    strategy_caption = QLabel(S.MARKET_CTX_STRATEGY_CAPTION)
+    strategy_caption.setObjectName("sectionTitle")
+    layout.addWidget(strategy_caption)
     all_rows = strategy_sheet_rows(coin, perfect_only=perfect_only)
     # Same list object so cellClicked / share always see the latest filtered rows.
     visible: list[dict[str, Any]] = list(all_rows)

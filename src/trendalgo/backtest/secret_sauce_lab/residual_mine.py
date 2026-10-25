@@ -45,7 +45,7 @@ def try_residual_refine(
     cols, feats = feature_matrix(df)
     if not feats or not cols:
         return None
-    keys = feature_keys_for(df)
+    keys = feature_keys_for(df, include_pivots=True)
     n = len(df)
     best: tuple[CompositeRule, CompositeRule, float] | None = None
 

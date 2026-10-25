@@ -97,6 +97,11 @@ def merge_backtest_into_coins(
         coin["backtest_top_strategies"] = strategies
         coin["backtest_buy_hold"] = buy_hold
         coin["backtest_oracle_max"] = oracle_max
+        contexts = backtest_summary.get("market_contexts")
+        if isinstance(contexts, dict):
+            ctx = contexts.get(symbol)
+            if isinstance(ctx, dict):
+                coin["market_context"] = ctx
         for key in EDGE_KEYS:
             coin.pop(key, None)
         edge = bot_vs_bh_edge(strategies, buy_hold)

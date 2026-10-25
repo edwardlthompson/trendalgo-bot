@@ -17,8 +17,8 @@ from trendalgo.backtest.ta_simulator import simulate_long_with_fees
 _SAUCE_TA = "Secret Sauce TA"
 _SKIP = frozenset({"Oracle max", "B&H", "Secret Sauce", "Secret Sauce TA", "Secret Sauce Lab"})
 _SID = "GEN_SECRET_1"
-_TOP = 40
-_PAIR = 8
+_TOP = 48
+_PAIR = 12
 _TSL = float(PASS12_TRAILING_STOP_PCT)
 
 # Cached masks for one coincidence pass: sid -> (entries, exits, row, e_hit, x_hit)
@@ -215,6 +215,18 @@ def coincidence_sauce_row(
         return None
     entries = cands[e_sid][0]
     exits = cands[x_sid][1]
+    from trendalgo.backtest.secret_sauce_pivot_gate import refine_masks_with_pivots
+
+    entries, exits, stats, pivot_tag = refine_masks_with_pivots(
+        df,
+        entries,
+        exits,
+        entry_labels=e_lab,
+        exit_labels=x_lab,
+        fee=fee,
+        stake=stake,
+        trailing_stop_pct=_TSL,
+    )
     te, tx = indexes_from_trades(list(stats.get("trade_list") or []), n=len(df))
     dossier = _dossier(e_sid, x_sid, e_lab, x_lab, te, tx, entries, exits)
     from trendalgo.backtest.hill_climb_tsl import assign_protective_tsl_from_masks
@@ -231,6 +243,14 @@ def coincidence_sauce_row(
     )
     use = tsl_pick if tsl_pick is not None else stats
     hb = dossier.to_dict()
+    params = {
+        **dossier.eval_params(),
+        "coincidence_entry": e_sid,
+        "coincidence_exit": x_sid,
+        "ss_ta_fee_aware": True,
+    }
+    if pivot_tag:
+        params["pivot_gate"] = pivot_tag
     trial = {
         "strategy_id": _SID,
         "net_profit": float(use.get("net_profit") or 0.0),
@@ -245,12 +265,7 @@ def coincidence_sauce_row(
         "timeframe": tf,
         "bar_count": len(df),
         "heartbeat_dossier": hb,
-        "params": {
-            **dossier.eval_params(),
-            "coincidence_entry": e_sid,
-            "coincidence_exit": x_sid,
-            "ss_ta_fee_aware": True,
-        },
+        "params": params,
         "indicator": _SAUCE_TA,
         "ss_lab_pending": False,
         "ss_coincidence": True,

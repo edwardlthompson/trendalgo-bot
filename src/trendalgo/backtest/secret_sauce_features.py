@@ -13,6 +13,7 @@ from trendalgo.backtest.secret_sauce_cross import (
     merge_cross_into_rows,
     osc_cross_columns,
 )
+from trendalgo.backtest.secret_sauce_pivots import PIVOT_KEYS, merge_pivot_features_into_rows
 from trendalgo.backtest.secret_sauce_structure import STRUCTURE_KEYS, merge_structure_into_rows
 from trendalgo.backtest.secret_sauce_ta_series import (
     atr_pct,
@@ -39,7 +40,13 @@ PRICE_KEYS = (
 VOLUME_KEYS = ("vol_ratio", "vol_ratio_20", "vol_z", "dollar_vol_ratio", "up_vol_impulse")
 TA_KEYS = ("rsi_14", "macd_hist", "bb_pct_b", "atr_pct", "stoch_k")
 ALL_FEATURE_KEYS = (
-    PRICE_KEYS + VOLUME_KEYS + TA_KEYS + CROSS_KEYS + STRUCTURE_KEYS + cdl_feature_keys()
+    PRICE_KEYS
+    + VOLUME_KEYS
+    + TA_KEYS
+    + CROSS_KEYS
+    + STRUCTURE_KEYS
+    + PIVOT_KEYS
+    + cdl_feature_keys()
 )
 
 
@@ -52,8 +59,11 @@ def has_real_volume(df: pd.DataFrame) -> bool:
     return float(np.nanstd(vols)) > 1e-12 or float(np.nanmax(vols) - np.nanmin(vols)) > 1e-9
 
 
-def feature_keys_for(df: pd.DataFrame) -> tuple[str, ...]:
+def feature_keys_for(df: pd.DataFrame, *, include_pivots: bool = False) -> tuple[str, ...]:
+    """Keys for Lab search. Pass include_pivots=True for primary + residual pivot bank."""
     extra = STRUCTURE_KEYS + cdl_feature_keys()
+    if include_pivots:
+        extra = STRUCTURE_KEYS + PIVOT_KEYS + cdl_feature_keys()
     if has_real_volume(df):
         return PRICE_KEYS + VOLUME_KEYS + TA_KEYS + CROSS_KEYS + extra
     return PRICE_KEYS + TA_KEYS + CROSS_KEYS + extra
@@ -120,6 +130,8 @@ def causal_features(df: pd.DataFrame) -> list[dict[str, float]]:
     rsx_a = compute_rsx_series(closes, 14)
     merge_cross_into_rows(out, osc_cross_columns(rsi_a, stoch_a, rsx_a))
     merge_structure_into_rows(closes, highs, lows, out)
+    vols_arr = vols if use_vol else None
+    merge_pivot_features_into_rows(closes, highs, lows, out, volumes=vols_arr)
     merge_cdl_into_rows(df, out)
     return out
 

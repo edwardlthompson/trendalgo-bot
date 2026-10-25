@@ -85,6 +85,7 @@ def run_all_ta_scan_backtests(
     load_s = pass1_s = deepen_s = 0.0
     results: list[dict[str, Any]] = []
     per_coin: list[dict[str, Any]] = []
+    market_contexts: dict[str, dict[str, Any]] = {}
     workers = min(_bt_workers(), max(1, len(coins)))
 
     done = 0
@@ -105,12 +106,14 @@ def run_all_ta_scan_backtests(
         for fut in as_completed(futs):
             done += 1
             try:
-                symbol, rows, stats = fut.result()
+                symbol, rows, stats, market_context = fut.result()
             except Exception as exc:
                 progress.log(f"All-TA coin failed: {exc}", level="error")
                 progress.step(done)
                 continue
             results.extend(rows)
+            if symbol and isinstance(market_context, dict):
+                market_contexts[str(symbol).upper()] = market_context
             tested += int(stats.get("tested", 0))
             pruned += int(stats.get("pruned", 0))
             deepened += int(stats.get("deepened", 0))
@@ -156,4 +159,5 @@ def run_all_ta_scan_backtests(
         "deepened": deepened,
         "phase_s": phase_s,
         "per_coin_s": per_coin,
+        "market_contexts": market_contexts,
     }

@@ -11,6 +11,8 @@ from collections.abc import Callable
 from multiprocessing.pool import AsyncResult, Pool
 from typing import Any
 
+from trendalgo.device.spawn_no_console import install_spawn_no_console
+
 DEFAULT_WORKERS = 2
 
 
@@ -24,6 +26,7 @@ class WorkerPool:
 
     def submit(self, fn: Callable[..., Any], *args: Any) -> AsyncResult[Any]:
         if self._pool is None:
+            install_spawn_no_console()
             self._pool = multiprocessing.get_context("spawn").Pool(self.workers)
         return self._pool.apply_async(fn, args)
 

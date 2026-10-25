@@ -30,6 +30,8 @@ QLabel#badge { background: ${secondaryContainer}; color: ${onSecondaryContainer}
     border-radius: ${radius_sm}px; padding: 3px ${space_sm}px; font-weight: 600; }
 QFrame#emptyState, QFrame#panel { background: ${surface}; border: 1px solid ${outline};
     border-radius: ${radius_md}px; padding: ${space_md}px; }
+QFrame#marketCtxModule { background: ${surfaceVariant}; border: 1px solid ${outline};
+    border-radius: ${radius_md}px; }
 QWidget#navRow { border-bottom: 1px solid ${outline}; }
 QTabBar { background: transparent; }
 QTabBar::tab { background: transparent; color: ${onSurfaceVariant}; border: none;

@@ -52,6 +52,7 @@ from trendalgo.device.views.backtest_page_job import (
 )
 from trendalgo.device.views.backtest_share_dialog import run_backtest_share_dialog
 from trendalgo.device.views.glossary_popup import show_glossary_popup
+from trendalgo.device.views.market_context_pane import MarketContextPane
 from trendalgo.device.views.searchable_picker import pair_picker
 from trendalgo.device.views.widgets import (
     EmptyState,
@@ -70,6 +71,15 @@ _BH = "B&H"
 CreateBotCb = Callable[[dict[str, str]], None]
 
 
+def _unpack_scan_payload(
+    payload: object,
+) -> tuple[object, dict[str, Any] | None]:
+    if isinstance(payload, dict) and "rows" in payload:
+        ctx = payload.get("market_context")
+        return payload.get("rows"), ctx if isinstance(ctx, dict) else None
+    return payload, None
+
+
 class BacktestPage(QWidget):
     def __init__(
         self,
@@ -86,6 +96,7 @@ class BacktestPage(QWidget):
         self._pending: AsyncResult[Any] | None = None
         self._rows: list[dict[str, Any]] = []
         self._all_rows: list[dict[str, Any]] = []
+        self._market_context: dict[str, Any] | None = None
         self._sort_key = DEFAULT_SORT_KEY
         self._sort_dir = DEFAULT_SORT_DIR
         self._last_log = ""
@@ -138,6 +149,13 @@ class BacktestPage(QWidget):
         self._bar.setValue(0)
         self._bar.setTextVisible(True)
         self._empty = EmptyState(S.BACKTEST_EMPTY_TITLE, S.BACKTEST_EMPTY_BODY)
+        self._market_ctx = MarketContextPane(
+            expanded=not prefs.market_context_collapsed,
+            on_collapse=lambda collapsed: self._on_market_ctx_collapse(collapsed),
+        )
+        self._market_ctx.set_empty()
+        self._strategy_caption = QLabel(S.MARKET_CTX_STRATEGY_CAPTION)
+        self._strategy_caption.setObjectName("sectionTitle")
         self._table = read_only_table(S.BACKTEST_RESULT_HEADERS, S.BACKTEST_TITLE)
         self._filters = BacktestColumnFilterRow()
         self._filters.attach(self._table)
@@ -169,7 +187,9 @@ class BacktestPage(QWidget):
         layout.addWidget(self._status)
         layout.addWidget(self._problem)
         layout.addWidget(self._bar)
+        layout.addWidget(self._market_ctx)
         layout.addWidget(self._empty)
+        layout.addWidget(self._strategy_caption)
         layout.addWidget(self._table, 1)
         layout.addWidget(self._create_note)
         self._fill = TailFill(layout, self._table)
@@ -187,7 +207,7 @@ class BacktestPage(QWidget):
         saved = load_last_pair_backtest(self._root)
         if saved is None:
             return False
-        pair, rows = saved
+        pair, rows, market_context = saved
         self._pair.setText(pair)
         return apply_scan_result(
             self,
@@ -197,6 +217,7 @@ class BacktestPage(QWidget):
             status=self._status,
             bar=self._bar,
             persist=False,
+            market_context=market_context,
         )
 
     def _open_scan_settings(self) -> None:
@@ -232,6 +253,8 @@ class BacktestPage(QWidget):
         self._last_partial_n = -1
         self._rows = []
         self._all_rows = []
+        self._market_context = None
+        self._market_ctx.set_loading()
         self._filters.prepare_for_refill()
         self._table.setRowCount(0)
         self._show_running()
@@ -268,7 +291,7 @@ class BacktestPage(QWidget):
         self._set_running(False)
         clear_partial_rows(self._root)
         try:
-            rows = job.get(timeout=0)
+            payload = job.get(timeout=0)
         except ValueError as exc:
             fail_scan(self, self._problem, str(exc) or S.BACKTEST_PAIR_REQUIRED)
             return
@@ -280,8 +303,15 @@ class BacktestPage(QWidget):
                 f"{S.BACKTEST_FAILED}" + (f" ({detail})" if detail else ""),
             )
             return
+        rows, market_context = _unpack_scan_payload(payload)
         apply_scan_result(
-            self, rows, problem=self._problem, empty=self._empty, status=self._status, bar=self._bar
+            self,
+            rows,
+            problem=self._problem,
+            empty=self._empty,
+            status=self._status,
+            bar=self._bar,
+            market_context=market_context,
         )
 
     def _cancel_run(self) -> None:
@@ -343,6 +373,22 @@ class BacktestPage(QWidget):
         )
         self._rows = filter_rows(rows, self._filters.dump())
 
+    def _on_market_ctx_collapse(self, collapsed: bool) -> None:
+        prior = load_results_prefs(self._root)
+        save_results_prefs(
+            self._root,
+            ResultsViewPrefs(
+                heatmap_enabled=bool(self._heatmap.isChecked()),
+                perfect_only=bool(self._perfect.isChecked()),
+                last_pair=self._pair.text().strip().upper() or "BTC/USD",
+                results_dialog_width=prior.results_dialog_width,
+                results_dialog_height=prior.results_dialog_height,
+                results_dialog_maximized=prior.results_dialog_maximized,
+                market_context_collapsed=bool(collapsed),
+                buy_picks_collapsed=prior.buy_picks_collapsed,
+            ),
+        )
+
     def _persist_prefs(self) -> None:
         prior = load_results_prefs(self._root)
         save_results_prefs(
@@ -354,6 +400,8 @@ class BacktestPage(QWidget):
                 results_dialog_width=prior.results_dialog_width,
                 results_dialog_height=prior.results_dialog_height,
                 results_dialog_maximized=prior.results_dialog_maximized,
+                market_context_collapsed=prior.market_context_collapsed,
+                buy_picks_collapsed=prior.buy_picks_collapsed,
             ),
         )
 

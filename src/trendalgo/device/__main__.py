@@ -54,4 +54,8 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
+    # Before any WorkerPool: hide spawn consoles (uv venv → base python.exe).
+    from trendalgo.device.spawn_no_console import install_spawn_no_console
+
+    install_spawn_no_console()
     sys.exit(main())

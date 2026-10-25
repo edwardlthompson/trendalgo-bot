@@ -25,6 +25,8 @@ class ResultsViewPrefs:
     results_dialog_width: int = _DEFAULT_DIALOG_W
     results_dialog_height: int = _DEFAULT_DIALOG_H
     results_dialog_maximized: bool = False
+    market_context_collapsed: bool = False
+    buy_picks_collapsed: bool = False
 
 
 def prefs_path(root: Path) -> Path:
@@ -46,6 +48,8 @@ def load_results_prefs(root: Path) -> ResultsViewPrefs:
             raw.get("results_dialog_height"), _DEFAULT_DIALOG_H, _MIN_DIALOG_H
         ),
         results_dialog_maximized=_bool(raw.get("results_dialog_maximized"), False),
+        market_context_collapsed=_bool(raw.get("market_context_collapsed"), False),
+        buy_picks_collapsed=_bool(raw.get("buy_picks_collapsed"), False),
     )
 
 

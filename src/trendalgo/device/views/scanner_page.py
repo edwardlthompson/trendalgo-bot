@@ -60,6 +60,7 @@ from trendalgo.device.scanner_sort import (
 )
 from trendalgo.device.stores import StoreReadError, read_snapshot
 from trendalgo.device.time_display import load_use_utc
+from trendalgo.device.views.buy_picks_pane import BuyPicksPane
 from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
 from trendalgo.device.views.scanner_column_filter_row import ScannerColumnFilterRow
 from trendalgo.device.views.scanner_filters import ScannerFilterBar
@@ -136,6 +137,13 @@ class ScannerPage(QWidget):
         self._tabs = QTabBar()
         for label in (S.SCANNER_TAB_QUALIFIED, S.SCANNER_TAB_WATCH, S.SCANNER_TAB_LOGS):
             self._tabs.addTab(label)
+        from trendalgo.device.results_view_prefs import load_results_prefs  # noqa: PLC0415
+
+        view = load_results_prefs(self._root)
+        self._buy_picks = BuyPicksPane(
+            expanded=not view.buy_picks_collapsed,
+            on_collapse=self._on_buy_picks_collapse,
+        )
         self._table = read_only_table(S.SCANNER_LTS_HEADERS, S.SCANNER_TITLE)
         self._table.setColumnCount(COLUMNS)
         self._col_filters.attach(self._table)
@@ -154,13 +162,11 @@ class ScannerPage(QWidget):
         layout.addWidget(self._bar)
         self._caption.hide()  # last-scan text is folded into the top filter row
         layout.addWidget(self._empty)
+        layout.addWidget(self._buy_picks)
         layout.addWidget(self._table)
         layout.addWidget(self._logs)
         self._fill = TailFill(layout, self._table)
         saved = load_filters(self._root)
-        from trendalgo.device.results_view_prefs import load_results_prefs  # noqa: PLC0415
-
-        view = load_results_prefs(self._root)
         saved = {
             **saved,
             "heatmap_enabled": view.heatmap_enabled,
@@ -384,6 +390,10 @@ class ScannerPage(QWidget):
         show_grid = show_table
         filter_miss = show_table and has_source and not coins
         empty_scan = show_table and not has_source
+        show_buys = tab == TAB_QUALIFIED
+        self._buy_picks.setVisible(show_buys)
+        if show_buys:
+            self._buy_picks.set_from_coins(coins)
         self._table.setVisible(show_grid)
         # Filters stay on the table; status carries the "no pairs" copy (not a blank page).
         self._empty.setVisible(False)
@@ -470,6 +480,30 @@ class ScannerPage(QWidget):
                 results_dialog_width=prior.results_dialog_width,
                 results_dialog_height=prior.results_dialog_height,
                 results_dialog_maximized=prior.results_dialog_maximized,
+                market_context_collapsed=prior.market_context_collapsed,
+                buy_picks_collapsed=prior.buy_picks_collapsed,
+            ),
+        )
+
+    def _on_buy_picks_collapse(self, collapsed: bool) -> None:
+        from trendalgo.device.results_view_prefs import (  # noqa: PLC0415
+            ResultsViewPrefs,
+            load_results_prefs,
+            save_results_prefs,
+        )
+
+        prior = load_results_prefs(self._root)
+        save_results_prefs(
+            self._root,
+            ResultsViewPrefs(
+                heatmap_enabled=prior.heatmap_enabled,
+                perfect_only=prior.perfect_only,
+                last_pair=prior.last_pair,
+                results_dialog_width=prior.results_dialog_width,
+                results_dialog_height=prior.results_dialog_height,
+                results_dialog_maximized=prior.results_dialog_maximized,
+                market_context_collapsed=prior.market_context_collapsed,
+                buy_picks_collapsed=bool(collapsed),
             ),
         )
 

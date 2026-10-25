@@ -21,8 +21,11 @@ from trendalgo.device.scan_time_history import TimingSample, record_sample
 from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
 
 
-def pair_strategy_scan_job(root: Path, pair: str) -> list[dict[str, Any]]:
-    """Worker entry: All-TA settings + progress file under the profile."""
+def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
+    """Worker entry: All-TA settings + progress file under the profile.
+
+    Returns ``{"rows": [...], "market_context": dict|None}``.
+    """
     clear_progress(root)
     clear_partial_rows(root)
     text = str(pair or "").strip().upper()
@@ -73,7 +76,7 @@ def pair_strategy_scan_job(root: Path, pair: str) -> list[dict[str, Any]]:
         },
     )
     t0 = time.perf_counter()
-    rows = scan_pair_strategies(
+    rows, market_context = scan_pair_strategies(
         symbol=symbol,
         pair=text,
         timeframes=timeframes,
@@ -97,4 +100,4 @@ def pair_strategy_scan_job(root: Path, pair: str) -> list[dict[str, Any]]:
         )
     except OSError:
         pass
-    return rows
+    return {"rows": rows, "market_context": market_context}

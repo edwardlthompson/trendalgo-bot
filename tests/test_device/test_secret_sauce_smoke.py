@@ -126,5 +126,6 @@ def test_smoke_ss_multi_coin_all_ta(tmp_path: Path, pair: str) -> None:
     base = pair.split("/", 1)[0]
     if not _cache_has_base(base):
         pytest.skip(f"OHLCV cache missing {base}")
-    rows = pair_strategy_scan_job(tmp_path, pair)
+    payload = pair_strategy_scan_job(tmp_path, pair)
+    rows = payload["rows"] if isinstance(payload, dict) else payload
     _assert_sauce_rank_two(rows, label=base)

@@ -40,15 +40,21 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board clear of AGENT/AUTO after `/ship` **v0.8.0**. Open: HUMAN PF-H1 (optional calendar keys) + carry-forward (attorney H-006, ops, H-032/H-036).
+**Current sprint:** **Market-Context** AGENT rows ✅ (pane on Backtest + Scanner Results; Lab residual-gated pivots). Open HUMAN: alert copy review + PF-H1 + carry-forward (attorney H-006, ops, H-032/H-036).
 
-**Tests:** GitHub CI/CodeQL/Security Scan green @ ship HEAD; Release Please #50 → `v0.8.0`; SBOM CycloneDX + MSI/setup on release (OpenVEX still KB-015/020).
+**Tests:** Local `watch-agent-gates --scope python` OK 8 stages; `smoke-sprint` PASS Sprint Market-Context; BTC SS smoke OK after job payload unpack.
 
-**Recent:** `/ship` 2026-10-21 — Settings ribbon + keys inventory + 48-col square grid; CVE bumps certifi/pillow; restore `codeql-action@v4` after invalid upd pin; Windows installers on release.
+**Recent:** Market Context dedicated band (Signal/Levels/Risk/Structure); classic pivots + consensus + regime map + R:R + VWAP/VP/extension/BTC corr/spread; Show Chart level overlays; Sauce pivot keys residual-gated.
 
 **Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
 
 ## Retrospectives
+
+### Sprint Market-Context (2026-10-24)
+
+- Pair-level Market Context stays **above** strategy tables (never new Strength columns)
+- Shared causal builders feed pane + Lab; pivot search keys are **residual-gated** so primary Sauce smoke stays stable
+- `pair_strategy_scan_job` returns `{rows, market_context}` — update all callers (smoke, parity tests)
 
 ### Sprint Oracle-SS (2026-10-18)
 

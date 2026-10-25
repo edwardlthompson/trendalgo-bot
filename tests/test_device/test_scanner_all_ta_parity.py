@@ -72,7 +72,7 @@ def test_backtest_one_coin_keeps_losing_pass1_rows() -> None:
         patch("trendalgo.device.pair_strategy_scan.buy_and_hold_row", side_effect=fake_bh),
         patch("trendalgo.device.pair_strategy_scan.deepen_seeds", return_value=[]),
     ):
-        _sym, rows, _stats = backtest_one_coin(
+        _sym, rows, _stats, _ctx = backtest_one_coin(
             {"symbol": "TIA", "pair": "TIA/USD"},
             loader_factory=lambda: _FakeLoader(frame),
             timeframes=("1h",),

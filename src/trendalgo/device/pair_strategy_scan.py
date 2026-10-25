@@ -67,10 +67,14 @@ def scan_pair_strategies(
     gecko_id: str | None = None,
     on_progress: ProgressFn | None = None,
     on_rows: RowsFn | None = None,
-) -> list[dict[str, Any]]:
-    """Signal-only all TF → best TF → params → TSL grid (trades ≥ 3)."""
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    """Signal-only all TF → best TF → params → TSL grid (trades ≥ 3).
+
+    Returns ``(rows, market_context)`` — context is pair-level, not a strategy row.
+    """
     out: list[dict[str, Any]] = []
     skip_best: dict[str, str] = {}
+    market_context: dict[str, Any] | None = None
     load_symbol = pair.split("/", 1)[0].strip().upper() if "/" in pair else symbol
     load_symbol = (load_symbol or symbol).upper()
     ordered_tf = sort_timeframes(timeframes)
@@ -114,7 +118,7 @@ def scan_pair_strategies(
         out = ensure_full_catalog(out, strat_list, symbol=symbol, stake_usd=stake, skips=skip_best)
         publish()
         emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
-        return out
+        return out, None
 
     emit(
         f"Resampling {load_symbol} {base_tf} ({len(base_frame)} bars) → "
@@ -154,6 +158,21 @@ def scan_pair_strategies(
             out.append(fleet_row_to_lts(oracle, symbol=symbol, stake_usd=stake, is_oracle=True))
             emit(f"{timeframe} Oracle max recorded", phase="oracle", timeframe=timeframe)
         publish()
+
+    # Pair-level Market Context (primary TF or first loaded frame) — not a strategy row.
+    try:
+        from trendalgo.analytics.market_context import compute_market_context
+
+        primary = frames_by_tf.get("1h")
+        if primary is None:
+            primary = frames_by_tf.get("4h")
+        if primary is None and frames_by_tf:
+            primary = next(iter(frames_by_tf.values()))
+        if primary is not None and not primary.empty:
+            market_context = compute_market_context(primary).to_dict()
+    except Exception as exc:
+        emit(f"Market Context soft-fail: {exc}", phase="load")
+        market_context = None
 
     ss_future: Future[dict[str, Any] | None] | None = None
     ss_pool: ThreadPoolExecutor | None = None
@@ -316,4 +335,4 @@ def scan_pair_strategies(
         had_subhour=needs_1m_base(ordered_tf),
     )
     publish()
-    return out
+    return out, market_context

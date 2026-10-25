@@ -51,7 +51,7 @@ def run_secret_sauce_lab(
         family="oracle_pattern",
         fee=fee,
         stake_usd=stake_usd,
-        time_budget_s=min(1.2, time_budget_s * 0.25),
+        time_budget_s=min(2.0, time_budget_s * 0.4),
     )
     family_pairs = seeds_for_weights(strategy_id, regime.family_weights, volume_ok=regime.volume_ok)
     pairs = pattern + family_pairs
@@ -105,7 +105,7 @@ def run_secret_sauce_lab(
             residual_exits=residual0["residual_exit_indexes"],
             fee=fee,
             stake_usd=stake_usd,
-            time_budget_s=min(0.8, max(0.2, time_budget_s * 0.2)),
+            time_budget_s=min(1.4, max(0.35, time_budget_s * 0.3)),
         )
         if refined is not None:
             entry_rule, exit_rule, search_net, family = refined

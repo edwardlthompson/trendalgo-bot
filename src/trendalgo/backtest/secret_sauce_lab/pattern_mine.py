@@ -14,7 +14,7 @@ from trendalgo.backtest.secret_sauce_lab.label_rules import pick_rules_at_labels
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees
 
 _MAX_PAIRS = 16
-_TIME_BUDGET_S = 0.6
+_TIME_BUDGET_S = 1.2
 _MAX_ENTRY_FRAC = 0.55
 _MAX_EXIT_FRAC = 0.80
 _MAX_TRADES = 200
@@ -41,7 +41,8 @@ def pattern_seed_pairs(
     cols, feats = feature_matrix(df)
     if not feats:
         return []
-    keys = feature_keys_for(df)
+    # Pivot/VWAP/POC keys in primary Lab search (not residual-only).
+    keys = feature_keys_for(df, include_pivots=True)
     entry_rules = pick_rules_at_labels(
         feats, entries, keys, strategy_id=strategy_id, side="entry", k=8
     )

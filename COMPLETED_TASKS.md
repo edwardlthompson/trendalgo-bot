@@ -2,6 +2,18 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint Device-Notify-Launch (2026-10-22)
+
+MSI registries + null-safe scanner filters; Telegram BotFather copy wizard + Detect deleteWebhook→getUpdates; Alerts notify ribbon (Entered/Left/Trades + preview + Test Win/TG); source-first `launch-device.ps1` / `relaunch-device.ps1` + docs/rule. watch-agent-gates OK; commits through `49f3987`. HUMAN alert-copy review + PF-H1 remain on BUILD_PLAN.
+
+- ✅ [AGENT][LOCAL] MSI registries + null-safe scanner filter load + frozen config path — scope: `scripts/packaging/build-windows-desktop.ps1`, `src/trendalgo/bundled_config.py`, `src/trendalgo/exchanges/registry.py`, `src/trendalgo/venues/registry.py`, `src/trendalgo/device/views/scanner_filters.py`, `src/trendalgo/device/selftest.py`, `tests/test_device/test_device_scan_page.py`
+- ✅ [AGENT][LOCAL] Telegram BotFather copy-script wizard + Detect deleteWebhook→getUpdates — scope: `src/trendalgo/device/views/telegram_wizard.py`, `src/trendalgo/device/views/copy_snippet.py`, `src/trendalgo/device/telegram_botfather.py`, `src/trendalgo/notifications/telegram.py`, `src/trendalgo/device/strings.py`, `tests/test_device/test_telegram_wizard.py`, `tests/test_telegram.py`
+- ✅ [AGENT][LOCAL] Alerts notify ribbon (Entered/Left/Trades master toggles + preview + Test Windows/Telegram) — scope: `src/trendalgo/device/alert_preview.py`, `src/trendalgo/device/views/alerts_notify_ribbon.py`, `src/trendalgo/device/views/alerts_page.py`, `src/trendalgo/device/views/main_window.py`, `src/trendalgo/device/scan_alerts.py`, `tests/test_device/test_alert_preview.py`, `tests/test_device/test_alerts_notify_ribbon.py`
+- ✅ [AGENT][LOCAL] Source-first launch default + `-Frozen` + `relaunch-device.ps1` + docs/rule — scope: `scripts/packaging/launch-device.ps1`, `scripts/packaging/relaunch-device.ps1`, `scripts/lib/device_launch_prefer.py`, `.cursor/rules/device-no-console.mdc`, `docs/packaging/WINDOWS_LAUNCHER.md`, `docs/LOCAL_DEV.md`, `tests/test_scripts/test_device_launch_prefer.py`
+- ✅ [AGENT][LOCAL] Finish source-first gates — `watch-agent-gates --once --autofix --scope auto` green; smoke `relaunch-device.ps1` — scope: `scripts/packaging/`, `tests/test_scripts/test_device_launch_prefer.py`
+- ✅ [AGENT][LOCAL] Commit + Conventional Commits for Device-Notify-Launch tree (explicit paths only; no `.cursor/*.txt` noise) — scope: listed files above + `src/trendalgo/bundled_config.py`
+- ✅ [AGENT][LOCAL] Next MSI/ship: registries already in `--add-data`; verify frozen selftest `registries` OK on release build — scope: `scripts/packaging/build-windows-desktop.ps1`, `src/trendalgo/device/selftest.py`
+
 ## Sprint Oracle-SS — Glossary / Show Chart / SS bank (2026-10-18)
 
 Oracle Max glossary, Show Chart, Secret Sauce CDL/Fib bank, parallel All-TA Pass 2, Oracle×catalog Sauce TA, live ranked Results stream, Sauce TA vs Lab split. SS Lab #2 smokes BTC/ETH/SOL/AVAX 4/4; watch-agent-gates OK 8 stages; smoke-sprint PASS.

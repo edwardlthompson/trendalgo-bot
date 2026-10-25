@@ -35,23 +35,28 @@ def apply_scan_result(
     status: QLabel,
     bar: QProgressBar,
     persist: bool = True,
+    market_context: dict[str, Any] | None = None,
 ) -> bool:
     """Load rows into page or show empty/error. Returns True when table should fill."""
     if not isinstance(rows, list) or not rows:
         empty.set_text(S.BACKTEST_NO_CANDLES_TITLE, S.BACKTEST_NO_CANDLES_BODY)
         page._show_empty()
         status.setText(S.BACKTEST_DONE)
+        _apply_market_context(page, None)
         return False
     page._sort_key = DEFAULT_SORT_KEY
     page._sort_dir = DEFAULT_SORT_DIR
     page._all_rows = sort_rows(rows, key=page._sort_key, direction=page._sort_dir)
     page._apply_view_filter()
     page._persist_prefs()
+    page._market_context = market_context if isinstance(market_context, dict) else None
+    _apply_market_context(page, page._market_context)
     if persist:
         save_last_pair_backtest(
             page._root,
             page._pair.text().strip().upper(),
             page._all_rows,
+            market_context=page._market_context,
         )
     page._fill_table()
     status.setText(S.BACKTEST_DONE)
@@ -73,10 +78,21 @@ def apply_scan_result(
     return True
 
 
+def _apply_market_context(page: Any, raw: dict[str, Any] | None) -> None:
+    pane = getattr(page, "_market_ctx", None)
+    if pane is None:
+        return
+    if raw is None:
+        pane.set_empty()
+    else:
+        pane.set_context(raw)
+
+
 def fail_scan(page: Any, problem: QLabel, message: str) -> None:
     show_problem(problem, message)
     page._status.setText("")
     page._show_empty()
+    _apply_market_context(page, None)
 
 
 def fill_or_empty(page: Any) -> None:
@@ -94,6 +110,7 @@ def fill_or_empty(page: Any) -> None:
             filter_row=page._filters,
             on_open_plan=page._on_open_plan,
             on_note=page._create_note.setText,
+            market_context=getattr(page, "_market_context", None),
         )
         page._empty.hide()
         page._table.show()
