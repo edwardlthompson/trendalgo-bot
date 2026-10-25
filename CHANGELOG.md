@@ -20,6 +20,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.9.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.8.0...v0.9.0) (2026-10-25)
+
+
+### Added
+
+* **device:** Alerts notify ribbon with preview and channel tests ([1abbc83](https://github.com/edwardlthompson/trendalgo-bot/commit/1abbc83f24dff499ec146f0cfc2bb56df642d9cd))
+* **device:** BotFather copy wizard and deleteWebhook chat detect ([e9d0685](https://github.com/edwardlthompson/trendalgo-bot/commit/e9d06857a668a4a831ba2bd3981dcbf9f943455d))
+* **device:** Market Context glance and labeled top-10 ([b3223da](https://github.com/edwardlthompson/trendalgo-bot/commit/b3223dade4a0229ce60fdb44bc70aa80db662d4f))
+* **packaging:** source-first device launch and relaunch helper ([d32e2ba](https://github.com/edwardlthompson/trendalgo-bot/commit/d32e2bae49307e883bc8613c5d621cc91fda2dd0))
+
+
+### Fixed
+
+* **device:** ship registries in frozen build and harden filter nulls ([57a08b2](https://github.com/edwardlthompson/trendalgo-bot/commit/57a08b2b180920013fb66e33c948c8dac8f4d52c))
+
+
+### Changed
+
+* **build-plan:** close MSI verify; block alert copy pending HUMAN review ([49f3987](https://github.com/edwardlthompson/trendalgo-bot/commit/49f3987a084b91f046e258f75a9d597cdc37adc9))
+* **build-plan:** mark Device-Notify-Launch gates and commit rows done ([743bb2e](https://github.com/edwardlthompson/trendalgo-bot/commit/743bb2ecb547960c7bdcc2c392bef52c23d6f442))
+* **release:** sync uv.lock to 0.8.0 after Release Please merge ([a13743f](https://github.com/edwardlthompson/trendalgo-bot/commit/a13743fa6fc993e0dd347a152d19d01ba38aeb0e))
+
+
+### Documentation
+
+* **kb:** record v0.8.0 ship CodeQL pin and OpenVEX gap ([7c18a7d](https://github.com/edwardlthompson/trendalgo-bot/commit/7c18a7d1ea793710107d99eec70320e8fefc6783))
+
 ## [0.8.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.2...v0.8.0) (2026-10-21)
 
 
