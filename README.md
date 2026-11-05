@@ -402,3 +402,10 @@ Router: [`AGENTS.md`](AGENTS.md) · Batch commands: [`docs/help/BATCH_COMMANDS.m
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). AGPL applies to combined work; billing module licensing per ADR-0005.
 
 </details>
+
+## What this is not
+
+- A finished commercial product promise
+- A place for secrets or production credentials
+- An unbounded scope — see README goals above
+
