@@ -25,7 +25,7 @@ Cursor Cloud Agents and This Computer agents can both claim open `[AGENT]` rows.
 ### Critique
 
 | Issue | Resolution |
-|-------|------------|
+| ------- | ------------ |
 | Null/empty lane | Stub `_No local agent items._` / `_No cloud agent items._` |
 | Cloud PR race | `/resume` overlap check before next LOCAL |
 | Untagged AGENT | `check-agent-venue` rejects open `[AGENT]` without venue |
