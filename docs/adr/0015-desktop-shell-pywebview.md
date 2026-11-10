@@ -19,7 +19,7 @@ ADR-0014 opened the default browser against a same-origin API. Operators want an
 ## Alternatives considered
 
 | Option | Why not now |
-|--------|-------------|
+| -------- | ------------- |
 | Electron / Tauri | Heavier; proprietary friction vs FOSS MIT path |
 | Pure WinUI rewrite | Rewrites Scanner/LTS HTML |
 | Browser-only (ADR-0014 alone) | Opens a separate browser app |
@@ -34,7 +34,7 @@ ADR-0014 opened the default browser against a same-origin API. Operators want an
 ### Critique
 
 | Issue | Resolution |
-|-------|------------|
+| ------- | ------------ |
 | “No browser” vs WebView2 | Native OS window + embedded engine; does not open Chrome/Edge UI |
 | API race before window | Health poll before `webview.start` |
 | Filters reset each launch | `webview.start(private_mode=False, storage_path=data/launcher/webview)` + server `scanner_host_filters.json` |

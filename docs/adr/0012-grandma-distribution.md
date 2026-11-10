@@ -17,7 +17,7 @@ TrendAlgo is a Python API + browser PWA. Expert users can run `dev-local` / `pre
 ## Alternatives considered
 
 | Option | Why not first |
-|--------|----------------|
+| -------- | ---------------- |
 | Electron/Tauri rewrite | High packaging cost; duplicates the PWA |
 | Expert-only `uv`+`npm` forever | Blocks non-expert adoption |
 | Static GitHub Pages alone | No API → Bot/Scanner cannot load |
@@ -25,7 +25,7 @@ TrendAlgo is a Python API + browser PWA. Expert users can run `dev-local` / `pre
 ### Critique
 
 | Issue | Resolution |
-|-------|------------|
+| ------- | ------------ |
 | Hosted URL not live yet | Document operator steps in FIRST_RUN_USER + DEPLOYMENT; HUMAN provisions VPS |
 | Local launcher scope creep | BUILD_PLAN packaging sprint; wrap existing stack only |
 | Proprietary SDKs | FOSS MIT path only; no Crashlytics/Sentry on production |
