@@ -45,9 +45,43 @@ class RegimeSnapshot:
     votes: dict[str, bool]
     family_weights: dict[str, float]
     narrative: str
+    # SIM-06: tip snapshot is a display-only current reading (not fit weights).
+    display_only: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def regime_weights_series(df: pd.DataFrame) -> list[dict[str, float]]:
+    """Per-bar causal family weights (no tip leakage into earlier bars)."""
+    closes = df["close"].to_numpy(dtype=float)
+    highs = df["high"].to_numpy(dtype=float) if "high" in df.columns else closes
+    lows = df["low"].to_numpy(dtype=float) if "low" in df.columns else closes
+    n = len(closes)
+    adx, plus_di, minus_di = adx_di(highs, lows, closes)
+    er = efficiency_ratio(closes)
+    chop = choppiness_index(highs, lows, closes)
+    atr_p = atr_percentile(highs, lows, closes)
+    bb_p = bb_width_percentile(closes)
+    sq = squeeze_flag(highs, lows, closes)
+    sma20 = sma(closes, 20)
+    sma50 = sma(closes, 50)
+    sma100 = sma(closes, 100)
+    volume_ok = has_real_volume(df)
+    out: list[dict[str, float]] = []
+    for i in range(n):
+        structural, _, _ = _structural_at(i, adx, er, chop, atr_p)
+        direction = _direction_at(i, closes, plus_di, minus_di, sma20, sma50, sma100, structural)
+        vol_p = float(atr_p[i])
+        if vol_p < 0.25:
+            volatility = "low"
+        elif vol_p > 0.75:
+            volatility = "high"
+        else:
+            volatility = "normal"
+        squeeze = bool(sq[i]) or bool(bb_p[i] < 0.20)
+        out.append(_family_weights(structural, volatility, direction, squeeze, volume_ok))
+    return out
 
 
 def detect_regime(df: pd.DataFrame) -> RegimeSnapshot:
@@ -100,7 +134,7 @@ def detect_regime(df: pd.DataFrame) -> RegimeSnapshot:
     squeeze = bool(sq[i]) or bool(bb_p[i] < 0.20)
     weights = _family_weights(structural, volatility, direction, squeeze, volume_ok)
     narrative = (
-        f"{structural} · vol={volatility} · dir={direction}"
+        f"Current reading (display-only) — {structural} · vol={volatility} · dir={direction}"
         + (" · squeeze" if squeeze else "")
         + f" · votes ADX/ER/CHOP={tip_votes}/3 · maj{_MAJORITY_BARS}"
     )
@@ -114,6 +148,7 @@ def detect_regime(df: pd.DataFrame) -> RegimeSnapshot:
         votes=votes,
         family_weights=weights,
         narrative=narrative,
+        display_only=True,
     )
 
 

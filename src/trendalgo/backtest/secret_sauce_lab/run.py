@@ -10,7 +10,11 @@ from trendalgo.backtest.secret_sauce_dossier import HeartbeatDossier
 from trendalgo.backtest.secret_sauce_features import entries_for_secret_sauce
 from trendalgo.backtest.secret_sauce_lab.families import seeds_for_weights
 from trendalgo.backtest.secret_sauce_lab.narrative import build_narrative
-from trendalgo.backtest.secret_sauce_lab.regime_snapshot import RegimeSnapshot, detect_regime
+from trendalgo.backtest.secret_sauce_lab.regime_snapshot import (
+    RegimeSnapshot,
+    detect_regime,
+    regime_weights_series,
+)
 from trendalgo.backtest.secret_sauce_lab.residual_instrument import build_residual_fields
 from trendalgo.backtest.secret_sauce_lab.search import bh_net_profit, search_best_pair
 from trendalgo.backtest.secret_sauce_lab.search_folds import bar_folds
@@ -36,7 +40,7 @@ def run_secret_sauce_lab(
     """Mine dossier via Lab; returns (dossier, regime) or None."""
     if df.empty or len(oracle_trades) < 2:
         return None
-    regime = detect_regime(df)
+    regime = detect_regime(df)  # tip snapshot: display-only current reading
     if bh_net is None:
         bh_net = bh_net_profit(df, fee=fee, stake=stake_usd)
     from trendalgo.backtest.secret_sauce_lab.pattern_mine import (
@@ -55,9 +59,13 @@ def run_secret_sauce_lab(
         stake_usd=stake_usd,
         time_budget_s=min(2.0, time_budget_s * 0.4),
     )
-    family_pairs = seeds_for_weights(strategy_id, regime.family_weights, volume_ok=regime.volume_ok)
-    pairs = pattern + family_pairs
     train_idx, hold_idx = bar_folds(len(df), holdout_frac=_HOLDOUT_FRAC, purge_bars=_PURGE_BARS)
+    weight_series = regime_weights_series(df)
+    fit_weights = (
+        weight_series[train_idx[-1]] if train_idx and weight_series else regime.family_weights
+    )
+    family_pairs = seeds_for_weights(strategy_id, fit_weights, volume_ok=regime.volume_ok)
+    pairs = pattern + family_pairs
     picked = search_best_pair(
         df,
         pairs,
