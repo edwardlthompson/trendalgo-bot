@@ -3,6 +3,7 @@ name = "trendalgo-bot"
 version = "0.8.0"
 description = "Self-hosted crypto trading platform — native CCXT engine, portfolio, scanner, billing"
 readme = "README.md"
+license = "Elastic-2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "apscheduler>=3.11.3",

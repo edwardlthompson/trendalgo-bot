@@ -4,9 +4,11 @@
 
 # TrendAlgo Bot
 
-![MIT](https://img.shields.io/badge/license-MIT-2ea043?style=flat-square)
+![Elastic-2.0](https://img.shields.io/badge/license-Elastic--2.0-2ea043?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-Python%20%2B%20PySide6-0969da?style=flat-square)
-![FOSS](https://img.shields.io/badge/FOSS-no_tracking-656d76?style=flat-square)
+![Source-available](https://img.shields.io/badge/source--available-no_tracking-656d76?style=flat-square)
+
+Source-available under Elastic License 2.0 — free for your own trading; no reselling as a service; no stripping billing.
 
 **TrendAlgo Bot** is a self-hosted cryptocurrency trading platform: a headless bot on your VPS plus a local PySide6 device app for research and control. It combines algorithmic spot trading, portfolio tracking, opportunity scanning, and Secret Sauce Study — without custodial accounts, proprietary SDKs, or default telemetry.
 
@@ -371,7 +373,7 @@ Board: [`BUILD_PLAN.md`](BUILD_PLAN.md) · [Exchange roadmap](docs/EXCHANGE_ROAD
 <details>
 <summary><strong>License</strong></summary>
 
-MIT — see [`LICENSE`](LICENSE). Performance license terms: [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md).
+Elastic License 2.0 (source-available) — see [`LICENSE`](LICENSE). Performance license terms: [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md).
 
 </details>
 
@@ -393,7 +395,7 @@ Router: [`AGENTS.md`](AGENTS.md) · Batch commands: [`docs/help/BATCH_COMMANDS.m
 <details>
 <summary><strong>Contributing</strong></summary>
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md). AGPL applies to combined work; billing module licensing per ADR-0005.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Elastic License 2.0 applies; performance billing terms per ADR-0005 / ADR-0018.
 
 </details>
 
