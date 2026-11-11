@@ -27,6 +27,12 @@ class HeartbeatDossier:
     residual_exit_indexes: tuple[int, ...] = ()
     residual_feature_hits: tuple[dict[str, Any], ...] = ()
     oracle_gap_net_pct: float | None = None
+    trailing_stop_pct: float = 0.0
+    # SIM-05 honest rename: fit coverage on holdout bars (not a selection gate alone).
+    holdout_fit_coverage: float | None = None
+    holdout_gate_ok: bool | None = None
+    train_net: float | None = None
+    holdout_net: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -37,6 +43,14 @@ class HeartbeatDossier:
             "formula_en": self.formula_en,
             "train_coverage": self.train_coverage,
             "holdout_coverage": self.holdout_coverage,
+            "holdout_fit_coverage": (
+                self.holdout_fit_coverage
+                if self.holdout_fit_coverage is not None
+                else self.holdout_coverage
+            ),
+            "holdout_gate_ok": self.holdout_gate_ok,
+            "train_net": self.train_net,
+            "holdout_net": self.holdout_net,
             "swing_hits": list(self.swing_hits),
             "exit_hits": list(self.exit_hits),
             "oracle_entry_indexes": list(self.oracle_entry_indexes),
@@ -46,6 +60,7 @@ class HeartbeatDossier:
             "residual_exit_indexes": list(self.residual_exit_indexes),
             "residual_feature_hits": [dict(x) for x in self.residual_feature_hits],
             "oracle_gap_net_pct": self.oracle_gap_net_pct,
+            "trailing_stop_pct": self.trailing_stop_pct,
             "requires_backtest": True,
         }
 
@@ -56,6 +71,7 @@ class HeartbeatDossier:
             "entry_conjuncts": [asdict(c) for c in self.rule.conjuncts],
             "exit_conjuncts": [asdict(c) for c in self.exit_rule.conjuncts],
             "rationale": self.rule.rationale,
+            "trailing_stop_pct": float(self.trailing_stop_pct),
         }
 
 
@@ -126,6 +142,23 @@ def dossier_from_dict(raw: dict[str, Any] | None) -> HeartbeatDossier | None:
         gap = float(gap_raw) if gap_raw is not None else None
     except (TypeError, ValueError):
         gap = None
+    hold_fit = raw.get("holdout_fit_coverage")
+    try:
+        hold_fit_f = float(hold_fit) if hold_fit is not None else None
+    except (TypeError, ValueError):
+        hold_fit_f = None
+    gate_raw = raw.get("holdout_gate_ok")
+    gate_ok = None if gate_raw is None else bool(gate_raw)
+
+    def _opt_float(key: str) -> float | None:
+        val = raw.get(key)
+        if val is None:
+            return None
+        try:
+            return float(val)
+        except (TypeError, ValueError):
+            return None
+
     return HeartbeatDossier(
         rule=entry_rule,
         exit_rule=exit_rule,
@@ -141,6 +174,11 @@ def dossier_from_dict(raw: dict[str, Any] | None) -> HeartbeatDossier | None:
         residual_exit_indexes=tuple(int(x) for x in (raw.get("residual_exit_indexes") or [])),
         residual_feature_hits=_residual_hits_from(raw.get("residual_feature_hits")),
         oracle_gap_net_pct=gap,
+        trailing_stop_pct=float(raw.get("trailing_stop_pct") or 0.0),
+        holdout_fit_coverage=hold_fit_f,
+        holdout_gate_ok=gate_ok,
+        train_net=_opt_float("train_net"),
+        holdout_net=_opt_float("holdout_net"),
     )
 
 

@@ -257,6 +257,7 @@ def test_osc_cross_beats_level_state_on_synth() -> None:
             stake_usd=stake,
             fee=fee,
             trailing_stop_pct=0.0,
+            fill_offset=0,
         ).get("net_profit")
         or 0.0
     )
@@ -268,6 +269,7 @@ def test_osc_cross_beats_level_state_on_synth() -> None:
             stake_usd=stake,
             fee=fee,
             trailing_stop_pct=0.0,
+            fill_offset=0,
         ).get("net_profit")
         or 0.0
     )

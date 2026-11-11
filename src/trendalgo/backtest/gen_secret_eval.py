@@ -42,13 +42,14 @@ def eval_gen_secret(
         exits = np.zeros(len(df), dtype=bool)
     if not entries.any():
         return None, "no_trades"
+    tsl = max(0.0, float(params.get("trailing_stop_pct") or trailing_stop_pct or 0.0))
     stats = simulate_long_with_fees(
         df,
         entries,
         exits,
         stake_usd=stake_usd,
         fee=fee,
-        trailing_stop_pct=trailing_stop_pct,
+        trailing_stop_pct=tsl,
         collect_trades=collect_trades,
     )
     if stats["trades"] == 0:

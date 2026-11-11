@@ -179,7 +179,7 @@ def _search_tf_oracle_first(
         direction=regime.direction,
     )
     if picked is not None and not is_exact_peer_clone(picked[0], picked[1], hints):
-        er, xr, net, fam = picked
+        er, xr, net, fam = picked[:4]
         out.append((er, xr, net, fam, search_tf, search_frame, regime))
     # Default osc neighborhood (not peer-anchored levels) when still thin.
     if seed_peer is not None and (not out or (peer_usd is not None and out[-1][2] <= peer_usd)):
@@ -252,5 +252,5 @@ def _peer_skim_fallback(
         direction=regime.direction,
     )
     if picked is not None and not is_exact_peer_clone(picked[0], picked[1], hints):
-        er, xr, net, fam = picked
+        er, xr, net, fam = picked[:4]
         out.append((er, xr, net, fam, tf, frame, regime))

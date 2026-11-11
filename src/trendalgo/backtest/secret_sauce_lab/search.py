@@ -40,8 +40,8 @@ def search_best_pair(
     time_budget_s: float = _TIME_BUDGET_S,
     peer_net: float | None = None,
     direction: str | None = None,
-) -> tuple[CompositeRule, CompositeRule, float, str] | None:
-    """Return best (entry, exit, net_profit, family).
+) -> tuple[CompositeRule, CompositeRule, float, str, float] | None:
+    """Return best (entry, exit, net_profit, family, trailing_stop_pct).
 
     Objective: maximize fee Net % (Oracle is the unreachable ceiling).
     Constraint tiers: clear peer → clear B&H → positive → any. Never stop at
@@ -52,15 +52,15 @@ def search_best_pair(
     if n < 3 or not pairs:
         return None
     t0 = time.perf_counter()
-    overall: tuple[CompositeRule, CompositeRule, float, str] | None = None
-    best_pos: tuple[CompositeRule, CompositeRule, float, str] | None = None
-    best_vs_bh: tuple[CompositeRule, CompositeRule, float, str] | None = None
-    best_vs_peer: tuple[CompositeRule, CompositeRule, float, str] | None = None
+    Cand = tuple[CompositeRule, CompositeRule, float, str, float]
+    overall: Cand | None = None
+    best_pos: Cand | None = None
+    best_vs_bh: Cand | None = None
+    best_vs_peer: Cand | None = None
 
-    def _consider(cand: tuple[CompositeRule, CompositeRule, float, str]) -> None:
+    def _consider(cand: Cand) -> None:
         nonlocal overall, best_pos, best_vs_bh, best_vs_peer
-        er, xr, net, family = cand
-        del er, xr, family
+        _er, _xr, net, _family, _tsl = cand
         if overall is None or _better(cand, overall, direction):
             overall = cand
         if net > 0 and (best_pos is None or _better(cand, best_pos, direction)):
@@ -88,6 +88,7 @@ def search_best_pair(
         if (em.sum() / n) > _MAX_ENTRY_FRAC or (xm.sum() / n) > _MAX_EXIT_FRAC:
             return
         net = float("-inf")
+        best_tsl = 0.0
         for tsl in (0.0, 0.02, 0.03, 0.05):
             stats = simulate_long_with_fees(
                 df, em, xm, stake_usd=stake_usd, fee=fee, trailing_stop_pct=tsl
@@ -98,9 +99,10 @@ def search_best_pair(
             trial_net = float(stats.get("net_profit") or 0.0)
             if trial_net > net:
                 net = trial_net
+                best_tsl = float(tsl)
         if net == float("-inf"):
             return
-        _consider((er, xr, net, family))
+        _consider((er, xr, net, family, best_tsl))
 
     # Primary pass: non-adaptive families first so exit pass has a strong entry.
     primary = [(e, x, f) for e, x, f in pairs if f != "adaptive_exit"]
@@ -138,8 +140,8 @@ def search_best_pair(
 
 
 def _better(
-    cand: tuple[CompositeRule, CompositeRule, float, str],
-    cur: tuple[CompositeRule, CompositeRule, float, str],
+    cand: tuple[CompositeRule, CompositeRule, float, str, float],
+    cur: tuple[CompositeRule, CompositeRule, float, str, float],
     direction: str | None,
 ) -> bool:
     """Strictly higher Net % wins; at equal Net prefer Oracle-geometry families."""

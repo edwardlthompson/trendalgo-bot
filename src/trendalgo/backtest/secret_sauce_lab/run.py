@@ -66,7 +66,7 @@ def run_secret_sauce_lab(
     )
     if picked is None:
         return None
-    entry_rule, exit_rule, search_net, family = picked
+    entry_rule, exit_rule, search_net, family, best_tsl = picked
     entries = [
         int(t.get("entry_index") or -1)
         for t in oracle_trades
@@ -108,7 +108,9 @@ def run_secret_sauce_lab(
             time_budget_s=min(1.4, max(0.35, time_budget_s * 0.3)),
         )
         if refined is not None:
-            entry_rule, exit_rule, search_net, family = refined
+            entry_rule, exit_rule, search_net, family = refined[:4]
+            if len(refined) >= 5:
+                best_tsl = float(refined[4])
             entry_mask = entries_for_secret_sauce(df, entry_rule)
             exit_mask = entries_for_secret_sauce(df, exit_rule)
             if not entry_mask.any():
@@ -143,6 +145,7 @@ def run_secret_sauce_lab(
         formula_en=formula,
         train_coverage=max(train_cov, 0.0),
         holdout_coverage=max(hold_cov, 0.0),
+        holdout_fit_coverage=max(hold_cov, 0.0),
         swing_hits=swing_hits,
         exit_hits=exit_hits,
         oracle_entry_indexes=tuple(entries),
@@ -152,6 +155,7 @@ def run_secret_sauce_lab(
         residual_exit_indexes=residual["residual_exit_indexes"],
         residual_feature_hits=residual["residual_feature_hits"],
         oracle_gap_net_pct=residual["oracle_gap_net_pct"],
+        trailing_stop_pct=float(best_tsl),
     )
     return dossier, regime
 
