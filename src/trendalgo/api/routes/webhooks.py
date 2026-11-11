@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
 
+from trendalgo.api.deps import RawBody, RawBodyDep
 from trendalgo.signals.runner_bridge import bridge_tradingview_signal
 from trendalgo.signals.tradingview import TradingViewWebhook
 
@@ -38,13 +39,14 @@ async def telegram_webhook(
 @router.post("/webhooks/tradingview")
 async def tradingview_webhook(
     request: Request,
+    raw: RawBody = RawBodyDep,
     x_signature: str | None = Header(default=None, alias="X-Signature"),
 ) -> dict[str, Any]:
+    """AUTH-04: body is read exactly once in the dependency; handler must not re-read."""
     state = request.app.state.trendalgo
-    body = await request.body()
     client_ip = request.client.host if request.client else "unknown"
     handler = TradingViewWebhook(state.portfolio_store)
-    result = handler.handle(body, client_ip=client_ip, signature=x_signature)
+    result = handler.handle(raw.payload, client_ip=client_ip, signature=x_signature)
     execution: dict[str, Any] | None = None
     if result.accepted and result.signal:
         execution = bridge_tradingview_signal(result.signal, state)
@@ -53,4 +55,5 @@ async def tradingview_webhook(
         "reason": result.reason,
         "signal": result.signal,
         "execution": execution,
+        "payload_digest": raw.digest_hex,
     }

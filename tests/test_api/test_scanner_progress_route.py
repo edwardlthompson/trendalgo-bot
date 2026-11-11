@@ -7,10 +7,11 @@ from fastapi.testclient import TestClient
 from trendalgo.api.app import create_app
 from trendalgo.api.state import default_state
 from trendalgo.scanner.progress import get_scan_progress
+from tests.support.api_client import make_api_client
 
 
 def test_progress_route_returns_state_and_only_newer_events() -> None:
-    client = TestClient(create_app(default_state()))
+    client = make_api_client(default_state())
     progress = get_scan_progress()
     progress.begin_job("Scan")
     try:
@@ -27,6 +28,6 @@ def test_progress_route_returns_state_and_only_newer_events() -> None:
 
 
 def test_progress_route_rejects_negative_cursor() -> None:
-    client = TestClient(create_app(default_state()))
+    client = make_api_client(default_state())
     response = client.get("/api/v1/scanner/progress", params={"after": -1})
     assert response.status_code == 422

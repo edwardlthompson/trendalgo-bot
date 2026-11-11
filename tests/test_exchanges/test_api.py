@@ -3,10 +3,11 @@
 from fastapi.testclient import TestClient
 
 from trendalgo.api.app import create_app
+from tests.support.api_client import make_api_client
 
 
 def test_exchanges_registry_endpoint() -> None:
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/exchanges/registry")
     assert resp.status_code == 200
     data = resp.json()

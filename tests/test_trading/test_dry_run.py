@@ -8,6 +8,7 @@ from trendalgo.risk.journal import TradeJournal
 from trendalgo.strategies.runtime.contract import Candle
 from trendalgo.strategies.runtime.loader import load_strategy
 from trendalgo.trading.runner.dry_run import DryRunRunner
+from tests.support.api_client import make_api_client
 
 
 def _candle(ts: int, close: float) -> Candle:
@@ -36,7 +37,7 @@ def test_runner_status_api() -> None:
 
     from trendalgo.api.app import create_app
 
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/trading/runner/status")
     assert resp.status_code == 200
     assert resp.json()["engine"] == "native"

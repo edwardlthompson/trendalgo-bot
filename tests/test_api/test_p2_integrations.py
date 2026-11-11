@@ -11,14 +11,14 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
-from trendalgo.api.app import create_app
+from tests.support.api_client import make_api_client
 from trendalgo.api.state import default_state
 
 
 def _client(tmp_path: Path, monkeypatch: Any) -> tuple[TestClient, Any]:
     monkeypatch.setenv("TRENDALGO_DATA_DIR", str(tmp_path))
     state = default_state()
-    return TestClient(create_app(state)), state
+    return make_api_client(state), state
 
 
 def test_telegram_ingress_allowlist_and_rate_limit(tmp_path: Path, monkeypatch: Any) -> None:

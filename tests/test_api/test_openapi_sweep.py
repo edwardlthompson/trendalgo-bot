@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from trendalgo.api.app import create_app
 from trendalgo.api.state import default_state
+from tests.support.api_client import make_api_client
 
 
 @pytest.fixture
@@ -26,7 +27,7 @@ def api_client() -> TestClient:
     reset_fee_store()
     fees.clear_fee_cache()
     ensure_fee_db_ready(get_fee_store())
-    return TestClient(create_app(default_state()))
+    return make_api_client(default_state())
 
 
 def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:

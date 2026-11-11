@@ -11,3 +11,9 @@ def health(request: Request) -> dict[str, str | bool]:
         "dry_run": state.bot.dry_run,
         "paused": state.risk_manager.state.paused,
     }
+
+
+@router.get("/version")
+def version() -> dict[str, str]:
+    """Unauthenticated version probe (AUTH-01 exempt)."""
+    return {"service": "trendalgo-api", "version": "0.1.0"}

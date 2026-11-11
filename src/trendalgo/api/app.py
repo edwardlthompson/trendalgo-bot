@@ -6,11 +6,13 @@ import os
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from trendalgo.api.deps import require_owner
 from trendalgo.api.routes import (
     ai_growth,
+    auth_session,
     backtest,
     billing,
     bots,
@@ -52,7 +54,8 @@ if TYPE_CHECKING:
 
 
 def _cors_origins() -> list[str]:
-    raw = os.environ.get("TRENDALGO_CORS_ORIGINS", "*")
+    """Default empty — no browser client. Override with comma-separated origins."""
+    raw = os.environ.get("TRENDALGO_CORS_ORIGINS", "")
     return [part.strip() for part in raw.split(",") if part.strip()]
 
 
@@ -67,6 +70,8 @@ def create_app(state: AppState | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        # AUTH-05: rotate bearer tokens on process start.
+        app_state.bearer_store.clear()
         delivery = AlertDelivery(app_state.portfolio_store, on_log=app_state.log)
         scanner_sched = start_scheduler(
             app_state.scanner_store,
@@ -97,40 +102,53 @@ def create_app(state: AppState | None = None) -> FastAPI:
     app = FastAPI(title="TrendAlgo API", version="0.1.0", lifespan=lifespan)
     app.state.trendalgo = app_state
 
+    origins = _cors_origins()
+    # Credentials only with explicit origins — never with wildcard (AUTH-03).
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=_cors_origins(),
+        allow_origins=origins,
+        allow_credentials=bool(origins),
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
     prefix = "/api/v1"
-    app.include_router(health.router, prefix=prefix, tags=["health"])
-    app.include_router(pairs.router, prefix=prefix, tags=["pairs"])
-    app.include_router(strategies.router, prefix=prefix, tags=["strategies"])
-    app.include_router(backtest.router, prefix=prefix, tags=["backtest"])
-    app.include_router(dashboard.router, prefix=prefix, tags=["dashboard"])
-    app.include_router(risk.router, prefix=prefix, tags=["risk"])
-    app.include_router(debug.router, prefix=prefix, tags=["debug"])
-    app.include_router(notifications.router, prefix=prefix, tags=["notifications"])
-    app.include_router(portfolio.router, prefix=prefix, tags=["portfolio"])
-    app.include_router(portfolio_advanced.router, prefix=prefix, tags=["portfolio-advanced"])
-    app.include_router(exchanges.router, prefix=prefix, tags=["exchanges"])
-    app.include_router(icons.router, prefix=prefix, tags=["icons"])
-    app.include_router(platform.router, prefix=prefix, tags=["platform"])
-    app.include_router(billing.router, prefix=prefix, tags=["billing"])
-    app.include_router(ai_growth.router, prefix=prefix, tags=["ai-growth"])
-    app.include_router(webhooks.router, prefix=prefix, tags=["webhooks"])
-    app.include_router(ops.router, prefix=prefix, tags=["ops"])
-    app.include_router(scanner.router, prefix=prefix, tags=["scanner"])
-    app.include_router(bots.router, prefix=prefix, tags=["bots"])
-    app.include_router(watchlist.router, prefix=prefix, tags=["watchlist"])
-    app.include_router(signals.router, prefix=prefix, tags=["signals"])
-    app.include_router(hyperopt.router, prefix=prefix, tags=["hyperopt"])
-    app.include_router(research.router, prefix=prefix, tags=["research"])
-    app.include_router(export.router, prefix=prefix, tags=["export"])
-    app.include_router(trading.router, prefix=prefix, tags=["trading"])
-    app.include_router(ws.router, prefix=prefix, tags=["ws"])
+    owner = [Depends(require_owner)]
+    # AUTH-01: require_owner at include time so new routes inherit it.
+    app.include_router(health.router, prefix=prefix, tags=["health"], dependencies=owner)
+    app.include_router(auth_session.router, prefix=prefix, tags=["auth"], dependencies=owner)
+    app.include_router(pairs.router, prefix=prefix, tags=["pairs"], dependencies=owner)
+    app.include_router(strategies.router, prefix=prefix, tags=["strategies"], dependencies=owner)
+    app.include_router(backtest.router, prefix=prefix, tags=["backtest"], dependencies=owner)
+    app.include_router(dashboard.router, prefix=prefix, tags=["dashboard"], dependencies=owner)
+    app.include_router(risk.router, prefix=prefix, tags=["risk"], dependencies=owner)
+    app.include_router(debug.router, prefix=prefix, tags=["debug"], dependencies=owner)
+    app.include_router(
+        notifications.router, prefix=prefix, tags=["notifications"], dependencies=owner
+    )
+    app.include_router(portfolio.router, prefix=prefix, tags=["portfolio"], dependencies=owner)
+    app.include_router(
+        portfolio_advanced.router,
+        prefix=prefix,
+        tags=["portfolio-advanced"],
+        dependencies=owner,
+    )
+    app.include_router(exchanges.router, prefix=prefix, tags=["exchanges"], dependencies=owner)
+    app.include_router(icons.router, prefix=prefix, tags=["icons"], dependencies=owner)
+    app.include_router(platform.router, prefix=prefix, tags=["platform"], dependencies=owner)
+    app.include_router(billing.router, prefix=prefix, tags=["billing"], dependencies=owner)
+    app.include_router(ai_growth.router, prefix=prefix, tags=["ai-growth"], dependencies=owner)
+    app.include_router(webhooks.router, prefix=prefix, tags=["webhooks"], dependencies=owner)
+    app.include_router(ops.router, prefix=prefix, tags=["ops"], dependencies=owner)
+    app.include_router(scanner.router, prefix=prefix, tags=["scanner"], dependencies=owner)
+    app.include_router(bots.router, prefix=prefix, tags=["bots"], dependencies=owner)
+    app.include_router(watchlist.router, prefix=prefix, tags=["watchlist"], dependencies=owner)
+    app.include_router(signals.router, prefix=prefix, tags=["signals"], dependencies=owner)
+    app.include_router(hyperopt.router, prefix=prefix, tags=["hyperopt"], dependencies=owner)
+    app.include_router(research.router, prefix=prefix, tags=["research"], dependencies=owner)
+    app.include_router(export.router, prefix=prefix, tags=["export"], dependencies=owner)
+    app.include_router(trading.router, prefix=prefix, tags=["trading"], dependencies=owner)
+    app.include_router(ws.router, prefix=prefix, tags=["ws"], dependencies=owner)
 
     @app.get("/")
     def root() -> dict[str, str]:

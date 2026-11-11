@@ -186,7 +186,19 @@ bash scripts/deploy-vps.sh
 3. Set `GO_LIVE_APPROVED=1` and exchange keys on the VPS only.
 4. Restrict `TRENDALGO_CORS_ORIGINS` to your PWA URL.
 
-**Production compose:** `docker/docker-compose.prod.yml` — API on port 8080 behind your reverse proxy (Caddy/nginx + TLS).
+**Production compose:** `docker/docker-compose.prod.yml` — API bound to **loopback only** (`127.0.0.1:8080:8080`). Do not publish `8080` on a public interface.
+
+**Reach the API remotely (AUTH-02):** SSH tunnel or Tailscale — not a public port.
+
+```bash
+# SSH tunnel from your PC to the VPS loopback API
+ssh -N -L 8080:127.0.0.1:8080 user@your-vps
+
+# Or join the VPS to your Tailscale tailnet and dial http://100.x.y.z:8080
+# (still bound on the VPS to 127.0.0.1 unless you also listen on the Tailscale IP)
+```
+
+Verify binding: `docker compose -f docker/docker-compose.prod.yml config` must show `127.0.0.1:8080:8080`.
 
 ### 9. Optional integrations
 

@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from trendalgo.api.app import create_app
 from trendalgo.trading.signed_command import OWNER_ID_ENV, OWNER_SECRET_ENV, sign_request
+from tests.support.api_client import make_api_client
 
 OWNER_ID = "owner-test"
 OWNER_SECRET = "owner-secret-for-api-tests-only"
@@ -30,7 +31,7 @@ def _owner_headers(monkeypatch: pytest.MonkeyPatch, path: str) -> dict[str, str]
 
 def test_exchange_control_api(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("TRENDALGO_DATA_DIR", str(tmp_path))
-    client = TestClient(create_app())
+    client = make_api_client()
     status = client.get("/api/v1/trading/exchanges/control")
     assert status.status_code == 200
     exchanges = status.json()["exchanges"]

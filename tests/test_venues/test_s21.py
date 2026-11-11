@@ -8,6 +8,7 @@ from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.portfolio.onchain import preview_onchain_wallet, sync_onchain_wallet
 from trendalgo.venues.registry import get_venue, list_wallet_venues, load_venue_registry
 from trendalgo.venues.wallet_sync import preview_wallet
+from tests.support.api_client import make_api_client
 
 EVM_ADDR = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
 SOL_ADDR = "7EcDhSYGxXyscesiyR6Y3Gf4zEWLUsRms95TMPMXLKm"
@@ -58,7 +59,7 @@ def test_venues_registry_api() -> None:
 
     from trendalgo.api.app import create_app
 
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/platform/venues/registry")
     body = resp.json()
     assert resp.status_code == 200

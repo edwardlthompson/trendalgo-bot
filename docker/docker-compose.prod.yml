@@ -6,8 +6,9 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.prod
     restart: unless-stopped
+    # AUTH-02: loopback only — reach remotely via SSH tunnel or Tailscale.
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     env_file:
       - /etc/trendalgo/.env
     environment:

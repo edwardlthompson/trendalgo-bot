@@ -10,6 +10,7 @@ from trendalgo.exchanges.registry import (
 )
 from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
 from trendalgo.trading.multi_exchange import list_supported_exchanges, route_order
+from tests.support.api_client import make_api_client
 
 
 def test_registry_s19_phase2_tier_b_trading() -> None:
@@ -50,7 +51,7 @@ def test_trading_arbitrage_signals_api() -> None:
 
     from trendalgo.api.app import create_app
 
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/trading/arbitrage/signals")
     body = resp.json()
     assert resp.status_code == 200
@@ -65,7 +66,7 @@ def test_runner_status_phase2_api() -> None:
 
     from trendalgo.api.app import create_app
 
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/trading/runner/status")
     body = resp.json()
     assert body["worldwide_trading_phase"] == 2

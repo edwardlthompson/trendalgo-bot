@@ -38,11 +38,11 @@
 
 ### Sprint Audit-P1 — Security surface (Sequential)
 
-1. 🔲 [AGENT][LOCAL] AUTH-01 Authenticate mutating endpoints via `require_owner` at router include — scope: `src/trendalgo/api/deps.py`, `api/app.py`, `tests/test_api/`
-2. 🔲 [AGENT][LOCAL] AUTH-02 Bind prod API to loopback; document SSH/Tailscale — scope: `docker/docker-compose.prod.yml`, `README.md`
-3. 🔲 [AGENT][LOCAL] AUTH-03 Kill CORS wildcard default — scope: `src/trendalgo/api/app.py`, tests
-4. 🔲 [AGENT][LOCAL] AUTH-04 Harden TradingView webhook (body-once, HMAC, rate limit tests) — scope: `api/routes/webhooks.py`, `signals/tradingview.py`
-5. 🔲 [AGENT][LOCAL] AUTH-05 Owner session bearer tokens (keyring, rotate, revoke) — scope: `botd/pairing.py`, device session/keyring
+1. ✅ [AGENT][LOCAL] AUTH-01 Authenticate mutating endpoints via `require_owner` at router include — scope: `src/trendalgo/api/deps.py`, `api/app.py`, `tests/test_api/`
+2. ✅ [AGENT][LOCAL] AUTH-02 Bind prod API to loopback; document SSH/Tailscale — scope: `docker/docker-compose.prod.yml`, `README.md`
+3. ✅ [AGENT][LOCAL] AUTH-03 Kill CORS wildcard default — scope: `src/trendalgo/api/app.py`, tests
+4. ✅ [AGENT][LOCAL] AUTH-04 Harden TradingView webhook (body-once, HMAC, rate limit tests) — scope: `api/routes/webhooks.py`, `signals/tradingview.py`
+5. ✅ [AGENT][LOCAL] AUTH-05 Owner session bearer tokens (keyring, rotate, revoke) — scope: `botd/pairing.py`, device session/keyring
 
 ### Sprint Audit-P2 — Remove PWA scaffolding
 

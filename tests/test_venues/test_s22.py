@@ -12,6 +12,7 @@ from trendalgo.venues.orchestrator import sync_all_wallet_venues
 from trendalgo.venues.plugins.zero_ex import preview_quote
 from trendalgo.venues.registry import get_lp_plugin, get_venue, load_venue_registry
 from trendalgo.venues.wallet_sync import preview_wallet, sync_wallet
+from tests.support.api_client import make_api_client
 
 EVM_ADDR = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
 SOL_ADDR = "7EcDhSYGxXyscesiyR6Y3Gf4zEWLUsRms95TMPMXLKm"
@@ -85,7 +86,7 @@ def test_s22_api_routes(tmp_path: Path, monkeypatch) -> None:
 
     from trendalgo.api.app import create_app
 
-    client = TestClient(create_app())
+    client = make_api_client()
     quote = client.get(
         "/api/v1/platform/dex/quote",
         params={"chain": "arbitrum", "sell_token": "ETH", "buy_token": "USDC", "sell_amount": 0.5},
