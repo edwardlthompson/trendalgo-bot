@@ -402,6 +402,10 @@ SECRET_SAUCE_STUDY_META = (
 SECRET_SAUCE_STUDY_NETS = (
     "Replay Net % — {name} {sauce:.2f}% · B&H {bh:.2f}% · Oracle ceiling {oracle:.2f}%"
 )
+SECRET_SAUCE_STUDY_REFIT_NET = "Re-fit Net % (study only): {refit:.2f}%"
+SECRET_SAUCE_STUDY_LIVE_NET = "Live realized Net %: {live}"
+SECRET_SAUCE_STUDY_NET_DISCLAIMER = "Re-fit Net % is not a track record."
+SECRET_SAUCE_STUDY_PARAM_DIFF = "{diff}"
 SECRET_SAUCE_REGIME = (
     "Regime — {structural} · vol {volatility} · dir {direction}"
     "{squeeze} · confidence {confidence:.0%}"

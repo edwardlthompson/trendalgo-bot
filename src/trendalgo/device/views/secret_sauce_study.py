@@ -118,6 +118,9 @@ def show_secret_sauce_study(
         )
     )
     nets.setWordWrap(True)
+    from trendalgo.device.views.secret_sauce_study_honesty import honesty_labels
+
+    honesty = honesty_labels(row, coin)
     layout.addWidget(meta)
     if regime_lbl is not None:
         layout.addWidget(regime_lbl)
@@ -134,6 +137,8 @@ def show_secret_sauce_study(
     layout.addWidget(QLabel(S.SECRET_SAUCE_COVERAGE))
     layout.addWidget(table, 1)
     layout.addWidget(nets)
+    for lbl in honesty:
+        layout.addWidget(lbl)
     row_btns = QHBoxLayout()
     copy_btn = QPushButton(S.SECRET_SAUCE_COPY)
     copy_btn.clicked.connect(lambda _c=False: _copy(formula_box.toPlainText(), dialog))
