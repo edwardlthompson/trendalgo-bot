@@ -415,7 +415,7 @@ SCAN_PHASE_SAUCE_MERGE = "Secret Sauce Lab merge…"
 SECRET_SAUCE_FORMULA = "Formula (Enter + Exit — same rhyme every trade)"
 SECRET_SAUCE_ENTER = "Enter"
 SECRET_SAUCE_EXIT = "Exit"
-SECRET_SAUCE_COVERAGE = "Oracle swing coverage under this formula"
+SECRET_SAUCE_COVERAGE = "Oracle swing coverage (exact bar match — not ±2)"
 SECRET_SAUCE_RESIDUAL = (
     "Residuals — missed entries {n_entry} · missed exits {n_exit}{gap}{features}"
 )

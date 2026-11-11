@@ -17,22 +17,29 @@ def score_labeled(
     feats: list[dict[str, float]],
     conjuncts: tuple[RuleConjunct, ...],
     labeled: list[int],
+    *,
+    exact_bars: bool = True,
 ) -> float:
-    """Coverage × precision with fire-rate cap (near ±2 bars)."""
+    """Coverage × precision with fire-rate cap.
+
+    SIM-09: default uses exact bar indexes (matches fee sim). Pass
+    ``exact_bars=False`` for legacy ±2-bar near coverage.
+    """
     if not conjuncts or not labeled:
         return -1.0
     m = _mask(feats, conjuncts)
     exact = sum(1 for i in labeled if m[i])
     near = sum(1 for i in labeled if m[max(0, i - 2) : i + 3].any())
-    if near == 0:
+    hits = exact if exact_bars else near
+    if hits == 0:
         return -1.0
     fire = int(m.sum())
     frac = fire / max(1, len(feats))
     if frac > _MAX_FIRE:
         return -1.0
-    cov = near / len(labeled)
-    prec = near / max(1, fire)
-    return cov * prec * (1.0 - frac) + 0.15 * (exact / len(labeled))
+    cov = hits / len(labeled)
+    prec = hits / max(1, fire)
+    return cov * prec * (1.0 - frac)
 
 
 def pick_rules_at_labels(
