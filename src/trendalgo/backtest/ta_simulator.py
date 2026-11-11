@@ -303,9 +303,10 @@ def simulate_oracle_max_gain(
         if position is None and kind == "L" and price > 0:
             position = (idx, price)
             continue
-        if position is not None and kind == "H" and price > position[1]:
+        # SIM-04: take every completed trough→peak swing, including losers.
+        if position is not None and kind == "H":
             entry_i, entry_px = position
-            g = stake_usd * ((price / entry_px) - 1.0)
+            g = stake_usd * ((price / entry_px) - 1.0) if entry_px else 0.0
             f = fee.round_trip_taker_cost(stake_usd)
             net_t = g - f
             gross += g
