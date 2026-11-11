@@ -419,7 +419,7 @@ class BillingStore:
             conn.execute(
                 """
                 UPDATE license_status SET
-                    grace_started_at = ?, grace_day = ?, suspended = ?,
+                    grace_started_at = ?, grace_day = ?, max_grace_day = ?, suspended = ?,
                     unpaid_period = ?, licensed_until = ?, last_payment_id = ?,
                     last_tx_hash = ?, last_reminder_day = ?, updated_at = ?
                 WHERE id = 1
@@ -427,6 +427,7 @@ class BillingStore:
                 (
                     status.get("grace_started_at"),
                     int(status.get("grace_day", 0)),
+                    int(status.get("max_grace_day", status.get("grace_day", 0))),
                     int(status.get("suspended", 0)),
                     status.get("unpaid_period"),
                     status.get("licensed_until"),

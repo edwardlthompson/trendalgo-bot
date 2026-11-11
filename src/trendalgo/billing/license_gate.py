@@ -94,12 +94,19 @@ def grace_days_elapsed(status: dict[str, Any], now: datetime) -> int | None:
     return None if started is None else max(0, (now - started).days)
 
 
+def monotonic_grace_day(*, clock_day: int, stored_day: int) -> int:
+    """BILL-05: never let the grace counter decrease on clock rewind."""
+    return max(clock_day, stored_day)
+
+
 def _grace_suspended(status: dict[str, Any], now: datetime) -> bool:
-    """Computed from the start time, so a job that did not run cannot extend the grace."""
+    """Uses max(clock, stored) so a rewind cannot freeze or extend grace."""
     elapsed = grace_days_elapsed(status, now)
+    stored = int(status.get("max_grace_day") or status.get("grace_day") or 0)
     if elapsed is None:
-        return bool(status.get("suspended"))
-    return elapsed >= GRACE_PERIOD_DAYS
+        return bool(status.get("suspended")) or stored >= GRACE_PERIOD_DAYS
+    day = monotonic_grace_day(clock_day=elapsed, stored_day=stored)
+    return day >= GRACE_PERIOD_DAYS
 
 
 def reminders_due(day: int, last_sent_day: int | None) -> list[int]:
@@ -116,6 +123,7 @@ def start_grace_period(status: dict[str, Any], unpaid_period: str) -> dict[str, 
         **status,
         "grace_started_at": now,
         "grace_day": 0,
+        "max_grace_day": 0,
         "suspended": 0,
         "unpaid_period": unpaid_period,
         "last_reminder_day": 0,  # the statement notice is the day-0 reminder
@@ -125,10 +133,13 @@ def start_grace_period(status: dict[str, Any], unpaid_period: str) -> dict[str, 
 
 def advance_grace(status: dict[str, Any], *, now: datetime | None = None) -> dict[str, Any]:
     elapsed = grace_days_elapsed(status, now or datetime.now(UTC))
-    day = elapsed if elapsed is not None else int(status.get("grace_day", 0))
+    stored = int(status.get("max_grace_day") or status.get("grace_day") or 0)
+    clock_day = elapsed if elapsed is not None else stored
+    day = monotonic_grace_day(clock_day=clock_day, stored_day=stored)
     return {
         **status,
         "grace_day": day,
+        "max_grace_day": day,
         "suspended": int(day >= GRACE_PERIOD_DAYS),
         "updated_at": _utc_now(),
     }
@@ -139,6 +150,7 @@ def clear_grace(status: dict[str, Any]) -> dict[str, Any]:
         **status,
         "grace_started_at": None,
         "grace_day": 0,
+        "max_grace_day": 0,
         "suspended": 0,
         "unpaid_period": None,
         "last_reminder_day": None,
