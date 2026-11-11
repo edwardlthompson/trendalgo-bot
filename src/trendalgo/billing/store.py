@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.billing.schema import BILLING_SCHEMA, CURRENT_TERMS_VERSION, DEFAULT_LICENSE_RATE
+from trendalgo.billing.venue_attribution import dumps_benchmark_refs, loads_benchmark_refs
 from trendalgo.db.rowid import require_row_id
 
 
@@ -112,6 +113,45 @@ class BillingStore:
             for col, ddl in migrations:
                 if col not in pay_cols:
                     conn.execute(f"ALTER TABLE settlement_payments ADD COLUMN {col} {ddl}")
+
+        period_cols = {row[1] for row in conn.execute("PRAGMA table_info(fee_periods)").fetchall()}
+        if period_cols:
+            if "bh_net_usd" not in period_cols:
+                conn.execute("ALTER TABLE fee_periods ADD COLUMN bh_net_usd REAL NOT NULL DEFAULT 0")
+            if "benchmark_refs_json" not in period_cols:
+                conn.execute(
+                    "ALTER TABLE fee_periods ADD COLUMN benchmark_refs_json TEXT NOT NULL DEFAULT '{}'"
+                )
+
+        stmt_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(license_statements)").fetchall()
+        }
+        if stmt_cols:
+            for col, ddl in (
+                ("bh_net_usd", "REAL NOT NULL DEFAULT 0"),
+                ("excess_usd", "REAL NOT NULL DEFAULT 0"),
+                ("benchmark_refs_json", "TEXT NOT NULL DEFAULT '{}'"),
+            ):
+                if col not in stmt_cols:
+                    conn.execute(f"ALTER TABLE license_statements ADD COLUMN {col} {ddl}")
+
+        if enroll_cols:
+            for col, ddl in (
+                ("share_class", "TEXT NOT NULL DEFAULT 'alpha'"),
+                ("api_key_fingerprint", "TEXT"),
+                ("machine_id", "TEXT"),
+                ("seat_count", "INTEGER NOT NULL DEFAULT 1"),
+                ("server_hwm_usd", "REAL NOT NULL DEFAULT 0"),
+                ("consecutive_paid", "INTEGER NOT NULL DEFAULT 0"),
+                ("pauses_used_quarter", "INTEGER NOT NULL DEFAULT 0"),
+                ("pause_quarter", "TEXT"),
+                ("deficit_months", "INTEGER NOT NULL DEFAULT 0"),
+            ):
+                if col not in enroll_cols:
+                    conn.execute(f"ALTER TABLE license_enrollment ADD COLUMN {col} {ddl}")
+
+        if status_cols and "max_grace_day" not in status_cols:
+            conn.execute("ALTER TABLE license_status ADD COLUMN max_grace_day INTEGER NOT NULL DEFAULT 0")
 
     def _init_schema(self) -> None:
         with self._connect() as conn:
@@ -261,21 +301,38 @@ class BillingStore:
         net_usd: float,
         fee_usd: float,
         deficit_out_usd: float,
+        bh_net_usd: float = 0.0,
+        benchmark_refs: dict[str, dict[str, Any]] | None = None,
     ) -> int:
         """Write a closed month, its rows, and the carry-forward in one transaction."""
         now = _utc_now()
+        refs_json = dumps_benchmark_refs(benchmark_refs or {})
         with self._connect() as conn:
             added = sum(_upsert_ledger_row(conn, period, row) for row in rows)
             conn.execute(
                 "INSERT INTO fee_periods (period, net_usd, license_fee_usd, deficit_out_usd, "
-                "finalized_at) VALUES (?, ?, ?, ?, ?)",
-                (period, net_usd, fee_usd, deficit_out_usd, now),
+                "bh_net_usd, benchmark_refs_json, finalized_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (period, net_usd, fee_usd, deficit_out_usd, bh_net_usd, refs_json, now),
             )
             conn.execute(
                 "UPDATE carry_forward_credits SET credit_usd = ?, updated_at = ? WHERE id = 1",
                 (deficit_out_usd, now),
             )
             return added
+
+    def get_period_benchmark(self, period: str) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT period, bh_net_usd, benchmark_refs_json FROM fee_periods WHERE period = ?",
+                (period,),
+            ).fetchone()
+            if row is None:
+                return None
+            return {
+                "period": str(row["period"]),
+                "bh_net_usd": float(row["bh_net_usd"]),
+                "benchmark_refs": loads_benchmark_refs(str(row["benchmark_refs_json"] or "{}")),
+            }
 
     def list_ledger(self, period: str | None = None, limit: int = 500) -> list[dict[str, Any]]:
         with self._connect() as conn:
@@ -292,19 +349,24 @@ class BillingStore:
             return [dict(r) for r in rows]
 
     def upsert_statement(self, period: str, statement: dict[str, Any]) -> None:
+        refs = statement.get("benchmark_refs") or {}
         with self._connect() as conn:
             conn.execute(
                 """
                 INSERT INTO license_statements
                 (period, gross_profit_usd, license_fee_usd, carry_forward_credit_usd,
-                 net_loss_note, signed_hash, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                 net_loss_note, signed_hash, bh_net_usd, excess_usd, benchmark_refs_json,
+                 created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(period) DO UPDATE SET
                     gross_profit_usd = excluded.gross_profit_usd,
                     license_fee_usd = excluded.license_fee_usd,
                     carry_forward_credit_usd = excluded.carry_forward_credit_usd,
                     net_loss_note = excluded.net_loss_note,
                     signed_hash = excluded.signed_hash,
+                    bh_net_usd = excluded.bh_net_usd,
+                    excess_usd = excluded.excess_usd,
+                    benchmark_refs_json = excluded.benchmark_refs_json,
                     created_at = excluded.created_at
                 """,
                 (
@@ -314,6 +376,9 @@ class BillingStore:
                     statement.get("carry_forward_credit_usd", 0),
                     statement.get("net_loss_note", ""),
                     statement["signed_hash"],
+                    float(statement.get("bh_net_usd") or 0),
+                    float(statement.get("excess_usd") or 0),
+                    dumps_benchmark_refs(refs) if isinstance(refs, dict) else "{}",
                     _utc_now(),
                 ),
             )
@@ -329,10 +394,12 @@ class BillingStore:
                 "SELECT * FROM fee_ledger_entries WHERE period = ? ORDER BY id",
                 (period,),
             ).fetchall()
-            return {
-                **dict(row),
-                "line_items": [dict(i) for i in items],
-            }
+            data = dict(row)
+            data["benchmark_refs"] = loads_benchmark_refs(
+                str(data.get("benchmark_refs_json") or "{}")
+            )
+            data["line_items"] = [dict(i) for i in items]
+            return data
 
     def list_statements(self) -> list[dict[str, Any]]:
         with self._connect() as conn:

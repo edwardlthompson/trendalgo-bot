@@ -43,10 +43,33 @@ ALL_TRADES = 2**31 - 1
 
 
 def _write_statement(
-    billing: BillingStore, period: str, items: list[dict[str, Any]], carry_usd: float
+    billing: BillingStore,
+    period: str,
+    items: list[dict[str, Any]],
+    carry_usd: float,
+    *,
+    bh_net_usd: float = 0.0,
+    excess: float = 0.0,
+    benchmark_refs: dict[str, dict[str, Any]] | None = None,
+    rate_pct: float | None = None,
+    floor_applied: bool = False,
+    cap_applied: bool = False,
+    share_class: str = "alpha",
 ) -> None:
-    rollup = rollup_period(items)
-    statement = build_statement(period, rollup, items, carry_forward_credit_usd=carry_usd)
+    rollup = rollup_period(items, bh_net_usd=bh_net_usd)
+    statement = build_statement(
+        period,
+        rollup,
+        items,
+        carry_forward_credit_usd=carry_usd,
+        bh_net_usd=bh_net_usd,
+        excess_usd=excess if excess else float(rollup.get("excess_usd") or 0),
+        benchmark_refs=benchmark_refs,
+        rate_pct=rate_pct,
+        floor_applied=floor_applied,
+        cap_applied=cap_applied,
+        share_class=share_class,
+    )
     billing.upsert_statement(period, statement)
 
 
@@ -118,12 +141,14 @@ def process_journal_trades(
             late += [ref for ref in refs if ref not in known]
             after[month] = deficit
             continue
+        share_class = str(enrollment.get("share_class") or "alpha")
         rows, result = apply_monthly_rules(
             month_trades,
             rate,
             deficit_usd=deficit,
             drawdown_paused=paused,
             billable_from=billable_from,
+            share_class=share_class if share_class in ("alpha", "standard") else "alpha",
         )
         deficit = result.deficit_out_usd
         after[month] = deficit
@@ -134,6 +159,7 @@ def process_journal_trades(
                 net_usd=result.net_usd,
                 fee_usd=result.fee_usd,
                 deficit_out_usd=deficit,
+                bh_net_usd=result.bh_net_usd,
             )
             finalized.append(
                 {"period": month, "net_usd": result.net_usd, "license_fee_usd": result.fee_usd}
@@ -141,7 +167,18 @@ def process_journal_trades(
             _start_grace_if_owed(billing, enrollment, month, result.fee_usd)
         else:
             added += billing.upsert_ledger_rows(month, rows)
-        _write_statement(billing, month, rows, deficit)
+        _write_statement(
+            billing,
+            month,
+            rows,
+            deficit,
+            bh_net_usd=result.bh_net_usd,
+            excess=result.excess_usd,
+            rate_pct=rate,
+            floor_applied=result.floor_applied,
+            cap_applied=result.cap_applied,
+            share_class=share_class,
+        )
     if billing.get_statement(period) is None:  # a closed month whose statement is missing
         _write_statement(
             billing,
