@@ -34,14 +34,19 @@ def check_ticker_fresh(
     now_ms: float,
     *,
     max_age_s: float = MAX_TICKER_AGE_S,
+    max_skew_s: float = 5.0,
 ) -> None:
-    """Reject a ticker with no timestamp, or one more than max_age_s from the local clock."""
+    """Reject a missing, stale, or far-future ticker. Small negative skew is allowed (RISK-07)."""
     if timestamp_ms is None or not math.isfinite(timestamp_ms):
         raise OrderSizingError("ticker has no timestamp, so its freshness cannot be checked")
-    age_s = (now_ms - timestamp_ms) / 1000
-    if abs(age_s) > max_age_s:
+    age_s = (now_ms - timestamp_ms) / 1000.0
+    if age_s > max_age_s:
         raise OrderSizingError(
-            f"ticker is {age_s:.0f} s from the local clock; the limit is {max_age_s:.0f} s"
+            f"ticker age_s={age_s:.0f}s is stale; the limit is {max_age_s:.0f}s"
+        )
+    if age_s < -max_skew_s:
+        raise OrderSizingError(
+            f"ticker clock skew age_s={age_s:.0f}s exceeds -{max_skew_s:.0f}s tolerance"
         )
 
 

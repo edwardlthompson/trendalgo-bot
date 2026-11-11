@@ -121,7 +121,7 @@ def test_unusable_ticker_sends_no_order(live_kraken: FakeExchange) -> None:
 
 def test_stale_ticker_sends_no_order(live_kraken: FakeExchange) -> None:
     live_kraken.timestamp = time.time() * 1000 - 120_000
-    with pytest.raises(ValueError, match="from the local clock"):
+    with pytest.raises(ValueError, match="stale|age"):
         route_order("kraken", "BTC/USD", "buy", 25.0, dry_run=False)
     assert live_kraken.orders == []
 
