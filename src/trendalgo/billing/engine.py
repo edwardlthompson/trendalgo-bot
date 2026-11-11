@@ -25,13 +25,25 @@ from trendalgo.billing.payment_verifier import (
     watch_pending_payments,
 )
 from trendalgo.billing.profit import rollup_period
-from trendalgo.billing.rules import apply_monthly_rules, group_by_month
+from trendalgo.billing.rules import (
+    age_deficit,
+    apply_monthly_rules,
+    group_by_month,
+    pause_allowed,
+    should_reset_hwm,
+)
 from trendalgo.billing.schema import DEFAULT_LICENSE_RATE, GRACE_PERIOD_DAYS
 from trendalgo.billing.settlement import list_available_assets
 from trendalgo.billing.statements import build_statement
 from trendalgo.billing.store import BillingStore
 from trendalgo.risk.journal import TradeJournal, TradeRecord
 from trendalgo.risk.manager import RiskManager
+
+
+def _quarter_of(period: str) -> str:
+    year, month = period.split("-")
+    q = (int(month) - 1) // 3 + 1
+    return f"{year}-Q{q}"
 
 
 def _period_now() -> str:
@@ -118,7 +130,11 @@ def process_journal_trades(
     enrollment = billing.get_enrollment()
     rate = float(enrollment.get("license_rate_pct", DEFAULT_LICENSE_RATE))
     billable_from = billable_from_iso(enrollment)
-    paused = bool(risk_manager.state.circuit_breaker_active)
+    breaker_on = bool(risk_manager.state.circuit_breaker_active)
+    pause_quarter = str(enrollment.get("pause_quarter") or "")
+    pauses_used = int(enrollment.get("pauses_used_quarter") or 0)
+    deficit_months = int(enrollment.get("deficit_months") or 0)
+    consecutive_paid = int(enrollment.get("consecutive_paid") or 0)
     trades = [
         t
         for t in journal.list_trades(limit=ALL_TRADES)
@@ -142,15 +158,23 @@ def process_journal_trades(
             after[month] = deficit
             continue
         share_class = str(enrollment.get("share_class") or "alpha")
+        q = _quarter_of(month)
+        if q != pause_quarter:
+            pause_quarter, pauses_used = q, 0
+        want_pause = breaker_on and pause_allowed(pauses_used)
+        if want_pause:
+            pauses_used += 1
+        deficit = age_deficit(deficit, deficit_months)
         rows, result = apply_monthly_rules(
             month_trades,
             rate,
             deficit_usd=deficit,
-            drawdown_paused=paused,
+            drawdown_paused=want_pause,
             billable_from=billable_from,
             share_class=share_class if share_class in ("alpha", "standard") else "alpha",
         )
         deficit = result.deficit_out_usd
+        deficit_months = deficit_months + 1 if deficit > 0 else 0
         after[month] = deficit
         if month < current:
             added += billing.finalize_period(
@@ -165,6 +189,15 @@ def process_journal_trades(
                 {"period": month, "net_usd": result.net_usd, "license_fee_usd": result.fee_usd}
             )
             _start_grace_if_owed(billing, enrollment, month, result.fee_usd)
+            if result.fee_usd > 0:
+                consecutive_paid += 1
+            else:
+                consecutive_paid = 0
+            if should_reset_hwm(consecutive_paid):
+                deficit = 0.0
+                deficit_months = 0
+                consecutive_paid = 0
+                billing.set_server_hwm(0.0)
         else:
             added += billing.upsert_ledger_rows(month, rows)
         _write_statement(
@@ -186,6 +219,13 @@ def process_journal_trades(
             billing.list_ledger(period, limit=ALL_TRADES),
             after.get(period, deficit),
         )
+    billing.update_cap_state(
+        pauses_used_quarter=pauses_used,
+        pause_quarter=pause_quarter,
+        deficit_months=deficit_months,
+        consecutive_paid=consecutive_paid,
+        server_hwm_usd=float(enrollment.get("server_hwm_usd") or 0),
+    )
     items = billing.list_ledger(period, limit=ALL_TRADES)
     return {
         "period": period,

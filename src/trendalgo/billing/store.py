@@ -622,3 +622,79 @@ class BillingStore:
 
     def current_terms_version(self) -> str:
         return CURRENT_TERMS_VERSION
+
+    def set_server_hwm(self, hwm_usd: float) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE license_enrollment SET server_hwm_usd = ?, updated_at = ? WHERE id = 1",
+                (hwm_usd, _utc_now()),
+            )
+
+    def update_cap_state(
+        self,
+        *,
+        pauses_used_quarter: int,
+        pause_quarter: str,
+        deficit_months: int,
+        consecutive_paid: int,
+        server_hwm_usd: float,
+    ) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE license_enrollment SET
+                    pauses_used_quarter = ?, pause_quarter = ?, deficit_months = ?,
+                    consecutive_paid = ?, server_hwm_usd = ?, updated_at = ?
+                WHERE id = 1
+                """,
+                (
+                    pauses_used_quarter,
+                    pause_quarter,
+                    deficit_months,
+                    consecutive_paid,
+                    server_hwm_usd,
+                    _utc_now(),
+                ),
+            )
+
+    def bind_identity(
+        self,
+        *,
+        api_key_fingerprint: str,
+        machine_id: str,
+        seat_count: int = 1,
+    ) -> dict[str, Any]:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE license_enrollment SET
+                    api_key_fingerprint = ?, machine_id = ?, seat_count = ?, updated_at = ?
+                WHERE id = 1
+                """,
+                (api_key_fingerprint, machine_id, seat_count, _utc_now()),
+            )
+        return self.get_enrollment()
+
+    def restore_hwm_for_identity(
+        self, *, api_key_fingerprint: str, machine_id: str
+    ) -> float | None:
+        enrollment = self.get_enrollment()
+        if (
+            enrollment.get("api_key_fingerprint") == api_key_fingerprint
+            and enrollment.get("machine_id") == machine_id
+        ):
+            return float(enrollment.get("server_hwm_usd") or 0)
+        return None
+
+    def seat_allows(self, *, active_machines: int) -> bool:
+        seats = int(self.get_enrollment().get("seat_count") or 1)
+        return active_machines <= seats
+
+    def set_share_class(self, share_class: str) -> None:
+        if share_class not in ("alpha", "standard"):
+            raise ValueError("share_class must be alpha or standard")
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE license_enrollment SET share_class = ?, updated_at = ? WHERE id = 1",
+                (share_class, _utc_now()),
+            )
