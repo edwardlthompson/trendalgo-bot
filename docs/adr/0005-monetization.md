@@ -1,7 +1,8 @@
 # ADR-0005: Monetization — Performance License Model
 
-- **Status:** Proposed (H-022 attorney review Sprint 10); amended by ADR-0017
+- **Status:** Proposed (H-022 attorney review Sprint 10); amended by ADR-0017; **license clause (item 3) superseded by ADR-0018**
 - **Date:** 2026-06-25
+- **Superseded-by (license only):** [ADR-0018](0018-elastic-license-v2.md) — Elastic License 2.0 replaces AGPL/MIT conflict for the product license. Monetization shape below remains.
 
 ## Context
 
@@ -11,7 +12,7 @@ Sustainable revenue without custodial payment processing or MSB exposure.
 
 1. **Performance-contingent software license** — fee calculated on bot-attributed net-positive closed trades.
 2. **User-initiated settlement** — copy address, QR, optional Lightning invoice; no Stripe.
-3. **AGPL** codebase + proprietary-friendly billing module boundary (CM4).
+3. ~~**AGPL** codebase + proprietary-friendly billing module boundary (CM4).~~ **Superseded by ADR-0018:** product is Elastic License 2.0 (source-available); billing/performance-fee model unchanged.
 4. **Grace period:** 7 days; suspend live trading if unpaid (not exchange access).
 5. **Net-loss months:** $0 license; drawdown pause on accrual (M3/M12).
 

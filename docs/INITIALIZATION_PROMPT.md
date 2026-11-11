@@ -10,7 +10,7 @@ You are a Senior Software Architect and Expert AI Coding Agent. Follow this temp
 
 **Stakeholders:** Primary users, operators, and maintainers. Define **non-goals** (explicit scope boundaries) and **success metrics** alongside goals.
 
-**Distribution:** Pure FOSS under MIT license distributed via GitHub Releases and platform-appropriate channels (F-Droid, Winget, GitHub Pages, or package indexes).
+**Distribution:** Source-available under Elastic License 2.0 (ELv2), distributed via GitHub Releases and platform-appropriate channels (Winget, GitHub Pages, or package indexes).
 
 ## 2. Repository & CI/CD Guardrails
 

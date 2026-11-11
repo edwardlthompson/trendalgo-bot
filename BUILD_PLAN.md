@@ -53,8 +53,8 @@
 
 ### Sprint Audit-P3 — License (ELv2 approved 2026-11-11)
 
-1. 🔲 [AGENT][LOCAL] LIC-01 Swap to Elastic License 2.0 — scope: `LICENSE`, `pyproject.toml`, REUSE, CITATION license fields, README badge, `docs/LICENSE_MODEL.md`
-2. 🔲 [AGENT][LOCAL] LIC-02 Supersede ADR-0005 license clause; single license answer — scope: `docs/adr/`, `CONTRIBUTING.md`
+1. ✅ [AGENT][LOCAL] LIC-01 Swap to Elastic License 2.0 — scope: `LICENSE`, `pyproject.toml`, REUSE, CITATION license fields, README badge, `docs/LICENSE_MODEL.md`
+2. ✅ [AGENT][LOCAL] LIC-02 Supersede ADR-0005 license clause; single license answer — scope: `docs/adr/`, `CONTRIBUTING.md`
 
 ### Sprint Audit-P4 — Risk engine (test-first)
 

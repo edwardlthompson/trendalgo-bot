@@ -1,6 +1,6 @@
 # Contributing — TrendAlgo Bot
 
-Thank you for contributing to **TrendAlgo Bot** — a self-hosted FOSS crypto trading stack.
+Thank you for contributing to **TrendAlgo Bot** — a self-hosted, source-available crypto trading stack (Elastic License 2.0).
 
 ## Who contributes what
 
@@ -24,9 +24,9 @@ Thank you for contributing to **TrendAlgo Bot** — a self-hosted FOSS crypto tr
 - No auto-withdraw, Stripe, or custodial patterns (ADR-0008 — CI enforced)
 - No community strategy imports (ADR-0009)
 
-## AGPL + billing boundary
+## Elastic License 2.0 + billing
 
-Application code: MIT/AGPL per root `LICENSE`. Performance license billing module terms: see `docs/LICENSE_MODEL.md` (CM4, Sprint 11).
+Application code: Elastic License 2.0 per root `LICENSE` (ADR-0018). Free for your own trading; no hosted-service resale; do not strip billing or license-key protections. Performance license fee terms: see `docs/LICENSE_MODEL.md` and ADR-0005 (monetization shape).
 
 ## Commit messages
 

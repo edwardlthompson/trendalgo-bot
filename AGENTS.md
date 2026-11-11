@@ -13,7 +13,7 @@
 
 ## Architecture Constraints
 
-- Pure FOSS under MIT license; no proprietary closed-source SDKs in production path
+- Source-available under Elastic License 2.0 (ELv2); no proprietary closed-source SDKs in production path
 - Max 250 lines per view file (web UI adapters: 300 per `check-file-limits.sh`), 150 lines per logic file
 - Strict type safety and runtime validation at all data boundaries
 - Core business logic decoupled from layout framework (MVVM / Clean / Hexagonal)
