@@ -36,19 +36,21 @@ def test_fills_trip_the_daily_loss_cap(tmp_path: Path) -> None:
     mgr = RiskManager(RiskLimits(daily_loss_cap_usd=50), wallet_usd=1000)
     _sync(mgr, journal, now)
     assert mgr.state.daily_pnl_usd == -60.0
-    assert mgr.can_open_trade() == (False, "daily loss cap exceeded")
+    assert mgr.can_open_trade(now=now) == (False, "daily loss cap exceeded")
 
 
 def test_the_cap_starts_again_at_utc_midnight(tmp_path: Path) -> None:
     journal = TradeJournal(tmp_path / "journal.db")
     _fill(journal, -60.0, datetime(2026, 10, 8, 23, 50, tzinfo=UTC), "fill-late")
     mgr = RiskManager(RiskLimits(daily_loss_cap_usd=50), wallet_usd=1000)
-    _sync(mgr, journal, datetime(2026, 10, 8, 23, 55, tzinfo=UTC))
-    assert mgr.can_open_trade()[0] is False
-    _sync(mgr, journal, datetime(2026, 10, 9, 0, 10, tzinfo=UTC))
+    day8 = datetime(2026, 10, 8, 23, 55, tzinfo=UTC)
+    _sync(mgr, journal, day8)
+    assert mgr.can_open_trade(now=day8)[0] is False
+    day9 = datetime(2026, 10, 9, 0, 10, tzinfo=UTC)
+    _sync(mgr, journal, day9)
     assert mgr.state.day_key == "2026-10-09"
     assert mgr.state.daily_pnl_usd == 0.0
-    assert mgr.can_open_trade() == (True, "ok")
+    assert mgr.can_open_trade(now=day9) == (True, "ok")
 
 
 def test_a_restart_recovers_the_day_from_the_journal(tmp_path: Path) -> None:
@@ -57,4 +59,4 @@ def test_a_restart_recovers_the_day_from_the_journal(tmp_path: Path) -> None:
     _fill(journal, -60.0, now.replace(hour=9), "fill-morning")
     after_restart = RiskManager(RiskLimits(daily_loss_cap_usd=50), wallet_usd=1000)
     _sync(after_restart, journal, now)
-    assert after_restart.can_open_trade()[0] is False
+    assert after_restart.can_open_trade(now=now)[0] is False
