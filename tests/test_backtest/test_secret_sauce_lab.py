@@ -388,22 +388,24 @@ def test_search_prefers_higher_net_and_oracle_family_on_tie() -> None:
     """Higher fee Net % wins; at equal Net prefer oracle_pattern family."""
     from trendalgo.backtest.secret_sauce_lab import search as ss_search
 
-    low = (
+    low = ss_search.SearchHit(
         CompositeRule("GEN_SECRET_1", (RuleConjunct("ret_1", ">=", 0.0),), ""),
         CompositeRule("GEN_SECRET_1", (RuleConjunct("rsi_14", ">=", 70.0),), ""),
         10.0,
         "peer_inspire",
+        0.0,
     )
-    high = (
+    high = ss_search.SearchHit(
         CompositeRule("GEN_SECRET_1", (RuleConjunct("trough_confirm", ">=", 1.0),), ""),
         CompositeRule("GEN_SECRET_1", (RuleConjunct("peak_confirm", ">=", 1.0),), ""),
         50.0,
         "dip_uptrend",
+        0.0,
     )
     assert ss_search._better(high, low, None)
     assert not ss_search._better(low, high, None)
-    tie_a = (low[0], low[1], 20.0, "peer_inspire")
-    tie_b = (high[0], high[1], 20.0, "oracle_pattern")
+    tie_a = low._replace(net=20.0, family="peer_inspire")
+    tie_b = high._replace(net=20.0, family="oracle_pattern")
     assert ss_search._better(tie_b, tie_a, None)
     assert not ss_search._better(tie_a, tie_b, None)
 

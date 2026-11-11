@@ -13,11 +13,13 @@ from trendalgo.backtest.secret_sauce_lab.narrative import build_narrative
 from trendalgo.backtest.secret_sauce_lab.regime_snapshot import RegimeSnapshot, detect_regime
 from trendalgo.backtest.secret_sauce_lab.residual_instrument import build_residual_fields
 from trendalgo.backtest.secret_sauce_lab.search import bh_net_profit, search_best_pair
+from trendalgo.backtest.secret_sauce_lab.search_folds import bar_folds
 from trendalgo.backtest.ta_fleet import backtest_one
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 
 _SECRET_ID = "GEN_SECRET_1"
 _HOLDOUT_FRAC = 0.35
+_PURGE_BARS = 4
 
 
 def run_secret_sauce_lab(
@@ -55,6 +57,7 @@ def run_secret_sauce_lab(
     )
     family_pairs = seeds_for_weights(strategy_id, regime.family_weights, volume_ok=regime.volume_ok)
     pairs = pattern + family_pairs
+    train_idx, hold_idx = bar_folds(len(df), holdout_frac=_HOLDOUT_FRAC, purge_bars=_PURGE_BARS)
     picked = search_best_pair(
         df,
         pairs,
@@ -63,10 +66,17 @@ def run_secret_sauce_lab(
         bh_net=bh_net,
         time_budget_s=time_budget_s,
         direction=regime.direction,
+        train_indexes=train_idx,
+        holdout_indexes=hold_idx,
+        purge_bars=_PURGE_BARS,
     )
     if picked is None:
         return None
-    entry_rule, exit_rule, search_net, family, best_tsl = picked
+    entry_rule = picked.entry
+    exit_rule = picked.exit
+    search_net = picked.net
+    family = picked.family
+    best_tsl = picked.trailing_stop_pct
     entries = [
         int(t.get("entry_index") or -1)
         for t in oracle_trades
@@ -146,6 +156,9 @@ def run_secret_sauce_lab(
         train_coverage=max(train_cov, 0.0),
         holdout_coverage=max(hold_cov, 0.0),
         holdout_fit_coverage=max(hold_cov, 0.0),
+        holdout_gate_ok=picked.holdout_gate_ok,
+        train_net=picked.train_net,
+        holdout_net=picked.holdout_net,
         swing_hits=swing_hits,
         exit_hits=exit_hits,
         oracle_entry_indexes=tuple(entries),
