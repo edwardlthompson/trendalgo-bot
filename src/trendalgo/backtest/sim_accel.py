@@ -38,16 +38,40 @@ def simulate_arrays(
     stake_usd: float,
     fee_per_trade: float,
     trailing_stop_pct: float,
+    fill_offset: int = 0,
+    slippage_bps: float = 0.0,
+    opens: np.ndarray | None = None,
+    highs: np.ndarray | None = None,
+    lows: np.ndarray | None = None,
 ) -> tuple[float, float, int, int, int, int]:
     """Return gross, fees, trades, wins, tsl_hits, open_trades."""
-    if accel_backend() in {"numba", "cuda"}:
+    use_legacy = (
+        int(fill_offset) == 0
+        and float(slippage_bps) == 0.0
+        and opens is None
+        and highs is None
+        and lows is None
+    )
+    if use_legacy and accel_backend() in {"numba", "cuda"}:
         try:
             from trendalgo.backtest.sim_accel_kernels import numba_one  # noqa: PLC0415
 
             return numba_one(closes, entries, exits, stake_usd, fee_per_trade, trailing_stop_pct)
         except Exception:
             pass
-    return python_one(closes, entries, exits, stake_usd, fee_per_trade, trailing_stop_pct)
+    return python_one(
+        closes,
+        entries,
+        exits,
+        stake_usd,
+        fee_per_trade,
+        trailing_stop_pct,
+        fill_offset=fill_offset,
+        slippage_bps=slippage_bps,
+        opens=opens,
+        highs=highs,
+        lows=lows,
+    )
 
 
 def simulate_tsl_grid(
@@ -135,7 +159,19 @@ def python_one(
     stake_usd: float,
     fee_per_trade: float,
     tsl: float,
+    *,
+    fill_offset: int = 0,
+    slippage_bps: float = 0.0,
+    opens: np.ndarray | None = None,
+    highs: np.ndarray | None = None,
+    lows: np.ndarray | None = None,
 ) -> tuple[float, float, int, int, int, int]:
+    from trendalgo.backtest.sim_fill import (  # noqa: PLC0415
+        apply_entry_slip,
+        apply_exit_slip,
+        gap_through_long_exit,
+    )
+
     gross = 0.0
     fees_paid = 0.0
     trades = 0
@@ -145,30 +181,65 @@ def python_one(
     in_pos = False
     entry_price = 0.0
     peak_price = 0.0
+    pending_entry = 0
+    pending_exit = 0
+    offset = max(0, int(fill_offset))
     n = len(closes)
+    o_arr = opens if opens is not None else closes
+    h_arr = highs if highs is not None else closes
+    l_arr = lows if lows is not None else closes
+
+    def _close_trade(exit_px: float, *, is_tsl: bool) -> None:
+        nonlocal gross, fees_paid, trades, wins, tsl_hits, in_pos, entry_price, peak_price
+        px = apply_exit_slip(exit_px, slippage_bps)
+        if is_tsl:
+            tsl_hits += 1
+        gross_pnl = stake_usd * ((px / entry_price) - 1.0) if entry_price else 0.0
+        gross += gross_pnl
+        fees_paid += fee_per_trade
+        trades += 1
+        if gross_pnl - fee_per_trade > 0:
+            wins += 1
+        in_pos = False
+        entry_price = 0.0
+        peak_price = 0.0
+
     for i in range(1, n):
-        if not in_pos and entries[i]:
-            in_pos = True
-            entry_price = float(closes[i])
-            peak_price = entry_price
-        elif in_pos:
-            px = float(closes[i])
-            peak_price = max(peak_price, px)
-            stop_hit = tsl > 0 and px <= peak_price * (1.0 - tsl)
-            if exits[i] or stop_hit:
-                if stop_hit:
-                    tsl_hits += 1
-                gross_pnl = stake_usd * ((px / entry_price) - 1.0) if entry_price else 0.0
-                gross += gross_pnl
-                fees_paid += fee_per_trade
-                trades += 1
-                if gross_pnl - fee_per_trade > 0:
-                    wins += 1
-                in_pos = False
-                entry_price = 0.0
-                peak_price = 0.0
+        if pending_entry > 0 and not in_pos:
+            pending_entry -= 1
+            if pending_entry == 0:
+                in_pos = True
+                entry_price = apply_entry_slip(float(closes[i]), slippage_bps)
+                peak_price = float(h_arr[i])
+        if in_pos and pending_exit > 0:
+            pending_exit -= 1
+            if pending_exit == 0:
+                _close_trade(float(closes[i]), is_tsl=False)
+                continue
+        if not in_pos and pending_entry == 0 and bool(entries[i]):
+            if offset == 0:
+                in_pos = True
+                entry_price = apply_entry_slip(float(closes[i]), slippage_bps)
+                peak_price = float(h_arr[i])
+            else:
+                pending_entry = offset
+            continue
+        if not in_pos or pending_exit > 0:
+            continue
+        peak_price = max(peak_price, float(h_arr[i]))
+        stop_px = peak_price * (1.0 - tsl) if tsl > 0 else 0.0
+        stop_hit = tsl > 0 and float(l_arr[i]) <= stop_px
+        if stop_hit:
+            fill = gap_through_long_exit(stop_px, float(o_arr[i]))
+            _close_trade(fill, is_tsl=True)
+            continue
+        if bool(exits[i]):
+            if offset == 0:
+                _close_trade(float(closes[i]), is_tsl=False)
+            else:
+                pending_exit = offset
     if in_pos and entry_price:
-        px = float(closes[n - 1])
+        px = apply_exit_slip(float(closes[n - 1]), slippage_bps)
         gross_pnl = stake_usd * ((px / entry_price) - 1.0)
         gross += gross_pnl
         fees_paid += fee_per_trade
