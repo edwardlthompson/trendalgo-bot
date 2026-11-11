@@ -19,7 +19,6 @@ from sprint_smoke_probes import (
     probe_docs_absent,
     probe_feature_gate,
 )
-from sprint_smoke_web import probe_web
 
 
 def _write_report(root: Path, payload: dict) -> None:
@@ -64,7 +63,6 @@ def run(root: Path, args: argparse.Namespace) -> int:
         return 0
     budget = load_budget(root)
     results = [
-        probe_web(root, budget),
         probe_android(root),
         probe_cli(root, "python", budget),
         probe_cli(root, "node", budget),

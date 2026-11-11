@@ -98,14 +98,6 @@ jobs:
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
 
-      - name: Generate web stack SBOM slice
-        if: hashFiles('examples/web/package.json') != ''
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.20.6
-        with:
-          path: examples/web
-          format: cyclonedx-json
-          output-file: sbom-web.cyclonedx.json
-
       - name: Generate python stack SBOM slice
         if: hashFiles('examples/python/pyproject.toml') != ''
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.20.6
@@ -164,7 +156,6 @@ jobs:
             exit 1
           fi
           FILES="packaging/winget/manifest.stub.yaml sbom.cyclonedx.json"
-          [ -f sbom-web.cyclonedx.json ] && FILES="$FILES sbom-web.cyclonedx.json"
           [ -f sbom-python.cyclonedx.json ] && FILES="$FILES sbom-python.cyclonedx.json"
           [ -f sbom-node.cyclonedx.json ] && FILES="$FILES sbom-node.cyclonedx.json"
           [ -f sbom-android.cyclonedx.json ] && FILES="$FILES sbom-android.cyclonedx.json"

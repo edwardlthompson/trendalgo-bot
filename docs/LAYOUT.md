@@ -16,4 +16,4 @@ One location per asset class. Do not invent parallel trees.
 | Briefs (fleet) | `briefs/` |
 | Gates | `scripts/check-*.py` (+ `.sh` / `.ps1` twins) |
 
-See also [`DIRECTORY_RULES.md`](DIRECTORY_RULES.md) for asset-class detail and [`WEB_PROJECT_LAYOUT.md`](WEB_PROJECT_LAYOUT.md) for web publish paths.
+See also [`DIRECTORY_RULES.md`](DIRECTORY_RULES.md) for asset-class detail.

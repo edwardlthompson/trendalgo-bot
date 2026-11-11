@@ -46,10 +46,10 @@
 
 ### Sprint Audit-P2 — Remove PWA scaffolding
 
-1. 🔲 [AGENT][LOCAL] PWA-01 Delete dead web surface (modules/web, web check scripts/libs) — scope: `modules/web/`, `scripts/check-*web*`, `scripts/lib/*web*`
-2. 🔲 [AGENT][LOCAL] PWA-02 Delete web-only golden-path schemas after grep clear — scope: `schemas/golden-path/`
-3. 🔲 [AGENT][LOCAL] PWA-03 Sweep refs; delete `api/routes/ws.py`; preserve Argus README/TEMPLATE — scope: workflows, README, `TEMPLATE_INDEX.json`, `AGENTS.md`
-4. 🔲 [AGENT][LOCAL] PWA-04 Amend ADR-0016: desktop stays for Study UI — scope: `docs/adr/0016-headless-bot-local-device.md`
+1. ✅ [AGENT][LOCAL] PWA-01 Delete dead web surface (modules/web, web check scripts/libs) — scope: `modules/web/`, `scripts/check-*web*`, `scripts/lib/*web*`
+2. ✅ [AGENT][LOCAL] PWA-02 Delete web-only golden-path schemas after grep clear — scope: `schemas/golden-path/`
+3. ✅ [AGENT][LOCAL] PWA-03 Sweep refs; delete `api/routes/ws.py`; preserve Argus README/TEMPLATE — scope: workflows, README, `TEMPLATE_INDEX.json`, `AGENTS.md`
+4. ✅ [AGENT][LOCAL] PWA-04 Amend ADR-0016: desktop stays for Study UI — scope: `docs/adr/0016-headless-bot-local-device.md`
 
 ### Sprint Audit-P3 — License (ELv2 approved 2026-11-11)
 

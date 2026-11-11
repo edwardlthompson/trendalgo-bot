@@ -1,6 +1,6 @@
 # ADR-0016 — Headless bot host with a local device app
 
-- **Status:** Accepted (2026-10-09; amended 2026-10-19 for optional device-local live + on-device vault)
+- **Status:** Accepted (2026-10-09; amended 2026-10-19 for optional device-local live + on-device vault; amended 2026-11-11 — desktop stays for Study UI)
 - **Date:** 2026-10-09
 - **Relates to:** ADR-0002 (hosting; decision 5 superseded), ADR-0005 and ADR-0008 (monetization), ADR-0012 (hosted URL), ADR-0013 (LTS vendor), ADR-0014 and ADR-0015 (desktop path; amended), ADR-0017 (tenant boundary and license terms)
 - **Plan:** `local_device_headless_bot` (approved 2026-10-09); go-live readiness `portfolio_bots_go-live_ready` (2026-10-19). Risk items cited here are in [docs/RISK_REGISTER.md](../RISK_REGISTER.md), section "Local device and headless bot register".
@@ -30,6 +30,7 @@
 7. **Shadow first.** The host starts in shadow mode (no real orders). At least 14 days of shadow, with a clean divergence report, come before any live order (P5).
 8. **Hosting.** Path A: Oracle Always Free A1, sized at 2 OCPU and 12 GB in total (the Always Free allowance). Path B: a paid VPS on amd64 or arm64. Oracle's Always Free page says idle A1 instances may be reclaimed. It does not say that a Pay As You Go upgrade prevents this. Owner decision (2026-10-09): live runs on Path A (Oracle A1), and the owner accepts the reclamation risk. Shadow may run on either path.
 9. **Retire the PWA and the pywebview shell** in P7, after the device app and wizard pass their exit tests. Until then the PWA stays runnable.
+10. **Desktop PySide6 stays as the local control surface (amended 2026-11-11).** Secret Sauce Study UI is the selling surface and lives in the device app. The VPS bot host remains headless. Flipping the product to a browser-only or fully headless-only operator path would break Study UI; do not retire the desktop shell without a replacement Study surface.
 
 ## Supersedes and amends
 

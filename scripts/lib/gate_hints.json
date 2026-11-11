@@ -9,63 +9,6 @@
     ]
   },
   "stages": {
-    "web-lint": {
-      "means": "TypeScript or ESLint found problems in the web Golden Path.",
-      "run": "npm run lint in examples/web (then npm run format if that script exists)",
-      "why": "Catching type and style errors on the laptop is cheaper than waiting for CI.",
-      "suggested": [
-        "fix TypeScript errors in feature scope",
-        "run npm run lint in examples/web",
-        "run npm run format in examples/web if format script exists"
-      ]
-    },
-    "web-format": {
-      "means": "Web files are not formatted the way CI expects.",
-      "run": "npm run format in examples/web",
-      "why": "One formatter keeps diffs small and reviewable.",
-      "suggested": [
-        "run npm run format in examples/web"
-      ]
-    },
-    "web-test": {
-      "means": "A web unit or component test failed.",
-      "run": "npm test in examples/web",
-      "why": "Tests are the proof the Golden Path still works after your change.",
-      "suggested": [
-        "fix failing vitest in src/{feature}/",
-        "run npm test in examples/web"
-      ]
-    },
-    "web-lighthouse-floors": {
-      "means": "Lighthouse performance, accessibility, best-practices, or web-vitals (TBT/LCP) floors dropped.",
-      "run": "bash scripts/check-lighthouse-floors.sh",
-      "why": "CI Lighthouse assertions must stay error floors, not warnings (Settings IA re-baseline + TBT/LCP budgets).",
-      "suggested": [
-        "restore categories:performance minScore 0.9 in examples/web/.lighthouserc.json",
-        "restore categories:accessibility minScore 0.95 in examples/web/.lighthouserc.json",
-        "keep categories:best-practices minScore at least 0.9",
-        "keep largest-contentful-paint maxNumericValue <= 2500",
-        "keep total-blocking-time maxNumericValue <= 300 (lab INP proxy)"
-      ]
-    },
-    "web-sw-cache-budget": {
-      "means": "Service-worker PRECACHE shell exceeds the offline cache budget.",
-      "run": "bash scripts/check-sw-cache-budget.sh",
-      "why": "PWA offline-first shell must stay within the /gates canvas budget.",
-      "suggested": [
-        "trim examples/web/public/sw.js PRECACHE entries",
-        "keep shell assets under SW_CACHE_MAX_BYTES (default 256KiB)"
-      ]
-    },
-    "web-build": {
-      "means": "The web app did not produce a production build.",
-      "run": "npm run build in examples/web",
-      "why": "A broken build never reaches users; fix it before the pull request.",
-      "suggested": [
-        "fix build errors",
-        "run npm run build in examples/web"
-      ]
-    },
     "python-lint": {
       "means": "Ruff found lint issues in the Python Golden Path.",
       "run": "uv run ruff check --fix in examples/python",

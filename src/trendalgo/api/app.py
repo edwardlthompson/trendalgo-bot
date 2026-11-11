@@ -37,7 +37,6 @@ from trendalgo.api.routes import (
     trading,
     watchlist,
     webhooks,
-    ws,
 )
 from trendalgo.api.state import AppState, default_state
 from trendalgo.bots.scheduler import start_bot_tick_scheduler
@@ -148,7 +147,6 @@ def create_app(state: AppState | None = None) -> FastAPI:
     app.include_router(research.router, prefix=prefix, tags=["research"], dependencies=owner)
     app.include_router(export.router, prefix=prefix, tags=["export"], dependencies=owner)
     app.include_router(trading.router, prefix=prefix, tags=["trading"], dependencies=owner)
-    app.include_router(ws.router, prefix=prefix, tags=["ws"], dependencies=owner)
 
     @app.get("/")
     def root() -> dict[str, str]:

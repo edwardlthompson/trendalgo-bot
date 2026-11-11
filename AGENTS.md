@@ -43,9 +43,8 @@
 Activate only the modules matching this product stack:
 
 - ✅ Python — `modules/python/MODULE.md` · `src/trendalgo/`
-- ✅ Web / PWA — `modules/web/MODULE.md` · `examples/web/`
 
-Do not re-add pruned Android/Node/Rust/Go/Lightroom modules unless the human explicitly expands scope.
+Do not re-add pruned Web/PWA, Android, Node, Rust, Go, or Lightroom modules unless the human explicitly expands scope.
 
 ## Cursor FOSS integrations
 
@@ -65,5 +64,5 @@ Commercial Cursor integrations are out of scope for this FOSS product (`distribu
 
 ## Ecosystem-Specific Rules
 
-- **Web/PWA:** Offline-first service workers; Lighthouse budget gates
 - **Python:** Strict typing (mypy), ruff lint/format, locked dependencies (uv)
+- **Device UI:** PySide6 local control surface (`src/trendalgo/device/`); VPS bot host stays headless

@@ -106,7 +106,7 @@
 
 | Task | Scope |
 |------|-------|
-| Web bundle + snapshots | `examples/web/**`, `scripts/check-bundle-size.sh` |
+| Device UI + tests | `src/trendalgo/device/**`, `tests/test_device/**` |
 | Python pyright | `examples/python/**` |
 | Android metadata | `examples/android/fastlane/**`, `examples/android/README.md` |
 | Cursor rules | `.cursor/rules/testing.mdc`, `.cursor/rules/ci-gates.mdc` |

@@ -5,10 +5,10 @@
 # TrendAlgo Bot
 
 ![MIT](https://img.shields.io/badge/license-MIT-2ea043?style=flat-square)
-![Stack](https://img.shields.io/badge/stack-Python%20%2B%20Web%20PWA-0969da?style=flat-square)
+![Stack](https://img.shields.io/badge/stack-Python%20%2B%20PySide6-0969da?style=flat-square)
 ![FOSS](https://img.shields.io/badge/FOSS-no_tracking-656d76?style=flat-square)
 
-**TrendAlgo Bot** is a self-hosted cryptocurrency trading platform you run on your own VPS. It combines algorithmic spot trading, a CoinStats-style portfolio tracker, opportunity scanning, and research tools behind a single progressive web app — without custodial accounts, proprietary SDKs, or default telemetry.
+**TrendAlgo Bot** is a self-hosted cryptocurrency trading platform: a headless bot on your VPS plus a local PySide6 device app for research and control. It combines algorithmic spot trading, portfolio tracking, opportunity scanning, and Secret Sauce Study — without custodial accounts, proprietary SDKs, or default telemetry.
 
 You own the stack, the keys, and the data. Dry-run is the default; live trading requires an explicit go-live approval for each exchange.
 
@@ -27,10 +27,9 @@ This guide walks you through running **your own** TrendAlgo Bot instance from cl
 |-------------|---------|-------------|
 | **OS** | Windows 10+, macOS 12+, or Linux | Ubuntu 22.04 LTS on a VPS for production |
 | **Python** | 3.12 (not 3.13+ yet) | 3.12.x with [uv](https://github.com/astral-sh/uv) or `pip` |
-| **Node.js** | 20 LTS | 20+ for the PWA dashboard |
 | **RAM** | 2 GB (local dev) | 4 GB+ on VPS |
 | **Disk** | 2 GB free | 10 GB+ for logs, SQLite, backtests |
-| **Network** | Outbound HTTPS | Static IP or domain for production PWA |
+| **Network** | Outbound HTTPS | Static IP or domain for the VPS bot host |
 Optional: Docker (production parity), WSL2 (Windows bash scripts), Telegram account (alerts).
 
 ### 2. Clone and install dependencies
@@ -49,15 +48,6 @@ uv sync --extra dev
 
 # or pip editable install
 pip install -e ".[dev]"
-
-```
-
-**Web dashboard:**
-
-```bash
-cd examples/web
-npm ci
-cd ../..
 
 ```
 
@@ -104,20 +94,16 @@ bash scripts/dev-local.sh
 
 ```
 
-**Manual (two terminals):**
+**Manual:**
 
 ```bash
-# Terminal 1 — API
 export TRENDALGO_DATA_DIR=./data/dev
 export TRENDALGO_MODE=dry-run
 uv run python -m trendalgo.api.main
 
-# Terminal 2 — PWA
-cd examples/web && npm run dev
-
 ```
 
-Open **http://localhost:5173**. Vite proxies `/api` → `http://127.0.0.1:8000`.
+Device UI (windowed, no console): `.\scripts\packaging\launch-device.ps1` (Windows) when `.venv` exists.
 
 **Verify:**
 
@@ -213,7 +199,7 @@ Verify binding: `docker compose -f docker/docker-compose.prod.yml config` must s
 
 | Symptom | Fix |
 |---------|-----|
-| PWA shows "API offline" | Start API on `:8000`; check firewall |
+| Device cannot reach API | Start API on `:8000`; check firewall / owner auth |
 | Empty portfolio chart | Delete `data/dev/portfolio.db` and reload (re-seeds 1Y history in dry-run) |
 | Sync slow / timeout | Set `TRENDALGO_SYNC_STAGGER_SEC=0` locally; reduce enabled exchanges |
 | Windows bash gates fail | Use PowerShell scripts or WSL; CI is source of truth |
@@ -223,7 +209,7 @@ Verify binding: `docker compose -f docker/docker-compose.prod.yml config` must s
 ### 11. Upgrade and backup
 
 - **Data:** Back up `$TRENDALGO_DATA_DIR` (SQLite files, `portfolio.db`, `bots.db`, journals).
-- **Updates:** `git pull`, `uv sync`, `cd examples/web && npm ci`, restart API.
+- **Updates:** `git pull`, `uv sync`, restart API / relaunch device.
 - **Hygiene:** `bash scripts/check-repo-hygiene.sh` before pushing custom forks.
 
 </details>
@@ -268,7 +254,7 @@ Blind RSI mean-reversion is looking for keys under the streetlight. An uptrend w
 | **Algo trading** | Native [CCXT runner](docs/NATIVE_TRADING.md) (dry-run default), strategy templates, risk limits, multi-bot |
 | **Opportunity scanner** | LTS pipeline with live OHLCV (cached/degraded fallback); pair forager prototype |
 | **Research** | Backtest library, walk-forward, Monte Carlo, TA catalog |
-| **Web dashboard** | Offline-capable PWA shell — portfolio, bots, billing, scanner, ops (live data needs API) |
+| **Device app** | Local PySide6 control surface — portfolio, bots, scanner, Secret Sauce Study, settings |
 | **Billing** | Performance-based license; user-initiated on-chain settlement; TERMS draft pending attorney (H-006) |
 | **Alerts** | Telegram for trades, risk events, daily P/L (requires H-008 tokens) |
 | **Platform extensions** | On-chain wallet read; Uniswap V3 LP; DEX dry-run; **DEX live = Base Phase 1 + human gates** — [DEX roadmap](docs/DEX_ROADMAP.md) |
@@ -279,7 +265,7 @@ Blind RSI mean-reversion is looking for keys under the streetlight. An uptrend w
 
 ```mermaid
 flowchart LR
-  PWA[PWA dashboard] --> API[FastAPI]
+  Device[PySide6 device] --> API[FastAPI]
   API --> Portfolio[portfolio/*]
   API --> Venues[venues/* + dex/*]
   API --> Runner[trading/runner]
@@ -296,8 +282,8 @@ flowchart LR
 |-------|------------|
 | Trading engine | Native CCXT runner ([ADR-0010](docs/adr/0010-ccxt-native-engine.md)) |
 | Domain logic | Python 3.12+ — `src/trendalgo/` |
-| API | FastAPI + WebSocket |
-| Web UI | Vite + TypeScript PWA — `examples/web/` |
+| API | FastAPI (headless host) |
+| Local UI | PySide6 device — `src/trendalgo/device/` |
 | Data | SQLite on VPS; Postgres dual-write experimental (not default) |
 | Exchanges | CCXT — 9 CEX venues; DEX via ADR-0011 plugins |
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · ADRs: [`docs/adr/`](docs/adr/) · [`DECISION_LOG.md`](DECISION_LOG.md)
@@ -329,7 +315,7 @@ bash scripts/dev-local.sh        # Linux / macOS / WSL
 
 ```
 
-→ **http://localhost:5173** · Full tiers: [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md)
+Device UI: `.\scripts\packaging\launch-device.ps1` · Full tiers: [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md)
 
 **Bootstrap checklist:**
 
@@ -344,8 +330,7 @@ bash scripts/dev-local.sh        # Linux / macOS / WSL
 <summary><strong>Repository layout</strong></summary>
 
 ```
-src/trendalgo/       # Core — portfolio, trading, scanner, billing, risk, API
-examples/web/        # PWA dashboard (Vite + TypeScript)
+src/trendalgo/       # Core — portfolio, trading, scanner, billing, risk, API, device
 config/              # Founder defaults, exchange registry
 docker/              # Compose dev + prod templates
 docs/                # ADRs, roadmaps, runbooks
@@ -362,9 +347,6 @@ tests/               # Python test suite
 ```bash
 uv sync --extra dev
 python scripts/run-trendalgo-tests.py
-
-cd examples/web && npm ci && npm test
-
 python scripts/founder_gate.py status
 
 ```
@@ -398,7 +380,7 @@ MIT — see [`LICENSE`](LICENSE). Performance license terms: [`docs/LICENSE_MODE
 
 1. Read [`docs/START_HERE.md`](docs/START_HERE.md) → pick Cursor mode via [`docs/CURSOR_MODES.md`](docs/CURSOR_MODES.md)
 2. Open [`BUILD_PLAN.md`](BUILD_PLAN.md) **Sequential** lane first (`[AGENT]` / `[HUMAN]` / `[AUTO]`; status 🔲 ✅ ❌)
-3. Active stacks only: Python (`src/trendalgo/`) + Web (`examples/web/`)
+3. Active stack: Python (`src/trendalgo/`) including the PySide6 device UI
 4. After each agent feature step: `bash scripts/watch-agent-gates.sh --once --autofix`
 5. Human/legal/go-live: [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) (root [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) is a pointer)
 6. Template alignment notes: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md)

@@ -477,13 +477,6 @@
       "owner": "maintainer"
     },
     {
-      "path": "scripts/check-bundle-size.sh",
-      "purpose": "Vite dist JS gzip bundle budget gate",
-      "read_when": "release",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
       "path": "scripts/init-stack-sync.py",
       "purpose": "Sync AGENT_MEMORY modules and stack-selection.json on init",
       "read_when": "bootstrap_session_start",
@@ -642,13 +635,6 @@
       "purpose": "Cross-stack design system, theme toggle, i18n rules",
       "read_when": "ui_work",
       "update_when": "design_change",
-      "owner": "agent+human"
-    },
-    {
-      "path": "docs/WEB_PROJECT_LAYOUT.md",
-      "purpose": "Website folder roles, GitHub Pages deploy path, i18n vs styles layout",
-      "read_when": "web_hosting",
-      "update_when": "layout_change",
       "owner": "agent+human"
     },
     {
@@ -1821,13 +1807,6 @@
       "owner": "maintainer"
     },
     {
-      "path": "scripts/check-lighthouse-floors.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
       "path": "scripts/check-lightroom-lua.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
@@ -1899,27 +1878,6 @@
     },
     {
       "path": "scripts/check-package-attestation-docs.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-pages-analytics.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-pages-demo-link.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-playwright-cache.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
       "update_when": "milestone_boundary",
@@ -2010,13 +1968,6 @@
       "owner": "maintainer"
     },
     {
-      "path": "scripts/check-sw-cache-budget.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
       "path": "scripts/check-template-gaps.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
@@ -2046,13 +1997,6 @@
     },
     {
       "path": "scripts/check-ux-inventory.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-web-import-hygiene.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
       "update_when": "milestone_boundary",
@@ -2407,10 +2351,6 @@
     }
   ],
   "modules": {
-    "web": {
-      "guide": "modules/web/MODULE.md",
-      "activate_when": "stack includes PWA, web, or static site"
-    },
     "python": {
       "guide": "modules/python/MODULE.md",
       "example": "examples/python",

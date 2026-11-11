@@ -20,7 +20,6 @@ build/
 .coverage
 htmlcov/
 coverage/
-examples/web/dist/
 examples/android/.gradle/
 examples/android/build/
 examples/android/local.properties
@@ -44,8 +43,6 @@ user_data/notebooks/.ipynb_checkpoints/
 
 # Test artifacts
 test-results/
-playwright-report/
-.lighthouseci/
 
 # Secrets
 .env
@@ -55,14 +52,8 @@ playwright-report/
 # Live user configs (examples committed; copies from init)
 .app-update.json
 donations.json
-examples/web/public/app-update.json
-examples/web/public/donations.json
-# LTS bulk coin PNGs (optional; dashboard uses CDN/monogram — see slim-lts-icons.ps1)
-examples/web/public/lts-dashboard/icons/coins/*
-!examples/web/public/lts-dashboard/icons/coins/README.md
 # Local junction to retired PWA coin icons (not committed)
 branding/assets/coins/from-retired-web-backup/
-examples/web/dist/lts-dashboard/icons/coins/
 examples/android/app/src/main/assets/app-update.json
 examples/android/app/src/main/assets/donations.json
 
@@ -102,8 +93,6 @@ src/trendalgo/data/**/__pycache__/
 !src/trendalgo/device/data/
 !src/trendalgo/device/data/**
 src/trendalgo/device/data/**/__pycache__/
-!examples/web/src/data/
-!examples/web/public/data/
 
 # Ephemeral agent outputs (examples tracked)
 CODE_REVIEW.md

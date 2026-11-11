@@ -63,6 +63,5 @@ Windows: use `scripts/purge-ephemeral.ps1` and `scripts/check-repo-hygiene.ps1`.
 | Enable Git LFS for source code | FOSS template avoids LFS by default |
 ## Related
 
-- [`docs/WEB_PROJECT_LAYOUT.md`](WEB_PROJECT_LAYOUT.md) — dist/ not in git
 - [`docs/SECURITY_TRIAGE.md`](SECURITY_TRIAGE.md) — Dependabot triage
 - [`.cursor/rules/repo-hygiene.mdc`](../.cursor/rules/repo-hygiene.mdc) — agent guardrails

@@ -40,10 +40,9 @@ Type **`/`** in Cursor Agent chat for shortcut workflows. Start with **[docs/hel
 6. `BUILD_PLAN.md` Sequential lane
 7. Active `modules/{stack}/MODULE.md` only
 8. Active `examples/{stack}/` only
-9. `docs/WEB_PROJECT_LAYOUT.md` when stack includes web (folder roles, GitHub Pages)
-10. `docs/DESIGN_GUIDE.md` when stack includes web or Android UI (tokens, themes, i18n)
-11. `branding/BRANDING.md` for logos, official colors, and pitch README generation
-12. `docs/FEATURE_MODULES.md` when implementing Sprint 2+ incremental features (vertical slices)
+9. `docs/DESIGN_GUIDE.md` when stack includes UI (tokens, themes, i18n)
+10. `branding/BRANDING.md` for logos, official colors, and pitch README generation
+11. `docs/FEATURE_MODULES.md` when implementing Sprint 2+ incremental features (vertical slices)
 
 ## Reference Read Order
 
