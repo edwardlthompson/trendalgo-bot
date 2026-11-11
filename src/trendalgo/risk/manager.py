@@ -1,4 +1,4 @@
-"""Position sizing, daily loss cap, and circuit breaker (R1 to R3)."""
+"""Position sizing, daily loss cap, and circuit breaker (R1 to R3; RISK-02..05)."""
 
 from __future__ import annotations
 
@@ -28,6 +28,8 @@ class RiskState:
     circuit_breaker_active: bool = False
     paused: bool = False
     day_key: str = ""
+    # After a manual breaker reset, wait for recovery under the DD threshold before re-arming.
+    breaker_needs_recovery: bool = False
 
 
 @dataclass
@@ -45,6 +47,7 @@ class RiskManager:
         if not (math.isfinite(balance_usd) and math.isfinite(open_position_usd)):
             raise ValueError("equity inputs must be finite numbers")
         self.wallet_usd = max(0.0, balance_usd + open_position_usd)
+        self._refresh_peak_and_breaker()
         return self.wallet_usd
 
     def compute_stake(self, proposed_usd: float) -> float:
@@ -52,7 +55,12 @@ class RiskManager:
             raise StakeRejected(f"stake must be a positive number, got {proposed_usd}")
         pct_cap = self.wallet_usd * self.limits.max_stake_pct
         cap = min(self.limits.max_stake_usd, pct_cap)
-        return round(max(0.0, min(proposed_usd, cap)), 2)
+        stake = round(max(0.0, min(proposed_usd, cap)), 2)
+        if stake <= 0:
+            raise StakeRejected(
+                f"stake rounds to {stake}; minimum viable stake is 0.01 after caps"
+            )
+        return stake
 
     def record_pnl(self, delta_usd: float) -> None:
         self.state.daily_pnl_usd += delta_usd
@@ -65,7 +73,8 @@ class RiskManager:
         self._refresh_peak_and_breaker()
 
     def _refresh_peak_and_breaker(self) -> None:
-        equity = self.wallet_usd + self.state.daily_pnl_usd
+        # RISK-02: wallet already is balance+open; never add daily_pnl on top.
+        equity = self.wallet_usd
         if equity > self.state.peak_equity_usd:
             self.state.peak_equity_usd = equity
         self._refresh_circuit_breaker(equity)
@@ -74,13 +83,27 @@ class RiskManager:
         if self.state.peak_equity_usd <= 0:
             return
         drawdown = (self.state.peak_equity_usd - equity) / self.state.peak_equity_usd
-        if drawdown >= self.limits.circuit_breaker_drawdown_pct:
+        threshold = self.limits.circuit_breaker_drawdown_pct
+        if self.state.breaker_needs_recovery:
+            if drawdown < threshold:
+                self.state.breaker_needs_recovery = False
+            return
+        if drawdown >= threshold:
             self.state.circuit_breaker_active = True
 
     def is_daily_loss_exceeded(self) -> bool:
         return self.state.daily_pnl_usd <= -self.limits.daily_loss_cap_usd
 
-    def can_open_trade(self) -> tuple[bool, str]:
+    def _roll_day_if_needed(self, now: datetime) -> None:
+        today = now.astimezone(UTC).date().isoformat()
+        if self.state.day_key and self.state.day_key != today:
+            self.state.daily_pnl_usd = 0.0
+            self.state.day_key = today
+        elif not self.state.day_key:
+            self.state.day_key = today
+
+    def can_open_trade(self, now: datetime | None = None) -> tuple[bool, str]:
+        self._roll_day_if_needed(now or datetime.now(UTC))
         if self.state.paused:
             return False, "trading paused"
         if self.state.circuit_breaker_active:
@@ -97,16 +120,25 @@ class RiskManager:
         self.state.paused = False
 
     def reset_breaker(self, *, confirm: bool, operator: str) -> None:
-        """Clear a tripped breaker. A separate command: it needs confirm=True and a named operator."""
+        """Clear a tripped breaker. Peak high-water mark is kept (RISK-04)."""
         if not confirm:
             raise ValueError("reset_breaker needs confirm=True")
         if not operator.strip():
             raise ValueError("reset_breaker needs the operator's name")
         was_active = self.state.circuit_breaker_active
         self.state.circuit_breaker_active = False
-        # Drawdown is measured from the reset point, so the breaker does not re-trip on old peaks.
-        self.state.peak_equity_usd = self.wallet_usd + self.state.daily_pnl_usd
+        self.state.breaker_needs_recovery = True
         logger.warning("circuit breaker reset by %s (was active: %s)", operator, was_active)
+
+    def reset_peak_equity(self, *, confirm: bool, operator: str) -> None:
+        """Explicit peak reset to current wallet. Separate from reset_breaker (RISK-04)."""
+        if not confirm:
+            raise ValueError("reset_peak_equity needs confirm=True")
+        if not operator.strip():
+            raise ValueError("reset_peak_equity needs the operator's name")
+        self.state.peak_equity_usd = self.wallet_usd
+        self.state.breaker_needs_recovery = False
+        logger.warning("peak equity reset to %.2f by %s", self.wallet_usd, operator)
 
     def reset_daily(self) -> None:
         self.state.daily_pnl_usd = 0.0
