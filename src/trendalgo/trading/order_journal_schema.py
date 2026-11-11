@@ -36,6 +36,13 @@ CREATE TABLE IF NOT EXISTS exchange_guard (
     last_error TEXT,
     announced INTEGER NOT NULL DEFAULT 1
 );
+CREATE TABLE IF NOT EXISTS exchange_guard_failures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exchange TEXT NOT NULL,
+    failed_at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_exchange_guard_failures_ex_ts
+    ON exchange_guard_failures (exchange, failed_at);
 CREATE TABLE IF NOT EXISTS balance_checkpoints (
     exchange TEXT NOT NULL,
     asset TEXT NOT NULL,
