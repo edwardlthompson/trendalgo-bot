@@ -1,6 +1,6 @@
 # ADR-0016 — Headless bot host with a local device app
 
-- **Status:** Accepted (2026-10-09; amended 2026-10-19 for optional device-local live + on-device vault; amended 2026-11-11 — desktop stays for Study UI)
+- **Status:** Accepted (2026-10-09; amended 2026-10-19 for optional device-local live + on-device vault; amended 2026-11-11 — desktop stays for Study UI; amended 2026-11-11 — exchange-side reduce-only stops RISK-09)
 - **Date:** 2026-10-09
 - **Relates to:** ADR-0002 (hosting; decision 5 superseded), ADR-0005 and ADR-0008 (monetization), ADR-0012 (hosted URL), ADR-0013 (LTS vendor), ADR-0014 and ADR-0015 (desktop path; amended), ADR-0017 (tenant boundary and license terms)
 - **Plan:** `local_device_headless_bot` (approved 2026-10-09); go-live readiness `portfolio_bots_go-live_ready` (2026-10-19). Risk items cited here are in [docs/RISK_REGISTER.md](../RISK_REGISTER.md), section "Local device and headless bot register".
@@ -24,7 +24,7 @@
 1b. **Execution venue (amended 2026-10-19).** `host` (default/recommended) or `device` (explicit opt-in). Device-local live requires a one-time risk disclosure (sleep / reboot / power / ISP → missed entries/exits). Choice is persisted; the app does not re-nag. After app restart, bots wake **paused**. Live still requires the owner-signed LiveGate. Query-scoped vault keys never place orders.
 2. **Device-initiated sync only.** The device sends `PUT /api/v1/plan` and `POST /api/v1/commands`, and pulls `GET /api/v1/events` and `GET /api/v1/status`. Nothing calls back into the PC, so the PC needs no inbound port. Each request carries an HMAC over method, path, timestamp, nonce, body, and `owner_id`. The device pins the host's TLS certificate fingerprint.
 3. **The host runs the LTS engine.** A streaming port of the LTS trade loop (`src/trendalgo/lts_vendor/backtesting/engine.py`) and its indicators (`signals.py`, `SIGNAL_REGISTRY`) runs on the host, so live trading executes what was backtested. Native strategies stay backtest-only in v1.
-4. **Exit policy.** Exits are the bot's trade signals plus an optional per-bot trailing stop. Entry guards (risk, exchange, entitlements) block new entries only. Exits, stops, and flatten are never gated (R5). There are no exchange-side stop orders in v1 (accepted risk R-STOP).
+4. **Exit policy.** Exits are the bot's trade signals plus an optional per-bot trailing stop. Entry guards (risk, exchange, entitlements) block new entries only. Exits, stops, and flatten are never gated (R5). **Exchange-side reduce-only stops (amended 2026-11-11, RISK-09):** on entry, place a real reduce-only stop at the venue; keep the local stop as a fast path only. On restart, adopt resting venue stops (`src/trendalgo/trading/exchange_stops.py`) rather than duplicating. R-STOP is closed for new live paths once venue wiring is live.
 5. **Sizing policy.** Each bot is sized at creation: a fixed USD amount per entry, or a percentage of equity. Backtests use the same sizing. A live base size is the USD amount divided by a fresh ticker price, with market precision and minimum-size checks (E1).
 6. **One live gate.** The host's `LiveGate` is the only path that can enable live orders (H2). These existing paths stop enabling live on the host: `GO_LIVE_APPROVED` and `WORLDWIDE_TRADING_ACK` (`src/trendalgo/trading/multi_exchange.py`), `TV_EXECUTION_ACK` (`src/trendalgo/signals/runner_bridge.py`), the `go_live_approved` flags in `src/trendalgo/trading/control.py` and `src/trendalgo/dex/control.py`, `validate_pre_live` in `src/trendalgo/risk/protections.py`, and the venue approval in `src/trendalgo/api/routes/platform.py`. `scripts/go-live-gate.sh` is re-pointed at the signed command and keeps its audit trail.
 7. **Shadow first.** The host starts in shadow mode (no real orders). At least 14 days of shadow, with a clean divergence report, come before any live order (P5).
@@ -54,7 +54,7 @@ These take effect on acceptance, 2026-10-09.
 
 - **Keep the bot in the API process on a VPS (ADR-0002 as written).** Rejected. The UI and the runtime stay coupled, and live runs native strategies, not the backtested engine.
 - **Run the bot on the PC as the only path.** Rejected as default. Amended 2026-10-19: device-local live is an explicit opt-in with one-time disclosure; host remains recommended because the PC sleeps, restarts, and can lose power or network.
-- **Exchange-side stop orders in v1.** Deferred. They can be added later as a per-bot option.
+- **Exchange-side stop orders deferred forever.** Rejected (amended 2026-11-11). RISK-09 requires place/adopt reduce-only stops so a process kill leaves protection at the venue.
 - **Caddy for TLS.** Not used. Uvicorn terminates TLS with a self-signed certificate that the device pins.
 - **Third-party scripts that retry Oracle capacity.** Rejected. They hold cloud credentials.
 - **TradingView webhook or Telegram ingress as trade input.** Off by default. Each adds inbound attack surface.
