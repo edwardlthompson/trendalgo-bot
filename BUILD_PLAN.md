@@ -58,16 +58,16 @@
 
 ### Sprint Audit-P4 — Risk engine (test-first)
 
-1. 🔲 [AGENT][LOCAL] RISK-01 Slippage on notional — scope: `backtest/slippage.py`
-2. 🔲 [AGENT][LOCAL] RISK-02 Stop double-counting equity — scope: `risk/manager.py`
-3. 🔲 [AGENT][LOCAL] RISK-03 Daily loss cap inline rollover — scope: `risk/manager.py`
-4. 🔲 [AGENT][LOCAL] RISK-04 Circuit breaker re-arm; peak persists — scope: `risk/manager.py`
-5. 🔲 [AGENT][LOCAL] RISK-05 `compute_stake` never returns 0.0 — scope: `risk/manager.py`, `trading/sizing.py`
-6. 🔲 [AGENT][LOCAL] RISK-06 Windowed failure rate trips — scope: `trading/order_guard.py`
-7. 🔲 [AGENT][LOCAL] RISK-07 Directional ticker freshness — scope: `trading/sizing.py`
-8. 🔲 [AGENT][LOCAL] RISK-08 Force-trade via `compute_stake` — scope: `api/routes/bots.py`
-9. 🔲 [AGENT][LOCAL] RISK-09 Exchange-side reduce-only stops + adopt on restart — scope: trading/risk + ADR-0016 amend
-10. 🔲 [AGENT][LOCAL] RISK-10 Panic verify cancel then flatten — scope: `trading/panic.py`
+1. ✅ [AGENT][LOCAL] RISK-01 Slippage on notional — scope: `backtest/slippage.py`
+2. ✅ [AGENT][LOCAL] RISK-02 Stop double-counting equity — scope: `risk/manager.py`
+3. ✅ [AGENT][LOCAL] RISK-03 Daily loss cap inline rollover — scope: `risk/manager.py`
+4. ✅ [AGENT][LOCAL] RISK-04 Circuit breaker re-arm; peak persists — scope: `risk/manager.py`
+5. ✅ [AGENT][LOCAL] RISK-05 `compute_stake` never returns 0.0 — scope: `risk/manager.py`, `trading/sizing.py`
+6. ✅ [AGENT][LOCAL] RISK-06 Windowed failure rate trips — scope: `trading/order_guard.py`
+7. ✅ [AGENT][LOCAL] RISK-07 Directional ticker freshness — scope: `trading/sizing.py`
+8. ✅ [AGENT][LOCAL] RISK-08 Force-trade via `compute_stake` — scope: `api/routes/bots.py`
+9. ✅ [AGENT][LOCAL] RISK-09 Exchange-side reduce-only stops + adopt on restart — scope: trading/risk + ADR-0016 amend
+10. ✅ [AGENT][LOCAL] RISK-10 Panic verify cancel then flatten — scope: `trading/panic.py`
 
 ### Sprint Audit-P5 — Simulator + Secret Sauce honesty
 
