@@ -1,7 +1,7 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 <!-- remaining-tally -->
-**Remaining:** AGENT 55 · LOCAL 55 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **57 open**
+**Remaining:** AGENT 23 · LOCAL 23 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **25 open**
 <!-- /remaining-tally -->
 > **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
@@ -35,7 +35,6 @@
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-
 ### Sprint Audit-P1 — Security surface (Sequential)
 
 1. ✅ [AGENT][LOCAL] AUTH-01 Authenticate mutating endpoints via `require_owner` at router include — scope: `src/trendalgo/api/deps.py`, `api/app.py`, `tests/test_api/`
@@ -85,25 +84,25 @@
 
 ### Sprint Audit-P6 — Billing (after AUTH-01 + SIM-01/02)
 
-1. 🔲 [AGENT][LOCAL] BILL-01 Alpha Share excess default — scope: `billing/rules.py`, profit/statements/scheduler/store/schema
-2. 🔲 [AGENT][LOCAL] BILL-02 Persist benchmark refs — scope: statements + `venue_attribution.py`
-3. 🔲 [AGENT][LOCAL] BILL-03 Caps and floors — scope: `billing/rules.py`
-4. 🔲 [AGENT][LOCAL] BILL-04 Statement integrity (hash-chain, recompute, sign) — scope: billing + API (needs AUTH-01)
-5. 🔲 [AGENT][LOCAL] BILL-05 Monotonic day counter — scope: `billing/license_gate.py`
-6. 🔲 [AGENT][LOCAL] BILL-06 Identity binding + seats — scope: billing enrollment
-7. 🔲 [AGENT][LOCAL] BILL-07 Two-class pricing page — scope: device/docs monetization UI
-8. 🔲 [AGENT][LOCAL] BILL-08 Evasion coverage table — scope: `docs/MONETIZATION.md`
+1. ✅ [AGENT][LOCAL] BILL-01 Alpha Share excess default — scope: `billing/rules.py`, profit/statements/scheduler/store/schema
+2. ✅ [AGENT][LOCAL] BILL-02 Persist benchmark refs — scope: statements + `venue_attribution.py`
+3. ✅ [AGENT][LOCAL] BILL-03 Caps and floors — scope: `billing/rules.py`
+4. ✅ [AGENT][LOCAL] BILL-04 Statement integrity (hash-chain, recompute, sign) — scope: billing + API (needs AUTH-01)
+5. ✅ [AGENT][LOCAL] BILL-05 Monotonic day counter — scope: `billing/license_gate.py`
+6. ✅ [AGENT][LOCAL] BILL-06 Identity binding + seats — scope: billing enrollment
+7. ✅ [AGENT][LOCAL] BILL-07 Two-class pricing page — scope: device/docs monetization UI
+8. ✅ [AGENT][LOCAL] BILL-08 Evasion coverage table — scope: `docs/MONETIZATION.md`
 
 ### Sprint Audit-P7 — Living bot + notifications (after SIM-05/06)
 
-1. 🔲 [AGENT][LOCAL] LIVE-01 Retune scheduler — scope: `botd/` retune
-2. 🔲 [AGENT][LOCAL] LIVE-02 Promotion gate — scope: `botd/shadow_gate.py`, `shadow_divergence.py`
-3. 🔲 [AGENT][LOCAL] LIVE-03 Anti-thrash — scope: retune dwell/hysteresis
-4. 🔲 [AGENT][LOCAL] LIVE-04 Regime flips before retunes — scope: regime actions
-5. 🔲 [AGENT][LOCAL] LIVE-05 Honesty in Study UI — scope: device Study
-6. 🔲 [AGENT][LOCAL] NOTIF-01 Re-fit notification pipeline — scope: notifications sinks
-7. 🔲 [AGENT][LOCAL] NOTIF-02 Event taxonomy + severity — scope: notifications
-8. 🔲 [AGENT][LOCAL] NOTIF-03 Re-fit events are billing journal events — scope: billing journal
+1. ✅ [AGENT][LOCAL] LIVE-01 Retune scheduler — scope: `botd/` retune
+2. ✅ [AGENT][LOCAL] LIVE-02 Promotion gate — scope: `botd/shadow_gate.py`, `shadow_divergence.py`
+3. ✅ [AGENT][LOCAL] LIVE-03 Anti-thrash — scope: retune dwell/hysteresis
+4. ✅ [AGENT][LOCAL] LIVE-04 Regime flips before retunes — scope: regime actions
+5. ✅ [AGENT][LOCAL] LIVE-05 Honesty in Study UI — scope: device Study
+6. ✅ [AGENT][LOCAL] NOTIF-01 Re-fit notification pipeline — scope: notifications sinks
+7. ✅ [AGENT][LOCAL] NOTIF-02 Event taxonomy + severity — scope: notifications
+8. ✅ [AGENT][LOCAL] NOTIF-03 Re-fit events are billing journal events — scope: billing journal
 
 ### Sprint Audit-P8 — Features
 
