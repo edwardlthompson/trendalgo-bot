@@ -93,6 +93,18 @@ BILLING_OWNER_BODY = (
     "TrendAlgo stays free for the owner. Statements and on-chain settlement are seams only in v1. "
     "Non-owner billing waits for counsel review (H-006)."
 )
+BILLING_ALPHA_FORMULA = "fee = rate * max(0, net - max(bh_net, 0))"
+BILLING_ALPHA_BODY = (
+    "Alpha Share (default): fee = rate * max(0, net - max(bh_net, 0)). "
+    "Standard Share is opt-in and bills raw equity net with an equity high-water mark. "
+    "Switch class any time; the new class applies next period with no penalty."
+)
+BILLING_PRICING_EXAMPLES = (
+    "bull-beat: net $200, B&H $80 → excess $120 → 5% fee $6.00. "
+    "bull-trail: net $50, B&H $120 → excess $0 → fee $0. "
+    "bear: net $100, B&H -$40 → excess $100 → 5% fee $5.00."
+)
+BILLING_PRICING_SECTION = "Two-class pricing"
 BILLING_SETTLEMENT = "Settle on chain"
 BILLING_SETTLEMENT_HELP = "Disabled until H-006 and non-owner billing rules ship."
 BILLING_GROWTH = "Growth"
