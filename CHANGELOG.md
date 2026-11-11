@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [Unreleased]
+
+### Changed
+
+* **sim:** Net % re-baseline after SIM-01/02 — default `fill_offset=1` (next-bar fills) and optional `slippage_bps` plus intrabar stop/gap fills. Prior published Net % figures are not comparable; regenerate snapshots deliberately. Use `fill_offset=0` only for legacy parity tests.
+
 ## [0.8.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.2...v0.8.0) (2026-10-21)
 
 
