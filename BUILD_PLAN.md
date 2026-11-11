@@ -71,17 +71,17 @@
 
 ### Sprint Audit-P5 — Simulator + Secret Sauce honesty
 
-1. 🔲 [AGENT][LOCAL] SIM-01 Next-bar-open fills — scope: `backtest/ta_simulator.py`, `sim_accel.py`
-2. 🔲 [AGENT][LOCAL] SIM-02 Slippage bps + intrabar stops/gaps — scope: `backtest/ta_simulator.py`
-3. 🔲 [AGENT][LOCAL] SIM-03 Validate with `eval_params()` — scope: `backtest/secret_sauce_validate.py`
-4. 🔲 [AGENT][LOCAL] SIM-04 Relax spectrum gate; honest oracle losers — scope: `secret_sauce_validate.py`
-5. 🔲 [AGENT][LOCAL] SIM-05 Holdout as selection constraint — scope: `secret_sauce_lab/search.py`, `run.py`
-6. 🔲 [AGENT][LOCAL] SIM-06 Per-bar causal regime — scope: `secret_sauce_lab/regime_snapshot.py`, `run.py`
-7. 🔲 [AGENT][LOCAL] SIM-07 Fee drag, exposure, excess vs hold — scope: `search.py`, result rows
-8. 🔲 [AGENT][LOCAL] SIM-08 Permutation null + stability — scope: `search.py`
-9. 🔲 [AGENT][LOCAL] SIM-09 Exact coverage metric — scope: `secret_sauce_lab/label_rules.py`
-10. 🔲 [AGENT][LOCAL] SIM-10 Dry-run parity with paper fills — scope: `trading/runner/dry_run.py`
-11. 🔲 [AGENT][LOCAL] SIM-11 Decay monitor — scope: bot health / may share FEAT-06
+1. ✅ [AGENT][LOCAL] SIM-01 Next-bar-open fills — scope: `backtest/ta_simulator.py`, `sim_accel.py`
+2. ✅ [AGENT][LOCAL] SIM-02 Slippage bps + intrabar stops/gaps — scope: `backtest/ta_simulator.py`
+3. ✅ [AGENT][LOCAL] SIM-03 Validate with `eval_params()` — scope: `backtest/secret_sauce_validate.py`
+4. ✅ [AGENT][LOCAL] SIM-04 Relax spectrum gate; honest oracle losers — scope: `secret_sauce_validate.py`
+5. ✅ [AGENT][LOCAL] SIM-05 Holdout as selection constraint — scope: `secret_sauce_lab/search.py`, `run.py`
+6. ✅ [AGENT][LOCAL] SIM-06 Per-bar causal regime — scope: `secret_sauce_lab/regime_snapshot.py`, `run.py`
+7. ✅ [AGENT][LOCAL] SIM-07 Fee drag, exposure, excess vs hold — scope: `search.py`, result rows
+8. ✅ [AGENT][LOCAL] SIM-08 Permutation null + stability — scope: `search.py`
+9. ✅ [AGENT][LOCAL] SIM-09 Exact coverage metric — scope: `secret_sauce_lab/label_rules.py`
+10. ✅ [AGENT][LOCAL] SIM-10 Dry-run parity with paper fills — scope: `trading/runner/dry_run.py`
+11. ✅ [AGENT][LOCAL] SIM-11 Decay monitor — scope: bot health / may share FEAT-06
 
 ### Sprint Audit-P6 — Billing (after AUTH-01 + SIM-01/02)
 
