@@ -49,6 +49,7 @@ def test_collect_trades_and_regions() -> None:
         stake_usd=1000.0,
         fee=fee,
         collect_trades=True,
+        fill_offset=0,  # region helper parity — not next-bar fill semantics
     )
     assert stats["trades"] == 1
     trades = stats["trade_list"]
@@ -137,6 +138,7 @@ def test_signal_only_tsl_does_not_clip_like_one_percent() -> None:
         fee=fee,
         trailing_stop_pct=signal_tsl,
         collect_trades=True,
+        fill_offset=0,
     )
     clipped = simulate_long_with_fees(
         df,
@@ -146,6 +148,7 @@ def test_signal_only_tsl_does_not_clip_like_one_percent() -> None:
         fee=fee,
         trailing_stop_pct=0.01,
         collect_trades=True,
+        fill_offset=0,
     )
     assert signal["trades"] == 1
     assert clipped["trades"] == 1
@@ -195,6 +198,82 @@ def test_regions_from_oracle_swings_labels_and_times() -> None:
     assert regions[0]["exit_time"]
     assert regions[0]["label"].startswith("+")
     assert regions[0]["profitable"] is True
+
+
+def test_oracle_swings_keep_trough_peak_prices_not_closes() -> None:
+    """Oracle enters at bar low / exits at bar high — overlays must not rewrite to close."""
+    idx = pd.date_range("2026-10-01", periods=40, freq="h", tz="UTC")
+    close = pd.Series(np.linspace(80_000.0, 82_000.0, 40), index=idx)
+    df = pd.DataFrame(
+        {
+            "open": close,
+            "high": close + 800.0,
+            "low": close - 800.0,
+            "close": close,
+            "volume": 1.0,
+        },
+        index=idx,
+    )
+    entry_i, exit_i = 8, 25
+    swings = [
+        {
+            "entry_index": entry_i,
+            "exit_index": exit_i,
+            "entry_time": str(idx[entry_i]),
+            "exit_time": str(idx[exit_i]),
+            "entry_price": float(df["low"].iloc[entry_i]),
+            "exit_price": float(df["high"].iloc[exit_i]),
+            "pnl_pct": 3.5,
+            "net_pnl": 35.0,
+        }
+    ]
+    regions = regions_from_oracle_swings(df, swings)
+    assert len(regions) == 1
+    assert regions[0]["entry_price"] == pytest.approx(float(df["low"].iloc[entry_i]))
+    assert regions[0]["exit_price"] == pytest.approx(float(df["high"].iloc[exit_i]))
+    # Must not silently substitute closes (that floats bands off the swing extremes).
+    assert regions[0]["entry_price"] != pytest.approx(float(df["close"].iloc[entry_i]))
+
+
+def test_oracle_swings_remap_indexes_by_timestamp_on_shifted_frame() -> None:
+    """When the chart frame rolls forward, keep swing prices — do not use stale indexes."""
+    idx = pd.date_range("2026-10-01", periods=50, freq="h", tz="UTC")
+    close = pd.Series(np.linspace(80_000.0, 85_000.0, 50), index=idx)
+    scan = pd.DataFrame(
+        {
+            "open": close,
+            "high": close + 500.0,
+            "low": close - 500.0,
+            "close": close,
+            "volume": 1.0,
+        },
+        index=idx,
+    )
+    entry_i, exit_i = 10, 30
+    entry_px = float(scan["low"].iloc[entry_i])
+    exit_px = float(scan["high"].iloc[exit_i])
+    swings = [
+        {
+            "entry_index": entry_i,
+            "exit_index": exit_i,
+            "entry_time": idx[entry_i].isoformat(),
+            "exit_time": idx[exit_i].isoformat(),
+            "entry_price": entry_px,
+            "exit_price": exit_px,
+            "pnl_pct": 4.0,
+            "net_pnl": 40.0,
+        }
+    ]
+    # Chart reloads with 5 bars dropped from the left (indexes shift by 5).
+    chart = scan.iloc[5:].copy()
+    assert chart.index[entry_i] != idx[entry_i]
+    regions = regions_from_oracle_swings(chart, swings)
+    assert len(regions) == 1
+    assert regions[0]["entry_price"] == pytest.approx(entry_px)
+    assert regions[0]["exit_price"] == pytest.approx(exit_px)
+    # Stale index into the shifted frame would pull the wrong close (~shifted series).
+    wrong_close = float(chart["close"].iloc[entry_i])
+    assert regions[0]["entry_price"] != pytest.approx(wrong_close)
 
 
 def test_regions_for_sauce_ta_uses_coincidence(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -236,33 +236,105 @@ def regions_from_oracle_swings(
     frame: pd.DataFrame,
     swings: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Map stored oracle swing indexes onto the overlay frame timestamps."""
+    """Map stored oracle swings onto the overlay frame.
+
+    Prefer stored trough/peak ``entry_price`` / ``exit_price`` (oracle fills at bar
+    low→high). Never rewrite those to ``close[index]`` — that floats bands off the
+    swing extremes and breaks Results net parity when the chart frame has rolled.
+    Remap indexes from timestamps when the frame window shifted.
+    """
     if frame.empty or not swings:
         return []
+    highs = frame["high"].to_numpy(dtype=float) if "high" in frame.columns else None
+    lows = frame["low"].to_numpy(dtype=float) if "low" in frame.columns else None
     closes = frame["close"].to_numpy(dtype=float) if "close" in frame.columns else None
     enriched: list[dict[str, Any]] = []
     for trade in swings:
         item = dict(trade)
-        try:
-            entry_i = int(trade.get("entry_index") or -1)
-            exit_i = int(trade.get("exit_index") or -1)
-        except (TypeError, ValueError):
-            continue
-        if entry_i < 0 or exit_i < 0 or entry_i >= len(frame) or exit_i >= len(frame):
+        entry_i = _resolve_bar_index(frame, trade.get("entry_time"), trade.get("entry_index"))
+        exit_i = _resolve_bar_index(frame, trade.get("exit_time"), trade.get("exit_index"))
+        if entry_i is None or exit_i is None:
             continue
         item["entry_time"] = item.get("entry_time") or _bar_time(frame, entry_i)
         item["exit_time"] = item.get("exit_time") or _bar_time(frame, exit_i)
-        if closes is not None:
-            item["entry_price"] = float(closes[entry_i])
-            item["exit_price"] = float(closes[exit_i])
+        entry_px = _as_positive_float(item.get("entry_price"))
+        exit_px = _as_positive_float(item.get("exit_price"))
+        # Fall back to swing extremes on the (remapped) bars — never closes.
+        if entry_px is None:
+            if lows is not None:
+                entry_px = float(lows[entry_i])
+            elif closes is not None:
+                entry_px = float(closes[entry_i])
+        if exit_px is None:
+            if highs is not None:
+                exit_px = float(highs[exit_i])
+            elif closes is not None:
+                exit_px = float(closes[exit_i])
+        if entry_px is None or exit_px is None:
+            continue
+        item["entry_price"] = entry_px
+        item["exit_price"] = exit_px
+        item["entry_index"] = entry_i
+        item["exit_index"] = exit_i
         item.setdefault("exit_reason", "oracle_swing")
-        if item.get("pnl_pct") is None:
-            ep = float(item.get("entry_price") or 0.0)
-            xp = float(item.get("exit_price") or 0.0)
-            if ep:
-                item["pnl_pct"] = round(((xp / ep) - 1.0) * 100.0, 4)
+        if item.get("pnl_pct") is None and entry_px:
+            item["pnl_pct"] = round(((exit_px / entry_px) - 1.0) * 100.0, 4)
         enriched.append(item)
     return trade_hold_regions(enriched)
+
+
+def _as_positive_float(raw: object) -> float | None:
+    try:
+        value = float(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if value != value or value <= 0:  # noqa: PLR0124 — NaN check
+        return None
+    return value
+
+
+def _resolve_bar_index(
+    frame: pd.DataFrame,
+    stamp: object,
+    stored_index: object,
+) -> int | None:
+    """Prefer timestamp match on the chart frame; fall back to a valid stored index."""
+    parsed = _parse_frame_stamp(stamp)
+    if parsed is not None:
+        try:
+            loc = frame.index.get_indexer([parsed], method=None)[0]
+        except (TypeError, ValueError, KeyError):
+            loc = -1
+        if loc >= 0:
+            return int(loc)
+        # Tolerant match when tz/resolution differs.
+        try:
+            loc = frame.index.get_indexer([parsed], method="nearest")[0]
+        except (TypeError, ValueError, KeyError):
+            loc = -1
+        if 0 <= loc < len(frame):
+            return int(loc)
+    try:
+        idx = int(stored_index)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if 0 <= idx < len(frame):
+        return idx
+    return None
+
+
+def _parse_frame_stamp(stamp: object) -> pd.Timestamp | None:
+    if stamp is None or stamp == "":
+        return None
+    try:
+        ts = pd.Timestamp(stamp)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if ts is pd.NaT:
+        return None
+    if ts.tzinfo is None:
+        return ts.tz_localize("UTC")
+    return ts.tz_convert("UTC")
 
 
 def _bar_time(frame: pd.DataFrame, index: int) -> str:
