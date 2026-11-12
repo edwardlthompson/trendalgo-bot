@@ -1,0 +1,26 @@
+# HOUSE-03: risk-core-only coverage config (high floor).
+# Used by scripts/check-risk-core-coverage.sh — not the package-wide pytest addopts.
+[run]
+branch = False
+source =
+    trendalgo.risk
+    trendalgo.trading
+    trendalgo.exchanges
+omit =
+    */trading/key_verify.py
+    */trading/runner/adapters/base.py
+    */trading/funding.py
+    */trading/go_live_cli.py
+    */trading/safety_lights.py
+    */risk/sizing.py
+    */exchanges/vault_store.py
+    */exchanges/fee_website.py
+    */exchanges/fee_parsers.py
+    */exchanges/scheduler.py
+
+[report]
+# High floor vs package-wide 86%; stubs omitted above.
+# 89 avoids float-edge false fails when TOTAL rounds to 90.00% yet compare is <90.
+fail_under = 89
+show_missing = True
+skip_covered = False

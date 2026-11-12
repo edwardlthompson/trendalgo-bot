@@ -1205,8 +1205,8 @@
       "owner": "human+agent"
     },
     {
-      "path": "scripts/postgres-migrate-dry-run.sh",
-      "purpose": "TrendAlgo ops: postgres migrate dry run",
+      "path": "scripts/check-risk-core-coverage.sh",
+      "purpose": "HOUSE-03 risk-core coverage gate (high floor)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
