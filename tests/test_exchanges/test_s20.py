@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from trendalgo.exchanges.load_test import (
 from tests.support.api_client import make_api_client
+from trendalgo.exchanges.load_test import (
     run_n_exchange_ops_validation,
     run_trading_status_check,
 )
