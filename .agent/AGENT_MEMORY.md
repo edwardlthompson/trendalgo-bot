@@ -14,11 +14,11 @@
 | Exchange | 9 portfolio / 7 trading venues | Registry v5; worldwide Phase 1 (S18) |
 | DEX | Venue plugin engine (ADR-0011) | S21–S24; Base Phase 1 live path; H-036 open |
 | Scanner | linear-trend-spotter → `scanner/` | ADR-0006 absorption S4.5 |
-| License | Performance software license | Calculation-only; user pays externally (ADR-0008) |
+| License | Elastic License 2.0 (ADR-0018) | Source-available; Alpha Share billing; attorney H-023 open |
 ## Active Modules
 
 - ✅ Python (`modules/python/MODULE.md`)
-- ✅ Web module retained in stack-selection for FOSS surface; product UI is device
+- ✅ Device UI (PySide6); web/PWA scaffolding removed (Audit-P2)
 
 ## Project Constraints
 
@@ -40,15 +40,22 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** **Market-Context** AGENT rows ✅ (pane on Backtest + Scanner Results; Lab residual-gated pivots). Open HUMAN: alert copy review + PF-H1 + carry-forward (attorney H-006, ops, H-032/H-036).
+**Current sprint:** Board clear of AGENT work after `/cleanup`. Open HUMAN: alert copy review + PF-H1 + carry-forward (attorney H-006/H-023, ops, H-032/H-036).
 
-**Tests:** Local `watch-agent-gates --scope python` OK 8 stages; `smoke-sprint` PASS Sprint Market-Context; BTC SS smoke OK after job payload unpack.
+**Tests:** `smoke-sprint --require` PASS (Market-Context block); audit suites spot-checked (auth/risk/billing). Full `watch-agent-gates` may still hit pre-existing venue lint.
 
-**Recent:** Market Context dedicated band (Signal/Levels/Risk/Structure); classic pivots + consensus + regime map + R:R + VWAP/VP/extension/BTC corr/spread; Show Chart level overlays; Sauce pivot keys residual-gated.
+**Recent:** Audit remediation P1–P9 landed + archived @ `4843168` / tip after cleanup. ELv2; API owner auth; risk/sim honesty; Alpha Share billing; LIVE/NOTIF logic (cron wiring follow-up).
 
-**Canonical plan:** `docs/CANONICAL_PLAN.md` (prompts 1–9, feature matrix).
+**Canonical plan:** `docs/specs/audit-remediation.md` · `docs/CANONICAL_PLAN.md`.
 
 ## Retrospectives
+
+### Audit remediation P1–P9 (2026-11-11)
+
+- Pull Argus first; never delete `.agent/` / `argus*` / README “What this is not”
+- AUTH before BILL-04; SIM-01/02 before BILL-01; SIM-05/06 before LIVE-01
+- LIVE/NOTIF unit logic shipped; botd cron + Study callers still follow-up
+- `/cleanup` archived Audit + Market-Context; board HUMAN-only
 
 ### Sprint Market-Context (2026-10-24)
 
