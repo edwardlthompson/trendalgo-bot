@@ -8,8 +8,14 @@ from typing import Any
 MAX_BOTS_TOTAL = 500
 
 # Concurrent enabled bots (TA + OHLCV work scales with enabled count).
+# Static ceilings; prefer adaptive_max_enabled_bots for paper fleets (FEAT-05).
 MAX_ENABLED_BOTS_PAPER = 50
 MAX_ENABLED_BOTS_LIVE = 20
+
+ADAPTIVE_PAPER_FLOOR = 4
+ADAPTIVE_PAPER_CEILING = MAX_ENABLED_BOTS_PAPER
+ADAPTIVE_BOTS_PER_CPU = 8
+ADAPTIVE_BOTS_PER_API_SLOT = 2
 
 # Sub-minute intervals (1S–30S) are CPU/network intensive.
 SUB_MINUTE_INTERVALS: frozenset[str] = frozenset({"1S", "5S", "15S", "30S"})
@@ -83,6 +89,24 @@ def _enabled_count(bots: list[dict[str, Any]]) -> int:
     return sum(1 for b in bots if b.get("enabled"))
 
 
+def adaptive_max_enabled_bots(
+    *,
+    paper: bool,
+    cpu_count: int,
+    api_budget_per_min: int,
+    static_ceiling: int | None = None,
+) -> int:
+    """Size the enabled fleet by CPU and private API budget (FEAT-05)."""
+    if not paper:
+        return MAX_ENABLED_BOTS_LIVE if static_ceiling is None else static_ceiling
+    ceiling = MAX_ENABLED_BOTS_PAPER if static_ceiling is None else static_ceiling
+    cpu = max(1, int(cpu_count))
+    api = max(0, int(api_budget_per_min))
+    by_cpu = cpu * ADAPTIVE_BOTS_PER_CPU
+    by_api = api // ADAPTIVE_BOTS_PER_API_SLOT if api else ADAPTIVE_PAPER_FLOOR
+    return max(ADAPTIVE_PAPER_FLOOR, min(ceiling, by_cpu, by_api if api else by_cpu))
+
+
 def validate_bot_capacity(
     bots: list[dict[str, Any]],
     *,
@@ -91,6 +115,7 @@ def validate_bot_capacity(
     enabling: bool = False,
     timeframe: str = "60",
     exclude_bot_id: int | None = None,
+    max_enabled_override: int | None = None,
 ) -> None:
     """Raise ValueError when a bot operation would exceed guardrails."""
     scoped = [b for b in bots if exclude_bot_id is None or int(b["id"]) != exclude_bot_id]
@@ -102,7 +127,10 @@ def validate_bot_capacity(
             "Delete bots you no longer use."
         )
 
-    max_enabled = MAX_ENABLED_BOTS_PAPER if paper else MAX_ENABLED_BOTS_LIVE
+    if max_enabled_override is not None:
+        max_enabled = max_enabled_override
+    else:
+        max_enabled = MAX_ENABLED_BOTS_PAPER if paper else MAX_ENABLED_BOTS_LIVE
     enabled = _enabled_count(scoped)
     if enabling and enabled >= max_enabled:
         raise ValueError(
@@ -135,10 +163,23 @@ def validate_bot_capacity(
             )
 
 
-def limits_payload(*, paper: bool) -> dict[str, Any]:
+def limits_payload(
+    *,
+    paper: bool,
+    cpu_count: int | None = None,
+    api_budget_per_min: int | None = None,
+) -> dict[str, Any]:
+    static = MAX_ENABLED_BOTS_PAPER if paper else MAX_ENABLED_BOTS_LIVE
+    adaptive = static
+    if paper and cpu_count is not None and api_budget_per_min is not None:
+        adaptive = adaptive_max_enabled_bots(
+            paper=True, cpu_count=cpu_count, api_budget_per_min=api_budget_per_min
+        )
     return {
         "max_bots_total": MAX_BOTS_TOTAL,
-        "max_enabled_bots": MAX_ENABLED_BOTS_PAPER if paper else MAX_ENABLED_BOTS_LIVE,
+        "max_enabled_bots": adaptive,
+        "max_enabled_bots_static": static,
+        "adaptive_budgeting": paper and cpu_count is not None,
         "max_sub_minute_enabled": MAX_SUB_MINUTE_ENABLED_PAPER
         if paper
         else MAX_SUB_MINUTE_ENABLED_LIVE,
