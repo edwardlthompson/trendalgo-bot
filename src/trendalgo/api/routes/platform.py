@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 from trendalgo.api.owner_auth import require_owner_command
 from trendalgo.billing.onchain_receipts import issue_fee_receipt, verify_fee_receipt
 from trendalgo.data.onchain_sentiment import onchain_sentiment_stub
-from trendalgo.db.postgres_adapter import PostgresDualWrite
 from trendalgo.dex.load_test import run_dex_ops_validation
 from trendalgo.dex.router import (
     dex_trading_status,
@@ -315,13 +314,3 @@ def sentiment_stub(asset: str) -> dict[str, Any]:
     return onchain_sentiment_stub(asset)
 
 
-@router.get("/postgres/status")
-def postgres_status() -> dict[str, Any]:
-    adapter = PostgresDualWrite()
-    return adapter.status()
-
-
-@router.post("/postgres/migrate-dry-run")
-def postgres_migrate_dry_run() -> dict[str, Any]:
-    adapter = PostgresDualWrite()
-    return adapter.dry_run_migrate()

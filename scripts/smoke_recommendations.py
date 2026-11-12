@@ -131,8 +131,6 @@ def main() -> int:
     )
     st, ln = req("POST", "/billing/lightning-invoice", {"period": "current", "amount_usd": 1})
     check("billing.lightning", st == 501, f"status={st} body={str(ln)[:120]}")
-    st, pg = req("GET", "/platform/postgres/status")
-    check("platform.postgres", st == 200, f"body={str(pg)[:140]}")
 
     st, ov = req("GET", "/portfolio/overview")
     dates = []

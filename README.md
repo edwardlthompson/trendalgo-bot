@@ -195,7 +195,7 @@ Verify binding: `docker compose -f docker/docker-compose.prod.yml config` must s
 | **Telegram alerts** | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
 | **Daily P/L hour** | `NOTIFICATION_DAILY_HOUR` (UTC; separate from midnight sync) |
 | **On-chain / DEX read** | `ETH_RPC_URL`, `BASE_RPC_URL`, `ONCHAIN_SYNC_ENABLED=1` — see [DEX roadmap](docs/DEX_ROADMAP.md) |
-| **Postgres dual-write** | Experimental — Platform tab shows status; not production-default |
+| **Database** | SQLite on the VPS (single-user MVP); Postgres dual-write removed |
 | **License / billing** | Default calculation-only; see [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md) |
 ### 10. Troubleshooting
 
@@ -286,7 +286,7 @@ flowchart LR
 | Domain logic | Python 3.12+ — `src/trendalgo/` |
 | API | FastAPI (headless host) |
 | Local UI | PySide6 device — `src/trendalgo/device/` |
-| Data | SQLite on VPS; Postgres dual-write experimental (not default) |
+| Data | SQLite on VPS |
 | Exchanges | CCXT — 9 CEX venues; DEX via ADR-0011 plugins |
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · ADRs: [`docs/adr/`](docs/adr/) · [`DECISION_LOG.md`](DECISION_LOG.md)
 

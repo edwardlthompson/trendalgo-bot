@@ -102,8 +102,6 @@ def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyP
         json={"receipt_id": "r1", "tx_hash": "0xabc", "verification_hash": "deadbeef"},
     )
     c.get("/api/v1/platform/data/sentiment/BTC")
-    c.get("/api/v1/platform/postgres/status")
-    c.post("/api/v1/platform/postgres/migrate-dry-run")
     c.post("/api/v1/platform/funding/estimate", json={"notional_usd": 1000, "rate": 0.01})
 
     c.post("/api/v1/portfolio/snapshot")
