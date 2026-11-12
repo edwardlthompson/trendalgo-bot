@@ -11,6 +11,15 @@ ShareClass = Literal["alpha", "standard"]
 
 SHARE_ALPHA: ShareClass = "alpha"
 SHARE_STANDARD: ShareClass = "standard"
+
+
+def as_share_class(value: object) -> ShareClass:
+    text = str(value or SHARE_ALPHA)
+    if text == "standard":
+        return SHARE_STANDARD
+    return SHARE_ALPHA
+
+
 FLOOR_USD = 5.0
 PROFIT_CAP_PCT = 0.30
 HARD_FEE_CEILING_USD = 10_000.0

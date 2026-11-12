@@ -52,25 +52,19 @@ def test_alpha_share_table(
     want_fee: float,
     want_deficit: float,
 ) -> None:
-    fee, deficit_out = monthly_fee(
-        net, deficit, RATE, bh_net=bh_net, share_class=SHARE_ALPHA
-    )
+    fee, deficit_out = monthly_fee(net, deficit, RATE, bh_net=bh_net, share_class=SHARE_ALPHA)
     assert (fee, deficit_out) == (want_fee, want_deficit), case
 
 
 def test_alpha_hwm_recovers_excess_deficit_before_fee() -> None:
     # Prior bull-trail left $70 excess deficit; next month excess $100 → recover then fee on $30
-    fee, deficit_out = monthly_fee(
-        150.0, 70.0, RATE, bh_net=50.0, share_class=SHARE_ALPHA
-    )
+    fee, deficit_out = monthly_fee(150.0, 70.0, RATE, bh_net=50.0, share_class=SHARE_ALPHA)
     assert fee == 5.0  # raw 0.05*30=1.5 → floor $5
     assert deficit_out == 0.0
 
 
 def test_standard_share_keeps_equity_hwm_ignores_bh() -> None:
-    fee, deficit_out = monthly_fee(
-        100.0, 0.0, RATE, bh_net=500.0, share_class=SHARE_STANDARD
-    )
+    fee, deficit_out = monthly_fee(100.0, 0.0, RATE, bh_net=500.0, share_class=SHARE_STANDARD)
     assert fee == 5.0  # equity net, not excess
     assert deficit_out == 0.0
     fee2, d2 = monthly_fee(50.0, 80.0, RATE, bh_net=0.0, share_class=SHARE_STANDARD)

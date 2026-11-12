@@ -28,6 +28,7 @@ from trendalgo.billing.profit import rollup_period
 from trendalgo.billing.rules import (
     age_deficit,
     apply_monthly_rules,
+    as_share_class,
     group_by_month,
     pause_allowed,
     should_reset_hwm,
@@ -157,7 +158,7 @@ def process_journal_trades(
             late += [ref for ref in refs if ref not in known]
             after[month] = deficit
             continue
-        share_class = str(enrollment.get("share_class") or "alpha")
+        share_class = as_share_class(enrollment.get("share_class"))
         q = _quarter_of(month)
         if q != pause_quarter:
             pause_quarter, pauses_used = q, 0
@@ -171,7 +172,7 @@ def process_journal_trades(
             deficit_usd=deficit,
             drawdown_paused=want_pause,
             billable_from=billable_from,
-            share_class=share_class if share_class in ("alpha", "standard") else "alpha",
+            share_class=share_class,
         )
         deficit = result.deficit_out_usd
         deficit_months = deficit_months + 1 if deficit > 0 else 0

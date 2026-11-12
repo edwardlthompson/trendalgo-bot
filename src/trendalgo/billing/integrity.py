@@ -6,7 +6,7 @@ from typing import Any
 
 from trendalgo.billing.eligibility import billable_from_iso
 from trendalgo.billing.profit import rollup_period
-from trendalgo.billing.rules import apply_monthly_rules
+from trendalgo.billing.rules import apply_monthly_rules, as_share_class
 from trendalgo.billing.schema import DEFAULT_LICENSE_RATE
 from trendalgo.billing.statements import build_statement
 from trendalgo.billing.store import BillingStore
@@ -23,9 +23,7 @@ def recompute_statement_from_journal(
     """Recompute from journal fills — never trust a client-supplied net."""
     enrollment = billing.get_enrollment()
     rate = float(enrollment.get("license_rate_pct", DEFAULT_LICENSE_RATE))
-    share_class = str(enrollment.get("share_class") or "alpha")
-    if share_class not in ("alpha", "standard"):
-        share_class = "alpha"
+    share_class = as_share_class(enrollment.get("share_class"))
     billable_from = billable_from_iso(enrollment)
     trades = [
         t
@@ -42,7 +40,7 @@ def recompute_statement_from_journal(
         rate,
         deficit_usd=0.0,
         billable_from=billable_from,
-        share_class=share_class,  # type: ignore[arg-type]
+        share_class=share_class,
     )
     rollup = rollup_period(rows, bh_net_usd=result.bh_net_usd)
     statement = build_statement(

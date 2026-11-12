@@ -39,6 +39,4 @@ def test_forward_jump_advances_but_does_not_skip_suspension() -> None:
 def test_monotonic_helper() -> None:
     assert monotonic_grace_day(clock_day=2, stored_day=7) == 7
     assert monotonic_grace_day(clock_day=9, stored_day=7) == 9
-    assert grace_days_elapsed(
-        {"grace_started_at": T0.isoformat()}, T0 + timedelta(days=4)
-    ) == 4
+    assert grace_days_elapsed({"grace_started_at": T0.isoformat()}, T0 + timedelta(days=4)) == 4

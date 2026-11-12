@@ -117,7 +117,9 @@ class BillingStore:
         period_cols = {row[1] for row in conn.execute("PRAGMA table_info(fee_periods)").fetchall()}
         if period_cols:
             if "bh_net_usd" not in period_cols:
-                conn.execute("ALTER TABLE fee_periods ADD COLUMN bh_net_usd REAL NOT NULL DEFAULT 0")
+                conn.execute(
+                    "ALTER TABLE fee_periods ADD COLUMN bh_net_usd REAL NOT NULL DEFAULT 0"
+                )
             if "benchmark_refs_json" not in period_cols:
                 conn.execute(
                     "ALTER TABLE fee_periods ADD COLUMN benchmark_refs_json TEXT NOT NULL DEFAULT '{}'"
@@ -151,7 +153,9 @@ class BillingStore:
                     conn.execute(f"ALTER TABLE license_enrollment ADD COLUMN {col} {ddl}")
 
         if status_cols and "max_grace_day" not in status_cols:
-            conn.execute("ALTER TABLE license_status ADD COLUMN max_grace_day INTEGER NOT NULL DEFAULT 0")
+            conn.execute(
+                "ALTER TABLE license_status ADD COLUMN max_grace_day INTEGER NOT NULL DEFAULT 0"
+            )
 
     def _init_schema(self) -> None:
         with self._connect() as conn:

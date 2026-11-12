@@ -11,7 +11,6 @@ from fastapi.testclient import TestClient
 from trendalgo.api.app import create_app
 from trendalgo.api.state import default_state
 from trendalgo.billing.integrity import recompute_statement_from_journal, statement_mismatch
-from trendalgo.billing.statements import verify_statement
 from trendalgo.billing.store import BillingStore
 from trendalgo.risk.journal import TradeJournal, TradeRecord
 

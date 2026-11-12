@@ -106,24 +106,24 @@
 
 ### Sprint Audit-P8 — Features
 
-1. 🔲 [AGENT][LOCAL] FEAT-01 Deterministic journal replay — scope: journal/store
-2. 🔲 [AGENT][LOCAL] FEAT-02 Shadow-to-live promotion gate (generic) — scope: `botd/shadow_gate.py`
-3. 🔲 [AGENT][LOCAL] FEAT-03 Fee-aware routing — scope: routing/fees
-4. 🔲 [AGENT][LOCAL] FEAT-04 Beta-weighted exposure cap — scope: risk
-5. 🔲 [AGENT][LOCAL] FEAT-05 Adaptive bot budgeting — scope: bots scheduler
-6. 🔲 [AGENT][LOCAL] FEAT-06 Strategy decay monitor — scope: bot health (w/ SIM-11)
+1. ✅ [AGENT][LOCAL] FEAT-01 Deterministic journal replay — scope: journal/store
+2. ✅ [AGENT][LOCAL] FEAT-02 Shadow-to-live promotion gate (generic) — scope: `botd/shadow_gate.py`
+3. ✅ [AGENT][LOCAL] FEAT-03 Fee-aware routing — scope: routing/fees
+4. ✅ [AGENT][LOCAL] FEAT-04 Beta-weighted exposure cap — scope: risk
+5. ✅ [AGENT][LOCAL] FEAT-05 Adaptive bot budgeting — scope: bots scheduler
+6. ✅ [AGENT][LOCAL] FEAT-06 Strategy decay monitor — scope: bot health (w/ SIM-11)
 
 ### Sprint Audit-P9 — Housekeeping
 
-1. 🔲 [AGENT][LOCAL] HOUSE-01 SQLite migrations via user_version — scope: PortfolioStore
-2. 🔲 [AGENT][LOCAL] HOUSE-02 WAL + busy_timeout — scope: PortfolioStore connect
-3. 🔲 [AGENT][LOCAL] HOUSE-03 Risk-core coverage gates — scope: pytest cov config
-4. 🔲 [AGENT][LOCAL] HOUSE-04 Fix `httpx2` typo — scope: dependency manifest
-5. 🔲 [AGENT][LOCAL] HOUSE-05 Align Python version truth — scope: pyproject + README
-6. 🔲 [AGENT][LOCAL] HOUSE-06 Wire or delete `balance_check.py` — scope: pre-trade
-7. 🔲 [AGENT][LOCAL] HOUSE-07 Re-enable gates on vendored runner (per-file ignores) — scope: lts_vendor
-8. 🔲 [AGENT][LOCAL] HOUSE-08 Kill dead Postgres dual-write — scope: store dual-write
-9. 🔲 [AGENT][LOCAL] HOUSE-09 Doc sprawl Argus-safe (archive specs; keep `.agent/`/argus) — scope: `docs/archive/`
+1. ✅ [AGENT][LOCAL] HOUSE-01 SQLite migrations via user_version — scope: PortfolioStore
+2. ✅ [AGENT][LOCAL] HOUSE-02 WAL + busy_timeout — scope: PortfolioStore connect
+3. ✅ [AGENT][LOCAL] HOUSE-03 Risk-core coverage gates — scope: pytest cov config
+4. ✅ [AGENT][LOCAL] HOUSE-04 Fix `httpx2` typo — scope: dependency manifest
+5. ✅ [AGENT][LOCAL] HOUSE-05 Align Python version truth — scope: pyproject + README
+6. ✅ [AGENT][LOCAL] HOUSE-06 Wire or delete `balance_check.py` — scope: pre-trade
+7. ✅ [AGENT][LOCAL] HOUSE-07 Re-enable gates on vendored runner (per-file ignores) — scope: lts_vendor
+8. ✅ [AGENT][LOCAL] HOUSE-08 Kill dead Postgres dual-write — scope: store dual-write
+9. ✅ [AGENT][LOCAL] HOUSE-09 Doc sprawl Argus-safe (archive specs; keep `.agent/`/argus) — scope: `docs/archive/`
 
 ### Sprint Market-Context (done)
 
