@@ -1,7 +1,7 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 <!-- remaining-tally -->
-**Remaining:** AGENT 23 · LOCAL 23 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **25 open**
+**Remaining:** AGENT 0 · LOCAL 0 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **2 open**
 <!-- /remaining-tally -->
 > **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
@@ -26,8 +26,8 @@
 ## Now
 
 > Day-to-day device: `.\scripts\packaging\relaunch-device.ps1` (source-first; no PyInstaller).
-> **Active:** Audit remediation Phases 1–9 — [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md).
-> Sequencing: P1→P5 sequential; P6–P9 after P5. AUTH-01 before BILL-04; SIM-01/02 before BILL-01; SIM-05/06 before LIVE-01.
+> **Audit remediation Phases 1–9:** ✅ complete — [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md).
+> Follow-ups: LIVE/NOTIF wiring into botd cron; SIM snapshot regen; attorney H-023 post-ELv2.
 > Sauce Phase 2–4 backlog: [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md) — not scheduled.
 
 | Marker | State |
