@@ -1,5 +1,8 @@
 ---
 name: TrendAlgo Bot Bootstrap
+# HOUSE-09 history note: retained as bootstrap history.
+# Live status is BUILD_PLAN.md + COMPLETED_TASKS.md; archived specs → docs/archive/.
+# Do not expand mid-flight. Argus trees (.agent/, argus/, rules.manifest.json) stay.
 overview: "Single canonical plan — TrendAlgo Bot: self-hosted AGPL software, LTS Scanner, CoinStats portfolio. Legal-safe monetization: performance-based software license + user-initiated crypto settlement (no KYC, no custodial, no MSB). Sprints 0–12; Prompt 8 legal safety is #1 constraint."
 todos:
   - id: scaffold-template
