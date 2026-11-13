@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-13 — Ship v1.14.0 LTS Telegram + Sauce-on-join
+- **Status:** Accepted
+- **Context:** `/ship` after LTS-parity Telegram enter/leave charts, Sauce first-join once then Oracle top-10, and update-deps; upd rewrote `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`; pandas-ta-classic 0.9 dropped EBSW/TSIGNALS/XSIGNALS; Dependabot #80 Pillow (patched in 13.0.0 already locked).
+- **Decision:** Ship Telegram/Sauce work; restore `codeql-action@v4`; pin `pandas-ta-classic>=0.8.32,<0.9`; require `pillow>=13.0.0` on desktop + constraints. Merge Release Please #54 → v1.14.0.
+- **Alternatives considered:** Keep pandas-ta 0.9 and delete those catalog IDs (rejected — catalog/glossary still list them); leave CodeQL on upd bundle tags (rejected — Actions cannot resolve).
+- **Consequences:** Required checks green on tip; `/regress` must confirm SBOM/Pages/upgrade sim.
+
 ### 2026-10-21 — Ship toward v0.8.0 Settings ribbon + CVE lock bumps
 - **Status:** Accepted
 - **Context:** `/ship` after Settings ribbon (Save/Setup/Telegram), saved-keys inventory, 48-col square Settings grid; `upd audit` reported Critical/High on certifi and pillow; `device-no-console.mdc` alwaysApply failed cursor-rule allowlist.

@@ -40,15 +40,21 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board clear of AGENT work after `/cleanup`. Open HUMAN: alert copy review + PF-H1 + carry-forward (attorney H-006/H-023, ops, H-032/H-036).
+**Current sprint:** Board HUMAN-only after `/ship` v1.14.0. Open: PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
 
-**Tests:** `smoke-sprint --require` PASS (Market-Context block); audit suites spot-checked (auth/risk/billing). Full `watch-agent-gates` may still hit pre-existing venue lint.
+**Tests:** Local `pre-release-gate --local` PASS; required GitHub CI/CodeQL/Security green on tip after CodeQL `@v4` restore.
 
-**Recent:** Audit remediation P1–P9 landed + archived @ `4843168` / tip after cleanup. ELv2; API owner auth; risk/sim honesty; Alpha Share billing; LIVE/NOTIF logic (cron wiring follow-up).
+**Recent:** v1.14.0 — LTS Telegram enter/leave + Sauce-on-join; `pandas-ta-classic` capped `<0.9`; Pillow `>=13.0.0`. Tip after RP #54 merge.
 
 **Canonical plan:** `docs/specs/audit-remediation.md` · `docs/CANONICAL_PLAN.md`.
 
 ## Retrospectives
+
+### Ship v1.14.0 (2026-11-13)
+
+- upd still mangles CodeQL to `vcodeql-bundle-*` — always restore `@v4` before push
+- pandas-ta 0.9 drops EBSW/TSIGNALS/XSIGNALS — keep `<0.9` until catalog drops those IDs
+- Sauce-ever + top-10 union: first join once, then Oracle top-N only
 
 ### Audit remediation P1–P9 (2026-11-11)
 
