@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tests.support.api_client import make_api_client
 from trendalgo.exchanges.registry import (
     get_entry,
     list_trading_exchanges,
@@ -10,7 +11,6 @@ from trendalgo.exchanges.registry import (
 )
 from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
 from trendalgo.trading.multi_exchange import list_supported_exchanges, route_order
-from tests.support.api_client import make_api_client
 
 
 def test_registry_s19_phase2_tier_b_trading() -> None:
@@ -47,9 +47,6 @@ def test_multi_venue_arbitrage_registry_driven() -> None:
 
 
 def test_trading_arbitrage_signals_api() -> None:
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     client = make_api_client()
     resp = client.get("/api/v1/trading/arbitrage/signals")
@@ -62,9 +59,6 @@ def test_trading_arbitrage_signals_api() -> None:
 
 
 def test_runner_status_phase2_api() -> None:
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     client = make_api_client()
     resp = client.get("/api/v1/trading/runner/status")

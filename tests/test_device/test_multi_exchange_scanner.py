@@ -65,6 +65,14 @@ def test_filter_coins_multi_select_exchanges() -> None:
     assert len(both) == 3
 
 
+def test_drop_watch_aliases_clears_legacy_pair() -> None:
+    from trendalgo.device.scan_identity import drop_watch_aliases
+
+    watch = ["CRV/USD", "XMR/USD", "kraken:PEPE", "OP/USD"]
+    assert drop_watch_aliases(watch, "kraken:CRV") == ["XMR/USD", "kraken:PEPE", "OP/USD"]
+    assert drop_watch_aliases(watch, "kraken:XMR") == ["CRV/USD", "kraken:PEPE", "OP/USD"]
+
+
 def test_watchlist_keys_are_per_venue() -> None:
     coin = normalize_coin({"symbol": "BTC", "exchange_id": "kraken"})
     other = normalize_coin({"symbol": "BTC", "exchange_id": "coinbaseadvanced"})
@@ -163,9 +171,10 @@ def test_scan_job_merges_dual_venue_rows(tmp_path: Path, monkeypatch: pytest.Mon
     assert keys == {"kraken:BTC", "coinbaseadvanced:BTC"}
 
 
-def test_scanner_copy_mentions_keyed_venues() -> None:
+def test_scanner_copy_mentions_public_default() -> None:
     from trendalgo.device import strings as S
 
-    assert "API keys" in S.SCANNER_SUBTITLE or "API key" in S.SCANNER_EMPTY_BODY
+    assert "public" in S.SCANNER_SUBTITLE.lower() or "public" in S.SCANNER_EMPTY_BODY.lower()
+    assert "optional" in S.SCANNER_EMPTY_BODY.lower() or "optional" in S.SCANNER_SUBTITLE.lower()
     assert "API calls this minute" in S.SETTINGS_KEYS_RATE
-    assert S.SCANNER_NO_EXCHANGES
+    assert "Kraken public" in S.SCANNER_SOURCE_PUBLIC

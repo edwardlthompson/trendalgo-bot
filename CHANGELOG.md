@@ -1,49 +1,27 @@
 # Changelog
 
-
-
-
-
 All notable changes to this template will be documented in this file.
-
-
-
-
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
-
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-
-
-
-
 
 ## [Unreleased]
 
-### Changed
-
-* **sim:** Net % re-baseline after SIM-01/02 — default `fill_offset=1` (next-bar fills) and optional `slippage_bps` plus intrabar stop/gap fills. Prior published Net % figures are not comparable; regenerate snapshots deliberately. Use `fill_offset=0` only for legacy parity tests.
-
 ## [0.8.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.2...v0.8.0) (2026-10-21)
-
 
 ### Added
 
 * **packaging:** ship Windows MSI and setup.exe on release ([61857a0](https://github.com/edwardlthompson/trendalgo-bot/commit/61857a0d0ab9dfe81dd7caffe5756e8045b92ec2))
 
-
 ### Fixed
 
 * **ci:** restore codeql-action@v4 after invalid upd pin ([be7e407](https://github.com/edwardlthompson/trendalgo-bot/commit/be7e4073ad2afc234fe1cbb09fb3e4a372ae9b67))
-
 
 ### Changed
 
 * **release:** prepare v0.8.0 release ([f872160](https://github.com/edwardlthompson/trendalgo-bot/commit/f872160bcde9c491f015f783b013bdbc80308978))
 * **release:** sync uv.lock to 0.7.2 and record ship milestone ([5690112](https://github.com/edwardlthompson/trendalgo-bot/commit/56901129487542abe4a8a17458590007421a6b0b))
-
 
 ### Documentation
 
@@ -52,17 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.1...v0.7.2) (2026-10-20)
 
-
 ### Fixed
 
 * **test:** use low-entropy vault fixtures for gitleaks ([1a27a65](https://github.com/edwardlthompson/trendalgo-bot/commit/1a27a653336af8b77a849e2ee9c7e4fb415a0ce7))
-
 
 ### Changed
 
 * **release:** prepare v0.7.2 release ([5767544](https://github.com/edwardlthompson/trendalgo-bot/commit/57675440905d725a7275b9b2b420ac77daf2331f))
 * **release:** sync uv.lock to 0.7.1 and record ship milestone ([d6cd83b](https://github.com/edwardlthompson/trendalgo-bot/commit/d6cd83b148c53a0851130ad21128b84f2a8b2645))
-
 
 ### Documentation
 
@@ -70,18 +45,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.7.0...v0.7.1) (2026-10-19)
 
-
 ### Fixed
 
 * **ci:** restore codeql-action@v4 after invalid bundle pin ([4a5d310](https://github.com/edwardlthompson/trendalgo-bot/commit/4a5d31091834f17a481b424e43c9249efe957255))
 * **test:** stub RSX series in secret sauce cross-period mask test ([fc3e8d0](https://github.com/edwardlthompson/trendalgo-bot/commit/fc3e8d02cccd1858a1bd8640f0bd851db76727ca))
 
-
 ### Changed
 
 * **release:** prepare v0.7.1 release ([4c60847](https://github.com/edwardlthompson/trendalgo-bot/commit/4c6084748860670c762ea1771edbd10d946c508e))
 * **release:** sync uv.lock to 0.7.0 on release PR ([4e8ea94](https://github.com/edwardlthompson/trendalgo-bot/commit/4e8ea9450ca0be137f15539a285202bacdd018a3))
-
 
 ### Documentation
 
@@ -90,11 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.2...v0.7.0) (2026-10-17)
 
-
 ### Added
 
 * **device:** square portfolio grid and Settings module mins ([f11ea6d](https://github.com/edwardlthompson/trendalgo-bot/commit/f11ea6dd121ec98ce4474fcd5f7da0f15fe6abd5))
-
 
 ### Fixed
 
@@ -104,11 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.1...v0.6.2) (2026-10-16)
 
-
 ### Fixed
 
 * **release:** sync uv.lock to 0.6.1 after Release Please bump ([7750cf7](https://github.com/edwardlthompson/trendalgo-bot/commit/7750cf700e97b8fad99a30ae635d9cf51766293f))
-
 
 ### Documentation
 
@@ -116,19 +84,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.6.0...v0.6.1) (2026-10-16)
 
-
 ### Fixed
 
 * **release:** sync uv.lock to 0.6.0 after Release Please bump ([a3b7433](https://github.com/edwardlthompson/trendalgo-bot/commit/a3b7433559bbe34fce54efa80243a8ed179312ac))
 
 ## [0.6.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.1...v0.6.0) (2026-10-16)
 
-
 ### Added
 
 * align FOSS surface to template 0.17 with branding kit ([92ea03b](https://github.com/edwardlthompson/trendalgo-bot/commit/92ea03b8bb4dd3d29f2789efd90f731c4350c85b))
 * **device:** add TrendAlgo app icon assets and brand inventory ([632db17](https://github.com/edwardlthompson/trendalgo-bot/commit/632db1714a742cd17fcc5b65d017bded987b1444))
-
 
 ### Fixed
 
@@ -148,7 +113,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **ci:** unblock Linux pytest with TA fallbacks and process-group kill ([de14bf7](https://github.com/edwardlthompson/trendalgo-bot/commit/de14bf796eff1a9fff6d9f454470187039631cea))
 * **security:** override js-yaml and brace-expansion High alerts ([b251300](https://github.com/edwardlthompson/trendalgo-bot/commit/b251300ba34caad833d271626f52ebeb17ac00c5))
 
-
 ### Changed
 
 * **deps-dev:** Bump ip-address from 10.2.0 to 10.4.0 in /examples/web ([#24](https://github.com/edwardlthompson/trendalgo-bot/issues/24)) ([a5f215e](https://github.com/edwardlthompson/trendalgo-bot/commit/a5f215e6f1b2933c60653f38a8cc04f24699875a))
@@ -165,7 +129,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **release:** sync uv.lock package version to 0.5.1 ([e90ab11](https://github.com/edwardlthompson/trendalgo-bot/commit/e90ab11ab4ef78dc38f37d6cce15ef90ea941e15))
 * **template:** align FOSS surface to agent-project-bootstrap v1.9.0 ([ee5213c](https://github.com/edwardlthompson/trendalgo-bot/commit/ee5213c1b4ac6cc5bc908fac82e8e38425f96351))
 
-
 ### Documentation
 
 * **plan:** backlog Golden Path gaps GP-1..GP-8 from template v1.9.0 ([90da166](https://github.com/edwardlthompson/trendalgo-bot/commit/90da1669ebe123c0bc568a6cf2fab8d93626f220))
@@ -173,43 +136,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.5.0...v0.5.1) (2026-07-22)
 
-
 ### Fixed
 
 * **ci:** ruff format Cursor FOSS hook scripts ([4d404bf](https://github.com/edwardlthompson/trendalgo-bot/commit/4d404bf6bac51a4a5cd3b8e3afe6a38e5e1837b0))
 * **ci:** ruff-clean bootstrap scripts/lib for CI gates ([32f7627](https://github.com/edwardlthompson/trendalgo-bot/commit/32f76276eadc91a6909625526b87a27f4c8819f5))
 * **ci:** ruff-clean Cursor FOSS hooks under .cursor/hooks ([e8916e3](https://github.com/edwardlthompson/trendalgo-bot/commit/e8916e391301d4f2f4f289ec4aaf55e8658e9bef))
 
-
 ### Changed
 
 * **release:** prepare bootstrap FOSS alignment for next release ([3e4a4b7](https://github.com/edwardlthompson/trendalgo-bot/commit/3e4a4b793d90a42c54e9f3d7cd4298c4987d6af1))
 * **release:** sync uv.lock package version to 0.5.0 ([c79a095](https://github.com/edwardlthompson/trendalgo-bot/commit/c79a09518bcc1fafdc99430e1647ec1c1c9522ca))
-
 
 ### Documentation
 
 * note R-Audit-8.10 completion in archive ([c54e8e9](https://github.com/edwardlthompson/trendalgo-bot/commit/c54e8e93d4a0d11cf8c0be4c2d9069b651193d0e))
 * **ship:** mark R-Audit-8.10 done and record v0.5.0 regress notes ([f57425e](https://github.com/edwardlthompson/trendalgo-bot/commit/f57425eddf0146c0d57e9310eb02fc15f1bbe22f))
 
-## [Unreleased]
-
-### Added
-
-- **bootstrap:** Align FOSS agent surface with agent-project-bootstrap v0.17.0 — opt-in `/codex-review`, expanded `/prerelease`, critique Issue→Resolution (`docs/BOOTSTRAP_ALIGNMENT.md`)
-
-### Changed
-
-- **security:** npm overrides for `undici`, `ip-address`, `nanoid`, `postcss`; `js-yaml >=5.2.2`; `brace-expansion >=1.1.18 <2`
-- **template-updates:** `upstream_aligned_version` 0.17.0 (product `.template-version` remains release-please)
-
 ## [0.5.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.4.1...v0.5.0) (2026-07-12)
-
 
 ### Added
 
 * product recommendations P0-P3 and R-Audit-8 hygiene ([d308468](https://github.com/edwardlthompson/trendalgo-bot/commit/d308468b6735ff2e39fd8453ae7046f21290e923))
-
 
 ### Fixed
 
@@ -218,16 +165,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **e2e:** narrow update mocks so API routes stay mocked ([db0bb1f](https://github.com/edwardlthompson/trendalgo-bot/commit/db0bb1fe4dfc55d5f285036a45a369a770deb9bf))
 * **web:** hide More menu when [hidden] so nav does not block clicks ([3cb19c4](https://github.com/edwardlthompson/trendalgo-bot/commit/3cb19c48457b2bbae03732fa0cf49f7e8098765c))
 
-
 ### Changed
 
 * **deps:** Bump actions/stale in the github-actions group ([#14](https://github.com/edwardlthompson/trendalgo-bot/issues/14)) ([041c7f5](https://github.com/edwardlthompson/trendalgo-bot/commit/041c7f51925c095f7333f0ac1034ed823873f6ef))
 * **release:** align package-lock version to 0.4.1 ([45b8625](https://github.com/edwardlthompson/trendalgo-bot/commit/45b8625e788ee0bcfc91b1443c554dc575297547))
 * **release:** sync package versions to v0.4.1 after PR [#7](https://github.com/edwardlthompson/trendalgo-bot/issues/7) ([cebd8f4](https://github.com/edwardlthompson/trendalgo-bot/commit/cebd8f4b6df2f2e48c7e0b3cb07e3e87afc6cb6c))
 
-
 ## [0.4.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.4.0...v0.4.1) (2026-06-30)
-
 
 ### Fixed
 
@@ -258,7 +202,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **release:** sync uv.lock for v0.2.0 and dedupe CHANGELOG Unreleased ([55bfd54](https://github.com/edwardlthompson/trendalgo-bot/commit/55bfd548d92a1a20e9cc00bdb6da5e60c79741a4))
 * sync template version for release ([dfebbd9](https://github.com/edwardlthompson/trendalgo-bot/commit/dfebbd90cf6f1256a20606b724a348db85bd44e3))
 
-
 ### Changed
 
 * **deps-dev:** Bump the web-dependencies group ([#2](https://github.com/edwardlthompson/trendalgo-bot/issues/2)) ([886a392](https://github.com/edwardlthompson/trendalgo-bot/commit/886a3926c4460a5756cd9c5bb0fe322d453c021c))
@@ -277,14 +220,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * remove accidentally committed data __pycache__ ([00f279d](https://github.com/edwardlthompson/trendalgo-bot/commit/00f279dbfa3b34bea798fdd56b6d447d26398971))
 * Sprint 0 scaffold TrendAlgo Bot from agent-project-bootstrap ([46e7e76](https://github.com/edwardlthompson/trendalgo-bot/commit/46e7e7684ead1033cc345a02b633dfeb8350b9d3))
 
-
 ### Documentation
 
 * **build-plan:** slim active board to summary tables ([33a7f8d](https://github.com/edwardlthompson/trendalgo-bot/commit/33a7f8dc49d229157689d13074c648118ea7096f))
 * **kb:** KB-012 v0.2.0 ship CI follow-ups ([dbf6c11](https://github.com/edwardlthompson/trendalgo-bot/commit/dbf6c11173074198b11d8ed47927c1fb0586ab32))
 
 ## [0.3.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.3.0...v0.3.1) (2026-06-28)
-
 
 ### Fixed
 
@@ -303,7 +244,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **e2e:** mock platform forager, funding, and postgres routes for bootstrap ([50d20c1](https://github.com/edwardlthompson/trendalgo-bot/commit/50d20c1e965ab92e0a06197c7c513bc60d35f673))
 * **release:** sync uv.lock for v0.2.0 and dedupe CHANGELOG Unreleased ([55bfd54](https://github.com/edwardlthompson/trendalgo-bot/commit/55bfd548d92a1a20e9cc00bdb6da5e60c79741a4))
 
-
 ### Changed
 
 * **deps-dev:** Bump the web-dependencies group ([#2](https://github.com/edwardlthompson/trendalgo-bot/issues/2)) ([886a392](https://github.com/edwardlthompson/trendalgo-bot/commit/886a3926c4460a5756cd9c5bb0fe322d453c021c))
@@ -312,7 +252,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **release:** prepare v0.2.0 release ([99557b1](https://github.com/edwardlthompson/trendalgo-bot/commit/99557b18bb415a6a8e5ef06d87fb72133363ac57))
 * **release:** prepare v0.3.0 release ([5613200](https://github.com/edwardlthompson/trendalgo-bot/commit/56132009e2f6eb5dd5fa46682129a6bd38469fa6))
 * Sprint 0 scaffold TrendAlgo Bot from agent-project-bootstrap ([46e7e76](https://github.com/edwardlthompson/trendalgo-bot/commit/46e7e7684ead1033cc345a02b633dfeb8350b9d3))
-
 
 ### Documentation
 
@@ -393,8 +332,6 @@ Exchange program S19–S20 and DEX program S21–S24 — native multi-venue ops 
 - R-Audit-4 doc sync (README, POST_DELIVERY, ROADMAP_PUBLIC Phase 8, KB-011)
 - TEMPLATE_INDEX synced for TrendAlgo ops scripts and version 0.2.0
 
-
-
 ## [0.1.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v0.0.0...v0.1.0) (2026-06-25)
 
 First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
@@ -421,12 +358,10 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 
 ## [0.11.1](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.11.0...v0.11.1) (2026-06-21)
 
-
 ### Fixed
 
 * **release:** automate version sync and SBOM dispatch (M29) ([8b7d62e](https://github.com/edwardlthompson/agent-project-bootstrap/commit/8b7d62ecbe5ee0fa4d1572fd870495bf51936460))
 * **release:** parse Release Please PR number from JSON output ([57201aa](https://github.com/edwardlthompson/agent-project-bootstrap/commit/57201aa03595979196dff79c5c0327e7e70f4725))
-
 
 ### Documentation
 
@@ -434,11 +369,9 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 
 ## [0.11.0](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.10.0...v0.11.0) (2026-06-18)
 
-
 ### Added
 
 * **android:** add F-Droid device dry-run scripts (M28) ([fb90878](https://github.com/edwardlthompson/agent-project-bootstrap/commit/fb9087846d424b088d37ed4e77ee13c672e9c0b6))
-
 
 ### Fixed
 
@@ -446,11 +379,9 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * **docs:** index template version sync scripts in TEMPLATE_INDEX ([367b650](https://github.com/edwardlthompson/agent-project-bootstrap/commit/367b650a1cd490f3ca181c42aaa4fe79020278cf))
 * **release:** SBOM backfill from main; add template version sync gate ([d3b4c05](https://github.com/edwardlthompson/agent-project-bootstrap/commit/d3b4c057db7470593244f46ed5d3dc9c04468a99))
 
-
 ### Changed
 
 * **release:** sync version files to 0.10.0 ([36a02e4](https://github.com/edwardlthompson/agent-project-bootstrap/commit/36a02e4569d4d26bcacbc95b8e27a991a634d5b4))
-
 
 ### Documentation
 
@@ -458,7 +389,6 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * record v0.10.0 SBOM backfill complete ([f78dd18](https://github.com/edwardlthompson/agent-project-bootstrap/commit/f78dd185fed55d2e5b225c7c5a55f5f8e637eaeb))
 
 ## [0.10.0](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.9.0...v0.10.0) (2026-06-17)
-
 
 ### Added
 
@@ -470,7 +400,6 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * **m18-p2:** complete post-sequential backlog — tests, gates, CI, SW cache ([d2e088d](https://github.com/edwardlthompson/agent-project-bootstrap/commit/d2e088de9d7f97813a0ca66d4c4b3335455bf853))
 * **m18:** remediate post-P2 review — Pages base path, Android apply, init config ([9105ebb](https://github.com/edwardlthompson/agent-project-bootstrap/commit/9105ebb129e660c288c65f6bef3ee7a67aeec4dd))
 * **p2:** complete M17 P2 backlog — a11y, updates, CI, docs ([64ec578](https://github.com/edwardlthompson/agent-project-bootstrap/commit/64ec578a352d6d771c8d774d68da93f0fd01467d))
-
 
 ### Fixed
 
@@ -494,7 +423,6 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * **upgrade-sim:** skip full bootstrap validation after prune pass ([1634917](https://github.com/edwardlthompson/agent-project-bootstrap/commit/1634917f35ee9137ffb56b5c3a6e763025819ed7))
 * **web:** override js-yaml to patch Dependabot alert [#9](https://github.com/edwardlthompson/agent-project-bootstrap/issues/9) ([609165c](https://github.com/edwardlthompson/agent-project-bootstrap/commit/609165c6321cb2498c39541b5315ff19a533f7fb))
 * **web:** use hasAttribute for disabled check in panelDialog ([f4d082e](https://github.com/edwardlthompson/agent-project-bootstrap/commit/f4d082ea1331446f45baeabd77f55818ec5a8cdf))
-
 
 ### Documentation
 
@@ -555,19 +483,16 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 
 ## [0.9.0](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.8.0...v0.9.0) (2026-06-15)
 
-
 ### Added
 
 * **agents:** execute Sprint M13 human-gate automation ([4fddec8](https://github.com/edwardlthompson/agent-project-bootstrap/commit/4fddec8aa677ab5f873a86e88dbb56bb5082bc46))
 * **agents:** execute Sprint M14 post-M13 review remediation ([fc71433](https://github.com/edwardlthompson/agent-project-bootstrap/commit/fc71433fcbfeae3c15703adedde7970106c80c90))
-
 
 ### Documentation
 
 * **build-plan:** mark M14 CI sign-off complete on fc71433 ([0419e62](https://github.com/edwardlthompson/agent-project-bootstrap/commit/0419e621a9a99e7f34fc31f32b5dd19a30437345))
 
 ## [0.8.0](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.7.1...v0.8.0) (2026-06-15)
-
 
 ### Added
 
@@ -577,7 +502,6 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * **agents:** execute Sprint M9 sequential rows 1-7 ([e8e6831](https://github.com/edwardlthompson/agent-project-bootstrap/commit/e8e6831f3367f41fce5cb22f25c7d07347034e98))
 * **agents:** execute Sprint M9-8 and M10 code review remediation ([9163dab](https://github.com/edwardlthompson/agent-project-bootstrap/commit/9163dab255d4a7552ea1d0d4f169f2b78f569593))
 * **agents:** incremental feature assembly and autonomous agent gates ([3d47485](https://github.com/edwardlthompson/agent-project-bootstrap/commit/3d4748595589a642db0373947ae2152e5e3cd1de))
-
 
 ### Fixed
 
@@ -589,11 +513,9 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * **web:** narrow app root type for AppShell render ([53406b1](https://github.com/edwardlthompson/agent-project-bootstrap/commit/53406b1b84736d145ebf620a5852a6d6eb23c087))
 * **web:** resolve CI lint and file-size budget failures ([1759a8f](https://github.com/edwardlthompson/agent-project-bootstrap/commit/1759a8f54b80f54564318e4174f56388d20047ef))
 
-
 ### Changed
 
 * sync template version to 0.7.1 and fix CHANGELOG encoding ([e7ebf2d](https://github.com/edwardlthompson/agent-project-bootstrap/commit/e7ebf2dadc367ceec14f701bd927a20b7c4dcde0))
-
 
 ### Documentation
 
@@ -604,7 +526,6 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 
 ## [0.7.1](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.7.0...v0.7.1) (2026-06-13)
 
-
 ### Fixed
 
 * **android:** bump compileSdk to 37 for androidx 1.19 dependencies ([3a74f0c](https://github.com/edwardlthompson/agent-project-bootstrap/commit/3a74f0c08d32aff7a14d6fb7eff829578cbe73da))
@@ -613,7 +534,6 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * **ci:** gofmt Go example and harden PR coverage comment parsing ([0423990](https://github.com/edwardlthompson/agent-project-bootstrap/commit/0423990b4ece9559a42db6c6bc66cec0eab518c8))
 * **ci:** remove job-level hashFiles guards from ci.yml ([36fdbc1](https://github.com/edwardlthompson/agent-project-bootstrap/commit/36fdbc118f25e5865fb18aee653728ee87613f09))
 * **ci:** repair corrupted template literals in coverage comment job ([a64ad04](https://github.com/edwardlthompson/agent-project-bootstrap/commit/a64ad04b1fd5ec301110925d8783ed8a1653a6ab))
-
 
 ### Changed
 
@@ -624,13 +544,11 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 
 ## [0.7.0](https://github.com/edwardlthompson/agent-project-bootstrap/compare/v0.6.0...v0.7.0) (2026-06-13)
 
-
 ### Added
 
 * design system, web layout docs, and Golden Path UI refresh ([912ebbe](https://github.com/edwardlthompson/agent-project-bootstrap/commit/912ebbe2c57fb2d47223c49b3332f3037cc9c80f))
 * initial agent-project-bootstrap template v0.1.0 ([d71c23c](https://github.com/edwardlthompson/agent-project-bootstrap/commit/d71c23c22dd97b96f3ef91435319d5df04bb28b6))
 * template v0.2.0 with UTF-8 gates, lockfiles, and build verification ([2317440](https://github.com/edwardlthompson/agent-project-bootstrap/commit/2317440eeecec0ef961bb9cf54ea3830c183d8cf))
-
 
 ### Fixed
 
@@ -650,12 +568,10 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 * resolve CI failures in web lint, python format, and android grep ([444ad7b](https://github.com/edwardlthompson/agent-project-bootstrap/commit/444ad7b4c713257bb749371c7c9882b0e883bd19))
 * stabilize Lighthouse CI with 3-run median ([f41c48d](https://github.com/edwardlthompson/agent-project-bootstrap/commit/f41c48daff6d8a148d86ba5cfabf800d015c806d))
 
-
 ### Changed
 
 * **deps:** Bump the github-actions group across 1 directory with 10 updates ([#3](https://github.com/edwardlthompson/agent-project-bootstrap/issues/3)) ([648f5d2](https://github.com/edwardlthompson/agent-project-bootstrap/commit/648f5d202b1b2820e10b59c680b6980109290f77))
 * release v0.2.1 full bootstrap hardening ([a2749a3](https://github.com/edwardlthompson/agent-project-bootstrap/commit/a2749a30cfac1b3bf3f2d450666592453ca3aca2))
-
 
 ### Documentation
 
@@ -683,48 +599,25 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 
 ## [0.5.0] - 2026-06-13
 
-
-
-
-
 ### Added
-
-
-
-
 
 - `examples/lightroom/` stub (`Info.lua`, README with SDK version table) per `modules/lightroom/MODULE.md`
 
-
 - Optional `modules/rust/MODULE.md` + `examples/rust/` hello stub (Cargo.toml, clippy/fmt/test CI)
-
 
 - Optional `modules/go/MODULE.md` + `examples/go/` hello stub (vet/fmt/test CI)
 
-
 - `docs/OPTIONAL_STACKS.md` ΓÇö Rust/Go/Lightroom/Node opt-in outside default init stack picker
-
 
 - CI `stack-filters` job; `lightroom`, `node`, `rust`, `go` jobs gated on directory existence and path changes
 
-
 - F-Droid submission dry-run checklist in `modules/android/MODULE.md` (`[ADB]`)
-
-
-
-
 
 ### Changed
 
-
-
-
-
 - `TEMPLATE_INDEX.json` ΓÇö `modules.lightroom.example` ΓåÆ `examples/lightroom/`; added `rust` and `go` modules
 
-
 - `.template-version` ΓåÆ `0.5.0`
-
 
 - README Supported Stacks table includes Lightroom example path and optional stacks note
 - README (M5.1): hero badges, table of contents, GitHub alert callouts, collapsible detail sections, audience dividers
@@ -735,422 +628,228 @@ First TrendAlgo Bot release — native CCXT platform (S0–S18 AGENT complete).
 
 ## [0.2.2] - 2026-06-13
 
-
-
-
-
 ### Added
-
-
-
-
 
 - `scripts/setup-github-repo.sh` and `scripts/setup-github-repo.ps1` - idempotent gh api setup for Dependabot alerts, private vulnerability reporting, branch protection
 
-
 - `scripts/pre-release-gate.sh` and `scripts/pre-release-gate.ps1` - CI poll, Dependabot Critical/High count, template version check, release workflow reminder
-
 
 - `scripts/check-file-encoding.py` - cross-platform UTF-8/UTF-16 BOM check; `check-file-encoding.sh` delegates to Python
 
-
 - `.cursor/rules/windows-encoding.mdc` - Python UTF-8 write guidance for Windows
-
 
 - Gitleaks CI job in `.github/workflows/security.yml` (SHA-pinned `gitleaks/gitleaks-action@v3.0.0`)
 
-
 - Pre-commit hooks: `file-limits`, `validate-bootstrap --quick`
-
 
 - KNOWLEDGE_BASE KB-007 npm/pip overrides policy; DECISION_LOG entry for `@lhci/cli` overrides
 
-
 - PROMPT_LIBRARY entries 10 (pre-release gate) and 11 (GitHub repo setup)
 
-
-
-
-
 ### Changed
-
-
-
-
 
 - `scripts/validate-bootstrap.sh` - `--quick` flag skips `validate-workflow-actions`
 
-
 - `.github/workflows/health-check.yml` - `npm audit` for `examples/web`, `uv pip audit` for `examples/python`
-
 
 - `docs/SECURITY_TRIAGE.md` - documents `setup-github-repo.sh` in Setup section
 
-
 - `init-project` scripts remind to run `setup-github-repo` after init
-
 
 - `AGENT_MEMORY.md` template version synced to `0.2.2`; em-dash corruption fixed to ASCII hyphen
 
-
 - README CI gate section mentions `setup-github-repo` and `pre-release-gate`
-
-
-
-
 
 ## [0.3.0] - 2026-06-13
 
-
-
-
-
 ### Added
-
-
-
-
 
 - Stack picker `web/python/android/multi/none` in `init-project` scripts; `none` keeps all examples
 
-
 - `scripts/init-stack-sync.py` - sync `AGENT_MEMORY.md` checkboxes and `.cursor/stack-selection.json`
-
 
 - `.cursor-session-state.example.json` - session restore schema
 
-
 - `docs/adr/0001-core-architecture.md` - MVVM / Clean / Hexagonal choice template for child repos
-
 
 - `android-release` CI job with `SOURCE_DATE_EPOCH=1700000000` and APK hash flake check
 
-
 - Semantic PR title job (`amannn/action-semantic-pull-request`, SHA-pinned)
-
 
 - `scripts/check-bundle-size.sh` - Vite dist JS gzip budget (200 KB)
 
-
 - Playwright visual snapshot and service-worker offline e2e tests
-
 
 - Optional `pyright` CI job for Python example
 
-
 - `.cursor/rules/testing.mdc` and `.cursor/rules/ci-gates.mdc`
-
 
 - `docs/PARALLEL_AGENT_SCOPES.md` and `scripts/check-parallel-scope.sh`
 
-
 - PROMPT_LIBRARY entries 12-14
-
 
 - `.github/workflows/scorecard.yml` - weekly OpenSSF Scorecard (SHA-pinned)
 
-
 - Android Fastlane `short_description.txt` stub and emulator checklist in README
 
-
-
-
-
 ### Changed
-
-
-
-
 
 - `docs/FOR_AGENTS.md` - failure playbook (CI poll, GH_TOKEN, Dependabot, 3-strike, parallel scope)
 
-
 - Python CI enforces `pytest --cov-fail-under=90` explicitly
-
 
 - `.template-version` bumped to `0.3.0`; TEMPLATE_INDEX and README updated
 
-
-
-
-
 ## [0.2.1] - 2026-06-13
 
-
-
-
-
 ### Added
-
-
-
-
 
 - `scripts/check-workflow-action-ref-format.sh` ΓÇö local pre-commit guard against bare-semver action refs
 
-
 - `.github/workflows/health-check.yml` ΓÇö weekly Monday 07:00 UTC poll of CI + Security Scan + CodeQL on main
-
 
 - CI `android-build` job ΓÇö `./gradlew assembleDebug` smoke for `examples/android/`
 
-
 - Gradle wrapper binaries (`gradlew`, `gradlew.bat`, `gradle-wrapper.jar`) in `examples/android/`
-
 
 - `KNOWLEDGE_BASE.md` ΓÇö six structured entries from v0.2.0 CI/security fix round
 
-
 - `PROMPT_LIBRARY.md` entries 8ΓÇô9 ΓÇö workflow action validation and post-push GitHub gate
-
 
 - Devcontainer `github-cli` feature; postStart runs encoding check + CI gate reminder
 
-
 - README GitHub CI Gate section; init scripts run `validate-workflow-actions` and remind `check-github-ci`
 
-
-
-
-
 ### Changed
-
-
-
-
 
 - Normalized root `.gitignore` from UTF-16 to UTF-8; added to encoding scan and pre-commit hook
 
-
 - SHA-pinned `release.yml` actions: `anchore/sbom-action`, `softprops/action-gh-release`, `actions/attest-build-provenance`
-
 
 - `docs/SECURITY_TRIAGE.md` ΓÇö GitHub Actions pin policy, health-check in weekly triage table
 
-
 - `modules/web/MODULE.md` ΓÇö Lighthouse 3-run median policy documented
-
 
 - `modules/android/MODULE.md` ΓÇö CI assembleDebug documented; fixed corrupted path characters
 
-
 - `docs/INITIALIZATION_PROMPT.md` ΓÇö root `.gitignore` in encoding extension list
-
 
 - `PROMPT_LIBRARY.md` entries 4 and 6 ΓÇö validate-workflow-actions, three-workflow sign-off
 
-
-
-
-
 ### Fixed
-
-
-
-
 
 - CI: Lighthouse CI uses 3 runs with median assertion to reduce shared-runner flake while keeping 0.9 performance budget
 
-
 - Security Scan: pin `aquasecurity/trivy-action` to SHA `a9c7b0f` (v0.36.0); invalid `@0.28.0` ref caused workflow setup failure
-
 
 - Automation: `scripts/validate-workflow-actions.sh` and `scripts/check-github-ci.sh` (+ `.ps1`) to catch bad action refs and poll required GH workflows before sign-off
 
-
 - CI: Web TS null narrowing in main.ts, MIT license on web package, scoped Android FOSS grep to Gradle files
-
 
 - Python: ruff format on greet.py
 
-
 - Index/pre-commit: CONTRIBUTING.md in TEMPLATE_INDEX; encoding hook covers .ts/.tsx/.toml
-
 
 - License script: --excludePrivatePackages for private stub packages
 
-
 - Encoding: normalize UTF-16 index.html and style.css; extend encoding scan to .html/.css
-
-
-
-
 
 ## [0.2.0] - 2026-06-12
 
-
-
-
-
 ### Added
-
-
-
-
 
 - `scripts/check-file-encoding.sh` ΓÇö UTF-8 enforcement in CI and pre-commit
 
-
 - `.env.example` ΓÇö documented environment variable stub
-
 
 - `examples/web/package-lock.json` and `examples/python/uv.lock` ΓÇö reproducible locked installs
 
-
 - Build Verification Gate in `INITIALIZATION_PROMPT.md` Section 7a (Sprint 0 + release)
-
 
 - `PROMPT_LIBRARY.md` entries: bootstrap verification, security triage, SBOM audit, build verification
 
-
 - Secret rotation procedure in `docs/RUNBOOK.md`
-
 
 - Android operations checklist in `modules/android/MODULE.md`
 
-
 - Release workflow `workflow_dispatch` for maintainer dry-run
-
 
 - Web Vitest coverage budget (90%) matching Python example
 
-
-
-
-
 ### Changed
-
-
-
-
 
 - Normalized ~46 UTF-16 corrupted files to UTF-8
 
-
 - `scripts/validate-bootstrap.sh` ΓÇö encoding, index, lockfile, and LICENSE checks
-
 
 - `scripts/check-license-compliance.sh` ΓÇö strict fail on disallowed licenses; stack-scoped CI steps
 
-
 - `TEMPLATE_INDEX.json` ΓÇö added LICENSE, scripts, dependency-review, destructive-ops, `.env.example`; version 0.2.0
-
 
 - `.github/CODEOWNERS` ΓÇö `@[PROJECT_OWNER]` placeholder; init scripts replace during Sprint 0
 
-
 - `docs/SECURITY_TRIAGE.md` ΓÇö private vulnerability reporting in setup
-
 
 - `docs/UPGRADING_FROM_TEMPLATE.md` ΓÇö cherry-pick rows for new scripts/workflows
 
-
 - `BUILD_PLAN.md` ΓÇö encoding, lockfiles, Build Verification Gate in Sprint 0 and Milestone Gates
-
 
 - `README.md` ΓÇö links THREAT_MODEL, PRIVACY, RUNBOOK, THIRD_PARTY_LICENSES, LICENSE
 
-
 - CI: license check after locked installs; `uv sync --locked`; encoding-check job first
-
 
 - `docs/MAINTAINING_THE_TEMPLATE.md` ΓÇö release dry-run steps
 
-
 - Init scripts ΓÇö CODEOWNERS replacement, GITHUB_ABOUT.md draft, update checker config
-
-
-
-
 
 ### Human-only (not automated)
 
-
-
-
-
 - Enable Dependabot alerts + private vulnerability reporting on GitHub
-
 
 - Branch protection on `main` with required CI checks (`encoding-check`, `validate-bootstrap`)
 
-
 - Replace `@[PROJECT_OWNER]` in CODEOWNERS with real GitHub username
-
 
 - Paste GitHub About description from `docs/GITHUB_ABOUT.md`
 
-
-
-
-
 ## [0.1.0] - 2026-06-12
-
-
-
-
 
 ### Added
 
-
-
-
-
 - Verbatim Project Initialization Prompt (`docs/INITIALIZATION_PROMPT.md`)
-
 
 - Agent routing: `docs/START_HERE.md`, `docs/FOR_AGENTS.md`, `TEMPLATE_INDEX.json`
 
-
 - Workspace memory files: `AGENT_MEMORY.md`, `DECISION_LOG.md`, `KNOWLEDGE_BASE.md`, `BUILD_PLAN.md`
-
 
 - Multi-stack Golden Path stubs: Web (Vite PWA), Python (uv CLI), Android (FOSS Gradle skeleton)
 
-
 - Ecosystem module guides: Android, Web, Python, Lightroom
-
 
 - CI/CD guardrails: matrix CI, CodeQL, Trivy, Dependabot, release workflow
 
-
 - Template update checker with configurable intervals (`off`, `daily`, `weekly`, `monthly`, `on_session`)
-
 
 - Maintainer and consumer docs: `MAINTAINING_THE_TEMPLATE.md`, `UPGRADING_FROM_TEMPLATE.md`
 
-
 - Devcontainer, pre-commit hooks, init scripts (bash + PowerShell)
-
 
 - `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/CODEOWNERS` ΓÇö community health and responsible disclosure
 
-
 - `docs/THREAT_MODEL.md`, `docs/PRIVACY.md`, `docs/RUNBOOK.md` ΓÇö threat model, privacy-by-design, operations
-
 
 - `THIRD_PARTY_LICENSES.md` + `scripts/check-license-compliance.sh` ΓÇö license compliance
 
-
 - `scripts/validate-bootstrap.sh` ΓÇö Sprint 0 artifact verification in CI
-
 
 - `.github/workflows/dependency-review.yml` ΓÇö PR dependency review (fail on High/Critical)
 
-
 - Release workflow: SBOM (CycloneDX) + SLSA build provenance attestation
-
 
 - `.cursor/rules/destructive-ops.mdc` ΓÇö human-in-the-loop gates for destructive agent operations
 
-
-
-
-
 [0.2.0]: https://github.com/edwardlthompson/agent-project-bootstrap/releases/tag/v0.2.0
 
-
 [0.2.1]: https://github.com/edwardlthompson/agent-project-bootstrap/releases/tag/v0.2.1
-
 
 [0.1.0]: https://github.com/edwardlthompson/agent-project-bootstrap/releases/tag/v0.1.0

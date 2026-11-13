@@ -18,15 +18,43 @@ def best_oracle_row(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
 
 
 def lab_oracle_row(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """Prefer 1h Oracle for Lab (densest bars); else best Oracle Net %."""
-    ones = [
-        r
-        for r in rows
-        if str(r.get("indicator") or "") == "Oracle max" and str(r.get("timeframe") or "") == "1h"
-    ]
-    if ones:
-        return max(ones, key=lambda r: float(r.get("net_pct") or float("-inf")))
+    """Same wall-clock Oracle as the charted best row (not forced 1h)."""
     return best_oracle_row(rows)
+
+
+def unavailable_lab_row(
+    *,
+    symbol: str,
+    timeframe: str,
+    stake: float,
+    reason: str = "no fee-honest rule beat peers",
+) -> dict[str, Any]:
+    """Honest Lab stub when peer-clear fails — no fake winning Net %."""
+    trial = {
+        "strategy_id": "GEN_SECRET_1",
+        "indicator": SAUCE_LAB,
+        "timeframe": timeframe,
+        "net_profit": 0.0,
+        "gross_profit": 0.0,
+        "fees_paid": 0.0,
+        "trades": 0,
+        "wins": 0,
+        "params": {"status": "unavailable", "note": reason},
+        "ss_lab_pending": False,
+        "ss_unavailable": True,
+        "spectrum_ok": False,
+        "spectrum_note": reason,
+        "phase": "sauce",
+    }
+    row = fleet_row_to_lts(trial, symbol=symbol, stake_usd=stake)
+    row["indicator"] = SAUCE_LAB
+    row["ss_lab_pending"] = False
+    row["ss_unavailable"] = True
+    row["spectrum_ok"] = False
+    row["spectrum_note"] = reason
+    row["net_pct"] = None
+    row["params"] = {"status": "unavailable", "note": reason}
+    return row
 
 
 def pending_sauce_row(*, symbol: str, timeframe: str, stake: float) -> dict[str, Any]:
@@ -113,6 +141,8 @@ def mine_and_eval_secret_sauce(
     tf = str(oracle.get("timeframe") or "1h")
     if frames_by_tf.get(tf) is None or not swings:
         return None
+    from trendalgo.backtest.secret_sauce_lab.search import lab_time_budget_s
+
     try:
         packed = mine_best_across_tfs(
             frames_by_tf,
@@ -120,7 +150,7 @@ def mine_and_eval_secret_sauce(
             oracle_trades=swings,
             fee=fee,
             stake_usd=stake,
-            time_budget_s=6.0,
+            time_budget_s=lab_time_budget_s(len(swings)),
         )
     except (TypeError, ValueError, KeyError, IndexError):
         return None
@@ -152,22 +182,24 @@ def refine_sauce_from_peers(
     *,
     stake: float,
     fee: Any,
-    time_budget_s: float = 12.0,
+    time_budget_s: float | None = None,
 ) -> dict[str, Any]:
     """Second-pass Lab refine: maximize fee Net % toward Oracle; peer clear is floor."""
     from trendalgo.backtest.secret_sauce_lab.peer_refine import refine_lab_from_peers
+    from trendalgo.backtest.secret_sauce_lab.search import lab_time_budget_s
 
     tf = str(sauce.get("timeframe") or "1h")
     frame = frames_by_tf.get(tf)
     if frame is None:
         return sauce
+    swings_n = len(list((sauce.get("heartbeat_dossier") or {}).get("oracle_entry_indexes") or []))
     packed = refine_lab_from_peers(
         sauce,
         rows,
         frame,
         stake=stake,
         fee=fee,
-        time_budget_s=time_budget_s,
+        time_budget_s=(time_budget_s if time_budget_s is not None else lab_time_budget_s(swings_n)),
         frames_by_tf=frames_by_tf,
     )
     if packed is None:

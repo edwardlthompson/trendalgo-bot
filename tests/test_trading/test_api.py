@@ -5,11 +5,9 @@ import uuid
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
 
-from trendalgo.api.app import create_app
-from trendalgo.trading.signed_command import OWNER_ID_ENV, OWNER_SECRET_ENV, sign_request
 from tests.support.api_client import make_api_client
+from trendalgo.trading.signed_command import OWNER_ID_ENV, OWNER_SECRET_ENV, sign_request
 
 OWNER_ID = "owner-test"
 OWNER_SECRET = "owner-secret-for-api-tests-only"

@@ -60,7 +60,9 @@ def _assert_sauce_rank_two(rows: list[dict[str, Any]], *, label: str) -> None:
     oracle_net = max(float(r.get("net_pct") or float("-inf")) for r in oracles)
     bh_rows = [r for r in rows if str(r.get("indicator") or "") == _BH]
     bh_net = max((float(r.get("net_pct") or float("-inf")) for r in bh_rows), default=0.0)
-    _skip = {_ORACLE, _BH, "Secret Sauce", "Secret Sauce TA", "Secret Sauce Lab"}
+    from trendalgo.device.sauce_names import SAUCE_ALL
+
+    _skip = {_ORACLE, _BH, *SAUCE_ALL}
     peers = [
         r
         for r in rows
@@ -86,11 +88,16 @@ def _assert_sauce_rank_two(rows: list[dict[str, Any]], *, label: str) -> None:
             for r in top5
         ]
         print(f"{label} triage top-5 (non-Oracle): {triage}")
+    # Honest Lab: peer-losing recipes are not published (unavailable stub).
+    if bool(sauce.get("ss_unavailable")) or sauce.get("net_pct") is None:
+        assert sauce.get("ss_unavailable") or sauce.get("spectrum_note"), (
+            f"{label}: unavailable Lab should carry an honesty note"
+        )
+        return
     assert sauce_net <= oracle_net + 1e-6, (
         f"{label}: Sauce {sauce_net:.2f}% should not beat Oracle {oracle_net:.2f}%"
     )
     assert sauce_net > bh_net, f"{label}: Sauce {sauce_net:.2f}% must beat B&H {bh_net:.2f}%"
-    # Honest Lab may admit spectrum_fail when peers stay ahead — still a valid run.
     if sauce.get("spectrum_ok") is False:
         return
     assert sauce_net > top_peer, (

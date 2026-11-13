@@ -8,8 +8,25 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
+import time
 from pathlib import Path
 from typing import Any
+
+_PATH_LOCKS: dict[str, threading.Lock] = {}
+_PATH_LOCKS_GUARD = threading.Lock()
+_REPLACE_TRIES = 8
+
+
+def _lock_for(path: Path) -> threading.Lock:
+    key = str(path.resolve()) if path.parent.exists() else str(path)
+    with _PATH_LOCKS_GUARD:
+        lock = _PATH_LOCKS.get(key)
+        if lock is None:
+            lock = threading.Lock()
+            _PATH_LOCKS[key] = lock
+        return lock
+
 
 PROFILE_ENV = "TRENDALGO_DEVICE_DIR"
 CANDLES_ENV = "TRENDALGO_CANDLES_DB"
@@ -70,15 +87,31 @@ def read_json(path: Path) -> dict[str, Any] | None:
 
 
 def write_json(path: Path, data: dict[str, Any]) -> None:
-    """Replace path with data in one rename. A failed write leaves the old file in place."""
+    """Replace path with data in one rename. A failed write leaves the old file in place.
+
+    Parallel All-TA coins hit the same prefs files; retry Windows Access Denied on replace.
+    Locks are per-path so ``scan_progress.json`` cannot stall catalog timing writes.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2, sort_keys=True)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp_name, path)
-    except BaseException:
-        Path(tmp_name).unlink(missing_ok=True)
-        raise
+    lock = _lock_for(path)
+    last_err: OSError | None = None
+    payload = json.dumps(data, indent=2, sort_keys=True)
+    for attempt in range(_REPLACE_TRIES):
+        fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(payload)
+                handle.flush()
+                os.fsync(handle.fileno())
+            with lock:
+                os.replace(tmp_name, path)
+            return
+        except OSError as exc:
+            last_err = exc
+            Path(tmp_name).unlink(missing_ok=True)
+            time.sleep(0.02 * (attempt + 1))
+        except BaseException:
+            Path(tmp_name).unlink(missing_ok=True)
+            raise
+    if last_err is not None:
+        raise last_err

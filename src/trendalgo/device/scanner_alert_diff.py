@@ -96,7 +96,8 @@ def leave_reason(
     min_uni = floors.get("min_uniformity")
     if min_uni is not None and uni is not None and uni < min_uni:
         parts.append(f"Uniformity {uni:.2f} < {min_uni:.2f}")
-    gain30 = _num(snap.get("gain_30d") or snap.get("gain_pct"))
+    gains = snap.get("gains") if isinstance(snap.get("gains"), dict) else {}
+    gain30 = _num(snap.get("gain_30d") or gains.get("30d") or snap.get("gain_pct"))
     min_gain = floors.get("min_gain_30d") or floors.get("min_gain_pct")
     if min_gain is not None and gain30 is not None:
         # floors may be fraction (0.2) or percent (20)
@@ -104,7 +105,7 @@ def leave_reason(
         gain_pct = gain30 * 100.0 if abs(gain30) <= 1.5 else gain30
         if gain_pct < floor_pct:
             parts.append(f"30D gain {gain_pct:.1f}% below min {floor_pct:.1f}%")
-    health = _num(snap.get("health"))
+    health = _num(snap.get("health_score") or snap.get("health"))
     min_health = floors.get("min_health")
     if min_health is not None and health is not None and health < min_health:
         parts.append(f"Health {health:.2f} < {min_health:.2f}")

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.support.api_client import make_api_client
 from trendalgo.dex.control import DexVenueControlStore
 from trendalgo.dex.gates import validate_live_swap_gates
 from trendalgo.dex.load_test import run_dex_ops_validation
@@ -17,7 +18,6 @@ from trendalgo.dex.runner.live import LiveSwapRunner
 from trendalgo.dex.signer import sign_swap_payload, signer_configured, signer_fingerprint
 from trendalgo.trading.signed_command import OWNER_ID_ENV, OWNER_SECRET_ENV, sign_request
 from trendalgo.venues.registry import get_venue, load_venue_registry
-from tests.support.api_client import make_api_client
 
 
 def _live_env(monkeypatch, tmp_path: Path) -> tuple[DexVenueControlStore, NonceStore]:
@@ -110,9 +110,6 @@ def test_dex_ops_validation() -> None:
 def test_s24_api_routes(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("TRENDALGO_DATA_DIR", str(tmp_path))
     _live_env(monkeypatch, tmp_path)
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     client = make_api_client()
     status = client.get("/api/v1/platform/dex/status/full")

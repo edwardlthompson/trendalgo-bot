@@ -37,9 +37,7 @@ def test_simulate_long_with_fees_known_trade() -> None:
     entries = np.array([False, True, False, False])
     exits = np.array([False, False, True, False])
     fee = get_fee_schedule("kraken")
-    stats = simulate_long_with_fees(
-        df, entries, exits, stake_usd=1000.0, fee=fee, fill_offset=0
-    )
+    stats = simulate_long_with_fees(df, entries, exits, stake_usd=1000.0, fee=fee, fill_offset=0)
     assert stats["trades"] == 1
     assert stats["tsl_hits"] == 0
     assert stats["gross_profit"] == 10.0

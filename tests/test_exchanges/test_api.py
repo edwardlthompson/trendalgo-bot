@@ -1,8 +1,5 @@
 """Exchange API route tests."""
 
-from fastapi.testclient import TestClient
-
-from trendalgo.api.app import create_app
 from tests.support.api_client import make_api_client
 
 

@@ -312,5 +312,3 @@ def fee_receipt_verify(body: ReceiptVerifyBody) -> dict[str, Any]:
 @router.get("/data/sentiment/{asset}")
 def sentiment_stub(asset: str) -> dict[str, Any]:
     return onchain_sentiment_stub(asset)
-
-

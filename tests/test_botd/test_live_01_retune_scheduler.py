@@ -23,7 +23,9 @@ def test_due_for_retune_daily_utc_and_tf_floor() -> None:
     now = datetime(2026, 11, 11, 6, 0, tzinfo=UTC)
     last = datetime(2026, 11, 10, 6, 0, tzinfo=UTC)
     assert due_for_retune(now, last, strategy_tf_hours=1.0, scheduled_hour_utc=6)
-    assert not due_for_retune(now, last + timedelta(hours=1), strategy_tf_hours=1.0, scheduled_hour_utc=6)
+    assert not due_for_retune(
+        now, last + timedelta(hours=1), strategy_tf_hours=1.0, scheduled_hour_utc=6
+    )
     # 48h TF → floor tf/24 = 2h; daily (24h) still due
     assert due_for_retune(now, last, strategy_tf_hours=48.0, scheduled_hour_utc=6)
     # 720h TF → floor 30h; 24h since last is not enough

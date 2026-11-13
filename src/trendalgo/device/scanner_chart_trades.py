@@ -13,12 +13,15 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from trendalgo.backtest.heartbeat_tf import ALL_SCAN_TIMEFRAMES, timeframe_hours, timeframe_minutes
 from trendalgo.backtest.load_days import SCAN_LOOKBACK_DAYS
 from trendalgo.backtest.ta_fleet import backtest_one, prepare_signals
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees, trade_hold_regions
 from trendalgo.device.sauce_names import is_sauce, is_sauce_ta
 from trendalgo.device.scan_stake import DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scanner_all_ta_prune import fee_for_bps
+
+_ALLOWED_TF = frozenset(ALL_SCAN_TIMEFRAMES)
 
 _BH = "B&H"
 _DEFAULT_FEE_BPS = 52.0
@@ -107,11 +110,12 @@ def resolve_ohlcv_frame(
         frame = _load_scan_frame(coin, timeframe=tf)
         if not frame.empty:
             return frame
+    step_h = timeframe_hours(tf) or max(1, (timeframe_minutes(tf) or 60) // 60)
     if closes is not None:
-        return frame_from_closes(closes, hours_step=1 if tf == "1h" else 4)
+        return frame_from_closes(closes, hours_step=step_h)
     spark = _coin_closes(coin)
     if spark:
-        return frame_from_closes(spark, hours_step=1 if tf == "1h" else 4)
+        return frame_from_closes(spark, hours_step=step_h)
     return _load_scan_frame(coin, timeframe=tf)
 
 
@@ -140,9 +144,11 @@ def regions_for_strategy(
             or bool(params.get("ss_coincidence"))
             or bool(row.get("ss_coincidence"))
         ):
-            return _regions_sauce_ta(frame, params, stake=stake, fee=fee, tsl=tsl)
+            regions = _regions_sauce_ta(frame, params, stake=stake, fee=fee, tsl=tsl)
+            return attach_path_envelopes(frame, regions)
         if is_sauce(sid) or sid.upper().startswith("GEN_SECRET"):
-            return _regions_sauce_lab(frame, row, params, stake=stake, fee=fee, tsl=tsl)
+            regions = _regions_sauce_lab(frame, row, params, stake=stake, fee=fee, tsl=tsl)
+            return attach_path_envelopes(frame, regions)
         trial, _reason = backtest_one(
             frame,
             sid,
@@ -162,7 +168,7 @@ def regions_for_strategy(
     trades = trial.get("trade_list")
     if not isinstance(trades, list):
         return []
-    return trade_hold_regions(trades)
+    return attach_path_envelopes(frame, trade_hold_regions(trades))
 
 
 def _regions_sauce_ta(
@@ -255,8 +261,9 @@ def regions_from_oracle_swings(
         exit_i = _resolve_bar_index(frame, trade.get("exit_time"), trade.get("exit_index"))
         if entry_i is None or exit_i is None:
             continue
-        item["entry_time"] = item.get("entry_time") or _bar_time(frame, entry_i)
-        item["exit_time"] = item.get("exit_time") or _bar_time(frame, exit_i)
+        # Always draw on the chart frame's bar stamps (after remap).
+        item["entry_time"] = _bar_time(frame, entry_i)
+        item["exit_time"] = _bar_time(frame, exit_i)
         entry_px = _as_positive_float(item.get("entry_price"))
         exit_px = _as_positive_float(item.get("exit_price"))
         # Fall back to swing extremes on the (remapped) bars — never closes.
@@ -280,7 +287,7 @@ def regions_from_oracle_swings(
         if item.get("pnl_pct") is None and entry_px:
             item["pnl_pct"] = round(((exit_px / entry_px) - 1.0) * 100.0, 4)
         enriched.append(item)
-    return trade_hold_regions(enriched)
+    return attach_path_envelopes(frame, trade_hold_regions(enriched))
 
 
 def _as_positive_float(raw: object) -> float | None:
@@ -446,9 +453,54 @@ def _coin_closes(coin: dict[str, Any]) -> list[float]:
 
 
 def _normalize_tf(raw: str) -> str:
+    """Pass through any All-TA scan TF (1m…30m, 1h…24h). Never collapse 8h→1h."""
     text = str(raw or "").strip()
-    aliases = {"60": "1h", "240": "4h", "1H": "1h", "4H": "4h"}
-    return aliases.get(text, text if text in {"1h", "4h"} else "1h")
+    aliases = {
+        "60": "1h",
+        "240": "4h",
+        "480": "8h",
+        "1H": "1h",
+        "4H": "4h",
+        "8H": "8h",
+    }
+    key = aliases.get(text, text.lower())
+    if key in _ALLOWED_TF:
+        return key
+    return "1h"
+
+
+def attach_path_envelopes(
+    frame: pd.DataFrame,
+    regions: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Attach bar high/low polylines so chart bands hug the hold path."""
+    if frame.empty or not regions:
+        return regions
+    has_hl = "high" in frame.columns and "low" in frame.columns
+    out: list[dict[str, Any]] = []
+    for region in regions:
+        item = dict(region)
+        entry_i = item.get("entry_index")
+        exit_i = item.get("exit_index")
+        try:
+            start = int(entry_i)  # type: ignore[arg-type]
+            end = int(exit_i)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            start = end = -1
+        if has_hl and 0 <= start <= end < len(frame):
+            path: list[dict[str, float | str]] = []
+            for i in range(start, end + 1):
+                path.append(
+                    {
+                        "time": _bar_time(frame, i),
+                        "high": float(frame["high"].iloc[i]),
+                        "low": float(frame["low"].iloc[i]),
+                    }
+                )
+            if len(path) >= 2:
+                item["path_envelope"] = path
+        out.append(item)
+    return out
 
 
 def _tsl_fraction(row: dict[str, Any]) -> float:
@@ -473,8 +525,33 @@ def _tsl_fraction(row: dict[str, Any]) -> float:
     return value / 100.0
 
 
-def overlay_net_pct(regions: list[dict[str, Any]]) -> float | None:
-    """Sum of per-trade pnl_pct (All-TA restakes full stake each trade)."""
+def overlay_net_pct(
+    regions: list[dict[str, Any]],
+    *,
+    stake_usd: float | None = None,
+) -> float | None:
+    """Sum fee-aware net when ``net_pnl`` present; else gross ``pnl_pct``.
+
+    Results Net % is ``(net_profit/stake)*100``. Prefer the same fee-aware path
+    so Oracle overlays stop lying with gross ``pnl_pct`` sums.
+    """
+    stake = float(stake_usd) if stake_usd is not None and float(stake_usd) > 0 else None
+    if stake is None:
+        stake = DEVICE_SCAN_STAKE_USD if DEVICE_SCAN_STAKE_USD > 0 else None
+    if stake is not None:
+        fee_total = 0.0
+        fee_found = False
+        for region in regions:
+            raw = region.get("net_pnl")
+            if raw is None:
+                continue
+            try:
+                fee_total += float(raw) / stake * 100.0
+                fee_found = True
+            except (TypeError, ValueError):
+                continue
+        if fee_found:
+            return fee_total
     total = 0.0
     found = False
     for region in regions:

@@ -67,7 +67,8 @@ def test_the_brand_mark_is_the_logo_svg() -> None:
 def test_device_ui_code_has_no_raw_hex_colors() -> None:
     offenders = []
     for path in sorted(DEVICE_SRC.rglob("*.py")):
-        if path.name == "design_tokens.py":
+        # design_tokens + chart_contrast are the only hex SoTs (Qt tokens / Palette B).
+        if path.name in {"design_tokens.py", "chart_contrast.py"}:
             continue
         if HEX.search(path.read_text(encoding="utf-8")):
             offenders.append(path.name)

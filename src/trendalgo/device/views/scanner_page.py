@@ -15,7 +15,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPlainTextEdit,
-    QProgressBar,
     QTabBar,
     QVBoxLayout,
     QWidget,
@@ -23,6 +22,12 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import strings as S
 from trendalgo.device.context import DeviceContext
+from trendalgo.device.debug_scan import (
+    clear_scan_caches,
+    debug_scan_enabled,
+    log_debug_scan_publish,
+)
+from trendalgo.device.export_prefs import remember_export_dir
 from trendalgo.device.lts_scan_model import (
     filter_coins,
     load_filters,
@@ -34,10 +39,10 @@ from trendalgo.device.lts_scan_model import (
 from trendalgo.device.rows import scan_caption
 from trendalgo.device.scan_alerts import process_scan_alerts, toast_lines
 from trendalgo.device.scan_job import scan_job
+from trendalgo.device.scan_lock import ScanBusyError, scan_lock_held
 from trendalgo.device.scan_model import (
     ScanUnavailableError,
     progress_line,
-    progress_pct,
     scan_store_path,
 )
 from trendalgo.device.scan_progress import (
@@ -47,7 +52,6 @@ from trendalgo.device.scan_progress import (
 )
 from trendalgo.device.scanner_schedule import (
     clamp_interval_minutes,
-    is_stale,
     minutes_until,
     next_aligned_run,
 )
@@ -61,6 +65,7 @@ from trendalgo.device.scanner_sort import (
 from trendalgo.device.stores import StoreReadError, read_snapshot
 from trendalgo.device.time_display import load_use_utc
 from trendalgo.device.views.buy_picks_pane import BuyPicksPane
+from trendalgo.device.views.scan_progress_dialog import ScanProgressDialog, apply_main_blur
 from trendalgo.device.views.scanner_chart_dialog import show_scanner_chart_dialog
 from trendalgo.device.views.scanner_column_filter_row import ScannerColumnFilterRow
 from trendalgo.device.views.scanner_filters import ScannerFilterBar
@@ -104,6 +109,7 @@ class ScannerPage(QWidget):
         self._on_alerts_changed = on_alerts_changed
         self._pool = WorkerPool(workers=1)
         self._pending: AsyncResult[Any] | None = None
+        self._scan_dialog: ScanProgressDialog | None = None
         self._coins: list[dict[str, Any]] = []
         self._shown: list[dict[str, Any]] = []
         self._sort_key = DEFAULT_SORT_KEY
@@ -124,12 +130,9 @@ class ScannerPage(QWidget):
         self._col_filters = ScannerColumnFilterRow()
         self._run = self._filters.run
         self._cancel = self._filters.cancel
+        self._force_fresh_pending = False
         self._status = QLabel()
         self._problem = problem_label()
-        self._bar = QProgressBar()
-        self._bar.setRange(0, 100)
-        self._bar.setValue(0)
-        self._bar.setTextVisible(True)
         self._caption = QLabel()
         self._caption.setObjectName("hint")
         self._caption.setWordWrap(True)
@@ -159,7 +162,6 @@ class ScannerPage(QWidget):
         layout.addWidget(self._tabs)
         layout.addWidget(self._status)
         layout.addWidget(self._problem)
-        layout.addWidget(self._bar)
         self._caption.hide()  # last-scan text is folded into the top filter row
         layout.addWidget(self._empty)
         layout.addWidget(self._buy_picks)
@@ -180,6 +182,12 @@ class ScannerPage(QWidget):
             self._sort_dir = DEFAULT_SORT_DIR
         self._run.clicked.connect(lambda _checked=False: self._start())
         self._cancel.clicked.connect(lambda _checked=False: self._cancel_run())
+        self._filters.refresh_prices.clicked.connect(lambda _checked=False: self._refresh_prices())
+        if debug_scan_enabled():
+            self._filters.force_fresh.setVisible(True)
+            self._filters.force_fresh.clicked.connect(
+                lambda _checked=False: self._start_force_fresh()
+            )
         self._wire_filter_signals()
         self._tabs.currentChanged.connect(lambda _index: self._show_tab())
         self._filters.share.clicked.connect(lambda _c=False: self._share_png())
@@ -250,7 +258,6 @@ class ScannerPage(QWidget):
 
         if open_scan_bt_settings(
             self._root,
-            show_signal_set=True,
             n_coins=max(1, len(self._coins)),
             parent=self,
         ):
@@ -289,23 +296,14 @@ class ScannerPage(QWidget):
         self._cancel_run()
 
     def _boot_after_restore(self) -> None:
-        """Cold open: rescan if past the aligned slot; else countdown to the next hour/grid."""
+        """Cold open: show last board and count down to the next aligned slot.
+
+        Never start an Opportunity scan just because the app opened. Run scan
+        (or the timer when the slot hits) is the only kickoff.
+        """
         if not self._autoscan_enabled:
             return
         minutes = clamp_interval_minutes(self._filters.every.value())
-        try:
-            snapshot, _from_pc = self._latest()
-        except StoreReadError:
-            snapshot = None
-        last = snapshot.generated_at if snapshot is not None else None
-        # Pytest constructs ScannerPage often; never kick a live network scan from unit tests.
-        under_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
-        if is_stale(last, minutes) and not under_pytest:
-            self._next_auto = None
-            self._auto_timer.stop()
-            self._refresh_auto_caption()
-            QTimer.singleShot(0, self.start_scan)
-            return
         self._next_auto = next_aligned_run(minutes)
         self._schedule_autoscan(reset=False)
 
@@ -430,8 +428,10 @@ class ScannerPage(QWidget):
             self._col_filters.install_row(self._table)
 
     def _on_watch(self, key: str, checked: bool) -> None:
+        from trendalgo.device.scan_identity import drop_watch_aliases
+
         watch = load_watchlist(self._root)
-        cleaned = [p for p in watch if p != key]
+        cleaned = drop_watch_aliases(watch, key)
         if checked:
             cleaned.append(key)
         save_watchlist(self._root, cleaned)
@@ -520,40 +520,112 @@ class ScannerPage(QWidget):
             return None, False
         return max(found, key=lambda item: item[0].generated_at.timestamp())
 
-    def _start(self) -> None:
+    def _refresh_prices(self) -> None:
+        """Expire OHLCV cache and re-run public (or keyed) scan — no keys required."""
         if self._pending is not None:
             return
+        from trendalgo.device.price_cache_clear import clear_price_caches
+
+        cleared = clear_price_caches(self._root)
+        self._status.setText(f"{S.SCAN_REFRESH_PRICES}: cleared={','.join(cleared) or 'none'}")
+        self._start()
+
+    def _start_force_fresh(self) -> None:
+        """Clear caches then live scan (public Kraken or keyed venues)."""
+        if self._pending is not None or not debug_scan_enabled():
+            return
+        cleared = clear_scan_caches(self._root)
+        self._force_fresh_pending = True
+        self._status.setText(f"{S.SCAN_FORCE_FRESH_STARTING} cleared={','.join(cleared) or 'none'}")
+        self._start(force_fresh=True)
+
+    def _scan_mode_label(self) -> str:
+        from trendalgo.device.scan_venues import resolve_scan_exchange_ids
+
+        venues = resolve_scan_exchange_ids(self._filters.dump())
+        if venues:
+            return S.SCANNER_SOURCE_KEYED.format(venues=", ".join(venues))
+        return S.SCANNER_SOURCE_PUBLIC
+
+    def _start(self, *, force_fresh: bool = False) -> None:
+        if self._pending is not None or self._scan_dialog is not None:
+            return
         self._persist_filters()
+        from trendalgo.backtest.heartbeat_tf import needs_1m_base
         from trendalgo.device.scan_bt_prefs import (
             enabled_strategies,
             load_scan_bt_prefs,
             selected_timeframes,
         )
-        from trendalgo.device.scan_venues import resolve_scan_exchange_ids
+        from trendalgo.device.scan_time_history import estimate_coin_seconds, load_history
 
-        # Unit tests mock the worker pool; skip the vault gate so they can drive Done/errors.
+        # Unit tests mock the worker pool; skip timeframe/strategy gates.
         under_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
-        if not under_pytest and not resolve_scan_exchange_ids(self._filters.dump()):
-            show_problem(self._problem, S.SCANNER_NO_EXCHANGES)
-            return
         prefs = load_scan_bt_prefs(self._root)
-        if not under_pytest and not selected_timeframes(prefs):
+        tfs = selected_timeframes(prefs)
+        strats = enabled_strategies(prefs.strategy_denylist)
+        if not under_pytest and not tfs:
             show_problem(self._problem, S.SCAN_BT_NO_TFS)
+            self._force_fresh_pending = False
             return
-        if not under_pytest and not enabled_strategies(prefs.strategy_denylist):
+        if not under_pytest and not strats:
             show_problem(self._problem, S.SCAN_BT_NO_STRATEGIES)
+            self._force_fresh_pending = False
+            return
+        if not under_pytest and scan_lock_held(self._root):
+            show_problem(self._problem, S.SCAN_BUSY)
+            self._force_fresh_pending = False
             return
         clear_problem(self._problem)
         clear_progress(self._root)
         self._logs.clear()
         self._log_seq = 0
+        if not force_fresh:
+            self._force_fresh_pending = False
+        mode = self._scan_mode_label()
+        n_coins = max(1, len(self._coins) or 1)
+        had_subhour = needs_1m_base(tfs) if tfs else False
+        from trendalgo.device.backtest_scan_eta import wall_coins_prior_s
+        from trendalgo.device.scanner_all_ta_bt import all_ta_coin_workers
+
+        per_coin = estimate_coin_seconds(
+            load_history(self._root),
+            n_strategies=len(strats) or 1,
+            n_timeframes=len(tfs) or 1,
+            had_subhour=had_subhour,
+        )
+        prior = wall_coins_prior_s(
+            per_coin_s=per_coin, n_coins=n_coins, coin_workers=all_ta_coin_workers()
+        )
+        dialog = ScanProgressDialog(
+            self.window(),
+            title=S.SCANNER_SCAN_TITLE.format(mode=mode),
+            seed_lines=(
+                S.SCANNER_SCAN_SEED.format(
+                    mode=mode,
+                    n_tf=len(tfs) or 0,
+                    n_strat=len(strats) or 0,
+                    n_coins=n_coins,
+                ),
+                S.SCAN_PROGRESS_STARTING,
+            ),
+            on_cancel=self._cancel_run,
+            prior_s=prior,
+            initial_total=max(1, n_coins),
+            initial_pair="—",
+            initial_pairs_total=None,
+            count_label=S.SCAN_PROGRESS_STEPS,
+        )
+        self._scan_dialog = dialog
+        apply_main_blur(self.window(), enabled=True)
         self._pending = self._pool.submit(scan_job, self._root)
         self._filters.set_running(True)
-        self._status.setText(S.SCAN_STARTING)
-        self._bar.setValue(0)
-        self._tabs.setCurrentIndex(TAB_LOGS)
+        self._filters.cancel.setEnabled(False)
         self._refresh_auto_caption()
         self._timer.start()
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
 
     def _poll(self) -> None:
         job = self._pending
@@ -561,39 +633,66 @@ class ScannerPage(QWidget):
             self._timer.stop()
             return
         raw = read_progress(self._root)
-        line = progress_line(raw) or S.SCAN_STARTING
-        self._status.setText(line)
         new_lines, self._log_seq = consume_progress_events(raw, self._log_seq)
         for entry in new_lines:
             self._logs.appendPlainText(entry)
-        pct = progress_pct(raw)
-        if pct is not None:
-            self._bar.setValue(pct)
-        if not job.ready():
+        ready = bool(job.ready())
+        if self._scan_dialog is not None:
+            # Prefer progress_line for phase when present.
+            phase = progress_line(raw)
+            payload = dict(raw) if isinstance(raw, dict) else {}
+            if phase and not payload.get("message"):
+                payload["message"] = phase
+            self._scan_dialog.update_progress(
+                payload,
+                worker_ready=ready,
+                extra_log_lines=new_lines,
+                append_phase_to_log=False,
+            )
+        if not ready:
             return
         self._timer.stop()
         self._pending = None
+        self._close_scan_dialog()
         self._filters.set_running(False)
-        self._status.clear()
-        self._bar.setValue(100)
         problem = ""
+        result: dict[str, Any] | None = None
         try:
-            job.get(timeout=0)
-        except ScanUnavailableError as exc:
-            msg = str(exc).strip().lower()
-            if "no exchange" in msg or "api key" in msg:
-                problem = S.SCANNER_NO_EXCHANGES
-            else:
-                problem = S.SCAN_UNAVAILABLE
+            result = job.get(timeout=0)
+        except ScanBusyError:
+            problem = S.SCAN_BUSY
+        except ScanUnavailableError:
+            problem = S.SCAN_UNAVAILABLE
         except Exception:
             problem = S.SCAN_FAILED
 
         self._tabs.setCurrentIndex(TAB_QUALIFIED)
         self.reload()
+        source = ""
+        if isinstance(result, dict):
+            source = str(result.get("data_source") or "").strip()
+        if not source:
+            source = self._scan_mode_label().removeprefix("Source: ").strip()
+        source_badge = S.SCANNER_SOURCE_BADGE.format(source=source) if source else ""
+        if self._force_fresh_pending:
+            updated = None
+            try:
+                snap, _from_pc = self._latest()
+                if snap is not None:
+                    updated = snap.generated_at.isoformat()
+            except Exception:  # noqa: BLE001 — debug log only
+                updated = None
+            log_debug_scan_publish(self._root, updated_at=updated)
+            if updated and not problem:
+                done = f"{S.SCAN_DONE} DEBUG_SCAN updated_at={updated}"
+                self._status.setText(f"{done} · {source_badge}" if source_badge else done)
+            self._force_fresh_pending = False
         if problem:
             show_problem(self._problem, problem)
         else:
-            self._status.setText(S.SCAN_DONE)
+            if not self._status.text().startswith(S.SCAN_DONE):
+                done = S.SCAN_DONE
+                self._status.setText(f"{done} · {source_badge}" if source_badge else done)
             self._emit_scan_alerts()
         self._schedule_autoscan(reset=True)
 
@@ -621,6 +720,7 @@ class ScannerPage(QWidget):
         except (OSError, ValueError) as exc:
             QMessageBox.warning(self, S.SCANNER_SHARE, str(exc))
             return
+        remember_export_dir(self._root, out)
         note = S.SCANNER_SHARE_DONE.format(name=out.name, path=str(out.parent))
         QMessageBox.information(self, S.SCANNER_SHARE, note)
 
@@ -653,10 +753,24 @@ class ScannerPage(QWidget):
         self._timer.stop()
         self._pending = None
         self._pool.cancel()
+        self._close_scan_dialog()
         self._filters.set_running(False)
         self._status.setText(S.SCAN_CANCELLED)
-        self._bar.setValue(0)
         self._refresh_auto_caption()
+
+    def _close_scan_dialog(self) -> None:
+        dialog = self._scan_dialog
+        self._scan_dialog = None
+        apply_main_blur(self.window(), enabled=False)
+        if dialog is None:
+            return
+        try:
+            dialog.finish_and_close()
+        except Exception:
+            try:
+                dialog.reject_cancel_close()
+            except Exception:
+                pass
 
 
 def _in_watch(coin: dict[str, Any], watch: set[str]) -> bool:

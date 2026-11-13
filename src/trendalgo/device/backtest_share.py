@@ -7,12 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.device.backtest_export_render import build_export_panel
+from trendalgo.device.export_prefs import suggested_png_path
 
 
 def default_export_path(root: Path, *, pair: str) -> Path:
     day = datetime.now(tz=UTC).date().isoformat()
     safe = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in pair.upper()) or "PAIR"
-    return root / "exports" / f"backtest-{safe}-{day}.png"
+    return suggested_png_path(root, f"backtest-{safe}-{day}.png")
 
 
 def filter_summary(filters: dict[str, Any]) -> str:

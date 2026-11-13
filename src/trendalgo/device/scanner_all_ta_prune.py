@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import pandas as pd
@@ -11,6 +12,7 @@ from trendalgo.backtest import hill_climb as _hill
 from trendalgo.backtest.fleet_config import OPTIMIZE_TOP_N
 from trendalgo.backtest.hill_climb import climb_seed
 from trendalgo.backtest.hill_climb_axes import int_params
+from trendalgo.device.scan_parallel import pass2_worker_count
 from trendalgo.exchanges.fees import ExchangeFeeSchedule, get_fee_schedule
 
 ProgressFn = Callable[[str], None]
@@ -111,6 +113,15 @@ def fleet_row_to_lts(
         if is_oracle
         else [],
     }
+    if is_oracle and row.get("tradable_net_pct") is not None:
+        try:
+            out["tradable_net_pct"] = float(row["tradable_net_pct"])
+        except (TypeError, ValueError):
+            pass
+        try:
+            out["tradable_trades"] = int(row.get("tradable_trades") or 0)
+        except (TypeError, ValueError):
+            out["tradable_trades"] = 0
     dossier = row.get("heartbeat_dossier")
     if is_secret and isinstance(dossier, dict):
         out["heartbeat_dossier"] = dossier
@@ -177,13 +188,19 @@ def deepen_seeds(
     frames_by_tf: dict[str, pd.DataFrame] | None = None,
     on_progress: ProgressFn | None = None,
 ) -> list[dict[str, Any]]:
-    """Params at signal-only, then TSL 1–20% for each seed on its own TF."""
+    """Params at signal-only, then TSL 1–20% for each seed on its own TF.
+
+    Seeds deepen in parallel under the shared pass2 budget; output order matches
+    input seed order.
+    """
     frames = dict(frames_by_tf or {})
-    out: list[dict[str, Any]] = []
-    for seed in seeds:
+    if not seeds:
+        return []
+
+    def _one(seed: dict[str, Any]) -> dict[str, Any] | None:
         tf = str(seed.get("timeframe") or timeframe)
         active = frames.get(tf, frame)
-        best = climb_seed(
+        return climb_seed(
             active,
             seed,
             fee=fee,
@@ -192,9 +209,26 @@ def deepen_seeds(
             frames_by_tf=frames,
             on_progress=on_progress,
         )
-        if best is not None:
-            out.append(best)
-    return out
+
+    workers = max(1, min(len(seeds), pass2_worker_count()))
+    if workers == 1 or len(seeds) == 1:
+        out: list[dict[str, Any]] = []
+        for seed in seeds:
+            best = _one(seed)
+            if best is not None:
+                out.append(best)
+        return out
+
+    slotted: list[dict[str, Any] | None] = [None] * len(seeds)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(_one, seed): i for i, seed in enumerate(seeds)}
+        for fut in as_completed(futures):
+            i = futures[fut]
+            try:
+                slotted[i] = fut.result()
+            except Exception:
+                slotted[i] = None
+    return [row for row in slotted if row is not None]
 
 
 def fee_for_bps(fee_bps_round_trip: float) -> ExchangeFeeSchedule:

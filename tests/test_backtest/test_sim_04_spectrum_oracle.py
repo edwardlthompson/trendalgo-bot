@@ -1,4 +1,4 @@
-"""SIM-04: relaxed spectrum gate; oracle may take losing swings."""
+"""SIM-04: spectrum gate; Oracle is winners-only trough→peak (loser-oracle reverted)."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from trendalgo.backtest.ta_simulator import simulate_oracle_max_gain
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 
 
-def _fee() -> ExchangeFeeSchedule:
+def _fee(*, taker: float = 0.0) -> ExchangeFeeSchedule:
     return ExchangeFeeSchedule(
         exchange_id="test",
-        taker_pct=0.0,
-        maker_pct=0.0,
+        taker_pct=taker,
+        maker_pct=taker,
         tier="retail",
         source_url="",
     )
@@ -89,8 +89,8 @@ def test_spectrum_ok_above_oracle_within_five_pct(monkeypatch) -> None:  # noqa:
     assert reason == "spectrum_ok_above_oracle"
 
 
-def test_oracle_choppy_fixture_win_rate_below_100() -> None:
-    # L@1=10 → H@3=8 (loser), L@5=5 → H@6=20 (winner).
+def test_oracle_choppy_fixture_winners_only_after_fees() -> None:
+    # L@1=10 → H@3=8 (loser, skipped); L@5=5 → H@6=20 (winner).
     highs = [12.0, 11.0, 7.0, 8.0, 7.0, 6.0, 20.0, 5.0]
     lows = [11.0, 10.0, 10.5, 7.0, 6.0, 5.0, 15.0, 4.0]
     df = pd.DataFrame(
@@ -102,8 +102,10 @@ def test_oracle_choppy_fixture_win_rate_below_100() -> None:
             "volume": [1.0] * 8,
         }
     )
-    stats = simulate_oracle_max_gain(df, stake_usd=1000.0, fee=_fee())
+    stats = simulate_oracle_max_gain(df, stake_usd=1000.0, fee=_fee(taker=0.001))
     assert stats is not None
-    assert stats["trades"] >= 2
-    assert float(stats["win_rate"]) < 1.0
-    assert int(stats["wins"]) < int(stats["trades"])
+    assert int(stats["trades"]) >= 1
+    assert float(stats["win_rate"]) == 1.0
+    assert int(stats["wins"]) == int(stats["trades"])
+    for trade in stats["trade_list"]:
+        assert float(trade["net_pnl"]) > 0

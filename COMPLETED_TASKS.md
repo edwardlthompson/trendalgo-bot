@@ -2,6 +2,31 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## TG-SS-1 — Sauce-on-join + chart/volume (2026-11-13)
+
+- ✅ [AGENT][LOCAL] TG-SS-1 Drop Settings col on enter chart; Sauce first-join once then top-10; skip empty exchange volume lines; BTC enter resend with SS + volume — scope: `src/trendalgo/notifications/` `src/trendalgo/device/opportunity_sauce.py` `src/trendalgo/device/scanner_all_ta_bt.py` tests
+
+## TG-LTS-Alerts — LTS-parity Telegram + chart markers (2026-11-13)
+
+Plan: `.cursor/plans/lts-rich_telegram_alerts_9ad73007.plan.md` · Palette B. Local tip `c77b651`.
+
+- ✅ [AGENT][LOCAL] TG-1 Port LTS HTML enter/exit captions + exact URL keyboard; `parse_mode`/`reply_markup` on send; live field aliases — scope: `src/trendalgo/notifications/telegram_format.py` `telegram_keyboard.py` `telegram.py` `tests/test_device/`
+- ✅ [AGENT][LOCAL] TG-2 Candlestick composite enter PNG (top-strategy ^/v + holds + top-5/B&H table) + leave snapshot; wire `scan_alerts` — scope: `src/trendalgo/notifications/telegram_chart.py` (+split modules ≤150) `scan_alerts.py` `tests/test_device/`
+- ✅ [AGENT][LOCAL] TG-3 Shared Palette B tokens; Scanner + Backtest green up-triangle / red down-triangle entry/exit markers — scope: `src/trendalgo/device/chart_contrast.py` `views/candle_chart.py` `views/scanner_chart_dialog.py` `tests/test_device/`
+- ✅ [AGENT][LOCAL] TG-4 Leave reason/lifecycle enrichment; LTS-shaped `alert_preview`; ribbon Test TG; watch-agent-gates — scope: `scanner_alert_diff.py` `alert_preview.py` `alerts_notify_ribbon.py` `tests/test_device/`
+- ✅ [HUMAN] Review Alerts ribbon preview wording — absorbed by TG-LTS-Alerts (LTS HTML captions + preview samples)
+
+## SS-Final-Boss — Secret Sauce helpers → Final Boss (2026-11-13)
+
+Spec: [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md) · Feature: [`docs/features/secret-sauce.md`](docs/features/secret-sauce.md). Excluded: **M** (BTC/corr veto), **R** (cross-coin transfer).
+
+- ✅ [AGENT][LOCAL] S1 Spec + BUILD_PLAN + sauce names + uncapped Sauce plumbing + progress phases — scope: `docs/specs/secret-sauce-oracle-gap.md` `docs/features/secret-sauce.md` `src/trendalgo/device/sauce_names.py` `src/trendalgo/backtest/secret_sauce_lab/search.py` `src/trendalgo/device/pair_strategy_scan.py`
+- ✅ [AGENT][LOCAL] S2 Peer-entry helper (A) + Sauce-TA handoff Exit helper (C) + tests — scope: `src/trendalgo/backtest/secret_sauce_lab/helper_peer_entry.py` `helper_exit.py` `sauce_cook.py` `tests/test_backtest/`
+- ✅ [AGENT][LOCAL] S3 Armed helper (B) + Lab/helper TSL deepen (L) + Oracle-TF bias + walk-forward light (K) — scope: `helper_armed.py` `search.py` `multi_tf_lab.py` `meta_tsl.py`
+- ✅ [AGENT][LOCAL] S4 Final Boss (E/O) vote/holdout + Study + Results/chart; create-bot prefers Final — scope: `final_boss.py` `sauce_cook.py` `secret_sauce_study.py` `backtest_page.py`
+- ✅ [AGENT][LOCAL] S5 Dual-horizon (G), regime peers (I), residual CCI/WILLR/MFI (J), session mask (N), scale-out sim (H) — scope: `dual_horizon.py` `regime_peers.py` `secret_sauce_features.py` `session_mask.py` `scale_out.py`
+- ✅ [AGENT][LOCAL] S6 Teacher distill (P), genetic trees (Q), MFE exit (S), vol targeting (T), veto helper (U), meta-TSL (V) — scope: `teacher_distill.py` `genetic_search.py` `mfe_exit.py` `vol_targeting.py` `veto_helper.py` `meta_tsl.py`
+
 ## Audit remediation Phases 1–9 (2026-11-11)
 
 Spec: [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md). ELv2 approved 2026-11-11. Argus 1.13.0 preserved. Local tip `db11ba0`. Follow-ups: LIVE/NOTIF botd cron wiring; SIM snapshot regen; attorney H-023.

@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
             self._portfolio,
             alerts,
             scanner,
-            BacktestPage(ctx, pool, on_open_plan=open_bots_from_fleet),
+            BacktestPage(ctx, pool, on_open_plan=open_bots_from_fleet, on_toast=self._toast),
             _scrolled(bots_page),
             GlossaryPage(),
             ExportPage(ctx),

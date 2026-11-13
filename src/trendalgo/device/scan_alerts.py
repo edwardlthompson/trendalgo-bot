@@ -17,8 +17,9 @@ from trendalgo.device.scanner_alerts_store import (
 )
 from trendalgo.device.telegram_vault import load_telegram_creds
 from trendalgo.notifications.telegram import TelegramCommands
-from trendalgo.notifications.telegram_chart import chart_png_bytes, closes_from_coin
+from trendalgo.notifications.telegram_chart import enter_alert_png, exit_alert_png
 from trendalgo.notifications.telegram_format import format_qualified_enter, format_watchlist_leave
+from trendalgo.notifications.telegram_keyboard import reply_markup_json
 
 
 def process_scan_alerts(
@@ -72,11 +73,19 @@ def _send_telegram(event: AlertEvent, *, client: TelegramCommands | None) -> Non
         return
     if event.kind == "qualified_enter" and event.coin is not None:
         caption = format_qualified_enter(event.coin)
-        png = chart_png_bytes(closes_from_coin(event.coin), title=event.symbol)
+        markup = reply_markup_json(event.coin)
+        png = enter_alert_png(event.coin)
         if png:
-            tg.send_photo(png, caption)
+            tg.send_photo(png, caption, parse_mode="HTML", reply_markup=markup)
         else:
-            tg.send_message(caption)
+            tg.send_message(caption, parse_mode="HTML", reply_markup=markup)
         return
     if event.kind == "watchlist_leave":
-        tg.send_message(format_watchlist_leave(symbol=event.symbol, reason=event.reason))
+        coin = event.coin if isinstance(event.coin, dict) else {"symbol": event.symbol}
+        caption = format_watchlist_leave(symbol=event.symbol, reason=event.reason, coin=coin)
+        markup = reply_markup_json(coin)
+        png = exit_alert_png(coin)
+        if png:
+            tg.send_photo(png, caption, parse_mode="HTML", reply_markup=markup)
+        else:
+            tg.send_message(caption, parse_mode="HTML", reply_markup=markup)

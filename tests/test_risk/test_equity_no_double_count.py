@@ -42,9 +42,7 @@ def test_metrics_equity_is_wallet_only() -> None:
         (99.5, 0.5, 1e5),
     ],
 )
-def test_peak_input_never_sees_equity_twice(
-    balance: float, open_pos: float, daily: float
-) -> None:
+def test_peak_input_never_sees_equity_twice(balance: float, open_pos: float, daily: float) -> None:
     mgr = RiskManager(RiskLimits(circuit_breaker_drawdown_pct=1.0), wallet_usd=1.0)
     mgr.set_equity(balance_usd=balance, open_position_usd=open_pos)
     mgr.state.daily_pnl_usd = daily

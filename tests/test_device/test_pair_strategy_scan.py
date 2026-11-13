@@ -49,7 +49,8 @@ def _ohlcv(n: int = 80) -> pd.DataFrame:
 
 
 def test_sauce_progress_steps_constant() -> None:
-    assert SAUCE_PROGRESS_STEPS == 2
+    # TA + Lab + helpers suite + Final phase slots.
+    assert SAUCE_PROGRESS_STEPS == 4
 
 
 def test_sort_rows_by_net_descending() -> None:
@@ -264,7 +265,10 @@ def test_scan_full_catalog_length(monkeypatch: Any) -> None:
         fee=fee,
         loader=_FakeLoader(frame),
     )
-    assert len(rows) == len(strat) + 1
+    # Catalog strats + B&H + unavailable Lab stub (no Oracle → no helpers).
+    assert len(rows) == len(strat) + 2
+    inds = {str(r.get("indicator") or "") for r in rows}
+    assert "Secret Sauce Lab" in inds
     skips = {r["indicator"]: r.get("skip_reason") for r in rows if r.get("skip_reason")}
     assert skips["ADD"] == "not_a_strategy"
     assert skips["CDLDOJI"] == "no_pattern"

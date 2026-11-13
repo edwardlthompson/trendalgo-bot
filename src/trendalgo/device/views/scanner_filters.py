@@ -51,8 +51,14 @@ class ScannerFilterBar(QWidget):
         self.settings.setAccessibleName(S.SCAN_BT_SETTINGS)
         self.run = mark_primary(QPushButton(S.SCAN_RUN))
         self.run.setDefault(True)
+        self.refresh_prices = QPushButton(S.SCAN_REFRESH_PRICES)
+        self.refresh_prices.setToolTip(S.SCAN_REFRESH_PRICES_TIP)
         self.cancel = QPushButton(S.CANCEL)
         self.cancel.setEnabled(False)
+        # TEMP: only visible when TRENDALGO_DEBUG_SCAN=1 (wired by ScannerPage).
+        self.force_fresh = QPushButton(S.SCAN_FORCE_FRESH_DEBUG)
+        self.force_fresh.setToolTip(S.SCAN_FORCE_FRESH_TIP)
+        self.force_fresh.setVisible(False)
         self.share = QToolButton()
         self.share.setObjectName("shareButton")
         self.share.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
@@ -76,6 +82,8 @@ class ScannerFilterBar(QWidget):
         row.addWidget(self.heatmap)
         row.addWidget(self.settings)
         row.addWidget(self.run)
+        row.addWidget(self.refresh_prices)
+        row.addWidget(self.force_fresh)
         row.addWidget(self.cancel)
         row.addWidget(self.share)
         row.addWidget(self.auto_status)
@@ -122,4 +130,8 @@ class ScannerFilterBar(QWidget):
 
     def set_running(self, running: bool) -> None:
         self.run.setEnabled(not running)
-        self.cancel.setEnabled(running)
+        self.refresh_prices.setEnabled(not running)
+        self.force_fresh.setEnabled(not running)
+        # Cancel lives on the ApplicationModal progress dialog while running.
+        self.cancel.setEnabled(False)
+        self.cancel.setVisible(not running)

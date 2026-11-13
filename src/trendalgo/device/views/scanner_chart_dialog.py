@@ -6,9 +6,19 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from PySide6.QtCharts import QAreaSeries, QChart, QChartView, QDateTimeAxis, QLineSeries, QValueAxis
+from PySide6.QtCharts import (
+    QAreaSeries,
+    QCandlestickSeries,
+    QCandlestickSet,
+    QChart,
+    QChartView,
+    QDateTimeAxis,
+    QLineSeries,
+    QScatterSeries,
+    QValueAxis,
+)
 from PySide6.QtCore import QDateTime, QPointF, Qt, QTimer
-from PySide6.QtGui import QColor, QFont, QKeySequence, QPainter, QShortcut
+from PySide6.QtGui import QColor, QFont, QKeySequence, QPainter, QPen, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -26,7 +36,7 @@ from PySide6.QtWidgets import (
 )
 
 from trendalgo.device import strings as S
-from trendalgo.device.candle_chart_data import timestamp_ms
+from trendalgo.device.candle_chart_data import ohlc_bars, timestamp_ms
 from trendalgo.device.scan_stake import DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scanner_chart_trades import (
     overlay_net_pct,
@@ -193,15 +203,19 @@ def show_scanner_chart_dialog(
                 n_trades = len(regions)
                 tsl_n = sum(1 for r in regions if r.get("tsl_exit"))
                 expected = row.get("trades")
+                tf_label = str(row.get("timeframe") or "1h")
                 if not regions:
-                    hint.setText("No trades for this strategy on the available bars.")
+                    hint.setText(
+                        f"{row.get('indicator')} · {tf_label}: "
+                        "No trades for this strategy on the available bars."
+                    )
                 elif expected is not None and int(expected) != n_trades:
                     hint.setText(
-                        f"{row.get('indicator')}: overlay {n_trades} trades "
+                        f"{row.get('indicator')} · {tf_label}: overlay {n_trades} trades "
                         f"(Results listed {expected}; {tsl_n} TSL)."
                     )
                 else:
-                    overlay_net = overlay_net_pct(regions)
+                    overlay_net = overlay_net_pct(regions, stake_usd=DEVICE_SCAN_STAKE_USD)
                     results_net = _as_float(row.get("net_pct"))
                     if (
                         overlay_net is not None
@@ -227,7 +241,10 @@ def show_scanner_chart_dialog(
                                 dossier = row["params"].get("heartbeat_dossier")
                                 if isinstance(dossier, dict):
                                     formula = str(dossier.get("formula_en") or "")
-                        base = f"{row.get('indicator')}: {n_trades} trades ({tsl_n} TSL exits)"
+                        base = (
+                            f"{row.get('indicator')} · {tf_label}: "
+                            f"{n_trades} trades ({tsl_n} TSL exits)"
+                        )
                         hint.setText(f"{base}\n{formula}" if formula else base)
             else:
                 radios_scroll.setEnabled(False)
@@ -338,8 +355,11 @@ class _OverlayChart(QWidget):
         super().__init__(parent)
         self._empty = QLabel(S.SCANNER_CHART_EMPTY)
         self._empty.setObjectName("hint")
-        self._price = QLineSeries()
+        self._candles = QCandlestickSeries()
+        self._candles.setName("OHLC")
+        self._price = QLineSeries()  # spark fallback when OHLC missing
         self._chart = QChart()
+        self._chart.addSeries(self._candles)
         self._chart.addSeries(self._price)
         self._chart.legend().hide()
         self._chart.setBackgroundVisible(False)
@@ -348,12 +368,17 @@ class _OverlayChart(QWidget):
         self._axis_y = QValueAxis()
         self._chart.addAxis(self._axis_x, Qt.AlignmentFlag.AlignBottom)
         self._chart.addAxis(self._axis_y, Qt.AlignmentFlag.AlignLeft)
+        self._candles.attachAxis(self._axis_x)
+        self._candles.attachAxis(self._axis_y)
         self._price.attachAxis(self._axis_x)
         self._price.attachAxis(self._axis_y)
         self._areas: list[QAreaSeries] = []
         self._area_lines: list[QLineSeries] = []
+        self._markers: list[QScatterSeries] = []
+        self._connectors: list[QLineSeries] = []
         self._level_lines: list[QLineSeries] = []
         self._labels: list[QGraphicsSimpleTextItem] = []
+        self._map_series = self._candles
         self._view = QChartView(self._chart)
         self._view.setRenderHint(QPainter.RenderHint.Antialiasing)
         layout = QVBoxLayout(self)
@@ -364,6 +389,7 @@ class _OverlayChart(QWidget):
 
     def clear(self) -> None:
         self._clear_areas()
+        self._candles.clear()
         self._price.clear()
         self._empty.show()
         self._view.hide()
@@ -377,16 +403,44 @@ class _OverlayChart(QWidget):
         level_prices: list[tuple[str, float]] | None = None,
     ) -> None:
         self._clear_areas()
+        self._candles.clear()
         self._price.clear()
+        bars = ohlc_bars(frame) if frame is not None and not frame.empty else []
         points = _price_points(frame, closes)
-        if len(points) < 2:
+        if len(bars) < 2 and len(points) < 2:
             self.clear()
             return
         colors = colors_for(active_mode())
-        for ms, value in points:
-            self._price.append(ms, value)
-        lows = [p[1] for p in points]
-        highs = list(lows)
+        use_candles = len(bars) >= 2
+        self._map_series = self._candles if use_candles else self._price
+        lows: list[float] = []
+        highs: list[float] = []
+        if use_candles:
+            from trendalgo.device import chart_contrast as contrast
+
+            bull = QColor(contrast.CANDLE_UP)
+            bear = QColor(contrast.CANDLE_DOWN)
+            self._candles.setIncreasingColor(bull)
+            self._candles.setDecreasingColor(bear)
+            self._candles.setBodyOutlineVisible(False)
+            for bar in bars:
+                self._candles.append(
+                    QCandlestickSet(bar.open, bar.high, bar.low, bar.close, bar.ms)
+                )
+                lows.append(bar.low)
+                highs.append(bar.high)
+            first, last = bars[0].ms, bars[-1].ms
+            self._price.setVisible(False)
+            self._candles.setVisible(True)
+        else:
+            for ms, value in points:
+                self._price.append(ms, value)
+                lows.append(value)
+                highs.append(value)
+            first, last = points[0][0], points[-1][0]
+            self._price.setColor(QColor(colors["primary"]))
+            self._candles.setVisible(False)
+            self._price.setVisible(True)
         for region in regions:
             area = self._add_region(region, colors)
             if area is not None:
@@ -395,7 +449,6 @@ class _OverlayChart(QWidget):
                 lows.append(float(region["exit_price"]))
                 highs.append(float(region["entry_price"]))
                 highs.append(float(region["exit_price"]))
-        first, last = points[0][0], points[-1][0]
         for _name, price in level_prices or []:
             line = QLineSeries()
             line.append(float(first), float(price))
@@ -409,7 +462,6 @@ class _OverlayChart(QWidget):
             self._level_lines.append(line)
             lows.append(float(price))
             highs.append(float(price))
-        self._price.setColor(QColor(colors["primary"]))
         self._axis_x.setRange(
             QDateTime.fromMSecsSinceEpoch(first), QDateTime.fromMSecsSinceEpoch(last)
         )
@@ -421,7 +473,6 @@ class _OverlayChart(QWidget):
         self._axis_y.setLabelsColor(label)
         self._empty.hide()
         self._view.show()
-        # Labels need mapped chart positions after axes/layout settle.
         pending = list(regions)
 
         def _place_labels() -> None:
@@ -444,26 +495,61 @@ class _OverlayChart(QWidget):
         end = timestamp_ms(region.get("exit_time"))
         if start is None or end is None or end <= start:
             return None
-        lo = min(float(region["entry_price"]), float(region["exit_price"]))
-        hi = max(float(region["entry_price"]), float(region["exit_price"]))
+        entry_px = float(region["entry_price"])
+        exit_px = float(region["exit_price"])
+        lo = min(entry_px, exit_px)
+        hi = max(entry_px, exit_px)
         if hi <= lo:
             hi = lo * 1.001
         upper = QLineSeries()
         lower = QLineSeries()
+        # Flat rectangle from entry bar → exit bar (not wick path envelope).
         upper.append(float(start), hi)
         upper.append(float(end), hi)
         lower.append(float(start), lo)
         lower.append(float(end), lo)
         area = QAreaSeries(upper, lower)
-        fill = colors["gainUp"] if region.get("profitable") else colors["gainDown"]
+        from trendalgo.device import chart_contrast as contrast
+
+        fill = contrast.HOLD_WIN if region.get("profitable") else contrast.HOLD_LOSS
         color = QColor(fill)
-        color.setAlpha(110)
+        color.setAlpha(int(255 * contrast.HOLD_ALPHA))
         area.setColor(color)
-        area.setBorderColor(QColor(fill))
+        border = QColor(fill)
+        border.setAlpha(140)
+        area.setBorderColor(border)
         self._area_lines.extend((upper, lower))
         self._chart.addSeries(area)
         area.attachAxis(self._axis_x)
         area.attachAxis(self._axis_y)
+        # Faint dashed buy→sell connector across the rectangle.
+        connector = QLineSeries()
+        pen = QPen(QColor(fill))
+        pen.setStyle(Qt.PenStyle.DashLine)
+        pen.setWidthF(1.0)
+        c = QColor(fill)
+        c.setAlpha(120)
+        pen.setColor(c)
+        connector.setPen(pen)
+        connector.append(float(start), entry_px)
+        connector.append(float(end), exit_px)
+        self._chart.addSeries(connector)
+        connector.attachAxis(self._axis_x)
+        connector.attachAxis(self._axis_y)
+        self._connectors.append(connector)
+        from trendalgo.device.chart_markers import style_entry_series, style_exit_series
+
+        buy = QScatterSeries()
+        style_entry_series(buy, size=10.0)
+        buy.append(float(start), entry_px)
+        sell = QScatterSeries()
+        style_exit_series(sell, size=10.0)
+        sell.append(float(end), exit_px)
+        for marks in (buy, sell):
+            self._chart.addSeries(marks)
+            marks.attachAxis(self._axis_x)
+            marks.attachAxis(self._axis_y)
+            self._markers.append(marks)
         return area
 
     def _add_region_label(self, region: dict[str, Any], colors: dict[str, str]) -> None:
@@ -479,23 +565,18 @@ class _OverlayChart(QWidget):
             except (TypeError, ValueError):
                 return
         mid_ms = (start + end) / 2.0
-        lo = min(float(region["entry_price"]), float(region["exit_price"]))
         hi = max(float(region["entry_price"]), float(region["exit_price"]))
-        profitable = bool(region.get("profitable"))
-        # Wins above the band; losses below — easier to read on dense overlays.
-        anchor_px = hi if profitable else lo
-        scene_pt = self._chart.mapToPosition(QPointF(mid_ms, anchor_px), self._price)
+        # Percentage always above the rectangle.
+        scene_pt = self._chart.mapToPosition(QPointF(mid_ms, hi), self._map_series)
         item = QGraphicsSimpleTextItem(text)
         font = QFont(item.font())
         font.setBold(True)
         font.setPointSize(9)
         item.setFont(font)
-        fill = colors["gainUp"] if profitable else colors["gainDown"]
+        fill = colors["gainUp"] if region.get("profitable") else colors["gainDown"]
         item.setBrush(QColor(fill))
-        # Center label on the hold band mid-point.
         br = item.boundingRect()
-        y_off = -br.height() - 2 if profitable else 4
-        item.setPos(scene_pt.x() - br.width() / 2.0, scene_pt.y() + y_off)
+        item.setPos(scene_pt.x() - br.width() / 2.0, scene_pt.y() - br.height() - 2)
         scene = self._chart.scene()
         if scene is not None:
             scene.addItem(item)
@@ -516,6 +597,22 @@ class _OverlayChart(QWidget):
             self._chart.removeSeries(area)
         self._areas.clear()
         self._area_lines.clear()
+        for marks in self._markers:
+            try:
+                marks.detachAxis(self._axis_x)
+                marks.detachAxis(self._axis_y)
+            except RuntimeError:
+                pass
+            self._chart.removeSeries(marks)
+        self._markers.clear()
+        for line in self._connectors:
+            try:
+                line.detachAxis(self._axis_x)
+                line.detachAxis(self._axis_y)
+            except RuntimeError:
+                pass
+            self._chart.removeSeries(line)
+        self._connectors.clear()
         for line in self._level_lines:
             try:
                 line.detachAxis(self._axis_x)

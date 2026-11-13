@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import html
 from collections.abc import Callable
 from typing import Any
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -12,7 +14,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QTableWidgetItem,
-    QTextEdit,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -39,52 +41,142 @@ def show_secret_sauce_study(
     dialog.setMinimumSize(520, 460)
     layout = QVBoxLayout(dialog)
     if bool(row.get("ss_lab_pending")):
-        empty = QLabel(S.SECRET_SAUCE_PENDING)
-        empty.setWordWrap(True)
-        layout.addWidget(empty)
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
-        dialog.exec()
+        _stub(layout, dialog, S.SECRET_SAUCE_PENDING)
         return
-
+    if bool(row.get("ss_unavailable")):
+        _stub(layout, dialog, str(row.get("spectrum_note") or S.SECRET_SAUCE_UNAVAILABLE))
+        return
     if not isinstance(dossier, dict):
-        empty = QLabel(S.SECRET_SAUCE_STUDY_EMPTY)
-        empty.setWordWrap(True)
-        layout.addWidget(empty)
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
-        dialog.exec()
+        _stub(layout, dialog, S.SECRET_SAUCE_STUDY_EMPTY)
         return
 
     formula = str(dossier.get("formula_en") or "")
     anti = str(dossier.get("anti_cheat") or "")
-    meta = QLabel(
-        S.SECRET_SAUCE_STUDY_META.format(
-            pair=str((coin or {}).get("pair") or row.get("symbol") or "—"),
-            tf=str(row.get("timeframe") or "—"),
-            train=float(dossier.get("train_coverage") or 0) * 100.0,
-            hold=float(dossier.get("holdout_coverage") or 0) * 100.0,
-        )
+    pair = str((coin or {}).get("pair") or row.get("symbol") or "—")
+    tf = str(row.get("timeframe") or "—")
+    sauce = float(row.get("net_pct") or 0.0)
+    bh = float(((coin or {}).get("backtest_buy_hold") or {}).get("net_pct") or 0.0)
+    oracle = float(((coin or {}).get("backtest_oracle_max") or {}).get("net_pct") or 0.0)
+
+    # 1) Hero — bold pair · TF · Replay Net %
+    hero = QLabel(
+        f"<span style='font-size:15pt'><b>{html.escape(pair)}</b> · {html.escape(tf)}</span><br/>"
+        f"<span style='font-size:18pt'><b>{html.escape(name)} "
+        f"{sauce:.2f}%</b></span>"
     )
-    meta.setWordWrap(True)
+    hero.setTextFormat(Qt.TextFormat.RichText)
+    hero.setWordWrap(True)
+    secondary = QLabel(
+        f"B&amp;H {bh:.2f}% · Oracle ceiling {oracle:.2f}% · "
+        f"train {float(dossier.get('train_coverage') or 0) * 100.0:.0f}% · "
+        f"holdout {float(dossier.get('holdout_coverage') or 0) * 100.0:.0f}%"
+    )
+    secondary.setObjectName("hint")
+    secondary.setWordWrap(True)
+    layout.addWidget(hero)
+    layout.addWidget(secondary)
+
+    # 2) Rule block — Enter / Exit rich lines (formula kept for Copy only)
+    rules_title = QLabel(S.SECRET_SAUCE_RULES)
+    rules_title.setObjectName("sectionTitle")
+    layout.addWidget(rules_title)
+    enter_lbl = QLabel(_side_rich(S.SECRET_SAUCE_ENTER, dossier.get("entry_conjuncts")))
+    enter_lbl.setTextFormat(Qt.TextFormat.RichText)
+    enter_lbl.setWordWrap(True)
+    exit_lbl = QLabel(_side_rich(S.SECRET_SAUCE_EXIT, dossier.get("exit_conjuncts")))
+    exit_lbl.setTextFormat(Qt.TextFormat.RichText)
+    exit_lbl.setWordWrap(True)
+    layout.addWidget(enter_lbl)
+    layout.addWidget(exit_lbl)
+
+    # 3) Regime chips (muted) + votes as hint
     regime = row.get("regime") if isinstance(row.get("regime"), dict) else None
     if regime is None and isinstance(dossier.get("regime"), dict):
         regime = dossier.get("regime")
     regime_lbl = _regime_label(regime)
+    if regime_lbl is not None:
+        regime_lbl.setObjectName("hint")
+        layout.addWidget(regime_lbl)
     votes_lbl = _votes_label(regime)
-    formula_box = QTextEdit()
-    formula_box.setReadOnly(True)
-    formula_box.setPlainText(formula)
-    formula_box.setMaximumHeight(100)
-    enter_lbl = QLabel(_side_line(S.SECRET_SAUCE_ENTER, dossier.get("entry_conjuncts")))
-    enter_lbl.setWordWrap(True)
-    exit_lbl = QLabel(_side_line(S.SECRET_SAUCE_EXIT, dossier.get("exit_conjuncts")))
-    exit_lbl.setWordWrap(True)
-    anti_lbl = QLabel(anti)
-    anti_lbl.setObjectName("hint")
-    anti_lbl.setWordWrap(True)
+    if votes_lbl is not None:
+        layout.addWidget(votes_lbl)
+    voters = dossier.get("final_voters")
+    if isinstance(voters, list) and voters:
+        voters_lbl = QLabel(
+            S.SECRET_SAUCE_FINAL_VOTERS.format(voters=", ".join(str(v) for v in voters))
+        )
+        voters_lbl.setObjectName("hint")
+        voters_lbl.setWordWrap(True)
+        layout.addWidget(voters_lbl)
+
+    # 4) Honesty / anti-cheat collapsed
+    anti_summary = QLabel(S.SECRET_SAUCE_ANTI_SUMMARY)
+    anti_summary.setObjectName("hint")
+    anti_summary.setWordWrap(True)
+    layout.addWidget(anti_summary)
+    if anti.strip():
+        more = QToolButton()
+        more.setText(S.SECRET_SAUCE_ANTI_MORE)
+        more.setCheckable(True)
+        more.setObjectName("hint")
+        anti_full = QLabel(anti)
+        anti_full.setObjectName("hint")
+        anti_full.setWordWrap(True)
+        anti_full.setMaximumHeight(0)
+        anti_full.hide()
+
+        def _toggle(checked: bool, *, box: QLabel = anti_full, btn: QToolButton = more) -> None:
+            box.setVisible(checked)
+            box.setMaximumHeight(16777215 if checked else 0)
+
+        more.toggled.connect(_toggle)
+        layout.addWidget(more)
+        layout.addWidget(anti_full)
+
+    # 5) Residuals
+    residual_lbl = _residual_label(dossier)
+    if residual_lbl is not None:
+        layout.addWidget(residual_lbl)
+
+    # 6) Coverage table (secondary)
+    layout.addWidget(QLabel(S.SECRET_SAUCE_COVERAGE))
+    table = _coverage_table(dossier)
+    layout.addWidget(table, 1)
+
+    # Honesty stubs (LIVE-05) — muted
+    from trendalgo.device.views.secret_sauce_study_honesty import honesty_labels
+
+    for lbl in honesty_labels(row, coin):
+        layout.addWidget(lbl)
+
+    # 7) Actions
+    row_btns = QHBoxLayout()
+    copy_btn = QPushButton(S.SECRET_SAUCE_COPY)
+    copy_btn.clicked.connect(lambda _c=False: _copy(formula or _formula_plain(dossier), dialog))
+    row_btns.addWidget(copy_btn)
+    if on_create_bot is not None:
+        create = QPushButton(S.SECRET_SAUCE_CREATE_BOT)
+        create.clicked.connect(lambda _c=False: _create(on_create_bot, row, coin or {}, dialog))
+        row_btns.addWidget(create)
+    row_btns.addStretch(1)
+    layout.addLayout(row_btns)
+    buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+    buttons.rejected.connect(dialog.reject)
+    layout.addWidget(buttons)
+    dialog.exec()
+
+
+def _stub(layout: QVBoxLayout, dialog: QDialog, text: str) -> None:
+    empty = QLabel(text)
+    empty.setWordWrap(True)
+    layout.addWidget(empty)
+    buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+    buttons.rejected.connect(dialog.reject)
+    layout.addWidget(buttons)
+    dialog.exec()
+
+
+def _coverage_table(dossier: dict[str, Any]) -> Any:
     hits = list(dossier.get("swing_hits") or [])
     exit_hits = list(dossier.get("exit_hits") or [])
     indexes = list(dossier.get("oracle_entry_indexes") or [])
@@ -109,50 +201,7 @@ def show_secret_sauce_study(
         table.setItem(i, 2, QTableWidgetItem(S.SECRET_SAUCE_YES if fired else S.SECRET_SAUCE_NO))
         table.setItem(i, 3, QTableWidgetItem(str(ex_idx)))
         table.setItem(i, 4, QTableWidgetItem(S.SECRET_SAUCE_YES if ex_fired else S.SECRET_SAUCE_NO))
-    nets = QLabel(
-        S.SECRET_SAUCE_STUDY_NETS.format(
-            name=name,
-            sauce=float(row.get("net_pct") or 0.0),
-            bh=float(((coin or {}).get("backtest_buy_hold") or {}).get("net_pct") or 0.0),
-            oracle=float(((coin or {}).get("backtest_oracle_max") or {}).get("net_pct") or 0.0),
-        )
-    )
-    nets.setWordWrap(True)
-    from trendalgo.device.views.secret_sauce_study_honesty import honesty_labels
-
-    honesty = honesty_labels(row, coin)
-    layout.addWidget(meta)
-    if regime_lbl is not None:
-        layout.addWidget(regime_lbl)
-    if votes_lbl is not None:
-        layout.addWidget(votes_lbl)
-    layout.addWidget(QLabel(S.SECRET_SAUCE_FORMULA))
-    layout.addWidget(formula_box)
-    layout.addWidget(enter_lbl)
-    layout.addWidget(exit_lbl)
-    layout.addWidget(anti_lbl)
-    residual_lbl = _residual_label(dossier)
-    if residual_lbl is not None:
-        layout.addWidget(residual_lbl)
-    layout.addWidget(QLabel(S.SECRET_SAUCE_COVERAGE))
-    layout.addWidget(table, 1)
-    layout.addWidget(nets)
-    for lbl in honesty:
-        layout.addWidget(lbl)
-    row_btns = QHBoxLayout()
-    copy_btn = QPushButton(S.SECRET_SAUCE_COPY)
-    copy_btn.clicked.connect(lambda _c=False: _copy(formula_box.toPlainText(), dialog))
-    row_btns.addWidget(copy_btn)
-    if on_create_bot is not None:
-        create = QPushButton(S.SECRET_SAUCE_CREATE_BOT)
-        create.clicked.connect(lambda _c=False: _create(on_create_bot, row, coin or {}, dialog))
-        row_btns.addWidget(create)
-    row_btns.addStretch(1)
-    layout.addLayout(row_btns)
-    buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-    buttons.rejected.connect(dialog.reject)
-    layout.addWidget(buttons)
-    dialog.exec()
+    return table
 
 
 def _regime_label(regime: dict[str, Any] | None) -> QLabel | None:
@@ -191,7 +240,27 @@ def _votes_label(regime: dict[str, Any] | None) -> QLabel | None:
     return lbl
 
 
-def _side_line(label: str, conjuncts: object) -> str:
+def _side_rich(label: str, conjuncts: object) -> str:
+    if not isinstance(conjuncts, list) or not conjuncts:
+        return f"<b>{html.escape(label)}</b>: —"
+    parts: list[str] = []
+    for c in conjuncts:
+        if isinstance(c, dict):
+            feat = html.escape(str(c.get("feature") or ""))
+            op = html.escape(str(c.get("op") or ""))
+            val = html.escape(str(c.get("value") or ""))
+            parts.append(f"<b>{feat}</b> {op} <b>{val}</b>")
+    joined = " AND ".join(parts) if parts else "—"
+    return f"<b>{html.escape(label)}</b>: {joined}"
+
+
+def _formula_plain(dossier: dict[str, Any]) -> str:
+    enter = _side_plain(S.SECRET_SAUCE_ENTER, dossier.get("entry_conjuncts"))
+    exit_ = _side_plain(S.SECRET_SAUCE_EXIT, dossier.get("exit_conjuncts"))
+    return f"{enter}\n{exit_}"
+
+
+def _side_plain(label: str, conjuncts: object) -> str:
     if not isinstance(conjuncts, list) or not conjuncts:
         return f"{label}: —"
     parts = []
@@ -251,7 +320,7 @@ def _create(
     pair = str(coin.get("pair") or f"{row.get('symbol') or 'BTC'}/USD")
     prefill = {
         "strategy_id": str(row.get("strategy_id") or "GEN_SECRET_1"),
-        "indicator": "Secret Sauce",
+        "indicator": str(row.get("indicator") or "Secret Sauce Final"),
         "params": str(row.get("params") or {}),
         "requires_backtest": "true",
         "timeframe": str(row.get("timeframe") or "1h"),

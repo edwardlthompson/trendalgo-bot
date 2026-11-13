@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.support.api_client import make_api_client
 from trendalgo.dex.control import DexVenueControlStore
 from trendalgo.dex.nonce import NonceStore
 from trendalgo.dex.router import (
@@ -16,7 +17,6 @@ from trendalgo.dex.router import (
 )
 from trendalgo.dex.runner.dry_run import DexDryRunRunner
 from trendalgo.venues.registry import get_swap_plugin, load_venue_registry
-from tests.support.api_client import make_api_client
 
 
 def test_registry_v3_swap_plugins() -> None:
@@ -84,9 +84,6 @@ def test_dex_dry_run_runner_history() -> None:
 
 
 def test_s23_api_routes() -> None:
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     client = make_api_client()
     chains = client.get("/api/v1/platform/dex/swap-chains")

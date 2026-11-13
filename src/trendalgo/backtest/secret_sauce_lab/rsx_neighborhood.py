@@ -24,10 +24,17 @@ def search_rsx_neighborhood(
     peer_period: int,
     peer_net_usd: float | None,
     strategy_id: str = "GEN_SECRET_1",
-    time_budget_s: float = 2.5,
+    time_budget_s: float | None = float("inf"),
 ) -> tuple[CompositeRule, CompositeRule, float, str] | None:
     """Grid cross-period/levels around peer; reject exact same-period clone."""
+    import math
+
     t0 = time.perf_counter()
+    budget = (
+        float("inf")
+        if time_budget_s is None or not math.isfinite(float(time_budget_s))
+        else float(time_budget_s)
+    )
     closes = df["close"].to_numpy(dtype=float)
     sma20 = np.array([float(np.mean(closes[max(0, i - 19) : i + 1])) for i in range(len(closes))])
     entry_periods = _periods_around(peer_period)
@@ -44,13 +51,13 @@ def search_rsx_neighborhood(
     best: tuple[CompositeRule, CompositeRule, float, str] | None = None
     n = len(df)
     for ep in entry_periods:
-        if time.perf_counter() - t0 > time_budget_s:
+        if time.perf_counter() - t0 > budget:
             break
         ra = _cached(cache, df, ep)
         if ra is None:
             continue
         for xp in exit_periods:
-            if time.perf_counter() - t0 > time_budget_s:
+            if time.perf_counter() - t0 > budget:
                 break
             xa = _cached(cache, df, xp)
             if xa is None:
@@ -74,7 +81,7 @@ def search_rsx_neighborhood(
                             and tag == "plain"
                         ):
                             continue
-                        if time.perf_counter() - t0 > time_budget_s:
+                        if time.perf_counter() - t0 > budget:
                             break
                         if not em.any() or not xm0.any():
                             continue

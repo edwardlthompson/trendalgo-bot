@@ -7,6 +7,7 @@ from typing import Any
 from PySide6.QtWidgets import QLabel, QProgressBar
 
 from trendalgo.device import strings as S
+from trendalgo.device.backtest_notify import done_status_line
 from trendalgo.device.backtest_sort import DEFAULT_SORT_DIR, DEFAULT_SORT_KEY, sort_rows
 from trendalgo.device.last_pair_backtest import save_last_pair_backtest
 from trendalgo.device.views.widgets import show_problem
@@ -33,15 +34,31 @@ def apply_scan_result(
     problem: QLabel,
     empty: Any,
     status: QLabel,
-    bar: QProgressBar,
+    bar: QProgressBar | None = None,
     persist: bool = True,
     market_context: dict[str, Any] | None = None,
+    elapsed_s: float | None = None,
+    data_source: str | None = None,
+    cache_age_s: float | None = None,
+    notify: bool = False,
 ) -> bool:
     """Load rows into page or show empty/error. Returns True when table should fill."""
+    ctx = market_context if isinstance(market_context, dict) else None
+    source = data_source
+    age = cache_age_s
+    if ctx is not None:
+        if not source:
+            source = str(ctx.get("data_source") or "") or None
+        if age is None and ctx.get("cache_age_s") is not None:
+            try:
+                age = float(ctx["cache_age_s"])
+            except (TypeError, ValueError):
+                age = None
+    line = done_status_line(elapsed_s=elapsed_s, data_source=source, cache_age_s=age)
     if not isinstance(rows, list) or not rows:
         empty.set_text(S.BACKTEST_NO_CANDLES_TITLE, S.BACKTEST_NO_CANDLES_BODY)
         page._show_empty()
-        status.setText(S.BACKTEST_DONE)
+        status.setText(line)
         _apply_market_context(page, None)
         return False
     page._sort_key = DEFAULT_SORT_KEY
@@ -49,7 +66,7 @@ def apply_scan_result(
     page._all_rows = sort_rows(rows, key=page._sort_key, direction=page._sort_dir)
     page._apply_view_filter()
     page._persist_prefs()
-    page._market_context = market_context if isinstance(market_context, dict) else None
+    page._market_context = ctx
     _apply_market_context(page, page._market_context)
     if persist:
         save_last_pair_backtest(
@@ -59,8 +76,9 @@ def apply_scan_result(
             market_context=page._market_context,
         )
     page._fill_table()
-    status.setText(S.BACKTEST_DONE)
-    bar.setValue(100)
+    status.setText(line)
+    if bar is not None:
+        bar.setValue(100)
     if persist:
         try:
             from trendalgo.device.scanner_alerts_store import append_log_alert
@@ -75,6 +93,10 @@ def apply_scan_result(
             )
         except (OSError, ValueError, TypeError, ImportError):
             pass
+    if notify and persist:
+        from trendalgo.device.views.backtest_done_notify import announce_backtest_done
+
+        announce_backtest_done(page, elapsed_s=elapsed_s)
     return True
 
 

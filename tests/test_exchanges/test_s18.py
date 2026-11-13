@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tests.support.api_client import make_api_client
 from trendalgo.exchanges.pair_normalizer import normalize_pair
 from trendalgo.exchanges.registry import (
     list_trading_exchanges,
@@ -9,7 +10,6 @@ from trendalgo.exchanges.registry import (
     load_registry,
 )
 from trendalgo.trading.multi_exchange import route_order
-from tests.support.api_client import make_api_client
 
 
 def test_registry_s18_worldwide_phase1() -> None:
@@ -46,9 +46,6 @@ def test_worldwide_live_requires_ack(monkeypatch) -> None:
 
 
 def test_runner_status_worldwide_api() -> None:
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     client = make_api_client()
     resp = client.get("/api/v1/trading/runner/status")

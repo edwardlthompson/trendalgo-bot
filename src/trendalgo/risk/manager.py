@@ -57,9 +57,7 @@ class RiskManager:
         cap = min(self.limits.max_stake_usd, pct_cap)
         stake = round(max(0.0, min(proposed_usd, cap)), 2)
         if stake <= 0:
-            raise StakeRejected(
-                f"stake rounds to {stake}; minimum viable stake is 0.01 after caps"
-            )
+            raise StakeRejected(f"stake rounds to {stake}; minimum viable stake is 0.01 after caps")
         return stake
 
     def record_pnl(self, delta_usd: float) -> None:

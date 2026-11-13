@@ -232,6 +232,17 @@ SETTINGS_KEYS_PRIVATE_HELP = "The private secret. Never share it or paste it int
 SETTINGS_KEYS_PRIVATE_PLACEHOLDER = "Paste private API secret"
 SETTINGS_KEYS_TEST = "Test connection"
 SETTINGS_KEYS_SAVE = "Save key"
+SETTINGS_KEYS_SAVE_OK_TITLE = "Keys saved"
+SETTINGS_KEYS_SAVE_OK = (
+    "{brand} API keys are saved in Windows Credential Manager on this PC "
+    "(not in settings.json). Use Test connection to verify them with the exchange."
+)
+SETTINGS_KEYS_SAVE_FAILED = (
+    "Could not save keys for {brand}. {detail} Re-enter both keys and try again."
+)
+SETTINGS_KEYS_SAVE_CONFIRM_FAILED = (
+    "Could not confirm the saved keys for {brand}. Re-enter both keys and try again."
+)
 SETTINGS_KEYS_DELETE = "Remove key"
 SETTINGS_KEYS_DELETE_CONFIRM = "Remove the saved API key for {brand} from this PC?"
 SETTINGS_KEYS_OK_TITLE = "Keys work"
@@ -303,21 +314,25 @@ SAVE_FAILED = "Could not save: {reason}. The file on disk was not changed."
 
 SCANNER_TITLE = "Opportunity scanner"
 SCANNER_SUBTITLE = (
-    "Scan the exchanges you select (API keys required). Each venue gets its own rows; "
-    "volume is that venue’s notional, not CoinMarketCap."
+    "Default: Live Kraken (public) — no API keys needed. "
+    "Optional keys unlock multi-venue scan; volume is that venue’s notional, not CoinMarketCap."
 )
 SCANNER_EMPTY_TITLE = "No scan results on this PC yet"
 SCANNER_EMPTY_BODY = (
-    "Add exchange API keys in Settings, check venues in the Exchange list, then press Run scan."
+    "Press Run scan for a free public Kraken opportunity board. "
+    "API keys are optional — they unlock multi-venue scan, portfolio sync, and live trading."
 )
-SCANNER_EXCHANGES_NEED_KEYS = "Add API keys…"
-SCANNER_EXCHANGES_NONE = "No exchanges"
+SCANNER_EXCHANGES_NEED_KEYS = "Add keys (optional)…"
+SCANNER_EXCHANGES_NONE = "Public Kraken"
 SCANNER_EXCHANGES_ALL = "All keyed"
 SCANNER_EXCHANGES_N = "{n} exchanges"
 SCANNER_NO_EXCHANGES = (
-    "No exchanges selected (or no API keys saved). Open Settings → Exchange API keys, "
-    "then check venues here."
+    "No keyed venues selected. Run scan still works on public Kraken. "
+    "Add API keys in Settings for multi-venue scan."
 )
+SCANNER_SOURCE_PUBLIC = "Source: Kraken public"
+SCANNER_SOURCE_KEYED = "Source: Keyed · {venues}"
+SCANNER_SOURCE_BADGE = "Source: {source}"
 SETTINGS_KEYS_RATE = "API calls this minute: {used} / {max}"
 SETTINGS_KEYS_RATE_EMPTY = "API calls this minute: —"
 SETTINGS_LAYOUT_EDIT = "Arrange modules"
@@ -414,6 +429,11 @@ SECRET_SAUCE_STUDY_META = (
 SECRET_SAUCE_STUDY_NETS = (
     "Replay Net % — {name} {sauce:.2f}% · B&H {bh:.2f}% · Oracle ceiling {oracle:.2f}%"
 )
+SECRET_SAUCE_STUDY_ORACLE_PROXY = (
+    "Oracle honesty — HL ceiling {ceiling:.2f}% · tradable next-bar close {tradable:.2f}% "
+    "· Sauce {sauce}"
+)
+SECRET_SAUCE_UNAVAILABLE = "Secret Sauce Lab: no fee-honest rule beat catalog peers on this window."
 SECRET_SAUCE_STUDY_REFIT_NET = "Re-fit Net % (study only): {refit:.2f}%"
 SECRET_SAUCE_STUDY_LIVE_NET = "Live realized Net %: {live}"
 SECRET_SAUCE_STUDY_NET_DISCLAIMER = "Re-fit Net % is not a track record."
@@ -426,7 +446,9 @@ SECRET_SAUCE_REGIME_VOTES = "Votes — ADX {adx} · ER {er} · CHOP {chop} · ri
 SECRET_SAUCE_PENDING = "Secret Sauce Lab is still cooking…"
 SCAN_PHASE_CATALOG = "Catalog TA (parallel)…"
 SCAN_PHASE_SAUCE_COINCIDENCE = "Secret Sauce TA — Oracle×catalog coincidence…"
-SCAN_PHASE_SAUCE_REFINE = "Secret Sauce Lab refine (~12s)…"
+SCAN_PHASE_SAUCE_REFINE = "Secret Sauce Lab refine (uncapped)…"
+SCAN_PHASE_SAUCE_HELPERS = "Secret Sauce helpers + Final Boss…"
+SECRET_SAUCE_FINAL_VOTERS = "Final Boss voters: {voters}"
 SCAN_PHASE_SAUCE_MERGE = "Secret Sauce Lab merge…"
 SECRET_SAUCE_FORMULA = "Formula (Enter + Exit — same rhyme every trade)"
 SECRET_SAUCE_ENTER = "Enter"
@@ -461,9 +483,6 @@ ALERTS_TEST_TG_NEED = "Set up Telegram in Settings first (token + chat id)."
 ALERTS_TEST_TG_FAIL = "Telegram test failed. Check token, chat id, and network."
 ALERTS_NOTIFY_ON = "On"
 ALERTS_NOTIFY_OFF = "Off"
-SCANNER_FILTER_SIGNALS = "Signals"
-SCANNER_SIGNALS_3COMMAS = "3Commas"
-SCANNER_SIGNALS_ALL_TA = "All TA"
 SCANNER_TAB_QUALIFIED = "Qualified"
 SCANNER_TAB_WATCH = "Watchlist"
 SCANNER_TAB_LOGS = "Logs"
@@ -512,6 +531,16 @@ SCANNER_NEW_BADGE = "NEW"
 SCANNER_ALERTS_TITLE = "No alerts on this PC"
 SCANNER_ALERTS_BODY = "Alerts from a scan show here when the scanner records them."
 SCAN_RUN = "Run scan"
+# TEMP / DEBUG — remove with trendalgo.device.debug_scan when done testing.
+SCAN_FORCE_FRESH_DEBUG = "Force fresh scan (DEBUG)"
+SCAN_FORCE_FRESH_TIP = (
+    "Clears Qualified rows + price cache, then re-pulls public (or keyed) market data. "
+    "Set TRENDALGO_DEBUG_SCAN=1 to show this control."
+)
+SCAN_FORCE_FRESH_NEED_KEYS = (
+    "Force fresh prefers keyed venues when selected; otherwise it re-pulls public Kraken."
+)
+SCAN_FORCE_FRESH_STARTING = "Force fresh scan: caches cleared. Starting live scan…"
 SCAN_STARTING = "Starting. The first scan loads the pair list, which can take a minute."
 SCAN_DONE = "Done. The new scan is saved on this PC."
 SCAN_CANCELLED = "Cancelled. The last saved scan is still shown."
@@ -519,12 +548,28 @@ SCAN_UNAVAILABLE = (
     "Kraken data was not available, so no scan was saved. The last saved scan is still shown."
 )
 SCAN_FAILED = "The scan did not finish. Check the connection, then run it again."
+SCAN_BUSY = "An Opportunity scan is already running. Wait for it to finish, or cancel it first."
+SCAN_REFRESH_PRICES = "Refresh prices"
+SCAN_REFRESH_PRICES_TIP = (
+    "Expire the local OHLCV cache and re-pull public Kraken candles. No API keys required."
+)
 
 BACKTEST_TITLE = "Backtests"
 BACKTEST_SUBTITLE = (
-    "Pick a pair and press Scan. TrendAlgo runs the same All-TA sweep as the Opportunity "
-    "scanner across each timeframe, then lists every strategy (and buy & hold) by Net %. "
-    "This page places no orders."
+    "Pick a pair and press Scan. Uses cache-first public Kraken candles (no keys). "
+    "TrendAlgo runs the same All-TA sweep as the Opportunity scanner across each timeframe, "
+    "then lists every strategy (and buy & hold) by Net %. This page places no orders."
+)
+BACKTEST_SOURCE_BADGE = "Source: {source}"
+BACKTEST_SOURCE_PUBLIC = "Kraken public"
+BACKTEST_SOURCE_CACHED = "Kraken public · cached {age}"
+BACKTEST_SOURCE_SYNTHETIC = "synthetic"
+BACKTEST_ELAPSED = "Elapsed {elapsed}"
+BACKTEST_DONE_TITLE = "Backtest complete"
+BACKTEST_DONE_BODY = "Finished in {elapsed}."
+BACKTEST_REFRESH_PRICES = "Refresh prices"
+BACKTEST_REFRESH_PRICES_TIP = (
+    "Clear cached OHLCV for free research, then re-run when you press Scan. No API keys required."
 )
 BACKTEST_TAB_SINGLE = "One indicator"
 BACKTEST_TAB_FLEET = "Fleet sweep"
@@ -540,14 +585,53 @@ BACKTEST_RUNNING = "Scanning All-TA strategies…"
 BACKTEST_CANCELLED = "Cancelled. No result was kept."
 BACKTEST_DONE = "Done. Results are sorted by Net % (highest first)."
 BACKTEST_FAILED = "The scan did not finish. Check the pair and connection, then try again."
+SCAN_PROGRESS_STEPS = "Progress: {done} / {total}{unit}"
+SCAN_PROGRESS_CURRENT_PAIR = "Current pair: {pair}"
+SCAN_PROGRESS_PAIRS_REMAINING = "{remaining} remaining ({done} / {total})"
+SCAN_PROGRESS_PAIRS_UNKNOWN = "Pairs remaining: —"
+SCAN_PROGRESS_ELAPSED = "Elapsed {elapsed}"
+SCAN_PROGRESS_ETA = "Remaining {remaining}"
+SCAN_PROGRESS_PACE = "Pace {pace}"
+SCAN_PROGRESS_PHASE = "Phase"
+SCAN_PROGRESS_LOG = "Activity"
+SCAN_PROGRESS_STARTING = "Starting…"
+SCAN_PROGRESS_CANCEL = "Cancel scan"
+SCAN_PROGRESS_HINT = "Finish or cancel before using charts / filters."
+SCAN_PROGRESS_BLOCKED = "Scan in progress — finish or cancel first."
+SCANNER_SCAN_TITLE = "Opportunity scan — {mode}"
+SCANNER_SCAN_SEED = (
+    "{mode} · {n_tf} timeframes · {n_strat} strategies · ~{n_coins} coins in estimate"
+)
+BACKTEST_SCAN_TITLE = "{pair} — Scanning All-TA"
+BACKTEST_SCAN_STRATEGIES = "Strategies (steps): {done} / {total}"
+BACKTEST_SCAN_STRATEGIES_FMT = "Strategies (steps): {done} / {total}{unit}"
+BACKTEST_SCAN_ELAPSED = "Elapsed {elapsed}"
+BACKTEST_SCAN_REMAINING = "Remaining {remaining}"
+BACKTEST_SCAN_PACE = "Pace {pace}"
+BACKTEST_SCAN_PHASE = "Phase"
+BACKTEST_SCAN_LOG = "Activity"
+BACKTEST_SCAN_STARTING = "Starting…"
+BACKTEST_SCAN_SEED = (
+    "Pair {pair} · {n_tf} timeframes · {n_strat} strategies"
+    "{subhour} · finish or cancel before using charts."
+)
+BACKTEST_SCAN_SUBHOUR = " · 1m base"
+BACKTEST_SCAN_CANCEL = "Cancel scan"
+BACKTEST_SCAN_HINT = "Finish or cancel before using charts / filters."
+BACKTEST_SCAN_BLOCKED = "Scan in progress — finish or cancel first."
 BACKTEST_EMPTY_TITLE = "No pair scan yet"
 BACKTEST_EMPTY_BODY = (
-    "Choose a pair, then press Scan to test every TA strategy over each timeframe."
+    "Choose a pair, then press Scan. Uses cache-first public Kraken candles — no API keys. "
+    "Refresh prices re-pulls OHLCV when you want fresher data."
 )
 BACKTEST_NO_CANDLES_TITLE = "No price data for this pair"
 BACKTEST_NO_CANDLES_BODY = (
-    "The All-TA loader found no candles for this pair. Try another pair or wait for cache data."
+    "The All-TA loader found no candles for this pair. Press Refresh prices, "
+    "try another pair, or check your connection (public Kraken — no keys needed)."
 )
+SECRET_SAUCE_RULES = "Rules"
+SECRET_SAUCE_ANTI_SUMMARY = "Anti-cheat: fee-honest replay; not a live track record."
+SECRET_SAUCE_ANTI_MORE = "More honesty…"
 BACKTEST_NO_TRADES_TITLE = "No trades in this run"
 BACKTEST_NO_TRADES_BODY = "This indicator made no trades on these candles. Try another timeframe."
 BACKTEST_CHART_TITLE = "Price chart"
@@ -610,7 +694,10 @@ BUY_PICKS_SUBTITLE = (
     "Highest consensus scores on the filtered board — plus top TA gain when All-TA ran"
 )
 BUY_PICKS_SUBTITLE_FALLBACK = BUY_PICKS_SUBTITLE
-BUY_PICKS_EMPTY = "No Market Context yet — run a Kraken scan (public OHLCV works without keys)."
+BUY_PICKS_EMPTY = (
+    "No Market Context yet — run a full Opportunity scan (All-TA). "
+    "Public Kraken OHLCV works without keys; Top 10 fills after the backtest pass."
+)
 BUY_PICKS_TA_NONE = "—"
 BUY_PICKS_COL_PAIR = "Pair"
 BUY_PICKS_COL_BIAS = "Bias"

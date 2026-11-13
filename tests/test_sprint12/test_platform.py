@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
 
-from trendalgo.api.app import create_app
 from trendalgo.api.state import default_state
 from trendalgo.billing.onchain_receipts import issue_fee_receipt, verify_fee_receipt
 from trendalgo.data.onchain_sentiment import onchain_sentiment_stub

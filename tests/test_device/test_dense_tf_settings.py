@@ -239,7 +239,7 @@ def test_default_timeframes_are_hours_only(tmp_path: Path) -> None:
 
 
 def test_scan_bt_settings_dialog_wires_dump_keys(tmp_path: Path, qtbot: QtBot) -> None:
-    dlg = ScanBacktestSettingsDialog(tmp_path, show_signal_set=True, n_coins=3)
+    dlg = ScanBacktestSettingsDialog(tmp_path, n_coins=3)
     qtbot.addWidget(dlg)
     assert dlg.windowTitle()
     assert dlg._eta.text()
@@ -253,7 +253,7 @@ def test_scan_bt_settings_dialog_wires_dump_keys(tmp_path: Path, qtbot: QtBot) -
     assert "5m" in loaded.timeframes
     assert "1h" in loaded.timeframes
     assert needs_1m_base(tuple(loaded.timeframes)) is True
-    assert loaded.bt_signal_set in ("3commas", "all_ta")
+    assert loaded.bt_signal_set == "all_ta"
     for box in dlg._tf_boxes.values():
         box.setChecked(False)
     dlg._save()

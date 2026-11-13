@@ -126,8 +126,10 @@ class DryRunRunner:
             if pnl is not None:
                 events.append(f"pnl={pnl:.2f}")
 
-        if self._position is not None and not self._pending_exit and self.strategy.exit(
-            ctx, self._position
+        if (
+            self._position is not None
+            and not self._pending_exit
+            and self.strategy.exit(ctx, self._position)
         ):
             if int(self.fill_offset) <= 0:
                 fill = paper_fill_price(

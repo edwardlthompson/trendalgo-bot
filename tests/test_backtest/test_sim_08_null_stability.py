@@ -33,12 +33,8 @@ def test_noise_series_sub_95th_badge() -> None:
     )
     cols, _ = feature_matrix(df)
     hit = SearchHit(
-        CompositeRule(
-            "GEN_SECRET_1", (RuleConjunct("above_sma20", ">=", 1.0),), ""
-        ),
-        CompositeRule(
-            "GEN_SECRET_1", (RuleConjunct("peak_confirm", ">=", 1.0),), ""
-        ),
+        CompositeRule("GEN_SECRET_1", (RuleConjunct("above_sma20", ">=", 1.0),), ""),
+        CompositeRule("GEN_SECRET_1", (RuleConjunct("peak_confirm", ">=", 1.0),), ""),
         net=1.0,
         family="noise",
         trailing_stop_pct=0.0,

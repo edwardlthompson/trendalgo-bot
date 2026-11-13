@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox, QWidget
 
 from trendalgo.device import strings as S
 from trendalgo.device.backtest_share import default_export_path, export_backtest_table_png
+from trendalgo.device.export_prefs import remember_export_dir
 
 
 def run_backtest_share_dialog(
@@ -49,6 +50,7 @@ def run_backtest_share_dialog(
     except (OSError, ValueError) as exc:
         QMessageBox.warning(parent, S.BACKTEST_SHARE, str(exc))
         return str(exc)
+    remember_export_dir(root, out)
     note = S.BACKTEST_SHARE_DONE.format(name=out.name, path=str(out.parent))
     QMessageBox.information(parent, S.BACKTEST_SHARE, note)
     return note

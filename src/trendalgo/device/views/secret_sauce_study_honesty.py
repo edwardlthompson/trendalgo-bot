@@ -24,6 +24,11 @@ def honesty_labels(row: dict[str, Any], coin: dict[str, Any] | None) -> list[QLa
         QLabel(S.SECRET_SAUCE_STUDY_LIVE_NET.format(live=live_txt)),
         QLabel(S.SECRET_SAUCE_STUDY_NET_DISCLAIMER),
     ]
+    if bool(row.get("ss_unavailable")):
+        labels.insert(0, QLabel(S.SECRET_SAUCE_UNAVAILABLE))
+    proxy_lbl = _oracle_proxy_label(row, coin)
+    if proxy_lbl is not None:
+        labels.insert(0, proxy_lbl)
     old = row.get("params_before") if isinstance(row.get("params_before"), dict) else None
     new = row.get("params") if isinstance(row.get("params"), dict) else None
     evidence = (
@@ -39,3 +44,37 @@ def honesty_labels(row: dict[str, Any], coin: dict[str, Any] | None) -> list[QLa
         lbl.setWordWrap(True)
         lbl.setObjectName("hint")
     return labels
+
+
+def _oracle_proxy_label(row: dict[str, Any], coin: dict[str, Any] | None) -> QLabel | None:
+    oracle = None
+    if isinstance(coin, dict):
+        raw = coin.get("backtest_oracle_max")
+        if isinstance(raw, dict):
+            oracle = raw
+        else:
+            tops = coin.get("backtest_top_strategies")
+            if isinstance(tops, list):
+                oracles = [
+                    r for r in tops if isinstance(r, dict) and r.get("indicator") == "Oracle max"
+                ]
+                if oracles:
+                    oracle = max(oracles, key=lambda r: float(r.get("net_pct") or float("-inf")))
+    if oracle is None:
+        return None
+    try:
+        ceiling = float(oracle.get("net_pct") or 0.0)
+        tradable = float(oracle["tradable_net_pct"])
+    except (TypeError, ValueError, KeyError):
+        return None
+    sauce_txt = "—"
+    try:
+        if row.get("net_pct") is not None:
+            sauce_txt = f"{float(row['net_pct']):.2f}%"
+    except (TypeError, ValueError):
+        sauce_txt = "—"
+    return QLabel(
+        S.SECRET_SAUCE_STUDY_ORACLE_PROXY.format(
+            ceiling=ceiling, tradable=tradable, sauce=sauce_txt
+        )
+    )

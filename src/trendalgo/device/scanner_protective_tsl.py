@@ -6,9 +6,8 @@ from typing import Any
 
 import pandas as pd
 
-from trendalgo.backtest.hill_climb_tsl import DEEPEN_TSL_PCTS
-from trendalgo.backtest.ta_fleet import backtest_one
-from trendalgo.backtest.tsl_plateau import pick_tsl_from_grid
+from trendalgo.backtest.hill_climb_tsl import assign_protective_tsl_from_masks
+from trendalgo.backtest.ta_fleet import prepare_signals
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 
 _SKIP = frozenset({"B&H", "Oracle max"})
@@ -21,7 +20,7 @@ def stamp_lts_protective_tsl(
     fee: ExchangeFeeSchedule,
     stake: float,
 ) -> dict[str, Any]:
-    """If Results TSL is 0/missing, grid-pick via backtest_one and rewrite percent fields."""
+    """If Results TSL is 0/missing, grid-pick via one prepare_signals + TSL grid."""
     name = str(row.get("indicator") or "").strip()
     if name in _SKIP or str(row.get("skip_reason") or "").strip():
         return row
@@ -39,40 +38,35 @@ def stamp_lts_protective_tsl(
     if not sid:
         return row
     params = dict(row.get("params") or {}) if isinstance(row.get("params"), dict) else {}
-    # Lab / Sauce store dossier bits under params; keep strategy_id for GEN_SECRET eval.
     if sid.upper().startswith("GEN_SECRET") and "strategy_id" not in params:
         params = {**params, "strategy_id": sid}
-    # Repair RSI 30/70 incorrectly stamped onto WILLR/CTI/FISHER during deepen.
     from trendalgo.backtest.hill_climb_axes import int_params
     from trendalgo.ta.signal_kinds import signal_kind
 
     if signal_kind(sid) == "bounded_reversal":
         params = int_params(params, sid)
-    tf = str(row.get("timeframe") or "1h")
+    prepared = prepare_signals(frame, sid, params)
+    entries, exits, used = prepared
+    if entries is None or exits is None or not isinstance(used, dict):
+        return row
     signal_net = _signal_net_usd(row, stake)
-    trials: list[dict[str, Any]] = []
-    for tsl in DEEPEN_TSL_PCTS:
-        trial, _reason = backtest_one(
-            frame,
-            sid,
-            fee,
-            stake,
-            timeframe=tf,
-            lookback_seconds=0,
-            params=params,
-            trailing_stop_pct=float(tsl),
-            phase="optimize",
-        )
-        if trial is None or int(trial.get("trades") or 0) < 1:
-            continue
-        row_t = dict(trial)
-        row_t["trailing_stop_pct"] = float(tsl)
-        trials.append(row_t)
-    picked = pick_tsl_from_grid(trials, signal_net=signal_net)
+    picked = assign_protective_tsl_from_masks(
+        frame,
+        entries,
+        exits,
+        fee=fee,
+        stake=stake,
+        signal_net=signal_net,
+        base={
+            "strategy_id": sid,
+            "timeframe": str(row.get("timeframe") or "1h"),
+            "params": used,
+            "phase": "optimize",
+        },
+    )
     if picked is None:
         return row
     out = _apply_picked_to_lts(row, picked, stake=stake)
-    # Persist repaired oscillator levels (not RSI 30/70 on WILLR/CTI).
     out["params"] = dict(params)
     return out
 
@@ -88,7 +82,6 @@ def stamp_rows_protective_tsl(
     out: list[dict[str, Any]] = []
     for row in rows:
         tf = str(row.get("timeframe") or "")
-        # Exact TF only — wrong-TF fallback yields empty masks and leaves TSL=0.
         frame = frames_by_tf.get(tf)
         if frame is None:
             out.append(row)

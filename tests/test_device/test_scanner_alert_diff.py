@@ -146,10 +146,10 @@ def test_process_scan_alerts_persists(tmp_path: Path) -> None:
         def __init__(self) -> None:
             super().__init__(token="t", chat_id="1")
 
-        def send_message(self, text: str) -> bool:
+        def send_message(self, text: str, **_kw: object) -> bool:
             return True
 
-        def send_photo(self, png: bytes, caption: str = "") -> bool:
+        def send_photo(self, png: bytes, caption: str = "", **_kw: object) -> bool:
             return True
 
     save_prefs(

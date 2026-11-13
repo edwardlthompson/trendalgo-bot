@@ -90,3 +90,53 @@ def stoch_k(
         lo = float(np.min(lows[max(0, i - period + 1) : i + 1]))
         out[i] = 50.0 if hi <= lo else 100.0 * (closes[i] - lo) / (hi - lo)
     return out
+
+
+def cci(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 20) -> np.ndarray:
+    n = len(closes)
+    out = np.zeros(n)
+    tp = (highs + lows + closes) / 3.0
+    for i in range(n):
+        w = tp[max(0, i - period + 1) : i + 1]
+        mean = float(np.mean(w))
+        mad = float(np.mean(np.abs(w - mean))) if len(w) else 0.0
+        out[i] = 0.0 if mad <= 1e-12 else (tp[i] - mean) / (0.015 * mad)
+    return out
+
+
+def willr(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 14) -> np.ndarray:
+    n = len(closes)
+    out = np.full(n, -50.0)
+    for i in range(n):
+        hi = float(np.max(highs[max(0, i - period + 1) : i + 1]))
+        lo = float(np.min(lows[max(0, i - period + 1) : i + 1]))
+        out[i] = -50.0 if hi <= lo else -100.0 * (hi - closes[i]) / (hi - lo)
+    return out
+
+
+def mfi(
+    highs: np.ndarray,
+    lows: np.ndarray,
+    closes: np.ndarray,
+    volumes: np.ndarray,
+    period: int = 14,
+) -> np.ndarray:
+    n = len(closes)
+    out = np.full(n, 50.0)
+    tp = (highs + lows + closes) / 3.0
+    raw = tp * volumes
+    pos = np.zeros(n)
+    neg = np.zeros(n)
+    for i in range(1, n):
+        if tp[i] > tp[i - 1]:
+            pos[i] = raw[i]
+        elif tp[i] < tp[i - 1]:
+            neg[i] = raw[i]
+    for i in range(n):
+        p = float(np.sum(pos[max(1, i - period + 1) : i + 1]))
+        ng = float(np.sum(neg[max(1, i - period + 1) : i + 1]))
+        if ng <= 1e-12:
+            out[i] = 100.0 if p > 0 else 50.0
+        else:
+            out[i] = 100.0 - (100.0 / (1.0 + p / ng))
+    return out

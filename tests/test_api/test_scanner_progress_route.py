@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-
-from trendalgo.api.app import create_app
+from tests.support.api_client import make_api_client
 from trendalgo.api.state import default_state
 from trendalgo.scanner.progress import get_scan_progress
-from tests.support.api_client import make_api_client
 
 
 def test_progress_route_returns_state_and_only_newer_events() -> None:

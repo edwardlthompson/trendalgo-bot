@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from trendalgo.trading.fill_model import paper_fill_price
-from trendalgo.trading.runner.dry_run import DryRunRunner
+from pathlib import Path
+
 from trendalgo.risk.journal import TradeJournal
 from trendalgo.strategies.runtime.contract import Candle, Position, Signal, StrategyContext
-from pathlib import Path
+from trendalgo.trading.fill_model import paper_fill_price
+from trendalgo.trading.runner.dry_run import DryRunRunner
 
 
 class _AlwaysEnter:
@@ -33,9 +34,10 @@ class _AlwaysEnter:
 
 def test_paper_fill_price_matches_entry_slip() -> None:
     assert paper_fill_price(100.0, side="buy", slippage_bps=100.0, fill_offset=0) == 101.0
-    assert paper_fill_price(
-        100.0, side="buy", slippage_bps=0.0, fill_offset=1, next_bar_price=105.0
-    ) == 105.0
+    assert (
+        paper_fill_price(100.0, side="buy", slippage_bps=0.0, fill_offset=1, next_bar_price=105.0)
+        == 105.0
+    )
 
 
 def test_dry_run_uses_shared_fill_model(tmp_path: Path) -> None:

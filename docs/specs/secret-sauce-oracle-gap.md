@@ -1,43 +1,53 @@
-# Spec: Secret Sauce — close Oracle gap
+# Spec: Secret Sauce helpers → Final Boss
 
-> Status: Phase 0–1 shipped. Phases 2–4 are follow-on only.
+> Status: Final Boss roadmap in progress (S1–S6). Phase 0–2 Lab foundations remain shipped.
 > Feature notebook: [`docs/features/secret-sauce.md`](../features/secret-sauce.md)
+> Board: `BUILD_PLAN.md` → **SS-Final-Boss**
 
 ## Locked decisions
 
-- Do **not** wire the full TA catalog into the Lab feature bank or search.
-- Residual-driven selective features only; keep sparsity and fee honesty.
-- Spectrum never force-sorts Sauce to #2. Anti-cheat rules stay intact.
+- Helpers + **Secret Sauce Final** (fee re-sim combiner) — not a Net % average of helpers.
+- Do **not** clone Oracle entry/exit indexes; no HL / fee-free fills for Sauce.
+- Never force-sort Sauce/Final to #2; spectrum note only.
+- Exact catalog clone still forbidden (`is_exact_peer_clone`).
+- **No Sauce `time_budget_s` hard caps** — helpers and Final run to completion (finite seed lists bound work).
+- **Out of scope forever:** **M** BTC/corr veto · **R** cross-coin transfer warm-start.
 
-## Shipped (Phase 0–1)
+## Helper rows (fee-valid → Results + Study)
 
-| Phase | What |
-|-------|------|
-| **0** | `residual_entry_indexes` / `residual_exit_indexes` / `residual_feature_hits` / `oracle_gap_net_pct` on `HeartbeatDossier`; Study residual line |
-| **1a** | `residual_mine.try_residual_refine` — AND one causal conjunct on missed Oracle bars; fee re-sim; OR deferred (CompositeRule is AND-only) |
-| **1b** | `adaptive_exit` family seeds + exit-preferential search pass (champion entry × diverse exits) |
+| Row | Skill |
+|-----|--------|
+| Secret Sauce TA | Oracle×catalog coincidence (existing) |
+| Secret Sauce Lab | Core mine / refine |
+| Secret Sauce Peer | **A** — mutated top peer entry; search exits + TSL |
+| Secret Sauce Armed | **B** — higher-TF / regime arming ∧ entry |
+| Secret Sauce Exit | **C** — seed from Sauce TA / Peer; heavy adaptive exit + trail |
+| Secret Sauce Final | **E/O** — vote (≥2 agree ±1) or best-holdout; dedicated exit+TSL; fee re-sim |
+Create-bot prefers **Final** when present (`create_bot_sauce_preference`).
 
-## Follow-on (Phase 2–4)
+## Sprint map
 
-| Phase | Work | Depends on |
-|-------|------|------------|
-| **2** | Holdout-aware soft ladder inside `search_best_pair` (~65% train / holdout gate). Lagged higher-TF regime **arming** on primary TF (extend `multi_tf_lab.py` beyond keep-best). Recompute coverage on every refine. | Phase 0 metrics |
-| **3** | ±2–3 bar neighborhood relative features. Add **CCI, WILLR, MFI** (cross/level binaries) only where residual_feature_hits show demand; optional `adx_strong` / SuperTrend–SAR exit state. | Residual histograms from live runs |
-| **4** | Sparse two-recipe ensemble + optional Ultimate Sauce spectrum row (never force-sort). | Stable Phase 1–3 |
+| ID | Sprint | What |
+|----|--------|------|
+| A, C | S2 | Peer-entry + Exit handoff |
+| B, L, K | S3 | Armed; TSL 0–20%; holdout-first pick / Oracle-TF 5% bias |
+| E/O | S4 | Final Boss + Study voters + chart radios |
+| G, I, J, N, H | S5 | Dual-horizon; regime peers; CCI/WILLR/MFI; session mask; scale-out proxy |
+| P, Q, S, T, U, V | S6 | Teacher; genetic; MFE exit; vol targeting; veto; meta-TSL |
+## Honesty locks (unchanged)
 
-## Non-goals
-
-- Bulk-adding catalog indicators to Lab search
-- Force-sorting Sauce to #2 / cloning peer formulas / Oracle indexes
-- Changing the scan fee schedule
+- Residual-driven selective features only; no bulk catalog bank in Lab search.
+- Closing the gap to Oracle **HL** Net % is not the honesty goal.
+- Under top peer → still publish with `spectrum_note`.
+- Empty helpers: Final degrades to Core; omit missing votes; never leave pending after join.
 
 ## Validation
 
 ```bash
-uv run pytest tests/test_backtest/test_secret_sauce_lab.py \
-  tests/test_backtest/test_residual_instrument.py \
-  tests/test_backtest/test_residual_mine.py \
-  tests/test_backtest/test_adaptive_exit_family.py \
+uv run pytest tests/test_backtest/test_secret_sauce_helpers_final.py \
+  tests/test_backtest/test_secret_sauce_lab.py \
+  tests/test_device/test_sauce_names.py \
   tests/test_device/test_secret_sauce_smoke.py -q
 python scripts/agent-run.py watch-agent-gates --once --autofix --scope auto
+
 ```

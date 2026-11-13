@@ -127,6 +127,18 @@ Sign off in founder gates: `python scripts/founder_gate.py approve H-034 --note 
 | API import errors | `pip install -e .` from repo root |
 | Bash gates fail on Windows | Use `python scripts/founder_gate.py` (see KB-001) |
 | Blank portfolio | Ensure `TRENDALGO_DATA_DIR` exists; API logs should show dry-run mode |
+## TEMP — Force fresh Qualified scan
+
+> Removable debug path. Delete when testing is done: `src/trendalgo/device/debug_scan.py`, Scanner **Force fresh scan (DEBUG)** wiring, and this section.
+
+Qualified lookback is intentionally ~30 days (`SCAN_LOOKBACK_DAYS`). Stale UI usually means a kept prior snapshot, seeded fixture, or 12h OHLCV cache — not the lookback window.
+
+1. Set `$env:TRENDALGO_DEBUG_SCAN = "1"` (PowerShell) or `export TRENDALGO_DEBUG_SCAN=1`.
+2. Relaunch the device GUI (`.\scripts\packaging\relaunch-device.ps1`).
+3. On Scanner, press **Force fresh scan (DEBUG)** (secondary to Run scan).
+4. Requires at least one vaulted venue key — sample/offline paths are refused.
+5. Clears `lts_scan_rows.json` + price-cache DBs and sets `CACHE_PRICE_HOURS=0` for that run; logs one `DEBUG_SCAN` line with `updated_at`.
+
 ## Gate
 
 **H-034 (soft):** Local preview completed for current sprint. Preflight checks this doc + dev scripts exist; human confirms L1/L2 run.

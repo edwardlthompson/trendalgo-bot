@@ -11,9 +11,9 @@ def test_decay_requires_min_trades() -> None:
 
 
 def test_maybe_alert_emits_when_trailing() -> None:
-    alert = maybe_alert(
-        bot_id=7, live_net_pct=1.0, fitted_net_pct=10.0, trades=30, margin=2.0
-    )
+    alert = maybe_alert(bot_id=7, live_net_pct=1.0, fitted_net_pct=10.0, trades=30, margin=2.0)
     assert alert is not None
     assert alert.bot_id == 7
-    assert maybe_alert(bot_id=7, live_net_pct=9.0, fitted_net_pct=10.0, trades=30, margin=2.0) is None
+    assert (
+        maybe_alert(bot_id=7, live_net_pct=9.0, fitted_net_pct=10.0, trades=30, margin=2.0) is None
+    )

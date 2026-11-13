@@ -99,11 +99,12 @@ def test_a_finished_scan_is_shown_as_scanned_on_this_pc(
     monkeypatch.setattr(page, "_pool", _FakePool(_Done(result)))
     page._run.click()
     qtbot.waitUntil(lambda: page._pending is None, timeout=5000)
-    assert page._status.text() == S.SCAN_DONE
+    assert page._status.text().startswith(S.SCAN_DONE)
+    assert "Source:" in page._status.text() or page._status.text() == S.SCAN_DONE
     assert S.SCANNER_FROM_PC in page._caption.text()
 
 
-def test_while_a_scan_runs_only_cancel_is_enabled_and_cancel_stops_the_pool(
+def test_while_a_scan_runs_modal_cancel_stops_the_pool(
     qtbot: QtBot,
     ctx: DeviceContext,
     monkeypatch: pytest.MonkeyPatch,
@@ -114,12 +115,13 @@ def test_while_a_scan_runs_only_cancel_is_enabled_and_cancel_stops_the_pool(
     monkeypatch.setattr(page, "_pool", pool)
     page._run.click()
     assert not page._run.isEnabled()
-    assert page._cancel.isEnabled()
-    page._cancel.click()
+    assert page._scan_dialog is not None
+    assert not page._cancel.isVisible()
+    page._scan_dialog._cancel.click()
     assert pool.cancelled
     assert page._pending is None
     assert page._run.isEnabled()
-    assert not page._cancel.isEnabled()
+    assert page._scan_dialog is None
     assert page._status.text() == S.SCAN_CANCELLED
 
 
@@ -169,12 +171,12 @@ def test_the_newer_of_the_bot_scan_and_this_pc_scan_is_shown_and_named(
     assert S.SCANNER_FROM_BOT in page._caption.text()
 
 
-def test_scanner_page_has_progress_bar(qtbot: QtBot, ctx: DeviceContext) -> None:
+def test_scanner_page_has_no_inline_progress_bar(qtbot: QtBot, ctx: DeviceContext) -> None:
     page = ScannerPage(ctx)
     qtbot.addWidget(page)
-    assert page._bar.minimum() == 0
-    assert page._bar.maximum() == 100
-    assert page._bar.value() == 0
+    assert not hasattr(page, "_bar")
+    assert S.SCAN_PROGRESS_CURRENT_PAIR
+    assert S.SCAN_PROGRESS_PAIRS_REMAINING
 
 
 def test_scanner_page_has_pwa_filter_strip(

@@ -18,9 +18,12 @@ from trendalgo.backtest.secret_sauce_structure import STRUCTURE_KEYS, merge_stru
 from trendalgo.backtest.secret_sauce_ta_series import (
     atr_pct,
     bb_pct_b,
+    cci,
     macd_hist,
+    mfi,
     rsi,
     stoch_k,
+    willr,
 )
 
 PRICE_KEYS = (
@@ -39,10 +42,23 @@ PRICE_KEYS = (
 )
 VOLUME_KEYS = ("vol_ratio", "vol_ratio_20", "vol_z", "dollar_vol_ratio", "up_vol_impulse")
 TA_KEYS = ("rsi_14", "macd_hist", "bb_pct_b", "atr_pct", "stoch_k")
+# J — residual oscillators (level binaries + raw); always in bank for residual_mine.
+RESIDUAL_OSC_KEYS = (
+    "cci_20",
+    "willr_14",
+    "mfi_14",
+    "cci_xup_neg100",
+    "cci_xdn_100",
+    "willr_xup_neg80",
+    "willr_xdn_neg20",
+    "mfi_xup_20",
+    "mfi_xdn_80",
+)
 ALL_FEATURE_KEYS = (
     PRICE_KEYS
     + VOLUME_KEYS
     + TA_KEYS
+    + RESIDUAL_OSC_KEYS
     + CROSS_KEYS
     + STRUCTURE_KEYS
     + PIVOT_KEYS
@@ -61,9 +77,9 @@ def has_real_volume(df: pd.DataFrame) -> bool:
 
 def feature_keys_for(df: pd.DataFrame, *, include_pivots: bool = False) -> tuple[str, ...]:
     """Keys for Lab search. Pass include_pivots=True for primary + residual pivot bank."""
-    extra = STRUCTURE_KEYS + cdl_feature_keys()
+    extra = STRUCTURE_KEYS + cdl_feature_keys() + RESIDUAL_OSC_KEYS
     if include_pivots:
-        extra = STRUCTURE_KEYS + PIVOT_KEYS + cdl_feature_keys()
+        extra = STRUCTURE_KEYS + PIVOT_KEYS + cdl_feature_keys() + RESIDUAL_OSC_KEYS
     if has_real_volume(df):
         return PRICE_KEYS + VOLUME_KEYS + TA_KEYS + CROSS_KEYS + extra
     return PRICE_KEYS + TA_KEYS + CROSS_KEYS + extra
@@ -82,6 +98,9 @@ def causal_features(df: pd.DataFrame) -> list[dict[str, float]]:
     bb_a = bb_pct_b(closes, 20)
     atr_a = atr_pct(highs, lows, closes, 14)
     stoch_a = stoch_k(highs, lows, closes, 14)
+    cci_a = cci(highs, lows, closes, 20)
+    willr_a = willr(highs, lows, closes, 14)
+    mfi_a = mfi(highs, lows, closes, vols, 14) if use_vol else np.full(n, 50.0)
     out: list[dict[str, float]] = []
     for i in range(n):
         prev = closes[i - 1] if i else closes[i]
@@ -123,10 +142,14 @@ def causal_features(df: pd.DataFrame) -> list[dict[str, float]]:
             "bb_pct_b": float(bb_a[i]),
             "atr_pct": float(atr_a[i]),
             "stoch_k": float(stoch_a[i]),
+            "cci_20": float(cci_a[i]),
+            "willr_14": float(willr_a[i]),
+            "mfi_14": float(mfi_a[i]),
         }
         if use_vol:
             row.update(_volume_at(i, closes, vols, prev))
         out.append(row)
+    _merge_residual_osc_crosses(out, cci_a, willr_a, mfi_a)
     rsx_a = compute_rsx_series(closes, 14)
     merge_cross_into_rows(out, osc_cross_columns(rsi_a, stoch_a, rsx_a))
     merge_structure_into_rows(closes, highs, lows, out)
@@ -134,6 +157,26 @@ def causal_features(df: pd.DataFrame) -> list[dict[str, float]]:
     merge_pivot_features_into_rows(closes, highs, lows, out, volumes=vols_arr)
     merge_cdl_into_rows(df, out)
     return out
+
+
+def _merge_residual_osc_crosses(
+    rows: list[dict[str, float]],
+    cci_a: np.ndarray,
+    willr_a: np.ndarray,
+    mfi_a: np.ndarray,
+) -> None:
+    """J — edge crosses for CCI / WILLR / MFI (causal vs prior bar)."""
+    for i, row in enumerate(rows):
+        prev_c = float(cci_a[i - 1]) if i else float(cci_a[i])
+        prev_w = float(willr_a[i - 1]) if i else float(willr_a[i])
+        prev_m = float(mfi_a[i - 1]) if i else float(mfi_a[i])
+        c, w, m = float(cci_a[i]), float(willr_a[i]), float(mfi_a[i])
+        row["cci_xup_neg100"] = 1.0 if prev_c < -100.0 <= c else 0.0
+        row["cci_xdn_100"] = 1.0 if prev_c > 100.0 >= c else 0.0
+        row["willr_xup_neg80"] = 1.0 if prev_w < -80.0 <= w else 0.0
+        row["willr_xdn_neg20"] = 1.0 if prev_w > -20.0 >= w else 0.0
+        row["mfi_xup_20"] = 1.0 if prev_m < 20.0 <= m else 0.0
+        row["mfi_xdn_80"] = 1.0 if prev_m > 80.0 >= m else 0.0
 
 
 def match_feat(feat: dict[str, float], conjuncts: tuple[RuleConjunct, ...]) -> bool:

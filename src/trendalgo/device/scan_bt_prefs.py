@@ -15,7 +15,7 @@ from trendalgo.backtest.heartbeat_tf import (
 )
 from trendalgo.backtest.ta_fleet import all_strategies
 from trendalgo.device.profile import read_json, write_json
-from trendalgo.device.scanner_signal_sets import BT_SET_3COMMAS, normalize_bt_signal_set
+from trendalgo.device.scanner_signal_sets import BT_SET_ALL_TA, normalize_bt_signal_set
 
 PREFS_FILE = "scan_bt_prefs.json"
 
@@ -24,7 +24,7 @@ PREFS_FILE = "scan_bt_prefs.json"
 class ScanBtPrefs:
     timeframes: list[str] = field(default_factory=lambda: list(HEARTBEAT_TIMEFRAMES))
     strategy_denylist: list[str] = field(default_factory=list)
-    bt_signal_set: str = BT_SET_3COMMAS
+    bt_signal_set: str = BT_SET_ALL_TA
 
 
 def prefs_path(root: Path) -> Path:

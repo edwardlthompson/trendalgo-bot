@@ -6,13 +6,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from trendalgo.device.export_prefs import suggested_png_path
 from trendalgo.device.scanner_export_render import build_scanner_export_panel
 
 
 def default_scanner_export_path(root: Path, *, label: str) -> Path:
     day = datetime.now(tz=UTC).date().isoformat()
     safe = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in label) or "scan"
-    return root / "exports" / f"scanner-{safe}-{day}.png"
+    return suggested_png_path(root, f"scanner-{safe}-{day}.png")
 
 
 def scanner_filter_summary(filters: dict[str, Any]) -> str:

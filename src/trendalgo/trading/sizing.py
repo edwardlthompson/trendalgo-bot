@@ -41,9 +41,7 @@ def check_ticker_fresh(
         raise OrderSizingError("ticker has no timestamp, so its freshness cannot be checked")
     age_s = (now_ms - timestamp_ms) / 1000.0
     if age_s > max_age_s:
-        raise OrderSizingError(
-            f"ticker age_s={age_s:.0f}s is stale; the limit is {max_age_s:.0f}s"
-        )
+        raise OrderSizingError(f"ticker age_s={age_s:.0f}s is stale; the limit is {max_age_s:.0f}s")
     if age_s < -max_skew_s:
         raise OrderSizingError(
             f"ticker clock skew age_s={age_s:.0f}s exceeds -{max_skew_s:.0f}s tolerance"

@@ -62,6 +62,15 @@ def net_tooltip(row: dict[str, Any], *, is_bh: bool) -> str:
     if is_bh:
         return ""
     parts: list[str] = []
+    if str(row.get("indicator") or "") == "Oracle max":
+        tradable = _as_float(row.get("tradable_net_pct"))
+        final = _as_float(row.get("net_pct"))
+        if tradable is not None and final is not None:
+            parts.append(
+                f"HL ceiling {final:.2f}% vs tradable next-bar-close proxy {tradable:.2f}% "
+                "(fee-on; same swing labels — not a live strategy)."
+            )
+            return " ".join(parts)
     if bool(row.get("protective_tsl")) or bool(row.get("tsl_breath")):
         parts.append(
             "Protective TSL: lowest safe trail from the 1–20% grid (+1% breath when tied)."
@@ -89,6 +98,8 @@ def format_export_params(row: dict[str, Any], *, is_bh: bool = False) -> str:
     if is_secret_sauce_indicator(indicator):
         if bool(row.get("ss_lab_pending")):
             return str(S.SECRET_SAUCE_PENDING)
+        if bool(row.get("ss_unavailable")):
+            return str(row.get("spectrum_note") or S.SECRET_SAUCE_UNAVAILABLE)
         return str(S.SECRET_SAUCE_PARAMS_STUB)
     parts: list[str] = []
     params = row.get("params")

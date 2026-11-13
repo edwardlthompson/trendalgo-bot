@@ -16,7 +16,11 @@ from trendalgo.backtest.secret_sauce_lab.regime_snapshot import (
     regime_weights_series,
 )
 from trendalgo.backtest.secret_sauce_lab.residual_instrument import build_residual_fields
-from trendalgo.backtest.secret_sauce_lab.search import bh_net_profit, search_best_pair
+from trendalgo.backtest.secret_sauce_lab.search import (
+    bh_net_profit,
+    lab_time_budget_s,
+    search_best_pair,
+)
 from trendalgo.backtest.secret_sauce_lab.search_folds import bar_folds
 from trendalgo.backtest.ta_fleet import backtest_one
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
@@ -34,12 +38,18 @@ def run_secret_sauce_lab(
     oracle_trades: list[dict[str, Any]],
     bh_net: float | None = None,
     strategy_id: str = _SECRET_ID,
-    time_budget_s: float = 4.0,
+    time_budget_s: float | None = None,
     oracle_net: float | None = None,
+    peer_net: float | None = None,
+    require_peer_clear: bool = False,
 ) -> tuple[HeartbeatDossier, RegimeSnapshot] | None:
     """Mine dossier via Lab; returns (dossier, regime) or None."""
     if df.empty or len(oracle_trades) < 2:
         return None
+    n_swings = len(oracle_trades)
+    if time_budget_s is None:
+        time_budget_s = lab_time_budget_s(n_swings)  # uncapped (+inf)
+
     regime = detect_regime(df)  # tip snapshot: display-only current reading
     if bh_net is None:
         bh_net = bh_net_profit(df, fee=fee, stake=stake_usd)
@@ -57,7 +67,7 @@ def run_secret_sauce_lab(
         family="oracle_pattern",
         fee=fee,
         stake_usd=stake_usd,
-        time_budget_s=min(2.0, time_budget_s * 0.4),
+        time_budget_s=time_budget_s,
     )
     train_idx, hold_idx = bar_folds(len(df), holdout_frac=_HOLDOUT_FRAC, purge_bars=_PURGE_BARS)
     weight_series = regime_weights_series(df)
@@ -73,10 +83,13 @@ def run_secret_sauce_lab(
         stake_usd=stake_usd,
         bh_net=bh_net,
         time_budget_s=time_budget_s,
+        peer_net=peer_net,
         direction=regime.direction,
         train_indexes=train_idx,
         holdout_indexes=hold_idx,
         purge_bars=_PURGE_BARS,
+        oracle_swing_count=n_swings,
+        require_peer_clear=require_peer_clear,
     )
     if picked is None:
         return None
@@ -123,7 +136,7 @@ def run_secret_sauce_lab(
             residual_exits=residual0["residual_exit_indexes"],
             fee=fee,
             stake_usd=stake_usd,
-            time_budget_s=min(1.4, max(0.35, time_budget_s * 0.3)),
+            time_budget_s=time_budget_s,
         )
         if refined is not None:
             entry_rule, exit_rule, search_net, family = refined[:4]

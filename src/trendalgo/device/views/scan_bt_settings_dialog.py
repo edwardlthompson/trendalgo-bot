@@ -1,4 +1,4 @@
-"""Shared Scanner / Backtest Settings popup: TFs, TA list, ETA, signal set."""
+"""Shared Scanner / Backtest Settings popup: TFs, TA list, ETA."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
-    QComboBox,
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
@@ -31,12 +30,7 @@ from trendalgo.device.scan_bt_prefs import (
     save_scan_bt_prefs,
 )
 from trendalgo.device.scan_time_history import estimate_label, load_history
-from trendalgo.device.scanner_signal_sets import (
-    BT_SET_3COMMAS,
-    BT_SET_ALL_TA,
-    normalize_bt_signal_set,
-)
-from trendalgo.device.views.widgets import configure_combo_popup, field
+from trendalgo.device.scanner_signal_sets import BT_SET_ALL_TA
 
 
 class ScanBacktestSettingsDialog(QDialog):
@@ -44,7 +38,6 @@ class ScanBacktestSettingsDialog(QDialog):
         self,
         root: Path,
         *,
-        show_signal_set: bool = True,
         n_coins: int = 1,
         parent: QWidget | None = None,
     ) -> None:
@@ -59,15 +52,6 @@ class ScanBacktestSettingsDialog(QDialog):
         self._eta = QLabel()
         self._eta.setObjectName("hint")
         self._eta.setWordWrap(True)
-
-        self._signals: QComboBox | None = None
-        if show_signal_set:
-            self._signals = QComboBox()
-            self._signals.addItem(S.SCANNER_SIGNALS_3COMMAS, BT_SET_3COMMAS)
-            self._signals.addItem(S.SCANNER_SIGNALS_ALL_TA, BT_SET_ALL_TA)
-            configure_combo_popup(self._signals)
-            idx = self._signals.findData(normalize_bt_signal_set(prefs.bt_signal_set))
-            self._signals.setCurrentIndex(idx if idx >= 0 else 0)
 
         self._tf_boxes: dict[str, QCheckBox] = {}
         tf_host = QWidget()
@@ -108,8 +92,6 @@ class ScanBacktestSettingsDialog(QDialog):
 
         body = QVBoxLayout(self)
         body.setSpacing(10)
-        if self._signals is not None:
-            body.addWidget(field(S.SCANNER_FILTER_SIGNALS, self._signals))
         body.addWidget(QLabel(S.SCAN_BT_TF_TITLE))
         body.addWidget(tf_scroll)
         body.addWidget(self._eta)
@@ -185,12 +167,13 @@ class ScanBacktestSettingsDialog(QDialog):
         if not enabled_strategies(deny):
             self._eta.setText(S.SCAN_BT_NO_STRATEGIES)
             return
-        signal = BT_SET_3COMMAS
-        if self._signals is not None:
-            signal = normalize_bt_signal_set(self._signals.currentData())
         save_scan_bt_prefs(
             self._root,
-            ScanBtPrefs(timeframes=tfs, strategy_denylist=deny, bt_signal_set=signal),
+            ScanBtPrefs(
+                timeframes=tfs,
+                strategy_denylist=deny,
+                bt_signal_set=BT_SET_ALL_TA,
+            ),
         )
         self.accept()
 
@@ -198,11 +181,8 @@ class ScanBacktestSettingsDialog(QDialog):
 def open_scan_bt_settings(
     root: Path,
     *,
-    show_signal_set: bool = True,
     n_coins: int = 1,
     parent: QWidget | None = None,
 ) -> bool:
-    dlg = ScanBacktestSettingsDialog(
-        root, show_signal_set=show_signal_set, n_coins=n_coins, parent=parent
-    )
+    dlg = ScanBacktestSettingsDialog(root, n_coins=n_coins, parent=parent)
     return dlg.exec() == QDialog.DialogCode.Accepted

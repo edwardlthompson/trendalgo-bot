@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
+
+# Soft ladder: positive holdout keeping ≥50% of train (after hard gate empty).
+_SOFT_HOLDOUT_FRAC = 0.50
 
 
 def bar_folds(
@@ -28,8 +31,13 @@ def bar_folds(
 
 
 def passes_holdout_gate(train_net: float, holdout_net: float) -> bool:
-    """Require positive holdout that keeps ≥60% of train net."""
+    """Hard gate: positive holdout that keeps ≥60% of train net."""
     return holdout_net > 0.0 and holdout_net > 0.6 * train_net
+
+
+def passes_holdout_gate_soft(train_net: float, holdout_net: float) -> bool:
+    """Soft ladder: positive holdout keeping ≥50% of train net."""
+    return holdout_net > 0.0 and holdout_net > _SOFT_HOLDOUT_FRAC * train_net
 
 
 def restrict_mask(mask: np.ndarray, allowed: Iterable[int]) -> np.ndarray:

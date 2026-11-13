@@ -33,7 +33,14 @@ def _frame(n: int = 60) -> pd.DataFrame:
 
 
 def test_pass2_worker_count_capped() -> None:
-    assert 1 <= pass2_worker_count() <= 8
+    from trendalgo.device.scan_parallel import cpu_budget, set_coin_parallel
+
+    set_coin_parallel(1)
+    try:
+        # Backtest (coin_parallel=1) gets the full CPU budget for pass2.
+        assert 1 <= pass2_worker_count() <= cpu_budget()
+    finally:
+        set_coin_parallel(1)
 
 
 def test_map_strategies_daemon_uses_threads(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -78,6 +85,7 @@ def test_map_strategies_daemon_uses_threads(monkeypatch: pytest.MonkeyPatch) -> 
     out = p2._map_strategies(df, "1h", ("A", "B", "C", "D"), _fee(), 1000.0, workers=4)
     assert len(out) == 4
     assert set(calls) == {"A", "B", "C", "D"}
+    assert all(len(item) == 4 for item in out)
 
 
 def test_run_catalog_pass2_threads(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -114,7 +122,7 @@ def test_run_catalog_pass2_threads(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("force threads")),
     )
     progress: list[dict[str, Any]] = []
-    rows, skips, done = run_catalog_pass2(
+    rows, skips, done, units = run_catalog_pass2(
         frames_by_tf={"1h": df},
         ordered_tf=("1h",),
         strat_list=("RSI", "MACD", "EMA"),
@@ -122,6 +130,7 @@ def test_run_catalog_pass2_threads(monkeypatch: pytest.MonkeyPatch) -> None:
         stake=1000.0,
         done_start=0,
         total=3,
+        pair="BTC/USD",
         on_progress=progress.append,
     )
     assert done == 3
@@ -129,3 +138,6 @@ def test_run_catalog_pass2_threads(monkeypatch: pytest.MonkeyPatch) -> None:
     assert not skips
     assert set(calls) == {"RSI", "MACD", "EMA"}
     assert any(p.get("phase") == "catalog" for p in progress)
+    assert len(units) == 3
+    assert all(u.pair == "BTC/USD" for u in units)
+    assert all(u.elapsed_s >= 0 for u in units)

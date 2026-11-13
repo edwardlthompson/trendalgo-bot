@@ -27,9 +27,6 @@ def test_n_exchange_ops_validation() -> None:
 
 
 def test_runner_status_api_matches_trading_check() -> None:
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     expected = run_trading_status_check()
     client = make_api_client()

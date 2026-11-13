@@ -31,9 +31,7 @@ def test_slippage_bps_both_sides_worsens_round_trip() -> None:
     )
     entries = np.array([False, True, False, False])
     exits = np.array([False, False, True, False])
-    clean = simulate_long_with_fees(
-        df, entries, exits, stake_usd=1000.0, fee=_fee(), fill_offset=0
-    )
+    clean = simulate_long_with_fees(df, entries, exits, stake_usd=1000.0, fee=_fee(), fill_offset=0)
     slip = simulate_long_with_fees(
         df,
         entries,

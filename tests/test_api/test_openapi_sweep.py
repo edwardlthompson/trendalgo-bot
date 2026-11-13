@@ -9,9 +9,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from trendalgo.api.app import create_app
-from trendalgo.api.state import default_state
 from tests.support.api_client import make_api_client
+from trendalgo.api.state import default_state
 
 
 @pytest.fixture

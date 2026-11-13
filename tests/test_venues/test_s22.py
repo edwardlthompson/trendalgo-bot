@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tests.support.api_client import make_api_client
 from trendalgo.billing.venue_attribution import attribution_by_venue
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.portfolio.dex_positions import list_dex_positions_from_store, preview_dex_positions
@@ -12,7 +13,6 @@ from trendalgo.venues.orchestrator import sync_all_wallet_venues
 from trendalgo.venues.plugins.zero_ex import preview_quote
 from trendalgo.venues.registry import get_lp_plugin, get_venue, load_venue_registry
 from trendalgo.venues.wallet_sync import preview_wallet, sync_wallet
-from tests.support.api_client import make_api_client
 
 EVM_ADDR = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"
 SOL_ADDR = "7EcDhSYGxXyscesiyR6Y3Gf4zEWLUsRms95TMPMXLKm"
@@ -82,9 +82,6 @@ def test_preview_dex_all_evm_chains() -> None:
 
 def test_s22_api_routes(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("TRENDALGO_VENUE_SYNC_STAGGER_SEC", "0")
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     client = make_api_client()
     quote = client.get(

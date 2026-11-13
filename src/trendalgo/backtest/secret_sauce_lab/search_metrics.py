@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 _FEE_DRAG_REJECT = 0.35
 
 
@@ -36,7 +35,9 @@ def enrich_trial_stats(
         "net_pct": round((net / stake_usd) * 100.0, 4) if stake_usd else 0.0,
         "reject_reason": None,
     }
-    if fee_drag > _FEE_DRAG_REJECT:
+    # Fee-drag honesty only applies to winners (gross>0). Losing recipes must
+    # stay selectable in down markets so Lab can still beat B&H / peers.
+    if gross > 0 and fee_drag > _FEE_DRAG_REJECT:
         out["reject_reason"] = f"fee_drag:{fee_drag:.2f}"
     if trades < 1:
         out["reject_reason"] = "min_trades"

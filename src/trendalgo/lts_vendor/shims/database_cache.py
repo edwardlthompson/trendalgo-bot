@@ -167,5 +167,15 @@ class PriceCache:
         self._memory[key] = entry
         return True, entry[1]
 
+    def peek_fetched_at(self, exchange: str, symbol: str, timeframe: str) -> float | None:
+        """Return wall-clock fetched_at for a cached series, or None."""
+        key = _key(exchange, symbol, timeframe)
+        entry = self._memory.get(key)
+        if entry is None and self.db_path is not None:
+            entry = _read_entry(self.db_path, key)
+        if entry is None:
+            return None
+        return float(entry[0])
+
     def close(self) -> None:
         self._memory.clear()

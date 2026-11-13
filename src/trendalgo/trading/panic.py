@@ -38,9 +38,11 @@ class CancelVerifier(Protocol):
         self, exchange: str, order_ids: list[str], *, timeout_s: float
     ) -> list[str]:
         """Return order ids the venue confirmed cancelled within timeout."""
+        ...
 
     def remaining_open(self, exchange: str) -> list[str]:
         """Open order ids still resting after a failed/partial cancel confirm."""
+        ...
 
 
 @dataclass(frozen=True)

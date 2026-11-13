@@ -46,7 +46,7 @@ def fat_beat_peer(
         fee=fee,
         stake_usd=stake,
         bh_net=bh_usd,
-        time_budget_s=3.0,
+        time_budget_s=None,
         peer_net=peer_usd,
         direction=regime.direction,
     )

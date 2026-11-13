@@ -21,7 +21,7 @@ from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.exchange_keys_inventory import ExchangeKeysInventory
 from trendalgo.device.views.widgets import configure_combo_popup, field, mark_primary
-from trendalgo.device.wizard.credentials import CredentialStore
+from trendalgo.device.wizard.credentials import CredentialError, CredentialStore
 from trendalgo.exchanges.private_budget import budget_snapshot
 from trendalgo.exchanges.registry import load_registry
 from trendalgo.trading.key_verify import success_dialog_text, verify_exchange_keys
@@ -65,9 +65,9 @@ class ExchangeKeysSection(QWidget):
         self._rate_timer = QTimer(self)
         self._rate_timer.setInterval(2_000)
         self._rate_timer.timeout.connect(self._refresh_rate)
-        save = mark_primary(QPushButton(S.SETTINGS_KEYS_SAVE))
-        save.setMinimumHeight(44)
-        save.clicked.connect(lambda _c=False: self._save())
+        self._save_btn = mark_primary(QPushButton(S.SETTINGS_KEYS_SAVE))
+        self._save_btn.setMinimumHeight(44)
+        self._save_btn.clicked.connect(lambda _c=False: self._save())
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
@@ -85,7 +85,7 @@ class ExchangeKeysSection(QWidget):
         layout.addWidget(field(S.SETTINGS_KEYS_PRIVATE, self._secret, S.SETTINGS_KEYS_PRIVATE_HELP))
         row = QHBoxLayout()
         row.setSpacing(8)
-        row.addWidget(save)
+        row.addWidget(self._save_btn)
         row.addStretch(1)
         layout.addLayout(row)
         layout.addWidget(self._check)
@@ -159,12 +159,18 @@ class ExchangeKeysSection(QWidget):
         self._status.setText(S.SETTINGS_KEYS_STATUS.format(scope=entry.scope, state=state))
         self._refresh_rate()
 
+    def _brand_for(self, exchange_id: str) -> str:
+        reg = load_registry().by_id(exchange_id)
+        return reg.brand if reg is not None else exchange_id
+
     def _save(self) -> None:
         scope = str(self._scope.currentData())
         if scope not in ("query", "trade"):
             scope = "query"
+        eid = self._exchange_id()
+        brand = self._brand_for(eid)
         entry = VaultEntry(
-            exchange_id=self._exchange_id(),
+            exchange_id=eid,
             api_key=self._key.text().strip(),
             api_secret=self._secret.text().strip(),
             scope=scope,  # type: ignore[arg-type]
@@ -172,17 +178,40 @@ class ExchangeKeysSection(QWidget):
         if not entry.api_key or not entry.api_secret:
             self._status.setText(S.SETTINGS_KEYS_REQUIRED)
             return
-        self._vault.write_entry(entry)
-        self._key.clear()
-        self._secret.clear()
-        self._refresh_status()
-        self._inventory.reload()
+        self._save_btn.setEnabled(False)
+        try:
+            try:
+                self._vault.write_entry(entry)
+            except CredentialError as exc:
+                detail = str(exc).strip() or "Credential Manager refused the write."
+                self._status.setText(S.SETTINGS_KEYS_SAVE_FAILED.format(brand=brand, detail=detail))
+                return
+            stored = self._vault.read_entry(eid)
+            if (
+                stored is None
+                or stored.api_key != entry.api_key
+                or stored.api_secret != entry.api_secret
+                or stored.scope != entry.scope
+            ):
+                self._status.setText(S.SETTINGS_KEYS_SAVE_CONFIRM_FAILED.format(brand=brand))
+                return
+            self._key.clear()
+            self._secret.clear()
+            self._refresh_status()
+            self._inventory.reload()
+            self._status.setText(
+                S.SETTINGS_KEYS_STATUS.format(scope=stored.scope, state=S.SETTINGS_KEYS_UNVERIFIED)
+            )
+            QMessageBox.information(
+                self,
+                S.SETTINGS_KEYS_SAVE_OK_TITLE,
+                S.SETTINGS_KEYS_SAVE_OK.format(brand=brand),
+            )
+        finally:
+            self._save_btn.setEnabled(True)
 
     def _delete_exchange(self, exchange_id: str) -> None:
-        brand = exchange_id
-        reg = load_registry().by_id(exchange_id)
-        if reg is not None:
-            brand = reg.brand
+        brand = self._brand_for(exchange_id)
         reply = QMessageBox.question(
             self,
             S.SETTINGS_KEYS_DELETE,

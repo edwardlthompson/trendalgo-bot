@@ -9,7 +9,9 @@ import pytest
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees, trade_hold_regions
 from trendalgo.device.scanner_all_ta_prune import DEEPEN_TSL_PCTS
 from trendalgo.device.scanner_chart_trades import (
+    _normalize_tf,
     _tsl_fraction,
+    attach_path_envelopes,
     frame_from_closes,
     overlay_net_pct,
     regions_for_strategy,
@@ -163,6 +165,15 @@ def test_signal_only_tsl_does_not_clip_like_one_percent() -> None:
 def test_overlay_net_pct_sums_trades() -> None:
     assert overlay_net_pct([{"pnl_pct": 10.0}, {"pnl_pct": -2.5}]) == 7.5
     assert overlay_net_pct([]) is None
+
+
+def test_overlay_net_pct_prefers_fee_aware_net_pnl() -> None:
+    # Gross pnl_pct would sum to 10; fee-aware net_pnl/stake is 4.8.
+    regions = [
+        {"pnl_pct": 6.0, "net_pnl": 30.0},
+        {"pnl_pct": 4.0, "net_pnl": 18.0},
+    ]
+    assert overlay_net_pct(regions, stake_usd=1000.0) == 4.8
 
 
 def _ohlcv(n: int = 40) -> pd.DataFrame:
@@ -370,3 +381,49 @@ def test_top_strategy_rows_includes_both_sauces() -> None:
     assert names[0] == "Secret Sauce Lab"
     assert "Secret Sauce TA" in names
     assert names[-1] == "Oracle max"
+
+
+def test_normalize_tf_keeps_8h() -> None:
+    assert _normalize_tf("8h") == "8h"
+    assert _normalize_tf("8H") == "8h"
+    assert _normalize_tf("480") == "8h"
+    assert _normalize_tf("1h") == "1h"
+    assert _normalize_tf("15m") == "15m"
+    assert _normalize_tf("nope") == "1h"
+
+
+def test_oracle_path_envelope_spans_hold_bars() -> None:
+    df = _ohlcv(30)
+    swings = [
+        {
+            "entry_index": 5,
+            "exit_index": 12,
+            "entry_price": 104.0,
+            "exit_price": 113.0,
+            "pnl_pct": 8.0,
+            "net_pnl": 80.0,
+        }
+    ]
+    regions = regions_from_oracle_swings(df, swings)
+    assert len(regions) == 1
+    env = regions[0].get("path_envelope")
+    assert isinstance(env, list)
+    assert len(env) == 8  # bars 5..12 inclusive
+    assert regions[0]["entry_time"] == str(df.index[5]) or "2024" in str(regions[0]["entry_time"])
+
+
+def test_attach_path_envelopes_requires_indexes() -> None:
+    df = _ohlcv(20)
+    bare = [{"entry_time": "x", "exit_time": "y", "entry_price": 1.0, "exit_price": 2.0}]
+    out = attach_path_envelopes(df, bare)
+    assert "path_envelope" not in out[0]
+    with_idx = [
+        {
+            "entry_index": 2,
+            "exit_index": 6,
+            "entry_price": 1.0,
+            "exit_price": 2.0,
+        }
+    ]
+    filled = attach_path_envelopes(df, with_idx)
+    assert len(filled[0]["path_envelope"]) == 5
