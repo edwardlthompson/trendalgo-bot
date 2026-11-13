@@ -64,6 +64,8 @@ trendalgo-api = "trendalgo.api.main:run"
 [tool.uv]
 constraint-dependencies = [
     "anyio>=4.14.2",
+    # Dependabot #80 — libtiff encoder CVE; first patched 13.0.0.
+    "pillow>=13.0.0",
 ]
 
 [build-system]
