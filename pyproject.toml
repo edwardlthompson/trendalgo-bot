@@ -27,7 +27,7 @@ dev = [
 desktop = [
     "pywebview>=5.0",
     "pystray>=0.19",
-    "pillow>=10",
+    "pillow>=13.0.0",
     # Six LTS indicators (Stochastic, CCI, Ultimate Oscillator, MFI, ADX, Parabolic SAR)
     # require TA-Lib; without it their combos are silently skipped in the backtest sweep.
     "TA-Lib>=0.8.3",

@@ -1418,7 +1418,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2.0" },
     { name = "pandas-ta-classic", marker = "extra == 'device'", specifier = ">=0.8.32,<0.9" },
     { name = "pandas-ta-classic", marker = "extra == 'ta'", specifier = ">=0.8.32,<0.9" },
-    { name = "pillow", marker = "extra == 'desktop'", specifier = ">=10" },
+    { name = "pillow", marker = "extra == 'desktop'", specifier = ">=13.0.0" },
     { name = "pydantic", specifier = ">=2.14.3" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.414" },
     { name = "pyside6-addons", marker = "extra == 'device'", specifier = ">=6.12.0,<6.13" },
