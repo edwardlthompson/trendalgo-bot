@@ -89,3 +89,20 @@ def minutes_until(target: datetime, *, now: datetime | None = None) -> int:
     end = _as_utc(target)
     seconds = max(0, int((end - base).total_seconds()))
     return max(0, (seconds + 59) // 60)
+
+
+def needs_autoscan_rearm(
+    *,
+    interval_minutes: int,
+    last_generated: datetime | None,
+    next_auto: datetime | None,
+    timer_active: bool,
+    now: datetime | None = None,
+) -> bool:
+    """True when the one-shot auto timer should be re-armed (no immediate scan)."""
+    clock = _as_utc(now or datetime.now(tz=UTC))
+    if next_auto is not None and _as_utc(next_auto) <= clock:
+        return True
+    if not timer_active and is_stale(last_generated, interval_minutes, now=clock):
+        return True
+    return False

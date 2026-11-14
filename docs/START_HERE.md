@@ -18,7 +18,7 @@ For template-only usage, see upstream [agent-project-bootstrap](https://github.c
 
 1. Read this file → pick Cursor mode (`docs/CURSOR_MODES.md`) → open `BUILD_PLAN.md` **Sequential** first
 2. Prefer local compute (`.cursor/rules/local-compute.mdc`) over Cloud Agents
-3. After each `[AGENT]` feature step: `bash scripts/watch-agent-gates.sh --once --autofix`
+3. After each `[AGENT]` feature step: scoped lint/type/pytest on touched paths only (not full `watch-agent-gates`; use `/gates` or `/fix` when you want the full local suite)
 4. Human/legal/go-live gates live in [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) / root pointer — never fake-approve hard gates
 5. Conventional Commits; no push without `[HUMAN]` / `/push` / `/ship`
 

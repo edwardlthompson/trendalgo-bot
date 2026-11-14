@@ -1,4 +1,8 @@
-"""Opportunity Secret Sauce budget: top-N by Oracle + first-join once."""
+"""Opportunity Secret Sauce budget: top-N by Oracle (default 10).
+
+``select_sauce_symbols_with_first_join`` remains for tests/legacy; Opportunity
+All-TA uses top-N only so a cold ``sauce_ever`` cannot Sauce the whole board.
+"""
 
 from __future__ import annotations
 
@@ -8,8 +12,7 @@ from typing import Any
 from trendalgo.device.pair_strategy_secret_sauce import best_oracle_row
 from trendalgo.device.profile import read_json, write_json
 
-# Sauce Lab / helpers only for this many coins after catalog+deepen for all,
-# plus any coin that has never been sauced (first join).
+# Sauce Lab / helpers only for this many coins after catalog+deepen for all.
 OPPORTUNITY_SAUCE_TOP_N = 10
 SAUCE_EVER_FILE = "sauce_ever_symbols.json"
 

@@ -252,7 +252,14 @@ def show_results_dialog(
             return
         out = Path(chosen) if chosen.lower().endswith(".png") else Path(f"{chosen}.png")
         try:
-            export_strategy_sheet_png(out, pair=pair or symbol, rows=export_rows, heatmap=heatmap)
+            active = filters.dump() if filters is not None else {}
+            export_strategy_sheet_png(
+                out,
+                pair=pair or symbol,
+                rows=export_rows,
+                heatmap=heatmap,
+                filters=active,
+            )
         except (OSError, ValueError) as exc:
             QMessageBox.warning(dialog, S.SCANNER_SHARE, str(exc))
             return

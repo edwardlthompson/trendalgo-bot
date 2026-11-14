@@ -12,8 +12,10 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
+from trendalgo.device.backtest_share import filter_summary  # noqa: E402
 from trendalgo.device.scanner_share import (  # noqa: E402
     export_scanner_list_png,
+    export_strategy_sheet_png,
     scanner_filter_summary,
 )
 
@@ -41,6 +43,43 @@ def test_scanner_filter_summary_lists_active_floors() -> None:
     assert "min 7d%=7" in line
     assert "min 30d%=30" in line
     assert "color ranks=True" in line
+
+
+def test_results_sheet_filter_summary_includes_column_floors() -> None:
+    line = filter_summary({"min_net_pct": 30, "min_win_pct": 50, "max_tsl_hit_pct": 50})
+    assert "min net%=30" in line
+    assert "min win%=50" in line
+    assert "max hit%=50" in line
+    assert "none" not in line.lower()
+
+
+def test_export_strategy_sheet_png_forwards_filters(
+    qapp: QApplication, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured: dict[str, object] = {}
+
+    def _fake(path: Path, **kwargs: object) -> Path:
+        captured.update(kwargs)
+        path.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return path
+
+    monkeypatch.setattr(
+        "trendalgo.device.backtest_share.export_backtest_table_png",
+        _fake,
+    )
+    out = tmp_path / "ake.png"
+    export_strategy_sheet_png(
+        out,
+        pair="AKE/USD",
+        rows=[{"indicator": "RSI", "net_pct": 40.0}],
+        heatmap=False,
+        filters={"min_net_pct": 30, "min_win_pct": 50, "max_tsl_hit_pct": 50},
+    )
+    assert captured.get("filters") == {
+        "min_net_pct": 30,
+        "min_win_pct": 50,
+        "max_tsl_hit_pct": 50,
+    }
 
 
 def test_export_scanner_list_png_writes_file(qapp: QApplication, tmp_path: Path) -> None:

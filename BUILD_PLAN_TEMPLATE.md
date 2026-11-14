@@ -16,7 +16,7 @@ This file is the **child model**. After `init-project`, it becomes your `BUILD_P
 
 ## Smoke gate (hard stop)
 
-After every `[AGENT]` row: `python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto`
+After every `[AGENT]` row: scoped lint/type/pytest on touched paths only (not full `watch-agent-gates`; `/gates` or `/fix` for full local suite)
 
 After the **last** `[AGENT]`/`[AUTO]` row in a sprint is ✅, do **not** start the next sprint until this exits 0:
 

@@ -95,18 +95,17 @@ def test_run_all_ta_sauces_only_top_oracle(monkeypatch: pytest.MonkeyPatch, tmp_
 
     out = mod.run_all_ta_scan_backtests(coins, prefs_root=tmp_path)
     assert out is not None
-    # First run: top-2 + first-join LOW (never sauced).
-    assert out["sauce_symbols"] == ["HIGH", "MID", "LOW"]
+    # Top-N only (no first-join expansion) — LOW stays off the Sauce pass.
+    assert out["sauce_symbols"] == ["HIGH", "MID"]
     assert len(pool_calls) == 2
     assert pool_calls[0]["include_sauce"] is False
     assert pool_calls[0]["sauce_only"] is False
     assert set(pool_calls[0]["syms"]) == {"HIGH", "MID", "LOW"}
     assert pool_calls[1]["include_sauce"] is True
     assert pool_calls[1]["sauce_only"] is True
-    assert pool_calls[1]["syms"] == ["HIGH", "MID", "LOW"]
-    assert set(pool_calls[1]["seed_syms"]) >= {"HIGH", "MID", "LOW"}
+    assert pool_calls[1]["syms"] == ["HIGH", "MID"]
+    assert set(pool_calls[1]["seed_syms"]) >= {"HIGH", "MID"}
 
-    # Second run: LOW already in sauce_ever → top-2 only.
     pool_calls.clear()
     out2 = mod.run_all_ta_scan_backtests(coins, prefs_root=tmp_path)
     assert out2 is not None

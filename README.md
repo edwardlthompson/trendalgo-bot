@@ -184,6 +184,7 @@ ssh -N -L 8080:127.0.0.1:8080 user@your-vps
 
 # Or join the VPS to your Tailscale tailnet and dial http://100.x.y.z:8080
 # (still bound on the VPS to 127.0.0.1 unless you also listen on the Tailscale IP)
+
 ```
 
 Verify binding: `docker compose -f docker/docker-compose.prod.yml config` must show `127.0.0.1:8080:8080`.
@@ -383,7 +384,7 @@ Elastic License 2.0 (source-available) — see [`LICENSE`](LICENSE). Performance
 1. Read [`docs/START_HERE.md`](docs/START_HERE.md) → pick Cursor mode via [`docs/CURSOR_MODES.md`](docs/CURSOR_MODES.md)
 2. Open [`BUILD_PLAN.md`](BUILD_PLAN.md) **Sequential** lane first (`[AGENT]` / `[HUMAN]` / `[AUTO]`; status 🔲 ✅ ❌)
 3. Active stack: Python (`src/trendalgo/`) including the PySide6 device UI
-4. After each agent feature step: `bash scripts/watch-agent-gates.sh --once --autofix`
+4. After each agent feature step: scoped lint/type/pytest on touched paths (full `watch-agent-gates` via `/gates` or `/fix` only)
 5. Human/legal/go-live: [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) (root [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) is a pointer)
 6. Template alignment notes: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md)
 7. Branding / pitch preview: [`branding/BRANDING.md`](branding/BRANDING.md)
@@ -404,4 +405,3 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md). Elastic License 2.0 applies; performan
 - A finished commercial product promise
 - A place for secrets or production credentials
 - An unbounded scope — see README goals above
-

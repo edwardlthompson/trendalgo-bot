@@ -99,6 +99,7 @@ def export_strategy_sheet_png(
     pair: str,
     rows: list[dict[str, Any]],
     heatmap: bool,
+    filters: dict[str, Any] | None = None,
     sort_key: str = "net_pct",
     sort_dir: int = -1,
 ) -> Path:
@@ -108,7 +109,7 @@ def export_strategy_sheet_png(
         path,
         pair=pair,
         rows=rows,
-        filters={},
+        filters=dict(filters or {}),
         heatmap=heatmap,
         sort_key=sort_key,
         sort_dir=sort_dir,

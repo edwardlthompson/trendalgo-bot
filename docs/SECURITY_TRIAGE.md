@@ -15,6 +15,7 @@ Weekly CVE triage playbook for Dependabot alerts and release security gates.
 bash scripts/setup-github-repo.sh
 # Windows:
 pwsh scripts/setup-github-repo.ps1
+
 ```
 
 Requires `gh` CLI authenticated with admin access. On API `422` (plan or permission limits), the script prints a manual UI checklist. Re-run after fixing permissions.
@@ -31,6 +32,14 @@ Requires `gh` CLI authenticated with admin access. On API `422` (plan or permiss
 
 `dependabot.yml` schedules version-update PRs; **Dependabot alerts** are a separate GitHub setting for CVE advisories - both are required.
 
+## Exchange API-key hygiene
+
+When a third-party trading/portfolio vendor discloses a breach (Coinigy-class revoke advisories):
+
+1. Revoke every exchange API key ever shared with that vendor (including read-only).
+2. Confirm TrendAlgo / bot keys still have **no withdraw/transfer**, prefer **IP allowlists**, and are **not reused** elsewhere — see [`API_ACCESS_LIMITS.md`](API_ACCESS_LIMITS.md).
+3. Rotate device vault keys after revoke; re-verify with Settings → Test connection.
+
 ## Weekly Triage Pass
 
 Recommended cadence: **Monday** (aligned with scheduled security scans and `health-check.yml`).
@@ -45,7 +54,6 @@ Recommended cadence: **Monday** (aligned with scheduled security scans and `heal
 | 6 | AUTO | Review `weekly-health-check.yml` weekly run (Monday 07:00 UTC); confirm CI + Security Scan + CodeQL green on main |
 | 7 | AUTO | Run `bash scripts/check-security-triage.sh --wait-ci 300` (Dependabot + workflows + OpenSSF Scorecard) |
 | 8 | AUTO | Run `bash scripts/check-risk-mitigations.sh --ongoing` (Risk Register Zero ongoing controls) |
-
 ## Risk Register gate
 
 TrendAlgo founder automation ties weekly maintenance to [`docs/risk-catalog.json`](risk-catalog.json):
@@ -54,6 +62,7 @@ TrendAlgo founder automation ties weekly maintenance to [`docs/risk-catalog.json
 bash scripts/check-risk-mitigations.sh --ongoing
 bash scripts/check-human-backlog.sh --sprint current
 python3 scripts/founder_gate.py status
+
 ```
 
 Sprint sign-off uses strict mode: `bash scripts/check-risk-mitigations.sh --strict --sprint N`. Register Zero target (S12): `bash scripts/check-risk-mitigations.sh --strict --all`.
@@ -74,7 +83,6 @@ See [`docs/FOUNDER_GATES.md`](FOUNDER_GATES.md) and [`docs/RISK_REGISTER.md`](RI
 | **Fix** | Patch available, low risk | Merge Dependabot PR or [AGENT] applies bump |
 | **Defer** | No fix yet, acceptable risk window | Open issue with expiry date; log in DECISION_LOG.md |
 | **Dismiss** | False positive or not applicable | Document rationale in issue or ADR |
-
 After triage, confirm Trivy and CodeQL workflows are green on `main`.
 
 ## GitHub Actions Pin Policy
@@ -88,7 +96,6 @@ Third-party workflow actions must use **immutable refs** to reduce supply-chain 
 | **Pre-push** | Run `scripts/validate-workflow-actions.sh` (requires `gh` + `GH_TOKEN`) |
 | **Local fast guard** | `scripts/check-workflow-action-ref-format.sh` (pre-commit; no network) |
 | **Post-push** | `scripts/check-github-ci.sh --wait 300` - required workflows: **CI**, **Security Scan**, **CodeQL** |
-
 ## Release Gate (mandatory before tag)
 
 Before any version bump or GitHub Release:
@@ -106,7 +113,6 @@ Before any version bump or GitHub Release:
 | `workflow_dispatch` (with `tag` input) | SBOM upload only — backfill assets on an existing release |
 | `release` published | Polls full CI rollup (`check-github-ci.sh --wait 3600`) then SBOM + Winget stub upload |
 | Tag push `v*` | Lightweight gate only: tag must match `.template-version`; polls **Repo Hygiene** + **Feature Gate** via `check-github-ci.sh --skip-workflows` (does **not** wait on CI/CodeQL rollup or emulator jobs) |
-
 Release Please publishes the GitHub Release; the `release` published event attaches SBOM assets. Use `workflow_dispatch` (no tag input) for maintainer dry-runs before merging the Release Please PR.
 
 If a Critical/High alert has no upstream fix, release may proceed only when:

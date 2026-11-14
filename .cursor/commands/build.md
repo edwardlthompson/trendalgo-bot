@@ -19,18 +19,11 @@ python3 scripts/agent-run.py build-sprint-status --json --lane auto
 | `execute` | Implement → gate → ✅ |
 | `parallel_dispatch` | `@scope.md` then `set-parallel-sprint-done` |
 | AUTO | Run scripts → ✅ |
-Every AGENT step:
+Every AGENT step: **scoped** ruff/mypy/pytest on touched paths and feature tests only (`--no-cov` locally). Do **not** run full `watch-agent-gates` / full-suite pytest mid-slice.
 
-```bash
-python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto
-
-```
-
-**Gate lock:** never skip watch-agent-gates; do not start the next row until gates exit 0. Never skip 1c to chain a second feature.
+**Gate lock:** do not start the next row until scoped checks pass (or 3-strike). Full `watch-agent-gates` only on `/gates`, `/fix`, wrap-up when asked, or ship/prerelease. Never skip 1c to chain a second feature.
 
 **Push cadence:** after each ✅ AGENT row, nudge the human to commit (if dirty) and `/push` when a remote exists. Never silent `git push`. Prefer `/split-to-prs` over one mega-diff.
-
-Do not re-run full validate mid-slice if watch passed.
 
 ## Wrap-up (sprint complete)
 

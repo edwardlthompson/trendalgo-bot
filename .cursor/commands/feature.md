@@ -13,14 +13,9 @@ On This Computer: only `🔲 [AGENT][LOCAL]` rows (`feature/local-<slug>`). Neve
 
 When invoked from @.cursor/commands/build.md: execute all open rows for the active feature without stopping; no user prompts.
 
-After each AGENT step:
+After each AGENT step: scoped ruff/mypy/pytest on touched paths and feature tests only (`--no-cov`). Do **not** run full `watch-agent-gates` mid-slice.
 
-```bash
-python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto --step scaffold
-
-```
-
-Do not re-run full `validate-bootstrap` mid-slice if watch already passed. Use `--step tests` or `--step wire` when appropriate. On exit 2, use `/debug` or escalate.
+Full local gates only on `/gates`, `/fix`, ship/prerelease, or human ask. On exit 2 from those, use `/debug` or escalate.
 
 When the active feature block is fully ✅, run `python3 scripts/agent-run.py smoke-sprint --require` before the next feature. Then read @.cursor/commands/cleanup.md — execute fully.
 

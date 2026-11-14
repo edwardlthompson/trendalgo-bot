@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import nav_layout as _nav
 from trendalgo.device import strings as S
-from trendalgo.device.autostart import is_enabled as autostart_is_enabled
 from trendalgo.device.autostart import set_enabled as set_autostart
 from trendalgo.device.context import DeviceContext
 from trendalgo.device.flow_layout import FlowLayout
@@ -250,7 +249,8 @@ class MainWindow(QMainWindow):
 
     def _ensure_default_autostart(self) -> None:
         prefs = load_prefs(self._ctx.root)
-        if prefs.start_with_windows and not autostart_is_enabled():
+        if prefs.start_with_windows:
+            # Always rewrite Run command so a stale frozen path cannot stick.
             set_autostart(True)
 
     def _show_from_tray(self) -> None:

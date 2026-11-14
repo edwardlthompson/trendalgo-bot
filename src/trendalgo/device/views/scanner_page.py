@@ -53,6 +53,7 @@ from trendalgo.device.scan_progress import (
 from trendalgo.device.scanner_schedule import (
     clamp_interval_minutes,
     minutes_until,
+    needs_autoscan_rearm,
     next_aligned_run,
 )
 from trendalgo.device.scanner_share import default_scanner_export_path, export_scanner_list_png
@@ -194,6 +195,11 @@ class ScannerPage(QWidget):
         self.reload()
         self._boot_after_restore()
         self._caption_timer.start()
+        from PySide6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        if app is not None:
+            app.applicationStateChanged.connect(self._on_app_state_changed)
 
     def _wire_filter_signals(self) -> None:
         self._filters.exchange.changed.connect(self._on_filter)
@@ -325,8 +331,40 @@ class ScannerPage(QWidget):
             self._schedule_autoscan(reset=False)
             return
         self._start()
+        # One-shot timer dies on early _start returns unless we re-arm here.
+        if self._pending is None:
+            self._schedule_autoscan(reset=True)
+
+    def _board_generated_at(self) -> datetime | None:
+        try:
+            snap, _from_pc = self._latest()
+        except StoreReadError:
+            return None
+        return snap.generated_at if snap is not None else None
+
+    def _maybe_rearm_autoscan(self) -> None:
+        if not self._autoscan_enabled or self._pending is not None:
+            return
+        minutes = clamp_interval_minutes(self._filters.every.value())
+        if needs_autoscan_rearm(
+            interval_minutes=minutes,
+            last_generated=self._board_generated_at(),
+            next_auto=self._next_auto,
+            timer_active=self._auto_timer.isActive(),
+        ):
+            self._schedule_autoscan(reset=True)
+
+    def _on_app_state_changed(self, state: object) -> None:
+        try:
+            from PySide6.QtCore import Qt
+
+            if state == Qt.ApplicationState.ApplicationActive:
+                self._maybe_rearm_autoscan()
+        except (TypeError, AttributeError):
+            return
 
     def _refresh_auto_caption(self) -> None:
+        self._maybe_rearm_autoscan()
         label = self._filters.auto_status
         parts: list[str] = []
         last = self._caption.text().strip()
@@ -355,16 +393,13 @@ class ScannerPage(QWidget):
         self._persist_filters()
         self._show_tab()
 
-    def _show_tab(self) -> None:
-        tab = self._tabs.currentIndex()
-        watch = set(load_watchlist(self._root))
-        base = (
-            [c for c in self._coins if _in_watch(c, watch)]
-            if tab == TAB_WATCH
-            else list(self._coins)
-        )
+    def _qualified_filtered_coins(
+        self, coins: list[dict[str, Any]] | None = None
+    ) -> list[dict[str, Any]]:
+        """Same filter_coins path as the Qualified tab (all column floors)."""
+        base = list(self._coins if coins is None else coins)
         col = self._col_filters.dump()
-        coins = filter_coins(
+        return filter_coins(
             base,
             exchanges=self._col_filters.exchange.filter_ids(),
             min_gain_7d=_floor_or_none(self._col_filters.gain_7d.floor()),
@@ -378,6 +413,41 @@ class ScannerPage(QWidget):
             vol_accel_filter=str(col.get("vol_accel_filter") or "") or None,
             vol24_min=_opt_float(col.get("vol24_min")),
         )
+
+    def _alert_floors(self) -> dict[str, float]:
+        """Numeric Qualified-column floors for leave-reason copy."""
+        col = self._col_filters.dump()
+        scan = self._filters.dump()
+        out: dict[str, float] = {}
+        for key in (
+            "min_gain_7d",
+            "min_gain_30d",
+            "min_gain_pct",
+            "min_best_bt",
+            "chart_dist_max_7d",
+            "chart_dist_max_30d",
+            "health_min",
+            "uniformity_min",
+            "vol24_min",
+        ):
+            val = _opt_float(col.get(key))
+            if val is not None:
+                out[key] = val
+        for key in ("min_volume_usd", "min_uniformity"):
+            val = _opt_float(scan.get(key))
+            if val is not None and val > 0:
+                out[key] = val
+        return out
+
+    def _show_tab(self) -> None:
+        tab = self._tabs.currentIndex()
+        watch = set(load_watchlist(self._root))
+        base = (
+            [c for c in self._coins if _in_watch(c, watch)]
+            if tab == TAB_WATCH
+            else list(self._coins)
+        )
+        coins = self._qualified_filtered_coins(base)
         coins = sort_coins(coins, key=self._sort_key, direction=self._sort_dir)
         self._shown = coins
         show_table = tab in (TAB_QUALIFIED, TAB_WATCH)
@@ -728,20 +798,20 @@ class ScannerPage(QWidget):
         from trendalgo.device.scanner_alerts_store import append_log_alert
 
         watch = load_watchlist(self._root)
-        floors = self._filters.dump()
+        alertable = self._qualified_filtered_coins()
         events, _history = process_scan_alerts(
             self._root,
-            coins=self._coins,
+            coins=alertable,
             watchlist_pairs=watch,
-            floors={
-                "min_volume_usd": float(floors.get("min_volume_usd") or 0),
-                "min_uniformity": float(floors.get("min_uniformity") or 0),
-            },
+            floors=self._alert_floors(),
+            board_coins=list(self._coins),
         )
         append_log_alert(
             self._root,
             kind="scan_log",
-            reason=f"Scan finished: {len(self._coins)} qualified",
+            reason=(
+                f"Scan finished: {len(self._coins)} qualified · {len(alertable)} after filters"
+            ),
         )
         if self._on_alerts_changed is not None:
             self._on_alerts_changed()

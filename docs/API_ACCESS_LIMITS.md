@@ -11,6 +11,17 @@
 - **Never put `DEX_SIGNER_KEY` on the device** (host/VPS only per ADR-0011).
 - Authenticated CEX calls share a per-venue `RateBudget` (`exchanges/private_budget.py`).
 
+## API-key hygiene (third-party leaks)
+
+Third-party portfolio apps can be breached (e.g. Coinigy 2026 revoke advisory). Bot and device keys must stay least-privilege:
+
+1. **No withdraw / transfer / custody** permissions — ever.
+2. **IP allowlist** on the exchange when the venue supports it (VPS/host egress IP for trade keys).
+3. **No key reuse** across third-party dashboards, mobile apps, or shared bots — mint a dedicated key per integration and revoke on vendor incidents.
+4. Rotate after any vendor breach notice, even for “read-only” keys.
+
+Device Settings copy echoes the same tip (`SETTINGS_KEYS_HELP`).
+
 ## CEX key scopes
 
 | Venue | Query (portfolio) | Trade (bot) | Forbidden |

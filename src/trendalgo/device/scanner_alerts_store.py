@@ -65,7 +65,14 @@ def save_previous_qualified(
                     "gain_30d",
                     "gain_pct",
                     "gain_7d",
+                    "gains",
                     "health",
+                    "health_score",
+                    "bot_best_net_pct",
+                    "bot_vs_bh_pct",
+                    "chart_dist_7d_pct",
+                    "chart_dist_30d_pct",
+                    "volume_acceleration_pct",
                 )
                 if k in coin
             }

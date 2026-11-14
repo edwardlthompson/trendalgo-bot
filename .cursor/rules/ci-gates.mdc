@@ -20,7 +20,7 @@ python3 scripts/agent-run.py check-github-ci --wait 300
 ## Gate Order (local)
 
 1. `python3 scripts/agent-run.py update-deps` (dry-run; `--apply` only from `/update-deps` / `/ship`)
-2. `scripts/watch-agent-gates.sh --once --autofix --scope auto` (after each AGENT feature step; `/gates` stays full)
+2. Scoped lint/type/pytest on touched paths after each AGENT step (not full-suite). `watch-agent-gates` only for `/gates`, `/fix`, ship/prerelease, or explicit ask
 3. `scripts/smoke-sprint.sh --require` after the sprint is all ✅ (every checked row; startup + load order). `/gates` uses `--if-complete`.
 4. `scripts/feature-gate.sh --json` (RAM-capped parallel stacks on `multi`; `FEATURE_GATE_JOBS` override)
 5. `pre-commit run --all-files` (optional if hooks installed)

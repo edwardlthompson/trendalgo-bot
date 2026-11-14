@@ -3,6 +3,7 @@
 <!-- remaining-tally -->
 **Remaining:** AGENT 0 · LOCAL 0 · CLOUD 0 · AUTO 0 · HUMAN 1 · ADB 0 · **1 open**
 <!-- /remaining-tally -->
+<!-- tally note: TG-ENRICH + NEWS-1 closed this session; HUMAN PF-H1 remains -->
 > **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Completed work:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
 
@@ -33,6 +34,15 @@
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
+### Sequential (agent)
+
+| ID | Task | Owner | Status |
+|----|------|-------|--------|
+| TG-ENRICH | Live enter Telegram: enrich coin with Results OHLC + `alert_trades` before PNG — scope: `telegram_alert_enrich.py`, `scan_alerts.py`, tests | `[AGENT][LOCAL]` | ✅ |
+| NEWS-1 | API-key hygiene in security docs (no-withdraw, IP allowlist, no reuse) citing Coinigy breach — scope: `docs/API_ACCESS_LIMITS.md`, `THREAT_MODEL.md`, `SECURITY_TRIAGE.md`, `SETTINGS_KEYS_HELP` | `[AGENT][LOCAL]` | ✅ |
+| AUTOSCAN-1 | Autoscan never-dies: re-arm after no-op `_start`, stale/active watchdog, refresh HKCU Run command — scope: `scanner_page.py`, `scanner_schedule.py`, `autostart`/`main_window`, tests | `[AGENT][LOCAL]` | ✅ |
+| ALERT-FILTER-1 | Telegram enters only for new pairs in full Qualified-tab filtered set; cold-seed empty previous — scope: `scan_alerts.py`, `scanner_page.py`, `scanner_alert_diff.py`, tests | `[AGENT][LOCAL]` | ✅ |
+| ALERT-LEAVE-1 | Exit notify when pair leaves filtered Qualified set; leave reason from board metrics vs floors — scope: `scanner_alert_diff.py`, `scan_alerts.py`, tests | `[AGENT][LOCAL]` | ✅ |
 ### Open HUMAN
 
 - 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)

@@ -23,7 +23,7 @@ def build_enter_alert_png(coin: dict[str, Any]) -> bytes | None:
     try:
         import matplotlib
 
-        matplotlib.use("Agg")
+        matplotlib.use("Agg")  # type: ignore[attr-defined,unused-ignore]
         import matplotlib.pyplot as plt
         from matplotlib import patches
     except ImportError:
@@ -63,7 +63,7 @@ def build_exit_alert_png(coin: dict[str, Any]) -> bytes | None:
     try:
         import matplotlib
 
-        matplotlib.use("Agg")
+        matplotlib.use("Agg")  # type: ignore[attr-defined,unused-ignore]
         import matplotlib.pyplot as plt
     except ImportError:
         return None

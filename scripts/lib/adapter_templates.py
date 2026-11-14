@@ -44,10 +44,10 @@ Every feature task must include automated tests, or the feature spec must state 
 
 ## Commands
 
-Run `bash scripts/verify.sh` before marking a BUILD_PLAN row complete.
+Run scoped lint/type/pytest on touched paths before marking a BUILD_PLAN row complete (not full-suite). Full gates: `/gates` or `watch-agent-gates` on ask/ship.
 
 `python3 scripts/agent-run.py validate-bootstrap --quick`
-`python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto`
+`python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto`  # /gates, /fix, ship only
 `python3 scripts/agent-run.py smoke-sprint --require`
 `python3 scripts/agent-run.py update-deps`
 `python3 scripts/agent-run.py check-local-compute`
@@ -67,7 +67,8 @@ Do not complete a feature task without corresponding tests, or an explicit justi
 ## Do
 
 - Follow BUILD_PLAN Sequential then Parallel
-- Run `python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto` after AGENT steps
+- After AGENT steps: scoped lint/type/pytest on touched paths only (not full `watch-agent-gates`)
+- Full `watch-agent-gates` only on `/gates`, `/fix`, ship/prerelease, or human ask
 - After a sprint is all ✅, run `python3 scripts/agent-run.py smoke-sprint --require` before the next sprint
 - Keep edits inside the active feature container
 

@@ -1,12 +1,14 @@
 ---
 name: watch-gates-autofix
-description: Run watch-agent-gates with autofix in feature scope. Use when /fix or after AGENT BUILD_PLAN steps.
+description: Run watch-agent-gates with autofix when the human asks /fix or /gates — not after routine AGENT steps.
 disable-model-invocation: false
 ---
 
 # Watch gates autofix (3-strike)
 
 See also: `.cursor/commands/fix.md`
+
+**When to use:** explicit `/fix`, `/gates`, ship/prerelease, or human ask. Routine AGENT rows use **scoped** ruff/mypy/pytest on touched paths only (see `.cursor/rules/feature-modules.mdc`).
 
 **Espresso before emulator reinstall:** on Android 16 `InputManager.getInstance` failures, bump `espresso-core` to ≥3.7.0 (`.cursor/skills/espresso-android16`) before deleting AVDs or re-downloading system images.
 

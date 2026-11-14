@@ -22,14 +22,34 @@ from trendalgo.device.telegram_vault import (
 from trendalgo.notifications.telegram_format import format_qualified_enter, format_trade
 
 
-def test_diff_enter_and_watchlist_leave() -> None:
+def test_diff_enter_and_filtered_leave() -> None:
     previous = {"AAA", "BBB"}
     current = [{"symbol": "BBB"}, {"symbol": "CCC", "pair": "CCC/USD"}]
-    events = diff_alerts(previous=previous, current_coins=current, watchlist={"AAA", "ZZZ"})
+    events = diff_alerts(previous=previous, current_coins=current, watchlist=set())
     kinds = {(e.kind, e.symbol) for e in events}
     assert ("qualified_enter", "CCC") in kinds
-    assert ("watchlist_leave", "AAA") in kinds
-    assert ("watchlist_leave", "BBB") not in kinds  # BBB left but not watchlisted
+    assert ("watchlist_leave", "AAA") in kinds  # left filtered set (no watchlist required)
+    assert ("watchlist_leave", "BBB") not in kinds  # still in filtered set
+
+
+def test_filtered_leave_uses_board_metrics_for_reason() -> None:
+    previous = {"KEEP", "DROP"}
+    current = [{"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0}]
+    board = [
+        {"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0},
+        {"symbol": "DROP", "pair": "DROP/USD", "bot_best_net_pct": 12.0},
+    ]
+    events = diff_alerts(
+        previous=previous,
+        current_coins=current,
+        watchlist=set(),
+        board_coins=board,
+        floors={"min_best_bt": 30.0},
+    )
+    leave = next(e for e in events if e.kind == "watchlist_leave" and e.symbol == "DROP")
+    assert "Best BT 12.0% below min 30.0%" in leave.reason
+    assert leave.coin is not None
+    assert leave.coin.get("bot_best_net_pct") == 12.0
 
 
 def test_leave_reason_uses_floors_and_snapshot() -> None:
@@ -43,6 +63,22 @@ def test_leave_reason_uses_floors_and_snapshot() -> None:
     assert "Volume $12,000 below min $50,000" in reason
     assert "Uniformity 0.41 < 0.55" in reason
     assert "scan floors" not in reason.lower()
+
+
+def test_leave_reason_cites_best_bt_and_gains() -> None:
+    from trendalgo.device.scanner_alert_diff import leave_reason
+
+    reason = leave_reason(
+        "AKE",
+        {
+            "bot_best_net_pct": 12.0,
+            "gain_7d": 5.0,
+            "pair": "AKE/USD",
+        },
+        floors={"min_best_bt": 30.0, "min_gain_7d": 10.0},
+    )
+    assert "Best BT 12.0% below min 30.0%" in reason
+    assert "7D gain 5.0% below min 10.0%" in reason
 
 
 def test_previous_coins_roundtrip(tmp_path: Path) -> None:
@@ -138,18 +174,21 @@ def test_formatters_smoke() -> None:
     assert coin_keys([{"symbol": "x"}]) == {"X"}
 
 
-def test_process_scan_alerts_persists(tmp_path: Path) -> None:
+def test_process_scan_alerts_cold_seed_then_enter(tmp_path: Path) -> None:
     from trendalgo.device.scan_alerts import process_scan_alerts
     from trendalgo.notifications.telegram import TelegramCommands
 
     class _Silent(TelegramCommands):
         def __init__(self) -> None:
             super().__init__(token="t", chat_id="1")
+            self.messages: list[str] = []
 
         def send_message(self, text: str, **_kw: object) -> bool:
+            self.messages.append(text)
             return True
 
         def send_photo(self, png: bytes, caption: str = "", **_kw: object) -> bool:
+            self.messages.append(caption)
             return True
 
     save_prefs(
@@ -161,12 +200,48 @@ def test_process_scan_alerts_persists(tmp_path: Path) -> None:
             telegram_entered=True,
         ),
     )
-    events, history = process_scan_alerts(
+    tg = _Silent()
+    first, _hist = process_scan_alerts(
         tmp_path,
-        coins=[{"symbol": "SOL", "pair": "SOL/USD", "closes_7d": [1.0, 1.1, 1.2]}],
+        coins=[
+            {"symbol": "SOL", "pair": "SOL/USD", "bot_best_net_pct": 40.0},
+            {"symbol": "ETH", "pair": "ETH/USD", "bot_best_net_pct": 55.0},
+        ],
         watchlist_pairs=[],
-        telegram=_Silent(),
+        telegram=tg,
     )
-    assert any(e.kind == "qualified_enter" for e in events)
+    assert first == []
+    assert load_previous_qualified(tmp_path) == {"ETH", "SOL"}
+    assert tg.messages == []
+
+    second, history = process_scan_alerts(
+        tmp_path,
+        coins=[
+            {"symbol": "SOL", "pair": "SOL/USD", "bot_best_net_pct": 40.0},
+            {"symbol": "ETH", "pair": "ETH/USD", "bot_best_net_pct": 55.0},
+            {"symbol": "BTC", "pair": "BTC/USD", "bot_best_net_pct": 80.0},
+        ],
+        watchlist_pairs=[],
+        telegram=tg,
+    )
+    assert [(e.kind, e.symbol) for e in second] == [("qualified_enter", "BTC")]
     assert history
-    assert load_previous_qualified(tmp_path) == {"SOL"}
+    assert load_previous_qualified(tmp_path) == {"BTC", "ETH", "SOL"}
+
+
+def test_filtered_caller_drops_below_best_bt() -> None:
+    """Caller pre-filters like Qualified tab; weak coins never enter the diff set."""
+    from trendalgo.device.lts_scan_model import filter_coins
+
+    board = [
+        {"symbol": "WEAK", "pair": "WEAK/USD", "bot_best_net_pct": 10.0, "gains": {"7d": 40}},
+        {"symbol": "STRONG", "pair": "STRONG/USD", "bot_best_net_pct": 50.0, "gains": {"7d": 40}},
+    ]
+    alertable = filter_coins(board, min_best_bt=30.0, min_gain_7d=20.0)
+    assert [c["symbol"] for c in alertable] == ["STRONG"]
+    events = diff_alerts(
+        previous=set(),
+        current_coins=alertable,
+        watchlist=set(),
+    )
+    assert [(e.kind, e.symbol) for e in events] == [("qualified_enter", "STRONG")]

@@ -11,10 +11,9 @@ from typing import Any
 from trendalgo.backtest.heartbeat_tf import needs_1m_base
 from trendalgo.device.opportunity_sauce import (
     OPPORTUNITY_SAUCE_TOP_N,
-    load_sauce_ever,
     mark_sauce_ever,
     oracle_rank_score,
-    select_sauce_symbols_with_first_join,
+    select_sauce_symbols,
 )
 from trendalgo.device.scan_bt_prefs import (
     enabled_strategies,
@@ -45,7 +44,7 @@ def run_all_ta_scan_backtests(
     timeframes: tuple[str, ...] | None = None,
     prefs_root: Path | None = None,
 ) -> dict[str, Any] | None:
-    """Catalog+deepen all coins; Sauce for top Oracle + first-join once."""
+    """Catalog+deepen all coins; Sauce Lab only for top Oracle-N (default 10)."""
     if not coins:
         return None
     if os.environ.get("BACKTEST_ENABLED", "1").strip().lower() in {"0", "false", "no", "off"}:
@@ -77,7 +76,7 @@ def run_all_ta_scan_backtests(
         f"taker={fee.taker_pct * 100:.2f}% · {catalog_accel_label()} · "
         f"{parallel_log_bits()} · "
         f"{len(tf_list)} TFs · {len(strat_list)} strategies · "
-        f"Sauce top {OPPORTUNITY_SAUCE_TOP_N} + first-join" + (" · 1m base" if subhour else "")
+        f"Sauce top {OPPORTUNITY_SAUCE_TOP_N} only" + (" · 1m base" if subhour else "")
     )
 
     def loader_factory() -> Any:
@@ -156,16 +155,11 @@ def run_all_ta_scan_backtests(
             on_score=lambda sym, rows: scored.append((sym, oracle_rank_score(rows))),
         )
 
-        sauce_ever = load_sauce_ever(root)
-        sauce_syms = select_sauce_symbols_with_first_join(
-            scored,
-            ever=sauce_ever,
-            top_n=OPPORTUNITY_SAUCE_TOP_N,
-        )
+        sauce_syms = select_sauce_symbols(scored, top_n=OPPORTUNITY_SAUCE_TOP_N)
         sauce_coins = [coin_by_sym[s] for s in sauce_syms if s in coin_by_sym]
         progress.log(
             f"Sauce: {len(sauce_coins)} of {len(coins)} "
-            f"(top{OPPORTUNITY_SAUCE_TOP_N}+first-join; "
+            f"(top{OPPORTUNITY_SAUCE_TOP_N} only; "
             f"{', '.join(sauce_syms) or 'none'})"
         )
         if sauce_coins:

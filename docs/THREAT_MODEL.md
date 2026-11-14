@@ -9,7 +9,6 @@
 | Project | TrendAlgo Bot |
 | Stack | Python (native CCXT runner + FastAPI) + Web PWA |
 | Methodology | STRIDE + OWASP ASVS (web) |
-
 ## Trust Boundaries
 
 ```text
@@ -18,6 +17,7 @@
                     [Native CCXT runner] --> [CEX APIs (CCXT)]
                               |
                     [Telegram API] (outbound alerts only)
+
 ```
 
 **Production boundary:** External VPS only — never PR local LAN for live trading.
@@ -32,10 +32,9 @@
 | Information disclosure | API keys in logs | Redaction; no Withdraw keys |
 | Denial of service | Webhook flood | Rate limits |
 | Elevation | Live trade without gate | go-live-gate.sh (R-003) |
-
 ## Top Abuse Cases
 
-1. **Key compromise** — trade-only keys; encryption at rest M11 (R-009)
+1. **Key compromise** — trade-only (no withdraw); IP allowlist; no reuse across third parties; encryption at rest M11 (R-009); see `docs/API_ACCESS_LIMITS.md` hygiene
 2. **Accidental live trading** — dry-run default; go-live gate
 3. **Webhook hijack** — TradingView HMAC (S4)
 4. **Fee gaming** — bot-attributed trades only; wash heuristics (S10)

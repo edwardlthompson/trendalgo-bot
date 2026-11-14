@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-14 — Ship filtered leave alerts + autoscan harden
+- **Status:** Accepted
+- **Context:** `/ship` after Qualified-tab filtered enter/leave notifies, TG enrich, Sauce top-10-only, autoscan rearm/watchdog, Share filter caption; local full pytest hung on `@pytest.mark.slow` All-TA Sauce smokes when OHLCV cache exists; bare `uv sync` stripped device/dev extras (httpx2/matplotlib).
+- **Decision:** Ship alert/autoscan/Sauce/share work; bump `opentelemetry-api`→1.45.2 and patch fastapi/ruff-pre-commit/codeql; run local gates with `-m "not slow"`; restore venv via `uv sync --extra dev --extra device --extra ta`. Keep `watchlist_leave` kind for prefs compatibility.
+- **Alternatives considered:** Delete slow smoke tests (rejected — still useful opt-in); force-include slow in feature-gate with timeout (deferred); leave Medium otel unfixed (rejected — lock bump available).
+- **Consequences:** Exit alerts fire for any filtered-set drop; overnight autoscan should stay alive; CI still ignores `tests/test_device` so slow hang is local-only until feature-gate gains `-m "not slow"`.
+
 ### 2026-11-13 — Ship v1.14.0 LTS Telegram + Sauce-on-join
 - **Status:** Accepted
 - **Context:** `/ship` after LTS-parity Telegram enter/leave charts, Sauce first-join once then Oracle top-10, and update-deps; upd rewrote `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`; pandas-ta-classic 0.9 dropped EBSW/TSIGNALS/XSIGNALS; Dependabot #80 Pillow (patched in 13.0.0 already locked).

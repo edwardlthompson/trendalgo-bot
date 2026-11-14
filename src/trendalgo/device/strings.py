@@ -208,7 +208,8 @@ STATUS_LIGHTS_FMT = "Vault: {vault} · Sync: {sync} · Live: {live}"
 SETTINGS_KEYS = "Exchange API keys"
 SETTINGS_KEYS_HELP = (
     "Keys stay in Windows Credential Manager on this PC. They are not part of Save settings. "
-    "Start with query-only. Live trading still needs a separate go-live approval."
+    "Start with query-only. Never enable withdraw/transfer; prefer exchange IP allowlists; "
+    "do not reuse the same key on third-party apps. Live trading needs a separate go-live approval."
 )
 SETTINGS_KEYS_SAVED = "Saved keys"
 SETTINGS_KEYS_EMPTY = "No exchange keys saved yet. Add one below."
@@ -933,7 +934,9 @@ AUTOSCAN_OFF = "Auto-scan waits until a scan finishes."
 NOTIFY_SECTION = "Alerts and notifications"
 NOTIFY_SECTION_HELP = (
     "Per event kind: enable Windows toast and/or Telegram. Logs default off to avoid spam. "
-    "Alerts history still records events on the Alerts tabs."
+    "Alerts history still records events on the Alerts tabs. "
+    "Rich Telegram photos (candles + trade holds) need the device app launched from source "
+    "(relaunch-device.ps1) or installer v1.14.0+ with the matplotlib device extra."
 )
 NOTIFY_COL_WINDOWS = "Windows"
 NOTIFY_COL_TELEGRAM = "Telegram"

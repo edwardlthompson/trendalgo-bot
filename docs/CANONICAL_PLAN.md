@@ -81,7 +81,6 @@ isProject: false
 | Operator as money transmitter | **Must avoid** — never hold or route user funds |
 | KYC | **Never** |
 | Primary deployment | **Self-hosted** (user's VPS, user's keys) |
-
 **Operator model:** Local LLC sells **AGPL software** under a **variable performance-based license**. Fee engine **calculates monthly license amounts** from closed-trade PnL. User **initiates payment** from their own wallet/exchange to operator's **public crypto address**. **Unpaid after grace → license suspended** (bot paused; scanner read-only). Language: **software license fee**, not payment processing or profit-sharing.
 
 ### Confirmed Strategic Decisions
@@ -101,7 +100,6 @@ isProject: false
 | Licensing | AGPL-3.0 core; billing module = calculator only |
 | Freemium | Limited scanner + paper-only |
 | Drawdown handling | Pause fee accrual; carry-forward credits |
-
 ## Context & Constraints
 
 - **Template source:** Local clone at [`C:\Users\edwar\agent-project-bootstrap`](C:\Users\edwar\agent-project-bootstrap) (v0.11.1)
@@ -119,7 +117,6 @@ isProject: false
 | **Legal safety (Prompt 8)** | **No KYC. No custodial funds. No money-transmitter behavior. Software vendor only.** |
 | **Cost** | Production **< $10/mo**; Oracle Always Free → Hetzner fallback |
 | **Combined decision rule** | Cheapest option that meets always-on + external cloud; a few extra $/mo acceptable for reliability; reject free tiers that sleep or have poor uptime |
-
 **Explicitly rejected for production:** local PR hardware, sleeping free tiers, high-latency/unreliable providers.
 
 **Development vs production split:**
@@ -128,7 +125,6 @@ isProject: false
 |-------------|-------|------|
 | Dev / backtest / dry-run | Local Docker Compose on PR workstation | $0 |
 | Production (live or always-on dry-run) | External cloud VPS only | $0–7/mo target |
-
 ---
 
 ## Phase 1 — Template Bootstrap (Sprint 0 Sequential, steps 1–3)
@@ -154,6 +150,7 @@ gh repo create edwardlthompson/trendalgo-bot --public --source=. --remote=origin
 git add -A
 git commit -m "chore: Sprint 0 scaffold from agent-project-bootstrap"
 git push -u origin main
+
 ```
 
 **H-001 partial automation:** AGENT runs `gh repo create` if `gh auth status` succeeds; otherwise stops with instructions for founder.
@@ -167,6 +164,7 @@ Copy bootstrap source files (exclude `.git/`, build artifacts, `node_modules/`, 
 robocopy C:\Users\edwar\agent-project-bootstrap C:\Users\edwar\trendalgo-bot /E /XD .git node_modules .venv dist build target coverage .pytest_cache .gradle
 cd C:\Users\edwar\trendalgo-bot
 git init
+
 ```
 
 ### 2. Run init script (non-interactive)
@@ -179,6 +177,7 @@ pwsh scripts/init-project.ps1 `
   -KeepOptional `
   -ProjectName "TrendAlgo Bot" `
   -ProjectPurpose "Production-grade self-hosted Kraken spot algo trading bot: Freqtrade core, multi-timeframe TA strategies, LTS backtest intelligence, rich web UI, Telegram + PWA notifications."
+
 ```
 
 Then **prune inactive stacks** manually (keep `python` + `web` only):
@@ -194,6 +193,7 @@ This produces [`.cursor/stack-selection.json`](.cursor/stack-selection.json) via
   "active_modules": ["python", "web"],
   "parallel_scope_note": "Sprint 1 Parallel: one agent per active stack; no overlapping paths"
 }
+
 ```
 
 ### 3. Customize bootstrap memory docs
@@ -207,7 +207,6 @@ This produces [`.cursor/stack-selection.json`](.cursor/stack-selection.json) via
 | [`README.md`](README.md) | TrendAlgo Bot overview, safety warning, **dev-local / prod-cloud** note, quick-start pointer to `docs/START_HERE.md` |
 | [`.env.example`](.env.example) | Kraken API keys, Telegram token, Freqtrade RPC, DB URL placeholders |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | **NEW** — hosting decision tree, cost table, Oracle/Hetzner setup outline, Render dev-only note |
-
 ### DECISION_LOG.md — ADR-0002 Draft (to write at scaffold)
 
 **ADR-0002: Production Hosting — Cost + Puerto Rico Reliability**
@@ -263,6 +262,7 @@ trendalgo-bot/
 └── examples/
     ├── python/                 # Bootstrap golden path (evolve → src/trendalgo)
     └── web/                    # Custom dashboard UI (Sprint 3+)
+
 ```
 
 **Package strategy:** Root [`pyproject.toml`](pyproject.toml) in `examples/python/` evolves to workspace root `pyproject.toml` with `src/trendalgo` as the installable package; Freqtrade + CCXT as pinned dependencies. Keeps uv/ruff/mypy/pytest CI from bootstrap.
@@ -286,7 +286,6 @@ trendalgo-bot/
 | `AGENT` | Cursor Agent | Code, docs, scaffolding, tests, CI config |
 | `HUMAN` | Human developer | Approvals, credentials, GitHub settings, product decisions |
 | `AUTO` | CI/scripts/bots | GitHub Actions, Dependabot, pre-commit, gate scripts |
-
 ## Status markers
 
 | Marker | State | Agent action |
@@ -294,10 +293,9 @@ trendalgo-bot/
 | 🔲 | Open | Default for new tasks |
 | ✅ | Done | Replace 🔲; archive sprint to `COMPLETED_TASKS.md` |
 | ❌ | Blocked | Replace 🔲; add brief reason |
-
 **Task format:** `🔲 [OWNER] Description`
 
-**Agent rule:** Execute all `[AGENT]` **Sequential** items first, then **Parallel** with isolated scopes (`docs/PARALLEL_AGENT_SCOPES.md`). After every `[AGENT]` step → `bash scripts/watch-agent-gates.sh --once --autofix --step <scaffold|tests|wire>`.
+**Agent rule:** Execute all `[AGENT]` **Sequential** items first, then **Parallel** with isolated scopes (`docs/PARALLEL_AGENT_SCOPES.md`). After every `[AGENT]` step → scoped lint/type/pytest on touched paths (not full `watch-agent-gates`; use `/gates` or `/fix` for full local suite).
 
 ## Project constraints (non-negotiable)
 
@@ -311,7 +309,6 @@ trendalgo-bot/
 | LTS absorption | Full scanner + alerts → **Opportunity Scanner** module; deprecate standalone repo |
 | Monetization | **Calculation-only** voluntary performance fee; **no custodial** collection; trade-only API keys |
 | Stack | Python 3.11+ (uv) + Web PWA (Vite/TS); see `.cursor/stack-selection.json` |
-
 ## ADR index (see `DECISION_LOG.md`)
 
 | ADR | Topic |
@@ -324,7 +321,6 @@ trendalgo-bot/
 | ADR-0006 | LTS absorption — Opportunity Scanner module, deprecation path for standalone repo |
 | ADR-0007 | Legal framework — no KYC, pseudonymous, software-only disclaimers, data minimization |
 | ADR-0008 | **Legal-safe monetization** — calculation-only, voluntary payment, non-custodial, anti-MSB |
-
 ## Feature ID index (detail in `docs/FEATURE_ROADMAP.md`)
 
 | IDs | Domain | Sprint |
@@ -345,7 +341,6 @@ trendalgo-bot/
 | **NT1–NT4** | Notification upgrades | S4.5, S5, S4, S3 |
 | **OPS1–OPS5** | Ops, backup, health, updates | S4, S3, S5 |
 | **B1** | Boost Mode (premium tier) | S11 |
-
 ---
 
 ### Sprint 0 — Initialization & Research (CURRENT)
@@ -389,7 +384,6 @@ trendalgo-bot/
 | CoinStats parity checklist | AGENT | `docs/PORTFOLIO_TRACKER.md` § Parity | P1–P11 |
 | Portfolio SQLite schema draft | AGENT | `docs/PORTFOLIO_TRACKER.md` § Data Model | P3–P4 |
 | Competitive analysis summary | AGENT | `docs/FEATURE_ROADMAP.md` § Analysis | — |
-
 ---
 
 ### Sprint 1 — Core Engine Foundation
@@ -418,7 +412,6 @@ trendalgo-bot/
 | Historical data download script | AGENT | `src/trendalgo/data/` | — |
 | Backtest result JSON schema | AGENT | `src/trendalgo/schemas/` | T11 |
 | WebSocket / Kraken capabilities doc | AGENT | `docs/FREQTRADE_INTEGRATION.md` | T2 |
-
 ---
 
 ### Sprint 2 — Risk, Execution & Paper Trading
@@ -443,7 +436,6 @@ trendalgo-bot/
 | Risk manager unit tests | AGENT | `tests/test_risk/` | T3, T23 |
 | Trade journal unit tests | AGENT | `tests/test_journal/` | T23 |
 | Freqtrade protections config doc | AGENT | `docs/FREQTRADE_INTEGRATION.md` | — |
-
 ---
 
 ### Sprint 3 — Web UI + Unified Bot Dashboard (MVP)
@@ -475,7 +467,6 @@ trendalgo-bot/
 | Metrics computation | AGENT | `src/trendalgo/analytics/metrics.py` | T1, T13 |
 | PWA manifest + mobile nav | AGENT | `examples/web/public/`, `examples/web/src/shell/` | T10, T17 |
 | Config form UI | AGENT | `examples/web/src/config/` | — |
-
 ---
 
 ### Sprint 4 — Notifications, Deploy & Portfolio Foundation (MVP)
@@ -513,7 +504,6 @@ trendalgo-bot/
 | Ollama backtest prompt templates | AGENT | `src/trendalgo/ai/` | T12, AI1 |
 | Backup cron + restore test | AGENT | `scripts/backup-restore.sh` | OPS1, OPS2 |
 | Version checker stub | AGENT | `src/trendalgo/ops/version_check.py` | OPS5 |
-
 ---
 
 ### Sprint 4.5 — Opportunity Scanner (LTS Full Absorption)
@@ -549,7 +539,6 @@ trendalgo-bot/
 | Uniformity score module | AGENT | `src/trendalgo/scanner/uniformity.py` | O2 |
 | API credit strategy doc | AGENT | `docs/LTS_ABSORPTION.md` § APIs | O4 |
 | Scanner → watchlist bridge | AGENT | `src/trendalgo/scanner/watchlist_bridge.py` | O8 |
-
 ---
 
 ### Sprint 5 — Portfolio Tracker Core (HIGH PRIORITY — CoinStats replacement)
@@ -599,7 +588,6 @@ trendalgo-bot/
 | Notification center | AGENT | `examples/web/src/notifications/Inbox.tsx` | U8, NT4 |
 | PWA widget manifest | AGENT | `examples/web/public/widgets/` | U10 |
 | Tooltip/onboarding layer | AGENT | `examples/web/src/components/TooltipHelp.tsx` | U9 |
-
 ---
 
 ### Sprint 6 — Strategy Templates, Multi-Bot & Watchlists (v1)
@@ -641,7 +629,6 @@ trendalgo-bot/
 | Watchlist API + UI | AGENT | `src/trendalgo/watchlist/` | T8 |
 | Slippage simulation | AGENT | `src/trendalgo/backtest/slippage.py` | T7 |
 | ATR sizing module | AGENT | `src/trendalgo/risk/sizing.py` | T14 |
-
 ---
 
 ### Sprint 7 — Research, Tax & Export Hub (v1)
@@ -676,7 +663,6 @@ trendalgo-bot/
 | Monte Carlo tests | AGENT | `src/trendalgo/optimize/monte_carlo.py` | T15 |
 | Tax export tests | AGENT | `tests/test_export/tax.py` | T12 |
 | Export hub UI | AGENT | `examples/web/src/export/` | T18 |
-
 ---
 
 ### Sprint 8 — Portfolio Advanced & Multi-Exchange (v2)
@@ -711,7 +697,6 @@ trendalgo-bot/
 | Tags UI | AGENT | `examples/web/src/portfolio/tags/` | P14 |
 | Rebalancing engine | AGENT | `src/trendalgo/portfolio/rebalance.py` | P15 |
 | Public dashboard auth | AGENT | `src/trendalgo/api/public_dashboard.py` | T20 |
-
 ---
 
 ### Sprint 10 — Performance License & Settlement
@@ -751,7 +736,6 @@ trendalgo-bot/
 | On-chain payment UX (copy address + QR) | AGENT | `examples/web/src/billing/pay/` | M7 |
 | Data retention TTL job | AGENT | `src/trendalgo/ops/retention.py` | LS20 |
 | ~~Stripe/fiat~~ | — | **REMOVED — legal risk** | ~~M8~~ |
-
 ---
 
 ### Sprint 11 — AI Strategy Curation & Anonymous Growth
@@ -810,7 +794,6 @@ trendalgo-bot/
 | On-chain balance provider adapter | AGENT | `src/trendalgo/portfolio/onchain.py` | P18 |
 | Forager strategy mixin | AGENT | `src/trendalgo/scanner/forager.py` | T25 |
 | Postgres schema mirror | AGENT | `docker/postgres/` + migration scripts | S12 |
-
 ---
 
 ### Sprint 9+ — Rejected Only (No Longer a Deferred Backlog)
@@ -824,7 +807,6 @@ trendalgo-bot/
 | FreqAI heavy ML on VPS | **Rejected** | CPU cost; local research only |
 | Auto-withdraw profit-share (retail) | **Rejected** | Technically infeasible without Withdraw keys |
 | Honor-system-only billing | **Rejected** | Insufficient for monetization |
-
 ---
 
 ## Sprint exit criteria summary
@@ -844,7 +826,6 @@ trendalgo-bot/
 | **10** | **product** | **Profit-share settlement + Fee Dashboard + billing nice-to-haves** |
 | **11** | **growth** | **AI strategy recommender + anonymous referral + leaderboard** |
 | **12** | **platform** | **On-chain, forager, perps hooks, PostgreSQL path** |
-
 ---
 
 ## Ongoing Maintenance (TrendAlgo)
@@ -873,7 +854,6 @@ trendalgo-bot/
 | Sprint | Status | Archive |
 |--------|--------|---------|
 | _(none yet)_ | — | `COMPLETED_TASKS.md` |
-
 ---
 
 ## Architecture (Target State)
@@ -967,6 +947,7 @@ flowchart TB
     FT --> Telegram
     WebApp --> PWA
     WebApp --> NotifPrefs
+
 ```
 
 **Integration principles (ADR-0001):**
@@ -1016,7 +997,6 @@ flowchart TB
 | **Typical total** | **$0/mo** | **~$5–8/mo** | **~$10–30/mo** |
 | **Reliability** | High (Oracle DC) | Very high | Good if Always On; free tier sleeps |
 | **PR outage survival** | Yes (external) | Yes (external) | Yes (external) |
-
 **Target:** $0/mo (Oracle) or ≤ $8/mo (Hetzner) — well under $10/mo cap.
 
 ### Cost-conscious stack rules (all sprints)
@@ -1041,7 +1021,6 @@ flowchart TB
 | Dev environment | **Local Docker on PR workstation** (backtest/dry-run only — not production) | Default |
 | Render.com | Dev/staging + optional relay; not primary bot host | Default |
 | GitHub repo | Create from template or push to `edwardlthompson/trendalgo-bot` | `[HUMAN]` |
-
 ---
 
 ## Execution Order After Plan Approval
@@ -1064,14 +1043,12 @@ flowchart TB
 | 🔲 Pending | Not started |
 | ⏳ Blocked | Waiting on prior HUMAN item |
 | ✅ Done | Confirmed by founder |
-
 | Gate type | Blocks |
 |-----------|--------|
 | **Sprint gate** | Next sprint AGENT tasks |
 | **Legal gate** | Public beta, license enrollment in prod |
 | **Go-live gate** | Live order submission on exchange |
 | **Validation gate** | Milestone sign-off (CoinStats cancel, LTS archive) |
-
 ---
 
 ### A — One-time setup (Sprint 0)
@@ -1084,7 +1061,6 @@ flowchart TB
 | **H-004** | Attempt **Oracle Cloud Always Free ARM** provisioning; note eligibility | Sprint gate | S4 VPS deploy | S0 #17 |
 | **H-005** | Confirm defaults: **SQLite** MVP, **Ollama-first** AI, TZ **`America/Puerto_Rico`** | Sprint gate | S1 config | S0 #18 |
 | **H-006** | **One-time attorney consult** + approve **ADR-0008** (no KYC, no custodial, performance license) | Legal gate | Public beta | S0 #19 |
-
 ---
 
 ### B — Sprint approval gates
@@ -1100,7 +1076,6 @@ flowchart TB
 | **H-022** | Approve **ADR-0005** + **ADR-0008** performance-contingent license model | S10 | S10 #1 |
 | **H-024** | Approve Sprint 11 scope — confirm **no operator-hosted trading keys** | S11 | S11 #1 |
 | **H-025** | Approve Sprint 12 scope + on-chain data provider (if any) | S12 | S12 #1 |
-
 ---
 
 ### C — Credentials & configuration
@@ -1110,7 +1085,6 @@ flowchart TB
 | **H-008** | Provide **Telegram bot token + chat ID** (`.env` only; never commit) | S2 notifications | S2 #6 |
 | **H-011** | Provide **Kraken read-only API keys** for portfolio sync | S4 portfolio seed | S4 #14 |
 | **H-016** | Configure **daily notification time**; smoke test Telegram + PWA on VPS | S5 exit | S5 #21 |
-
 ---
 
 ### D — Legal & compliance
@@ -1120,7 +1094,6 @@ flowchart TB
 | **H-006** | One-time attorney consult (see A) | Public beta | S0 #19 |
 | **H-023** | **Attorney sign-off on TERMS.md** before public distribution | Public beta, license enrollment | S10 #16 |
 | **H-029** | Confirm **license fee % range** (recommend **12%** default, 10–15% band) | S10 enrollment UX | Pre-S10 |
-
 ---
 
 ### E — Go-live & trading safety (repeat every live enable)
@@ -1129,7 +1102,6 @@ flowchart TB
 |----|------|--------|------------|
 | **H-010** | **Live-trading approval:** separate `config.live.json`, Kraken **IP whitelist**, position caps reviewed | Live orders | S4 #13, maintenance |
 | **H-028** | **Pre-live checklist:** explicit approval before each go-live (same as H-010) | Live orders | Maintenance |
-
 > Dry-run is always default. AGENT must not enable live trading without H-010/H-028 confirmation logged (install UUID + timestamp in audit log — no PII).
 
 ---
@@ -1143,7 +1115,6 @@ flowchart TB
 | **H-014** | Approve **archiving `linear-trend-spotter`** after parity checklist | LTS deprecation | S4.5 #15 |
 | **H-017** | **Validate vs CoinStats** on Kraken holdings; confirm ready to **cancel CoinStats** | S5 complete | S5 #22 |
 | **H-021** | Decide **second exchange + futures/perps timeline** | S8 scope | S8 #14 |
-
 ---
 
 ### G — Recurring maintenance (ongoing)
@@ -1152,7 +1123,6 @@ flowchart TB
 |----|------|---------|------------|
 | **H-026** | Review **portfolio snapshot integrity** + daily notification delivery | Monthly | Maintenance |
 | **H-027** | Confirm **production cost ≤ $10/mo** | Monthly | Maintenance |
-
 ---
 
 ### H — Pre-Sprint-1 confirmation bundle
@@ -1171,7 +1141,6 @@ After Sprint 0 scaffold, founder confirms in one session (can check off multiple
 | 8 | Fee % default **12%** (10–15% range) | H-029 |
 | 9 | **MVP scope:** S1–4 before S4.5/S5 unless explicitly parallel | H-007 |
 | 10 | Proceed to Sprint 1 code | **Master gate** |
-
 ---
 
 ## Risks & Mitigations
@@ -1211,7 +1180,6 @@ After Sprint 0 scaffold, founder confirms in one session (can check off multiple
 | **Notification fatigue** | Low–Medium | Granular NT3 matrix; notification center filters (NT4); quiet hours | S4, S5 |
 | ~~Hosted SaaS tenant data leak~~ | — | **Eliminated** — custodial SaaS rejected (ADR-0008) | — |
 | ~~Institutional auto-collect MSB~~ | — | **Eliminated** — rejected (ADR-0008) | — |
-
 ---
 
 ## Critiques Addressed (Response Registry)
@@ -1239,7 +1207,6 @@ After Sprint 0 scaffold, founder confirms in one session (can check off multiple
 | *"CoinStats looks better"* | H-015/H-017 gates; heatmap; timeline scrubber; daily insights | S5 P19, P20 |
 | *"Performance license = investment adviser"* | Tool-only disclaimers; user controls trades; attorney validates TERMS wording | H-006, H-023 |
 | *"38 new features = never shipping"* | Prompt 9 items phased across S3–S12; S5 portfolio remains critical path | H-015, burnout risk row |
-
 ### Risk response — mandatory gates (never skip)
 
 | Gate | When | Blocks | H-ID |
@@ -1251,7 +1218,6 @@ After Sprint 0 scaffold, founder confirms in one session (can check off multiple
 | **Fee reconciliation test** | Before S10 sign-off | Monetization release | S10 exit criteria |
 | **CoinStats validation** | Before S5 sign-off | Cancel CoinStats subscription | H-017 |
 | **Sprint scope approval** | Start of each sprint | Next sprint AGENT work | H-007, H-013, H-015, H-018–H-020, H-022, H-024, H-025 |
-
 ---
 
 ## What You Will Confirm Before Sprint 1 Code
@@ -1273,7 +1239,6 @@ After Sprint 0 scaffolding, confirm the **Pre-Sprint-1 bundle** (section H above
 | **OpenTrader** | Polished multi-bot dashboard, JSON5 strategy templates, live WebSocket metrics |
 | **Jesse** | Sharpe/Sortino/Calmar, Monte Carlo, walk-forward, side-by-side benchmark |
 | **Freqtrade (base)** | Hyperopt, protections, trailing stop — **leverage, don't rebuild** |
-
 ---
 
 ## Full Feature Matrix (95 items — all domains)
@@ -1451,7 +1416,6 @@ After Sprint 0 scaffolding, confirm the **Pre-Sprint-1 bundle** (section H above
 | OPS5 | Version checker + changelog feed | v1 | S4, S5 | S | In-app updates |
 | **Boost / Premium** |
 | B1 | Boost Mode — higher fee % for premium support | growth | S11 | S | Opt-in tier |
-
 ---
 
 ## ADR-0003 — Feature Adoption (unchanged summary)
@@ -1536,7 +1500,6 @@ After Sprint 0 scaffolding, confirm the **Pre-Sprint-1 bundle** (section H above
 | Auto-withdraw / subaccount routing | Yes | **High** | **Rejected** |
 | Stripe / fiat invoices | Indirect | Medium–High | **Rejected** |
 | Escrow / holding wallet | Yes | **High** | **Rejected** |
-
 - **Success metric:** Operator can describe business as "we sell trading software under a performance-based license" with no custodial or transmission duties.
 
 ---
@@ -1589,6 +1552,7 @@ flowchart TB
     Grace -->|"unpaid"| Suspended
     Stmt --> Pay --> Mark --> Active
     Suspended --> Pay
+
 ```
 
 ### License tiers — Free vs Paid
@@ -1604,7 +1568,6 @@ flowchart TB
 | Fee accrual | **None** — no license fee | Variable % on winning closed trades |
 | License statement | N/A | Monthly, itemized |
 | Support / docs tier | Community | Standard (Boost optional later) |
-
 **Upgrade path:** User explicitly **enrolls in performance license** during onboarding (S10) — accepts TERMS, selects rate (10–15%), sees fee preview on historical dry-run trades before going live.
 
 **Downgrade path:** User can revert to Free tier anytime (stops live trading; no new fee accrual). Outstanding license balance still shown; grace/gate applies only if user re-enables live trading without settling.
@@ -1622,7 +1585,6 @@ flowchart TB
 | Monthly cap (goodwill) | Optional **$25–50 USD equivalent** max | S10 parallel |
 | Attribution | **Bot-attributed closed trades only** (MVP); manual trades excluded unless opted in | TERMS §3 |
 | Settlement currency | BTC or USDC — user pays; statement shows USD equivalent + crypto amount | Operator config |
-
 ### Monthly cycle timeline
 
 | Day | Event |
@@ -1632,7 +1594,6 @@ flowchart TB
 | **Day 1–7** | **Grace period** — full license active; reminders on Day 1, 4, 7 |
 | **Day 8+** | If unpaid → **License suspended**: live trading off; scanner read-only + CSV export OK |
 | **Any time** | User pays → marks paid (optional tx hash) → license reactivated immediately |
-
 ### License gate behavior (what software can / cannot do)
 
 | Action | Allowed |
@@ -1644,7 +1605,6 @@ flowchart TB
 | Block user from logging into Kraken | **No** — never |
 | Withdraw or freeze user exchange funds | **No** — never |
 | Delete user data on non-payment | **No** — export always available |
-
 ### TERMS.md structure (Sprint 0 draft → S10 attorney review)
 
 Scaffold `TERMS.md` + `docs/LICENSE_MODEL.md` with these sections:
@@ -1676,7 +1636,6 @@ Scaffold `TERMS.md` + `docs/LICENSE_MODEL.md` with these sections:
 | Suspension banner | "License suspended — pay statement to resume live trading" |
 | Enrollment | "Enable live trading with performance-based license" |
 | **Avoid** | "We collect your profits," "profit share," "invoice due" (legal docs use "license fee") |
-
 ### Sprint 10 deliverables (this model)
 
 | ID | Deliverable |
@@ -1691,7 +1650,6 @@ Scaffold `TERMS.md` + `docs/LICENSE_MODEL.md` with these sections:
 | M20 | Monthly statement cron (Day 1) + grace reminders (Day 1/4/7) |
 | L1–L4 | TERMS.md + consent log (version + UUID + timestamp) |
 | NEW | `docs/LICENSE_MODEL.md` — full spec of this section |
-
 ---
 
 ## ADR-0006 — LTS Absorption / Opportunity Scanner (to write at scaffold)
@@ -1725,7 +1683,6 @@ Scaffold `TERMS.md` + `docs/LICENSE_MODEL.md` with these sections:
 | **v1 extended** | 6–8 | Templates, multi-bot, tax, multi-exchange portfolio | Power users |
 | **Product** | 10–11 | Profit-share, consent, onboarding, growth | Monetization |
 | **Platform** | 12 | On-chain, perps, PostgreSQL, horizontal scale | Long-term |
-
 **Do not block MVP on:** monetization (S10), on-chain (S12).
 
 **Must not slip:** S4.5 LTS scanner, S5 portfolio + daily P/L.
@@ -1742,7 +1699,6 @@ Scaffold `TERMS.md` + `docs/LICENSE_MODEL.md` with these sections:
 | Settlement ledger + user payment | **High feasibility** | Safest viable model; used by indie trading tools |
 | Open source + monetization | **Medium feasibility** | AGPL + billing module + hosted optional tier |
 | Regulatory / trust | **Medium–High risk** | Requires legal review; transparent UX mitigates |
-
 **Safest viable approach:** Build an **authoritative, auditable fee ledger** from closed trades; **monthly performance-based software license statement**; collect via **user-initiated settlement** (crypto/Lightning only); **license gate after grace** if unpaid; never hold withdrawal keys.
 
 ### Architecture — Scanner + Billing (target)
@@ -1778,6 +1734,7 @@ flowchart TB
     FeeLedger --> Settlement
     ReadTrade -.->|"never Withdraw"| Kraken
     Settlement -->|"user sends payment"| OperatorWallet[OperatorFeeWallet]
+
 ```
 
 ### 28 Concrete Recommendations
@@ -1801,7 +1758,6 @@ flowchart TB
 | 13 | Architecture | Event-driven **`trade.closed`** hook from Freqtrade → fee ledger (seed in Sprint 2) | Late retrofit painful |
 | 14 | Open source | **AGPL-3.0** core; **`trendalgo-billing`** separate repo/module | License confusion |
 | 15 | Keys | Kraken **IP whitelist** + key rotation runbook in `docs/RUNBOOK.md` | Unauthorized API use |
-
 #### Nice to Have / Future
 
 | # | Area | Recommendation |
@@ -1819,7 +1775,6 @@ flowchart TB
 | 26 | Technical | Funding payment inclusion when perps added (S9+) |
 | 27 | Technical | HSM / Azure Key Vault for operator settlement wallet keys (hosted tier) |
 | 28 | UX | Weekly fee summary Telegram digest with one-tap "pay now" deep link |
-
 #### Prompt 6 — Additional recommendations (#29–50)
 
 | # | Area | Recommendation | Priority | Sprint |
@@ -1849,7 +1804,6 @@ flowchart TB
 | 51 | Technical | **Fee events webhook/API** for external monitoring | Future | S10 M17 |
 | 52 | Technical | Settlement **retry + idempotency** for payment confirmation | High | S10 M18 |
 | 53 | Ops | Operator **privacy-preserving aggregate billing report** | Future | Post-S10 M19 |
-
 ### Consolidated master list — 50 recommendations (prompts 5–6)
 
 > Items 1–28 from Prompt 5; 29–50 from Prompt 6 expansion. All mapped to BUILD_PLAN / feature IDs.
@@ -1884,6 +1838,7 @@ sequenceDiagram
     User->>Pay: send crypto or pay Lightning invoice
     Pay->>Ledger: confirm settlement idempotent
     UI->>User: receipt plus effective rate summary
+
 ```
 
 **Phase rollout:**
@@ -1896,7 +1851,6 @@ sequenceDiagram
 | 4 — Present | S10 | Fee Dashboard + onboarding wizard + fee preview |
 | 5 — Collect | S10 | Manual approval → user-initiated crypto/Lightning (default) |
 | 6 — Optional | Post-S10 | Institutional auto-collect; referral; leaderboard |
-
 ### Safest path for "automated" fee collection
 
 | Tier | Model | Withdraw keys? | Default? |
@@ -1906,7 +1860,6 @@ sequenceDiagram
 | **Lightning invoice** | User-initiated pay to operator address | **No** | Optional S10 |
 | ~~Institutional auto-collect~~ | — | — | **Rejected** (ADR-0008) |
 | ~~Hosted custodial SaaS~~ | — | — | **Rejected** (ADR-0008) |
-
 **User-friendly + trustworthy:** Lead with "pay when profitable," dry-run license preview before live, net-loss = $0, pause accrual in drawdowns, every fee line links to underlying trade. **User always initiates payment.**
 
 ### Major risks (expanded) and mitigations
@@ -1930,7 +1883,6 @@ sequenceDiagram
 | AI recommender perceived as advice | Medium | Not financial advice TERMS; confirm-all-params UX; dry-run required | AI8, H-023 |
 | Scope creep (38 Prompt 9 items) | **High** | Phased sprints; S5 critical path; H-018–H-020 gates |
 | ~~Hosted SaaS / institutional MSB~~ | — | **Eliminated** — rejected architecture |
-
 ### Suggested business parameters
 
 > Superseded in detail by **Performance-Based Monthly Software License** section above. Summary:
@@ -1943,7 +1895,6 @@ sequenceDiagram
 | Grace | **7 days** after monthly statement |
 | Free tier | Scanner top-10; paper-only; 1 bot |
 | Paid tier | Live trading; full scanner; fee accrues on wins only |
-
 ### Edge cases & mitigations
 
 | Edge case | Mitigation |
@@ -1954,7 +1905,6 @@ sequenceDiagram
 | User runs fork without billing | AGPL requires source; billing module optional; hosted value-add |
 | Net losing month after winning trades | Period net ≤ 0 → $0 owed (winning trade fees waived or netted — document in TERMS) |
 | Manual trades outside bot | Include if enrolled; optional "bot-attributed only" mode initially |
-
 ### Critical finding — why auto-withdraw fails
 
 ```mermaid
@@ -1965,6 +1915,7 @@ flowchart LR
     UserKeys -->|"CreateOrder_QueryTrades"| Kraken
     UserKeys -.->|"Withdraw_NOT_granted"| Kraken
     Kraken -.->|"No_API_path"| OperatorWallet
+
 ```
 
 Kraken spot retail API does not support paying a third party from trade-only credentials. Subaccount `AccountTransfer` requires **Withdraw Funds** on the master key and is largely institutional.
@@ -2010,7 +1961,6 @@ Kraken spot retail API does not support paying a third party from trade-only cre
 | — | On-chain wallet sync | **S12** X1 |
 | — | Pair forager | **S12** X2 |
 | — | PostgreSQL migration | **S12** seq 7 |
-
 ### Docs to create at scaffold (Sprint 0)
 
 | File | Content |
@@ -2035,7 +1985,6 @@ Kraken spot retail API does not support paying a third party from trade-only cre
 | [`docs/features/fee-dashboard.md`](docs/features/fee-dashboard.md) | Fee UI spec (M5–M6) |
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Key management, billing trust model |
 | [`TERMS.md`](TERMS.md) | Performance-based software license template — 14 § structure; attorney review required |
-
 ---
 
 ## Expanded Feature Specification
@@ -2130,6 +2079,7 @@ gantt
     Sprint12_Platform          :s12, after s11, 3w
     section rejected
     OnChain_note_moved_to_S12  :milestone, after s12, 0d
+
 ```
 
 **MVP exit criteria (Sprints 1–4):**
@@ -2195,7 +2145,6 @@ gantt
 | Strategy factory / plugin pattern | ✅ | Sprint 1 task 8 |
 | Real-time WebSocket data path | ✅ | Sprint 1 task 9, Sprint 3 task 8 |
 | AI layer (Ollama-first) | ✅ | Sprint 4 task 7, ADR-0002 |
-
 ### Prompt 2 — Cost + Puerto Rico reliability
 
 | Recommendation | Status | Where |
@@ -2209,7 +2158,6 @@ gantt
 | Ollama local; rule-based on VPS | ✅ | Sprint 4, ADR-0002 |
 | No paid monitoring (Telegram + cron) | ✅ | Sprint 4, Ongoing Maintenance |
 | Dev local Docker only | ✅ | docker-compose.yml label |
-
 ### Prompt 3 — Competitor analysis (25+ features)
 
 | # | Feature | Status | Sprint / ID |
@@ -2243,7 +2191,6 @@ gantt
 | — | Passivbot forager | ⏸ deferred | S9+, T28 |
 | — | Jesse rule significance testing | ✅ | S7 task 8 |
 | — | Hyperopt UI trigger | ✅ | S6, T30 |
-
 ### Prompt 4 — Portfolio tracker + 20 features
 
 | # | Feature | Status | Sprint / ID |
@@ -2274,7 +2221,6 @@ gantt
 | — | CoinStats nice-to-have: health score | ✅ | S5 task 13, P11 |
 | — | CoinStats nice-to-have: offline PWA view | ✅ | S5 parallel, sw.js |
 | — | Cancel CoinStats subscription milestone | ✅ | S5 exit criteria task 16 |
-
 ### Prompt 5 — LTS absorption + profit-share monetization (28 recommendations)
 
 | # | Recommendation | Priority | Status | Where |
@@ -2307,7 +2253,6 @@ gantt
 | 26 | Funding payment inclusion (perps) | **S12** | ✅ | S12 seq 4 |
 | 27 | HSM/Key Vault for operator wallet | **S11** | ✅ | S11 seq 7 |
 | 28 | Weekly fee digest + pay-now deep link | **S10** | ✅ | S10 parallel |
-
 | Auto-withdraw profit-share without Withdraw keys | ❌ rejected | ADR-0008 |
 | Honor-system-only billing | ❌ rejected | Insufficient |
 | **KYC (any form)** | ❌ rejected | **Prompt 8 — forever** |
@@ -2315,7 +2260,6 @@ gantt
 | **Operator-hosted custodial SaaS** | ❌ rejected | **ADR-0008 — user holds own keys** |
 | **Institutional auto-collect / subaccount routing** | ❌ rejected | **Money transmitter risk** |
 | **IP/email identity logging** | ❌ rejected | **Anonymity — install UUID only** |
-
 ### Prompt 8 — Legal simplicity, anonymity & regulatory safety (LS1–LS25)
 
 > **#1 constraint.** Each recommendation evaluated: does it increase operator legal risk?
@@ -2354,7 +2298,6 @@ gantt
 | LS30 | **14-section TERMS.md template** at scaffold; attorney review before beta | **High** | S0, S10 |
 | LS31 | **Dry-run fee preview** before live enrollment — informed consent without PII | **High** | S10 M11 |
 | LS32 | **Monthly statement cron + grace reminders** (Day 1, 4, 7) | **High** | S10 M20 |
-
 **Total recommendations: 116** (84 prior + 32 legal safety LS1–LS32).
 
 #### Previously recommended → now rejected (Prompt 8 override)
@@ -2367,7 +2310,6 @@ gantt
 | Institutional auto-collect (#19, #35) | S11 | **Rejected** | Money transmitter risk |
 | IP hash in consent log | Prompt 7 L4 | **Rejected** | Identity adjacency; use UUID only |
 | Multi-tenant operator platform (SC1–SC3) | S11 | **Rejected** | Custodial complexity |
-
 ### Prompt 6 — Monetization, security & integration (#29–53)
 
 | # | Recommendation | Priority | Status | Where |
@@ -2388,7 +2330,6 @@ gantt
 | 47 | Referral | growth | ✅ | S11 G2 (anonymous) |
 | 48 | Marketplace | growth | ✅ | S11 G3 |
 | 49–53 | Messaging, job queue, webhooks, idempotency, operator report | Mixed | ✅/❌ | #53 optional only |
-
 ### Former deferred items — now Sprint 12
 
 | Item | Sprint | Status |
@@ -2399,7 +2340,6 @@ gantt
 | Multi-exchange unified trading (T27, X4) | S12 | ✅ scheduled |
 | PostgreSQL / TimescaleDB (X6) | S12 | ✅ scheduled |
 | On-chain / sentiment module (T28) | S12 | ✅ scheduled |
-
 ### Prompt 7 — Legal, UX, scalability, community & advanced (#54–83)
 
 | # | Recommendation | Priority | Status | Where |
@@ -2437,7 +2377,6 @@ gantt
 | 84 | Boost Mode premium tier | growth | ✅ | B1, S11 |
 | — | Referral program | growth | ✅ | G2, S11 (Prompt 6) |
 | — | Performance leaderboard | growth | ✅ | G1, S11 (Prompt 6) |
-
 **Total recommendations: 154** (116 prior + 38 Prompt 9 UX/feature items).
 
 ### Prompt 9 — Expanded features, UX polish & nice-to-haves (#85–122)
@@ -2458,7 +2397,6 @@ gantt
 | 92 | **Funding rate opportunities** — perps scanner | platform | ✅ Deferred | X3 | S12 |
 | 93 | **Custom indicator marketplace** — community import | growth | ✅ New | IX1 | S11 |
 | 94 | **Walk-forward & Monte Carlo** — robustness testing | v1 | ✅ Expanded | T16, T17 | S7 |
-
 #### Portfolio Tracker & Analytics (11–20)
 
 | # | Recommendation | Priority | Status | ID | Sprint |
@@ -2473,7 +2411,6 @@ gantt
 | 102 | **Portfolio snapshots** — daily automated backups | **v1 core** | ✅ Expanded | P3 | S5 |
 | 103 | **Realized vs unrealized breakdown** | **v1 core** | ✅ Expanded | P7 | S5 |
 | 104 | **Mobile-first PWA** — installable + quick-glance widgets | **v1 core** | ✅ New | U10, UX6 | S5 |
-
 #### Monetization & Transparency UX (21–25)
 
 | # | Recommendation | Priority | Status | ID | Sprint |
@@ -2483,7 +2420,6 @@ gantt
 | 107 | **One-click license fee payment** — prefilled amount, address, QR | product | ✅ New | M22 | S10 |
 | 108 | **Success celebration notifications** — milestone wins (not "fee taken") | product | ✅ New | M21 | S10 |
 | 109 | **Low-activity / drawdown grace** — pause accrual; net-loss = $0 | product | ✅ Expanded | M3, M12 | S10 |
-
 #### Nice-to-Have & Polish (26–38)
 
 | # | Recommendation | Priority | Status | ID | Sprint |
@@ -2501,7 +2437,6 @@ gantt
 | 120 | **Custom themes & branding** | nice-to-have | ✅ New | U11, UX5 | S8 |
 | 121 | **Educational tooltips & onboarding tips** | v1 | ✅ New | U9, UX4 | S5, S10 |
 | 122 | **Performance goal setting** — targets + progress | nice-to-have | ✅ New | P22 | S8 |
-
 #### Prompt 9 — Implementation notes & risks
 
 > Cross-ref main [Risks & Mitigations](#risks--mitigations) registry. These are **not new unmitigated risks** — mitigations assigned above.
@@ -2516,7 +2451,6 @@ gantt
 | Design system scope creep | MVP tokens S3; portfolio components S5 only | U6, **H-015** |
 | Timeline scrubber performance | Daily aggregates; lazy-load | P19, S5 |
 | Feature overload delays ship | Sprint gates **H-018–H-020**; S5 before S10 | H-015, roadmap |
-
 ### Explicitly rejected (documented — not scheduled)
 
 - Local PR hardware for production
