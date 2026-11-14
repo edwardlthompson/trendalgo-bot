@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.14.1...v1.14.2) (2026-11-14)
+
+
+### Changed
+
+* **build-plan:** archive filtered-alerts ship rows after v1.14.1 ([6c8c6ff](https://github.com/edwardlthompson/trendalgo-bot/commit/6c8c6ffde123c51847a4906baf4ed0217fe09473))
+* **release:** sync uv.lock package version to 1.14.1 ([20ed6f9](https://github.com/edwardlthompson/trendalgo-bot/commit/20ed6f934656e593c8fea5dc5675b7f86c43e911))
+
+
+### Documentation
+
+* **kb:** record v1.14.1 ship CI pin and lock sync ([f2a469b](https://github.com/edwardlthompson/trendalgo-bot/commit/f2a469b9b321c33db2ae1c08833321cf6a1429c2))
+
 ## [1.14.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.14.0...v1.14.1) (2026-11-14)
 
 
