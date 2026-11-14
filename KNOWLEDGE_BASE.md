@@ -80,6 +80,12 @@
 
 **Fix:** R-Audit-5 — `TimelineScrubber` `aria-label`/`aria-valuetext`; heatmap opacity removed; accent swatch labels; e2e waits for `portfolio-panel`; offline test uses `offline` event (SW unit-tested in Vitest); `sw.js` skips `/api/` interception. Windows gates: `python scripts/run-trendalgo-tests.py`, `check_risk_mitigations.py`. Enable Dependabot in GitHub Settings (F-053). Push → `bash scripts/check-github-ci.sh --wait 600` for v0.2.0 tag.
 
+## KB-022 — Ship v1.14.1 filtered leave + CodeQL pin + lock sync (2026-11-14)
+
+**Symptom:** `upd` again rewrote `codeql-action` to `vcodeql-bundle-v2.27.4` (unresolvable). Release Please #61 bumped versions but left `uv.lock` package at `1.14.0` so CI `uv sync --locked` failed. Local full `pytest` hangs on `@pytest.mark.slow` All-TA Sauce smokes when `data/lts_price_cache.db` exists. Bare `uv sync` drops `dev`/`device` extras (`httpx2`, matplotlib). `/regress` still fails `wait-release-sbom --require` without `openvex.json`; no `check-pages-analytics` script on this FOSS surface.
+
+**Fix:** Restore `codeql-action@v4`; after RP merge run `uv lock` and commit; local gates with `PYTEST_ADDOPTS='-m "not slow"'`; `uv sync --extra dev --extra device --extra ta`. Release Please #61 → `v1.14.1`. OpenVEX/Pages gaps unchanged (KB-015/021).
+
 ## KB-021 — Ship v1.14.0 CodeQL pin + pandas-ta cap + OpenVEX (2026-11-13)
 
 **Symptom:** `update-deps --apply` rewrote `github/codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`. `pandas-ta-classic` 0.9.0 dropped EBSW/TSIGNALS/XSIGNALS (`no pandas fallback`). `/regress` `wait-release-sbom --require` still fails without `openvex.json` while CycloneDX + MSI/setup assets are on `v1.14.0`. `check-pages-analytics` is not an `agent-run` script on this FOSS surface.
