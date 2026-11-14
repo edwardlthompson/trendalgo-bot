@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.14.0...v1.14.1) (2026-11-14)
+
+
+### Fixed
+
+* **ci:** restore codeql-action@v4 after invalid upd pin ([4c68c40](https://github.com/edwardlthompson/trendalgo-bot/commit/4c68c40fe8e29964f6a8a6321b2c523a00a49e5e))
+
+
+### Changed
+
+* **release:** prepare ship with filtered leave alerts ([bebd8db](https://github.com/edwardlthompson/trendalgo-bot/commit/bebd8db529b658586ee6a10861fee3584d89c06b))
+* **release:** sync uv.lock package version to 1.14.0 ([6687d0c](https://github.com/edwardlthompson/trendalgo-bot/commit/6687d0c0d46af1a2697650811e1ddda82e7d991b))
+
+
+### Documentation
+
+* **kb:** record v1.14.0 ship CI pin and OpenVEX gap ([35a0f70](https://github.com/edwardlthompson/trendalgo-bot/commit/35a0f70110d0895dee2a60c64516b94a8521b473))
+* **news:** inbox 2026-11-13 [skip ci] ([bb64b0d](https://github.com/edwardlthompson/trendalgo-bot/commit/bb64b0dac747bbb3d35e19bf2b1e6d38a31d7a6a))
+* **news:** inbox 2026-11-14 [skip ci] ([f456d51](https://github.com/edwardlthompson/trendalgo-bot/commit/f456d51b8a29705adc2dc2db96430323d6084d2a))
+
 ## [1.14.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.13.0...v1.14.0) (2026-11-13)
 
 
