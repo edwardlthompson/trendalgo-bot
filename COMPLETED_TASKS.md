@@ -2,6 +2,16 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Filtered alerts + autoscan (2026-11-14)
+
+Ship tip `1049964` · v1.14.1.
+
+- ✅ [AGENT][LOCAL] TG-ENRICH Live enter Telegram: enrich coin with Results OHLC + `alert_trades` before PNG — scope: `telegram_alert_enrich.py`, `scan_alerts.py`, tests
+- ✅ [AGENT][LOCAL] NEWS-1 API-key hygiene in security docs (no-withdraw, IP allowlist, no reuse) citing Coinigy breach — scope: `docs/API_ACCESS_LIMITS.md`, `THREAT_MODEL.md`, `SECURITY_TRIAGE.md`, `SETTINGS_KEYS_HELP`
+- ✅ [AGENT][LOCAL] AUTOSCAN-1 Autoscan never-dies: re-arm after no-op `_start`, stale/active watchdog, refresh HKCU Run command — scope: `scanner_page.py`, `scanner_schedule.py`, `autostart`/`main_window`, tests
+- ✅ [AGENT][LOCAL] ALERT-FILTER-1 Telegram enters only for new pairs in full Qualified-tab filtered set; cold-seed empty previous — scope: `scan_alerts.py`, `scanner_page.py`, `scanner_alert_diff.py`, tests
+- ✅ [AGENT][LOCAL] ALERT-LEAVE-1 Exit notify when pair leaves filtered Qualified set; leave reason from board metrics vs floors — scope: `scanner_alert_diff.py`, `scan_alerts.py`, tests
+
 ## TG-SS-1 — Sauce-on-join + chart/volume (2026-11-13)
 
 - ✅ [AGENT][LOCAL] TG-SS-1 Drop Settings col on enter chart; Sauce first-join once then top-10; skip empty exchange volume lines; BTC enter resend with SS + volume — scope: `src/trendalgo/notifications/` `src/trendalgo/device/opportunity_sauce.py` `src/trendalgo/device/scanner_all_ta_bt.py` tests

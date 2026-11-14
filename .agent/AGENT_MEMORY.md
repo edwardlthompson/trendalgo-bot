@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board HUMAN-only after `/ship` toward 1.14.1. Open: PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
+**Current sprint:** Board HUMAN-only after `/ship` v1.14.1. Open: PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
 
-**Tests:** Local `pre-release-gate --local` PASS with `PYTEST_ADDOPTS='-m "not slow"'` (slow Sauce multi-coin smokes hang when `data/lts_price_cache.db` present).
+**Tests:** Local `pre-release-gate --local` PASS with `PYTEST_ADDOPTS='-m "not slow"'` (slow Sauce multi-coin smokes hang when `data/lts_price_cache.db` present). Required GitHub CI/CodeQL/Security green; CodeQL must stay `@v4` (upd bundle tags break).
 
-**Recent:** Filtered Qualified enter/leave alerts; autoscan rearm/watchdog; Sauce top-10 only; TG enrich; otel-api 1.45.2 + fastapi patch.
+**Recent:** v1.14.1 — filtered Qualified enter/leave alerts; autoscan rearm/watchdog; Sauce top-10 only; TG enrich; otel-api 1.45.2. Tip after RP #61 merge.
 
 **Canonical plan:** `docs/specs/audit-remediation.md` · `docs/CANONICAL_PLAN.md`.
 
