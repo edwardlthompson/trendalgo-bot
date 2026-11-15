@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.15.0...v1.15.1) (2026-11-15)
+
+
+### Changed
+
+* **deps:** bump the github-actions group across 1 directory with 7 updates ([5fdb32b](https://github.com/edwardlthompson/trendalgo-bot/commit/5fdb32b91f98b913468d65d6d45f11f1748d5d86))
+
 ## [1.15.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.14.1...v1.15.0) (2026-11-15)
 
 
