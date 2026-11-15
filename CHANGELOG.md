@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.15.1...v1.15.2) (2026-11-15)
+
+
+### Changed
+
+* **release:** prepare ship with Sauce, Market Context, leave reasons, logos ([665d6f5](https://github.com/edwardlthompson/trendalgo-bot/commit/665d6f50b25d6e8f3a315f26335b226f9de0b000))
+
 ## [1.15.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.15.0...v1.15.1) (2026-11-15)
 
 
