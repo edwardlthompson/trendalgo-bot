@@ -22,6 +22,30 @@ def test_journal_stats_drawdown_and_losing_streak() -> None:
     assert stats["max_drawdown_usd"] == 3.0
 
 
+def test_journal_stats_losing_book_drawdown_pct() -> None:
+    rows = [
+        {
+            "side": "sell",
+            "pnl_usd": -20,
+            "stake_usd": 100,
+            "created_at": "2026-11-15T02:00:00+00:00",
+        },
+        {
+            "side": "sell",
+            "pnl_usd": -10,
+            "stake_usd": 100,
+            "created_at": "2026-11-15T01:00:00+00:00",
+        },
+    ]
+    stats = journal_stats(rows)
+    assert stats["pnl_usd"] == -30.0
+    assert stats["max_drawdown_usd"] == 30.0
+    assert stats["max_drawdown_pct"] == 0.15
+    report = build_golive_report(trades=rows)
+    assert "drawdown over 10%" in report["hints"]
+    assert "dry-run sample looks populated" not in " ".join(report["hints"])
+
+
 def test_golive_report_is_advisory(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TRENDALGO_MARKET_SOURCE", "synthetic")
     monkeypatch.setenv("BACKTEST_FEE_BPS_ROUND_TRIP", "40")
