@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from collections import Counter
 from datetime import UTC, datetime, timedelta
@@ -115,21 +116,30 @@ def run_scheduled(*, on_log: Any | None = None) -> None:
             on_log(f"weekly digest failed: {exc}")
 
 
-def emit_weekly_digest(*, data_dir: Path, scanner_store: Any, journal: TradeJournal) -> str:
-    import json
+def load_alert_history(data_dir: Path) -> list[dict[str, Any]]:
+    device = Path(os.environ.get("TRENDALGO_DEVICE_DIR") or Path.home() / ".trendalgo" / "device")
+    rows: list[dict[str, Any]] = []
+    for root in (data_dir, device):
+        path = root / "scanner_alerts.json"
+        if not path.is_file():
+            continue
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        chunk = raw.get("alerts") if isinstance(raw, dict) else raw
+        if isinstance(chunk, list):
+            rows.extend(row for row in chunk if isinstance(row, dict))
+    return rows
 
+
+def emit_weekly_digest(*, data_dir: Path, scanner_store: Any, journal: TradeJournal) -> str:
     from trendalgo.notifications.grokbot import emit, telegram_ai_note
     from trendalgo.notifications.telegram import TelegramCommands
 
-    alerts = scanner_store.list_alerts(limit=500) if hasattr(scanner_store, "list_alerts") else []
-    history: list[dict[str, Any]] = []
-    hist_path = data_dir / "scanner_alerts.json"
-    if hist_path.is_file():
-        raw = json.loads(hist_path.read_text(encoding="utf-8"))
-        if isinstance(raw, list):
-            history = [row for row in raw if isinstance(row, dict)]
+    alerts = scanner_store.list_alerts(limit=2500) if hasattr(scanner_store, "list_alerts") else []
     digest = build_weekly_digest(
-        trades=journal.list_trades(limit=2000), alerts=alerts, history=history
+        trades=journal.list_trades(limit=2000), alerts=alerts, history=load_alert_history(data_dir)
     )
     text = telegram_ai_note(format_weekly_telegram(digest))
     TelegramCommands().send_message(text)
