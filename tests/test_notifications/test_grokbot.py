@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from email.message import Message
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.request import BaseHandler, Request, build_opener
 
 import pytest
 
@@ -89,7 +92,7 @@ def test_filtered_emit_does_not_post(monkeypatch: pytest.MonkeyPatch) -> None:
         posted.append(1)
         raise AssertionError("should not post")
 
-    monkeypatch.setattr(grokbot_mod.urllib.request, "urlopen", boom)
+    monkeypatch.setattr(grokbot_mod, "_urlopen", boom)
     result = emit(
         scanner_alert_payload(pair="BTC/USD", tier="A", uniformity=0.8, gain=0.06), wait=True
     )
@@ -111,7 +114,7 @@ def test_non_2xx_marks_unavailable_without_retry(monkeypatch: pytest.MonkeyPatch
         hits["n"] += 1
         raise _FakeHTTPError(429)
 
-    monkeypatch.setattr(grokbot_mod.urllib.request, "urlopen", fail)
+    monkeypatch.setattr(grokbot_mod, "_urlopen", fail)
     first = emit(trade_payload(pair="BTC/USD", side="buy", amount=1, price=2), wait=True)
     assert first["sent"] is False
     assert first.get("unavailable") is True
@@ -122,6 +125,58 @@ def test_non_2xx_marks_unavailable_without_retry(monkeypatch: pytest.MonkeyPatch
     assert "AI brief unavailable" in telegram_ai_note("Trade BUY BTC/USD")
 
 
+def test_redirect_handler_does_not_follow() -> None:
+    from trendalgo.notifications.grokbot_http import NoRedirect
+
+    req = Request(
+        "https://example.invalid/hook",
+        data=b"{}",
+        headers={"Authorization": "Bearer secret-key"},
+        method="POST",
+    )
+    followed = NoRedirect().redirect_request(
+        req, None, 302, "Found", Message(), "http://evil.invalid/steal"
+    )
+    assert followed is None
+
+
+def test_redirect_is_unavailable_and_does_not_hop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from trendalgo.notifications.grokbot_http import NoRedirect
+
+    monkeypatch.setenv("GROKBOT_WEBHOOK_URL", "https://example.invalid/hook")
+    monkeypatch.setenv("GROKBOT_WEBHOOK_KEY", "secret-key")
+    monkeypatch.setenv("GROKBOT_WEBHOOK_COOLDOWN_SEC", "60")
+    hops: list[str] = []
+
+    class _Once(BaseHandler):
+        handler_order = 100
+
+        def https_open(self, req: Request) -> Any:
+            hops.append(str(req.full_url))
+            hdrs = Message()
+            hdrs["Location"] = "http://evil.invalid/steal"
+            raise HTTPError(req.full_url, 302, "Found", hdrs, BytesIO())
+
+        def http_open(self, req: Request) -> Any:
+            hops.append(str(req.full_url))
+            raise AssertionError("must not follow plaintext redirect")
+
+        def close(self) -> None:
+            return None
+
+    def open_probe(req: Request, timeout: float = 0) -> Any:
+        del timeout
+        return build_opener(NoRedirect(), _Once()).open(req)
+
+    monkeypatch.setattr(grokbot_mod, "_urlopen", open_probe)
+    result = emit(trade_payload(pair="BTC/USD", side="buy", amount=1, price=2), wait=True)
+    assert result["sent"] is False
+    assert result.get("unavailable") is True
+    assert hops == ["https://example.invalid/hook"]
+
+
 def test_timeout_is_grok_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GROKBOT_WEBHOOK_URL", "https://example.invalid/hook")
     monkeypatch.setenv("GROKBOT_WEBHOOK_COOLDOWN_SEC", "60")
@@ -129,7 +184,7 @@ def test_timeout_is_grok_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     def timeout(_req: object, timeout: float = 0) -> Any:
         raise URLError("timed out")
 
-    monkeypatch.setattr(grokbot_mod.urllib.request, "urlopen", timeout)
+    monkeypatch.setattr(grokbot_mod, "_urlopen", timeout)
     result = send_test(wait=True)
     assert result["sent"] is False
     assert result.get("unavailable") is True

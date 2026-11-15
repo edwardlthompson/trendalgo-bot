@@ -28,6 +28,7 @@ from trendalgo.notifications.grokbot_cooldown import (
     reset as reset_cooldown,
 )
 from trendalgo.notifications.grokbot_filter import event_allowed, event_tokens
+from trendalgo.notifications.grokbot_http import urlopen as _urlopen
 from trendalgo.notifications.grokbot_payload import envelope, test_payload
 
 AI_BRIEF_NOTE = "AI brief unavailable"
@@ -112,7 +113,7 @@ def _post_once(payload: dict[str, Any]) -> dict[str, Any]:
     headers = {"Content-Type": "application/json; charset=utf-8", **auth_headers()}
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT_SEC) as resp:
+        with _urlopen(req, timeout=TIMEOUT_SEC) as resp:
             code = int(resp.status)
             if 200 <= code < 300:
                 return {"sent": True, "status": code}

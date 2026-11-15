@@ -13,7 +13,7 @@ Optional, off-by-default notification channel. **Telegram is primary**: it alway
 | `GROKBOT_WEBHOOK_EVENTS` | `all` | Quota filter: `all`, `trades`, `scanner-a`, or a comma list (`trade_entry,trade_exit`) |
 | `GROKBOT_WEBHOOK_COOLDOWN_SEC` | `900` | After any non-2xx (including 402/429), timeout, or network error, skip POSTs for this many seconds |
 
-HTTP URLs are refused. The channel is send-only: no exchange keys, no extra balances.
+HTTP URLs are refused. POSTs do not follow redirects, so the sender key never hops to a `Location` URL (including plaintext HTTP). The channel is send-only: no exchange keys, no extra balances.
 
 ## Grok unavailable
 
