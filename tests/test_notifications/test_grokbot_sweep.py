@@ -42,6 +42,12 @@ def test_sweep_digest_flags_thin_high_win() -> None:
     ]
 
 
+def test_emit_sweep_complete_skips_without_summary() -> None:
+    from trendalgo.notifications.grokbot_sweep import emit_sweep_complete
+
+    assert emit_sweep_complete([{"symbol": "BTC"}], None) is None
+
+
 def test_sweep_filter_alias(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GROKBOT_WEBHOOK_EVENTS", "sweep")
     assert event_allowed("sweep_complete") is True

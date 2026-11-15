@@ -58,10 +58,11 @@ def sweep_digest(coins: list[dict[str, Any]]) -> dict[str, Any]:
 
 def emit_sweep_complete(
     coins: list[dict[str, Any]], summary: dict[str, Any] | None = None
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
+    if not summary:
+        return None
     from trendalgo.notifications.grokbot import emit
 
-    del summary
     digest = sweep_digest(coins)
     text = (
         f"LTS sweep complete: {digest['coin_count']} coins, "
