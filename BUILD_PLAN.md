@@ -1,7 +1,7 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 <!-- remaining-tally -->
-**Remaining:** AGENT 1 · LOCAL 0 · CLOUD 1 · AUTO 0 · HUMAN 18 · ADB 0 · **19 open** (HUMAN pack + DEX-P4b Cloud)
+**Remaining:** AGENT 1 · LOCAL 0 · CLOUD 1 · AUTO 0 · HUMAN 0 · ADB 0 · **1 open**
 <!-- /remaining-tally -->
 <!-- tally note: Multi-venue Sequential archived 2026-11-15 -->
 > **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)

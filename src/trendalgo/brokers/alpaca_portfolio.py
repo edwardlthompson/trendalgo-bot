@@ -27,9 +27,10 @@ class AlpacaPortfolioAdapter:
     broker_id = "alpaca"
 
     def __init__(self, entry: BrokerEntry | None = None) -> None:
-        self.entry = entry or load_broker_registry().by_id(self.broker_id)
-        if self.entry is None:
+        resolved = entry or load_broker_registry().by_id(self.broker_id)
+        if resolved is None:
             raise KeyError("alpaca broker not in registry")
+        self.entry = resolved
 
     def has_credentials(self) -> bool:
         key = os.environ.get(self.entry.env_key, "").strip()

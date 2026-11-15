@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from datetime import datetime
-from typing import Literal
+from typing import Literal, cast
 
 from trendalgo.market.dex_candle_catalog import DEX_CANDLE_VENUES, list_dex_candle_pairs
 from trendalgo.market.dex_candle_types import DexCandleResult, DexCandleSourceMeta, DexPairRef
@@ -88,8 +88,10 @@ def fetch_dex_candles(
         raise ValueError(f"unsupported DEX candle venue: {vid}")
     raw_prefer = prefer or os.environ.get("TRENDALGO_DEX_CANDLE_PREFER", "auto")
     mode: Prefer = (
-        raw_prefer if raw_prefer in {"auto", "aggregator", "cex_proxy", "synthetic"} else "auto"
-    )  # type: ignore[assignment]
+        cast(Prefer, raw_prefer)
+        if raw_prefer in {"auto", "aggregator", "cex_proxy", "synthetic"}
+        else "auto"
+    )
     # Explicit prefer wins; env synthetic only forces default/auto path.
     if (
         prefer is None
