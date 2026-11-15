@@ -2,6 +2,15 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sauce / Market Context / logos (2026-11-15)
+
+Ship tip `665d6f5` · v1.15.2 (RP #75).
+
+- ✅ [AGENT][LOCAL] SAUCE-CTRL-1 Sauce Pan: with-scan toggle + top-N prefs; gate Pass 2 only; manual Sauce-only on filtered Qualified — scope: `scan_bt_prefs.py`, `scanner_all_ta_bt.py`, `opportunity_sauce_job.py`, scanner UI, tests
+- ✅ [AGENT][LOCAL] Market Context settings toggle + ETA (MC + Sauce) + gfx on Qualified/per-coin export — scope: `scan_bt_prefs`, `scan_time_history`, `market_context_export(_gfx)`, scanner/backtest share
+- ✅ [AGENT][LOCAL] Off-board leave reason for Telegram/Grok (`no longer on scan board`) — scope: `scanner_alert_diff.py`, tests
+- ✅ [AGENT][LOCAL] Curated coin logos AKE/LIGHTER/AUDX + extras sync — scope: `config/coin-icon-extras.json`, `coin_icons.py`, `icons/sync.py`
+
 ## Filtered alerts + autoscan (2026-11-14)
 
 Ship tip `1049964` · v1.14.1.

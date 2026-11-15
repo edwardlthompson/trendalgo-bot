@@ -3,10 +3,10 @@
 <!-- remaining-tally -->
 **Remaining:** AGENT 0 · LOCAL 0 · CLOUD 0 · AUTO 0 · HUMAN 1 · ADB 0 · **1 open**
 <!-- /remaining-tally -->
-<!-- tally note: filtered-alerts/autoscan archived 2026-11-14; HUMAN PF-H1 remains -->
+<!-- tally note: sauce/MC/logos archived 2026-11-15; HUMAN PF-H1 remains -->
 > **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Completed work:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
-> **Filtered alerts + autoscan** archived in COMPLETED_TASKS.md @ `1049964`.
+> **Sauce / Market Context / logos** archived in COMPLETED_TASKS.md @ `665d6f5` · v1.15.2.
 
 ### Product (do not drift)
 
@@ -39,7 +39,7 @@
 
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
-| SAUCE-CTRL-1 | Sauce Pan: with-scan toggle + top-N prefs; gate Pass 2 only; manual Sauce-only on filtered Qualified — scope: `scan_bt_prefs.py`, `scanner_all_ta_bt.py`, `opportunity_sauce_job.py`, scanner UI, tests | `[AGENT][LOCAL]` | ✅ |
+| — | (no open AGENT rows) | | |
 ### Open HUMAN
 
 - 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)

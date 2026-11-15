@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-15 — Ship v1.15.2 Sauce / MC / leave / logos
+- **Status:** Accepted
+- **Context:** `/ship` after Sauce Pan prefs, Market Context settings toggle + ETA + PNG gfx exports, off-board leave reason for Grok/Telegram, curated coin logos; upd dry-run tried to rewrite `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`.
+- **Decision:** Ship product WIP; revert corrupted CodeQL/Scorecard pins; keep `@v4`. Merge Release Please #75 → v1.15.2. Zero Dependabot Critical/High (GraphQL open alerts empty).
+- **Alternatives considered:** Apply upd action pin rewrites (rejected — Actions cannot resolve bundle tags); defer logos to junction-only (rejected — curated overlay is commit-safe).
+- **Consequences:** Device Settings can skip MC to save ETA; leave alerts cite scan-board drops; `sync-icon-registry.py --extras` refreshes AKE/LIGHTER/AUDX.
+
 ### 2026-11-14 — Ship filtered leave alerts + autoscan harden
 - **Status:** Accepted
 - **Context:** `/ship` after Qualified-tab filtered enter/leave notifies, TG enrich, Sauce top-10-only, autoscan rearm/watchdog, Share filter caption; local full pytest hung on `@pytest.mark.slow` All-TA Sauce smokes when OHLCV cache exists; bare `uv sync` stripped device/dev extras (httpx2/matplotlib).
