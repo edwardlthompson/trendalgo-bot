@@ -75,7 +75,11 @@ def emit_sweep_complete(
 def _num(raw: object) -> float:
     if raw is None or raw == "-":
         return 0.0
-    try:
+    if isinstance(raw, bool):
+        return 0.0
+    if isinstance(raw, (int, float)):
         return float(raw)
-    except (TypeError, ValueError):
+    try:
+        return float(str(raw).replace("%", ""))
+    except ValueError:
         return 0.0
