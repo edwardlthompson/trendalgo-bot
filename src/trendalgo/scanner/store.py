@@ -199,3 +199,12 @@ class ScannerStore:
                 "INSERT INTO scanner_alerts (tier, pair, message, created_at) VALUES (?, ?, ?, ?)",
                 (tier, pair, message, _utc_now()),
             )
+
+    def list_alerts(self, limit: int = 500) -> list[dict[str, str]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT tier, pair, message, created_at FROM scanner_alerts "
+                "ORDER BY id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+            return [dict(r) for r in rows]

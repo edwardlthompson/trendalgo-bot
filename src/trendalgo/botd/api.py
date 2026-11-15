@@ -161,6 +161,20 @@ def create_botd_app(
         )
         return {"saved": True}
 
+    @app.get("/api/v1/notifications/grokbot")
+    async def grokbot_status(request: Request) -> dict[str, Any]:
+        await guard.require(request)
+        from trendalgo.notifications.grokbot import public_status
+
+        return public_status()
+
+    @app.post("/api/v1/notifications/grokbot/test")
+    async def grokbot_test(request: Request) -> dict[str, Any]:
+        await guard.require(request)
+        from trendalgo.notifications.grokbot import send_test
+
+        return send_test(wait=True)
+
     @app.get("/api/v1/portfolio")
     async def portfolio(request: Request) -> dict[str, Any]:
         """Read-only portfolio snapshot for the device Sync button (keys stay on host)."""

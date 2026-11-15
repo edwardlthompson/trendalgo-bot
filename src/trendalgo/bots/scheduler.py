@@ -170,6 +170,7 @@ class BotTickScheduler:
                 wallet_usd=float(bot["equity_usd"]),
                 bot_id=bot_id,
                 control=self.state.exchange_control,
+                notify=True,
             )
             self._runners[bot_id] = runner
         if block is not None:

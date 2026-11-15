@@ -28,7 +28,18 @@ def format_daily_summary(overview: dict[str, Any]) -> str:
 
 
 def send_daily_notification(text: str, *, dry_run: bool = True) -> bool:
-    if dry_run and not os.environ.get("TELEGRAM_BOT_TOKEN"):
-        return False
-    tg = TelegramCommands()
-    return tg.send_message(text)
+    from trendalgo.notifications.grokbot import telegram_ai_note
+
+    body = telegram_ai_note(text)
+    sent = False
+    if not (dry_run and not os.environ.get("TELEGRAM_BOT_TOKEN")):
+        sent = bool(TelegramCommands().send_message(body))
+    _emit_grokbot_daily(body)
+    return sent
+
+
+def _emit_grokbot_daily(text: str) -> None:
+    from trendalgo.notifications.grokbot import emit
+    from trendalgo.notifications.grokbot_payload import envelope
+
+    emit(envelope(event_type="daily_summary", reason=text))

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from trendalgo.alerts.market_events import evaluate_market_event
-from trendalgo.scanner.snapshot import QualifiedSnapshot
+from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
 from trendalgo.scanner.store import ScannerStore
 
 AlertSink = Callable[[str, str, str], object]
@@ -38,3 +38,22 @@ def emit_alerts_for_snapshot(
         if event and on_alert:
             event_type = str(event["type"]).replace("_", " ").title()
             on_alert("market", event_type, str(event["message"]))
+        reason = str(event["message"]) if event else message
+        _emit_grokbot_scanner(opp, tier, reason)
+
+
+def _emit_grokbot_scanner(opp: OpportunityRow, tier: str, reason: str) -> None:
+    from trendalgo.notifications.grokbot import emit
+    from trendalgo.notifications.grokbot_payload import scanner_alert_payload
+
+    emit(
+        scanner_alert_payload(
+            pair=opp.pair,
+            tier=tier,
+            uniformity=opp.uniformity,
+            gain=opp.gain_pct,
+            volume=opp.volume_score,
+            sparkline=opp.sparkline,
+            reason=reason,
+        )
+    )

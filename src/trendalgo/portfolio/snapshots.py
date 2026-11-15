@@ -76,6 +76,9 @@ def scheduled_portfolio_job(
     overview = overview_builder()
     check_portfolio_alerts(store, store.get_or_create_account("kraken", "default"), overview)
     run_daily_notification(store, overview, dry_run=dry_run)
+    from trendalgo.notifications.grokbot_portfolio import maybe_emit_snapshot
+
+    maybe_emit_snapshot(overview)
 
 
 def start_portfolio_scheduler(
@@ -98,5 +101,19 @@ def start_portfolio_scheduler(
         id="trendalgo-portfolio-daily",
         replace_existing=True,
     )
+    from trendalgo.notifications.grokbot_weekly import (
+        run_scheduled,
+        weekly_dow,
+        weekly_enabled,
+        weekly_hour,
+    )
+
+    if weekly_enabled():
+        scheduler.add_job(
+            lambda: run_scheduled(on_log=on_log),
+            CronTrigger(day_of_week=weekly_dow(), hour=weekly_hour(), minute=0, timezone="UTC"),
+            id="trendalgo-weekly-digest",
+            replace_existing=True,
+        )
     scheduler.start()
     return cast(object, scheduler)

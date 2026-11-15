@@ -108,13 +108,23 @@ def format_trade(
     fee_usd: float = 0.0,
     realized_pnl_usd: float = 0.0,
     plan_version: int = 0,
+    strategy_id: str | None = None,
+    rationale: str | None = None,
+    exit_rule: str | None = None,
 ) -> str:
-    return (
-        f"Trade {side.upper()} {pair}\n"
-        f"Amount: {amount:g} @ {price:g}\n"
-        f"Fee: ${fee_usd:.4f}  PnL: ${realized_pnl_usd:.2f}\n"
-        f"Plan v{plan_version}"
-    )
+    lines = [
+        f"Trade {side.upper()} {pair}",
+        f"Amount: {amount:g} @ {price:g}",
+        f"Fee: ${fee_usd:.4f}  PnL: ${realized_pnl_usd:.2f}",
+        f"Plan v{plan_version}",
+    ]
+    if strategy_id:
+        lines.append(f"Strategy: {strategy_id}")
+    if rationale:
+        lines.append(f"Signal: {rationale}")
+    if exit_rule:
+        lines.append(f"Exit: {exit_rule}")
+    return "\n".join(lines)
 
 
 def _t(value: object) -> str:

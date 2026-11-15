@@ -44,6 +44,7 @@ from trendalgo.exchanges.fee_scheduler import start_fee_scheduler
 from trendalgo.exchanges.fee_store import get_fee_store
 from trendalgo.exchanges.fee_sync import startup_fee_sync_background
 from trendalgo.notifications.delivery import AlertDelivery
+from trendalgo.notifications.grokbot import configure as configure_grokbot
 from trendalgo.portfolio.overview import build_portfolio_overview
 from trendalgo.portfolio.snapshots import start_portfolio_scheduler
 from trendalgo.scanner.scheduler import start_scheduler
@@ -71,6 +72,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         # AUTH-05: rotate bearer tokens on process start.
         app_state.bearer_store.clear()
+        configure_grokbot(on_log=app_state.log)
         delivery = AlertDelivery(app_state.portfolio_store, on_log=app_state.log)
         scanner_sched = start_scheduler(
             app_state.scanner_store,

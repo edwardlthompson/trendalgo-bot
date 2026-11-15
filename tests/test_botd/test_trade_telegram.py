@@ -15,7 +15,7 @@ class _FakeTg(TelegramCommands):
         super().__init__(token="t", chat_id="1")
         self.sent: list[str] = []
 
-    def send_message(self, text: str) -> bool:
+    def send_message(self, text: str, **_k: object) -> bool:
         self.sent.append(text)
         return True
 

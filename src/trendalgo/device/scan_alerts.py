@@ -16,6 +16,7 @@ from trendalgo.device.scanner_alerts_store import (
     save_previous_qualified,
 )
 from trendalgo.device.telegram_vault import load_telegram_creds
+from trendalgo.notifications.grokbot import telegram_ai_note
 from trendalgo.notifications.telegram import TelegramCommands
 from trendalgo.notifications.telegram_alert_enrich import enrich_enter_coin
 from trendalgo.notifications.telegram_chart import enter_alert_png, exit_alert_png
@@ -59,6 +60,8 @@ def process_scan_alerts(
         for event in plan.events:
             if plan.telegram:
                 _send_telegram(event, client=telegram)
+    for event in events:
+        _emit_grokbot(event)
     return events, history
 
 
@@ -75,6 +78,29 @@ def toast_lines(events: list[AlertEvent], prefs_root: Path) -> list[tuple[str, s
     return lines
 
 
+def _why_markup(event: AlertEvent, existing: str) -> str:
+    from trendalgo.notifications.grokbot_explain import why_markup
+    from trendalgo.notifications.grokbot_payload import coin_payload, envelope
+
+    kind = "qualified_enter" if event.kind == "qualified_enter" else "qualified_leave"
+    if isinstance(event.coin, dict):
+        return why_markup(coin_payload(kind, event.coin, reason=event.reason), existing)
+    return why_markup(envelope(event_type=kind, pair=event.pair, reason=event.reason), existing)
+
+
+def _emit_grokbot(event: AlertEvent) -> None:
+    from trendalgo.notifications.grokbot import emit
+    from trendalgo.notifications.grokbot_payload import coin_payload, envelope
+
+    kind = "qualified_enter" if event.kind == "qualified_enter" else "qualified_leave"
+    if event.kind not in {"qualified_enter", "watchlist_leave"}:
+        return
+    if isinstance(event.coin, dict):
+        emit(coin_payload(kind, event.coin, reason=event.reason))
+        return
+    emit(envelope(event_type=kind, pair=event.pair, reason=event.reason))
+
+
 def _send_telegram(event: AlertEvent, *, client: TelegramCommands | None) -> None:
     tg = client
     if tg is None:
@@ -84,8 +110,8 @@ def _send_telegram(event: AlertEvent, *, client: TelegramCommands | None) -> Non
         return
     if event.kind == "qualified_enter" and event.coin is not None:
         coin = enrich_enter_coin(event.coin)
-        caption = format_qualified_enter(coin)
-        markup = reply_markup_json(coin)
+        caption = telegram_ai_note(format_qualified_enter(coin))
+        markup = _why_markup(event, reply_markup_json(coin))
         png = enter_alert_png(coin)
         if png:
             tg.send_photo(png, caption, parse_mode="HTML", reply_markup=markup)
@@ -99,8 +125,10 @@ def _send_telegram(event: AlertEvent, *, client: TelegramCommands | None) -> Non
             if raw.get("ohlc_1h") or raw.get("backtest_top_strategies")
             else raw
         )
-        caption = format_watchlist_leave(symbol=event.symbol, reason=event.reason, coin=coin)
-        markup = reply_markup_json(coin)
+        caption = telegram_ai_note(
+            format_watchlist_leave(symbol=event.symbol, reason=event.reason, coin=coin)
+        )
+        markup = _why_markup(event, reply_markup_json(coin))
         png = exit_alert_png(coin)
         if png:
             tg.send_photo(png, caption, parse_mode="HTML", reply_markup=markup)

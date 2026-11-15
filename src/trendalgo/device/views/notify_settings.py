@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 from trendalgo.device import strings as S
 from trendalgo.device.autostart import set_enabled as set_autostart
 from trendalgo.device.context import DeviceContext
+from trendalgo.device.grokbot_notify import grokbot_status_line, send_device_test
 from trendalgo.device.host_session import try_open_host_client
 from trendalgo.device.notify_prefs import NotifyPrefs, load_prefs, save_prefs
 from trendalgo.device.telegram_vault import load_telegram_creds
@@ -63,6 +64,12 @@ class NotifySettingsSection(QWidget):
         auto_help = QLabel(S.NOTIFY_START_WINDOWS_HELP)
         auto_help.setObjectName("hint")
         auto_help.setWordWrap(True)
+        grok_help = QLabel(S.NOTIFY_GROKBOT_HELP)
+        grok_help.setObjectName("hint")
+        grok_help.setWordWrap(True)
+        self._grokbot = QLabel()
+        grok_test = QPushButton(S.NOTIFY_GROKBOT_TEST)
+        grok_test.clicked.connect(lambda _c=False: self._test_grokbot())
         save = mark_primary(QPushButton(S.SETTINGS_SAVE))
         save.clicked.connect(lambda _c=False: self.save())
         self._tg.toggled.connect(self._sync_tg_children)
@@ -73,6 +80,9 @@ class NotifySettingsSection(QWidget):
         layout.addWidget(self._tg)
         layout.addWidget(self._autostart)
         layout.addWidget(auto_help)
+        layout.addWidget(grok_help)
+        layout.addWidget(self._grokbot)
+        layout.addWidget(grok_test, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(save, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self._status)
         self.reload()
@@ -90,6 +100,11 @@ class NotifySettingsSection(QWidget):
         self._tg_kind["trades"].setChecked(prefs.telegram_trades)
         self._autostart.setChecked(prefs.start_with_windows)
         self._sync_tg_children(self._tg.isChecked())
+        self._grokbot.setText(
+            S.NOTIFY_GROKBOT_ON
+            if grokbot_status_line(self._ctx.settings_path) == "on"
+            else S.NOTIFY_GROKBOT_OFF
+        )
 
     def save(self) -> None:
         prefs = NotifyPrefs(
@@ -131,3 +146,12 @@ class NotifySettingsSection(QWidget):
     def _sync_tg_children(self, enabled: bool) -> None:
         for box in self._tg_kind.values():
             box.setEnabled(enabled)
+
+    def _test_grokbot(self) -> None:
+        ok, detail = send_device_test(self._ctx.settings_path)
+        if ok:
+            self._status.setText(S.ALERTS_TEST_OK)
+            return
+        self._status.setText(
+            S.NOTIFY_GROKBOT_NEED if detail == "not_configured" else S.NOTIFY_GROKBOT_FAIL
+        )

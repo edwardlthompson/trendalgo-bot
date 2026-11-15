@@ -111,6 +111,10 @@ def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyP
     c.get("/api/v1/portfolio/history/2026-06-01")
     c.post("/api/v1/portfolio/rebalance/apply", json={"dry_run": True})
     c.post("/api/v1/notifications/email/test", json={"subject": "t", "body": "b"})
+    c.get("/api/v1/notifications/grokbot")
+    c.post("/api/v1/notifications/grokbot/test")
+    c.get("/api/v1/notifications/golive-readiness")
+    c.post("/api/v1/notifications/golive-readiness")
 
     c.get("/api/v1/research/ta-catalog")
     c.get("/api/v1/research/ta-library")

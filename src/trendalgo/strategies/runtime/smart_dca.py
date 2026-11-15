@@ -55,3 +55,7 @@ class SmartDCAStrategy(BaseNativeStrategy, RiskGuardMixin):
         if len(df) < 14:
             return False
         return bool(df.iloc[-1]["rsi"] > 70)
+
+    def explain_exit(self, ctx: StrategyContext, position: Position) -> str:
+        del ctx, position
+        return "RSI threshold"

@@ -1,4 +1,4 @@
-"""Send Telegram trade alerts from the host fill path (PC need not be running)."""
+"""Send Telegram trade alerts first, then optional Grok Bot webhook."""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.botd.telegram_secrets import load_creds, trade_notify_allowed
+from trendalgo.notifications.grokbot import emit, telegram_ai_note
+from trendalgo.notifications.grokbot_payload import trade_payload
 from trendalgo.notifications.telegram import TelegramCommands
 from trendalgo.notifications.telegram_format import format_trade
 
@@ -22,8 +24,12 @@ def notify_fill(
     plan_version: int = 0,
     live: bool = True,
     client: TelegramCommands | None = None,
+    strategy_id: str | None = None,
+    rationale: str | None = None,
+    exit_rule: str | None = None,
+    exchange: str | None = None,
 ) -> bool:
-    """Return True when a message was sent (or dry-run client reported success)."""
+    """Telegram first and independently; Grok Bot never waits or gates the send."""
     text = format_trade(
         pair=pair,
         side=side,
@@ -32,15 +38,34 @@ def notify_fill(
         fee_usd=fee_usd,
         realized_pnl_usd=realized_pnl_usd,
         plan_version=plan_version,
+        strategy_id=strategy_id,
+        rationale=rationale,
+        exit_rule=exit_rule,
     )
+    text = telegram_ai_note(text)
     _append_device_trade_alert(root, pair=pair, reason=text)
-    if not live or not trade_notify_allowed(root):
-        return False
-    token, chat_id = load_creds(root)
-    tg = client or TelegramCommands(token=token, chat_id=chat_id)
-    if not tg.enabled:
-        return False
-    return tg.send_message(text)
+    payload = trade_payload(
+        pair=pair,
+        side=side,
+        amount=amount,
+        price=price,
+        realized_pnl_usd=realized_pnl_usd,
+        strategy_id=strategy_id,
+        rationale=rationale,
+        exit_rule=exit_rule,
+        exchange=exchange,
+        plan_version=plan_version,
+    )
+    sent = False
+    if live and trade_notify_allowed(root):
+        token, chat_id = load_creds(root)
+        tg = client or TelegramCommands(token=token, chat_id=chat_id)
+        if tg.enabled:
+            from trendalgo.notifications.grokbot_explain import why_markup
+
+            sent = bool(tg.send_message(text, reply_markup=why_markup(payload)))
+    emit(payload)
+    return sent
 
 
 def _append_device_trade_alert(root: Path, *, pair: str, reason: str) -> None:
