@@ -83,25 +83,82 @@ def leave_reason(
     floors: dict[str, float] | None = None,
     on_board: bool | None = None,
 ) -> str:
-    """Floor misses + off-board note for Telegram / Grok Bot ``reason``."""
-    if snap is None:
-        if on_board is False:
-            return f"{symbol} left qualified: no longer on scan board"
-        return f"{symbol} left the qualified list (not in qualified set)"
-    parts = _floor_misses(snap, floors or {})
+    """Floor misses + off-board gate/last-seen for Telegram / Grok Bot ``reason``."""
+    floor_map = floors or {}
     if on_board is False:
-        parts.insert(0, "no longer on scan board")
+        return _off_board_reason(symbol, snap, floor_map)
+    if snap is None:
+        return f"{symbol} left the qualified list (not in qualified set)"
+    parts = _floor_misses(snap, floor_map)
     if parts:
         return f"{symbol} left qualified: " + "; ".join(parts)
     return f"{symbol} left the qualified list (dropped from qualified set)"
 
 
-def _floor_misses(snap: dict[str, Any], floors: dict[str, float]) -> list[str]:
-    parts: list[str] = []
+def _off_board_reason(symbol: str, snap: dict[str, Any] | None, floors: dict[str, float]) -> str:
+    """Coin vanished from the full scan board — cite gate + last-seen metrics."""
+    parts: list[str] = [_scan_board_gate(floors)]
+    if snap is None:
+        parts.append("no last metrics saved")
+        return f"{symbol} left qualified: " + "; ".join(parts)
+    vol_miss = _volume_miss(snap, floors)
+    if vol_miss:
+        parts.append(vol_miss)
+    seen = _last_seen_bits(snap)
+    if seen:
+        parts.append("last seen: " + " · ".join(seen))
+    return f"{symbol} left qualified: " + "; ".join(parts)
+
+
+def _scan_board_gate(floors: dict[str, float]) -> str:
+    min_vol = _floor(floors, "vol24_min", "min_volume_usd")
+    if min_vol is not None:
+        return f"removed from scan board (must clear min 24h vol ${min_vol:,.0f})"
+    return "removed from scan board (delisted or failed live volume/listing gate)"
+
+
+def _volume_miss(snap: dict[str, Any], floors: dict[str, float]) -> str | None:
     vol = _num(snap.get("volume_24h") or snap.get("volume_usd"))
     min_vol = _floor(floors, "vol24_min", "min_volume_usd")
     if min_vol is not None and vol is not None and vol < min_vol:
-        parts.append(f"Volume ${vol:,.0f} below min ${min_vol:,.0f}")
+        return f"Volume ${vol:,.0f} below min ${min_vol:,.0f}"
+    return None
+
+
+def _last_seen_bits(snap: dict[str, Any]) -> list[str]:
+    bits: list[str] = []
+    vol = _num(snap.get("volume_24h") or snap.get("volume_usd"))
+    if vol is not None:
+        bits.append(f"Vol ${_fmt_vol(vol)}")
+    best = _num(snap.get("bot_best_net_pct"))
+    if best is not None:
+        bits.append(f"Best BT {best:.1f}%")
+    gains = snap.get("gains") if isinstance(snap.get("gains"), dict) else {}
+    gain7 = _num(snap.get("gain_7d") or gains.get("7d"))
+    if gain7 is not None:
+        bits.append(f"7D {_gain_display(gain7):+.1f}%")
+    gain30 = _num(snap.get("gain_30d") or gains.get("30d") or snap.get("gain_pct"))
+    if gain30 is not None:
+        bits.append(f"30D {_gain_display(gain30):+.1f}%")
+    health = _num(snap.get("health_score") or snap.get("health"))
+    if health is not None:
+        bits.append(f"Health {health:.2f}")
+    return bits
+
+
+def _fmt_vol(vol: float) -> str:
+    if vol >= 1_000_000:
+        return f"{vol / 1_000_000:.1f}M"
+    if vol >= 1_000:
+        return f"{vol / 1_000:.1f}K"
+    return f"{vol:,.0f}"
+
+
+def _floor_misses(snap: dict[str, Any], floors: dict[str, float]) -> list[str]:
+    parts: list[str] = []
+    vol_miss = _volume_miss(snap, floors)
+    if vol_miss:
+        parts.append(vol_miss)
     uni = _num(snap.get("uniformity_score") or snap.get("uniformity"))
     min_uni = _floor(floors, "uniformity_min", "min_uniformity")
     if min_uni is not None and uni is not None and uni < _uni_floor(min_uni, uni):
@@ -159,8 +216,11 @@ def _floor(floors: dict[str, float], *keys: str) -> float | None:
 
 def _pct_pair(value: float, floor: float) -> tuple[float, float]:
     floor_pct = floor * 100.0 if floor <= 1.0 else floor
-    value_pct = value * 100.0 if abs(value) <= 1.5 else value
-    return value_pct, floor_pct
+    return _gain_display(value), floor_pct
+
+
+def _gain_display(value: float) -> float:
+    return value * 100.0 if abs(value) <= 1.5 else value
 
 
 def _num(raw: Any) -> float | None:

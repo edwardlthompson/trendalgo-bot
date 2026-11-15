@@ -95,3 +95,13 @@ def test_pane_collapse_callback(qtbot) -> None:
     qtbot.addWidget(pane)
     pane.set_expanded(False)
     assert seen == [True]
+
+
+def test_pane_caps_at_ten(qtbot) -> None:
+    pane = BuyPicksPane()
+    qtbot.addWidget(pane)
+    pane.show()
+    many = [{**_PICK_A, "symbol": f"C{i}", "pair": f"C{i}/USD"} for i in range(15)]
+    pane.set_picks(many)
+    spectra = pane.findChildren(ScoreSpectrum)
+    assert len(spectra) == 10

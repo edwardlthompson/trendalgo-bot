@@ -87,7 +87,8 @@ def run_pool(
                 on_ok(symbol, rows, stats)
                 if on_score is not None:
                     on_score(symbol, rows)
-                if isinstance(market_context, dict):
+                # Sauce-only meta lacks "ok"; never wipe catalog Market Context.
+                if isinstance(market_context, dict) and "ok" in market_context:
                     on_ctx(str(symbol).upper(), market_context)
             progress.step(done, total=n_coins, pair=symbol or fallback)
 
@@ -131,6 +132,7 @@ def sauce_pool_on_seeds(
         on_ctx=on_ctx,
         on_score=None,
         seed_rows_by_symbol=seed_rows_by_symbol,
+        include_market_context=False,
     )
     return True
 

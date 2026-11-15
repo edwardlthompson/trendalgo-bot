@@ -113,11 +113,13 @@ def populate_results_table(
                 item.setForeground(QColor(ss_fg))
             table.setItem(row_i, c, item)
         _show_chart_cell(table, row_i, row, coin=coin, parent=parent)
+        # Oracle max is SS ceiling only — no Create Bot (same as B&H).
+        hide_create = (is_bh or is_baseline) and not is_sauce
         _create_bot_cell(
             table,
             row_i,
             row,
-            is_bh=is_bh and not is_sauce,
+            is_bh=hide_create,
             pair=pair,
             status=status,
             on_create_bot=on_create_bot,

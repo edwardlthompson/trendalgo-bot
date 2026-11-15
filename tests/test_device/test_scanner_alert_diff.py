@@ -52,8 +52,8 @@ def test_filtered_leave_uses_board_metrics_for_reason() -> None:
     assert leave.coin.get("bot_best_net_pct") == 12.0
 
 
-def test_off_board_leave_cites_scan_board_drop() -> None:
-    """CAP-style: left filtered set because coin vanished from scan board."""
+def test_off_board_leave_cites_gate_and_last_seen() -> None:
+    """Left filtered set because coin vanished from scan board."""
     previous = {"CAP", "KEEP"}
     current = [{"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0}]
     board = [{"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0}]
@@ -63,6 +63,7 @@ def test_off_board_leave_cites_scan_board_drop() -> None:
             "pair": "CAP/USD",
             "bot_best_net_pct": 55.0,
             "volume_24h": 2_000_000,
+            "gain_7d": 3.2,
         },
         "KEEP": {"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0},
     }
@@ -75,8 +76,34 @@ def test_off_board_leave_cites_scan_board_drop() -> None:
         floors={"min_best_bt": 30.0, "min_volume_usd": 1_000_000},
     )
     leave = next(e for e in events if e.kind == "watchlist_leave" and e.symbol == "CAP")
-    assert "no longer on scan board" in leave.reason
+    assert "removed from scan board (must clear min 24h vol $1,000,000)" in leave.reason
+    assert "last seen:" in leave.reason
+    assert "Vol $2.0M" in leave.reason
+    assert "Best BT 55.0%" in leave.reason
+    assert "no longer on scan board" not in leave.reason
     assert "dropped from qualified set" not in leave.reason
+
+
+def test_off_board_leave_cites_volume_miss_when_last_below_min() -> None:
+    from trendalgo.device.scanner_alert_diff import leave_reason
+
+    reason = leave_reason(
+        "LIGHTER",
+        {"volume_24h": 800_000, "bot_best_net_pct": 40.0, "pair": "LIGHTER/USD"},
+        floors={"min_volume_usd": 1_000_000},
+        on_board=False,
+    )
+    assert "removed from scan board (must clear min 24h vol $1,000,000)" in reason
+    assert "Volume $800,000 below min $1,000,000" in reason
+    assert "last seen:" in reason
+
+
+def test_off_board_leave_no_snap() -> None:
+    from trendalgo.device.scanner_alert_diff import leave_reason
+
+    reason = leave_reason("ZZZ", None, floors={"min_volume_usd": 1_000_000}, on_board=False)
+    assert "removed from scan board (must clear min 24h vol $1,000,000)" in reason
+    assert "no last metrics saved" in reason
 
 
 def test_leave_reason_uses_floors_and_snapshot() -> None:
@@ -90,6 +117,7 @@ def test_leave_reason_uses_floors_and_snapshot() -> None:
     assert "Volume $12,000 below min $50,000" in reason
     assert "Uniformity 0.41 < 0.55" in reason
     assert "scan floors" not in reason.lower()
+    assert "removed from scan board" not in reason
 
 
 def test_leave_reason_cites_best_bt_and_gains() -> None:

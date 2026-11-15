@@ -25,6 +25,7 @@ def test_run_all_ta_sauces_only_top_oracle(monkeypatch: pytest.MonkeyPatch, tmp_
         on_ok: Any,
         on_score: Any,
         seed_rows_by_symbol: dict[str, list[dict[str, Any]]] | None = None,
+        include_market_context: bool = True,
         **_k: Any,
     ) -> None:
         pool_calls.append(
@@ -33,6 +34,7 @@ def test_run_all_ta_sauces_only_top_oracle(monkeypatch: pytest.MonkeyPatch, tmp_
                 "include_sauce": include_sauce,
                 "sauce_only": seed_rows_by_symbol is not None,
                 "seed_syms": sorted((seed_rows_by_symbol or {}).keys()),
+                "include_market_context": include_market_context,
             }
         )
         for coin in batch:
@@ -113,6 +115,7 @@ def test_run_all_ta_sauces_only_top_oracle(monkeypatch: pytest.MonkeyPatch, tmp_
     assert set(pool_calls[0]["syms"]) == {"HIGH", "MID", "LOW"}
     assert pool_calls[1]["include_sauce"] is True
     assert pool_calls[1]["sauce_only"] is True
+    assert pool_calls[1]["include_market_context"] is False
     assert pool_calls[1]["syms"] == ["HIGH", "MID"]
     assert set(pool_calls[1]["seed_syms"]) >= {"HIGH", "MID"}
 

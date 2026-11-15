@@ -86,8 +86,9 @@ def scan_pair_strategies(
 
     Returns ``(rows, market_context)`` — context is pair-level, not a strategy row.
     When ``include_sauce`` is false, catalog + deepen + protective TSL only (Opportunity
-    pass-1); Secret Sauce Lab / coincidence / helpers are skipped.
-    When ``sauce_only_rows`` is set, skip catalog/deepen and cook Sauce on those rows.
+    pass-1); Secret Sauce Lab / coincidence / helpers / Oracle max are skipped.
+    When ``sauce_only_rows`` is set, skip catalog/deepen and cook Sauce on those rows
+    (Oracle is computed in the sauce-only path when missing from seeds).
     When ``include_market_context`` is false, skip ``compute_market_context`` (empty ctx).
     """
     if sauce_only_rows is not None:
@@ -224,12 +225,14 @@ def scan_pair_strategies(
             bh["timeframe"] = timeframe
             out.append(fleet_row_to_lts(bh, symbol=symbol, stake_usd=stake, is_bh=True))
             emit(f"{timeframe} B&H recorded", phase="bh", timeframe=timeframe)
-        oracle = oracle_max_row(frame, lookback_seconds=0, stake_usd=stake, fee=fee)
-        if oracle is not None:
-            oracle = dict(oracle)
-            oracle["timeframe"] = timeframe
-            out.append(fleet_row_to_lts(oracle, symbol=symbol, stake_usd=stake, is_oracle=True))
-            emit(f"{timeframe} Oracle max recorded", phase="oracle", timeframe=timeframe)
+        # Oracle max is SS-only (Lab ceiling); skip when Sauce is off.
+        if include_sauce:
+            oracle = oracle_max_row(frame, lookback_seconds=0, stake_usd=stake, fee=fee)
+            if oracle is not None:
+                oracle = dict(oracle)
+                oracle["timeframe"] = timeframe
+                out.append(fleet_row_to_lts(oracle, symbol=symbol, stake_usd=stake, is_oracle=True))
+                emit(f"{timeframe} Oracle max recorded", phase="oracle", timeframe=timeframe)
         publish()
 
     # Pair-level Market Context (primary TF or first loaded frame) — not a strategy row.

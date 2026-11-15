@@ -74,6 +74,7 @@ def _sauce_pool_on_seeds(
         on_ctx=on_ctx,
         on_score=None,
         seed_rows_by_symbol=seed_rows_by_symbol,
+        include_market_context=False,
     )
     return True
 
@@ -212,6 +213,9 @@ def run_all_ta_scan_backtests(
             on_score=lambda sym, rows: scored.append((sym, oracle_rank_score(rows))),
             include_market_context=mc_with,
         )
+        if mc_with:
+            mc_ok = sum(1 for c in market_contexts.values() if isinstance(c, dict) and c.get("ok"))
+            progress.log(f"Market Context: {mc_ok} ok / {len(coins)} coins")
 
         if not sauce_with:
             progress.log("Sauce skipped (sauce_with_scan=false); catalog+deepen complete")

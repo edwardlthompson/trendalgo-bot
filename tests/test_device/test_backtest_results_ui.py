@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 from trendalgo.device import strings as S
-from trendalgo.device.backtest_results_ui import HEAT_COLS, NET_COL, indicator_label, row_cells
+from trendalgo.device.backtest_results_ui import (
+    HEAT_COLS,
+    NET_COL,
+    indicator_label,
+    row_cells,
+    rows_for_strategy_export,
+)
 
 
 def test_backtest_headers_order() -> None:
@@ -88,3 +94,13 @@ def test_row_cells_params_and_order() -> None:
     assert HEAT_COLS[10] == ("tsl_hits", True)
     assert HEAT_COLS[11] == ("tsl_hit_pct", True)
     assert HEAT_COLS[12] == ("strength", False)
+
+
+def test_rows_for_strategy_export_drops_oracle() -> None:
+    rows = [
+        {"indicator": "RSI", "net_pct": 5.0},
+        {"indicator": "Oracle max", "net_pct": 40.0},
+        {"indicator": "B&H", "net_pct": 2.0},
+    ]
+    out = rows_for_strategy_export(rows)
+    assert [r["indicator"] for r in out] == ["RSI", "B&H"]

@@ -8,6 +8,7 @@ from typing import Any
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QWidget
 
 from trendalgo.device import strings as S
+from trendalgo.device.backtest_results_ui import rows_for_strategy_export
 from trendalgo.device.backtest_share import default_export_path, export_backtest_table_png
 from trendalgo.device.export_prefs import remember_export_dir
 
@@ -25,7 +26,8 @@ def run_backtest_share_dialog(
     market_context: dict[str, Any] | None = None,
 ) -> str | None:
     """Show save dialog, export, confirm. Returns status note or None when cancelled."""
-    if not rows:
+    export_rows = rows_for_strategy_export(rows)
+    if not export_rows:
         QMessageBox.information(parent, S.BACKTEST_SHARE, S.BACKTEST_SHARE_NEED_ROWS)
         return None
     suggested = str(default_export_path(root, pair=pair))
@@ -42,7 +44,7 @@ def run_backtest_share_dialog(
         export_backtest_table_png(
             out,
             pair=pair,
-            rows=rows,
+            rows=export_rows,
             filters=filters,
             heatmap=heatmap,
             sort_key=sort_key,

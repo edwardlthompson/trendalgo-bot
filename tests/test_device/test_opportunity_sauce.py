@@ -110,6 +110,8 @@ def test_include_sauce_false_skips_lab(monkeypatch: Any) -> None:
     assert ctx is not None
     assert ctx.get("include_sauce") is False
     assert not any(str(r.get("indicator") or "").startswith("Secret Sauce") for r in rows)
+    # Oracle max is SS-only — must not appear when Sauce is off.
+    assert not any(str(r.get("indicator") or "").strip() == "Oracle max" for r in rows)
 
 
 def test_sauce_only_rows_skips_catalog_and_deepen(monkeypatch: Any) -> None:
@@ -163,6 +165,66 @@ def test_sauce_only_rows_skips_catalog_and_deepen(monkeypatch: Any) -> None:
     )
     catalog.assert_not_called()
     deepen.assert_not_called()
-    assert ctx is not None
-    assert ctx.get("sauce_only") is True
+    # Sauce-only must not return a fake Market Context (would wipe catalog MC).
+    assert ctx is None
     assert any(str(r.get("indicator") or "").startswith("Oracle") for r in rows)
+
+
+def test_sauce_only_computes_oracle_when_missing(monkeypatch: Any) -> None:
+    import pandas as pd
+
+    from trendalgo.device import pair_strategy_sauce_pass as sauce_mod
+    from trendalgo.device import pair_strategy_scan as scan
+
+    idx = pd.date_range("2024-01-01", periods=80, freq="h", tz="UTC")
+    close = pd.Series(range(100, 180), index=idx, dtype=float)
+    frame = pd.DataFrame(
+        {"open": close, "high": close + 1, "low": close - 1, "close": close, "volume": 1.0},
+        index=idx,
+    )
+    monkeypatch.setattr(
+        sauce_mod,
+        "load_scan_frames",
+        lambda **_k: (
+            {"1h": frame},
+            {"data_source": "test", "cache_age_s": 0.0, "notes": [], "base_tf": "1h"},
+        ),
+    )
+    monkeypatch.setattr(sauce_mod, "mine_and_eval_secret_sauce", MagicMock(return_value=None))
+    monkeypatch.setattr(sauce_mod, "coincidence_sauce_row", MagicMock(return_value=None))
+    monkeypatch.setattr(sauce_mod, "stamp_rows_protective_tsl", lambda rows, *_a, **_k: rows)
+    oracle_fn = MagicMock(
+        return_value={
+            "strategy_id": "ORACLE",
+            "net_profit": 10.0,
+            "trades": 1,
+            "wins": 1,
+        }
+    )
+    monkeypatch.setattr(
+        "trendalgo.backtest.ta_fleet.oracle_max_row",
+        oracle_fn,
+    )
+    seed = [
+        {
+            "indicator": "RSI",
+            "strategy_id": "RSI",
+            "net_pct": 5.0,
+            "timeframe": "1h",
+            "net_profit": 5.0,
+            "trades": 3,
+            "wins": 2,
+        }
+    ]
+    rows, _ctx = scan.scan_pair_strategies(
+        symbol="PEPE",
+        pair="PEPE/USD",
+        timeframes=("1h",),
+        strat_list=("RSI",),
+        stake=1000.0,
+        fee=MagicMock(),
+        loader=MagicMock(),
+        sauce_only_rows=seed,
+    )
+    oracle_fn.assert_called()
+    assert any(str(r.get("indicator") or "").strip() == "Oracle max" for r in rows)

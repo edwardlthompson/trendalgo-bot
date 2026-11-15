@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
 )
 
 from trendalgo.device import strings as S
-from trendalgo.device.backtest_results_ui import filter_perfect_rows
+from trendalgo.device.backtest_results_ui import filter_perfect_rows, rows_for_strategy_export
 from trendalgo.device.backtest_row_filter import filter_rows
 from trendalgo.device.export_prefs import remember_export_dir
 from trendalgo.device.icons import nav_icon
@@ -241,7 +241,7 @@ def show_results_dialog(
     share.setEnabled(bool(all_rows) and export_root is not None)
 
     def _share(_checked: bool = False) -> None:
-        export_rows = visible if visible else all_rows
+        export_rows = rows_for_strategy_export(visible if visible else all_rows)
         if export_root is None or not export_rows:
             return
         suggested = str(default_scanner_export_path(export_root, label=symbol or "pair"))

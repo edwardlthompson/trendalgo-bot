@@ -157,6 +157,11 @@ def filter_perfect_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+def rows_for_strategy_export(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop Oracle max from share PNG (keep on-screen Results / chart)."""
+    return [r for r in rows if str(r.get("indicator") or "").strip() != "Oracle max"]
+
+
 def row_cells(row: dict[str, Any], *, is_bh: bool) -> list[str]:
     tsl = row.get("trailing_stop_loss_pct")
     if tsl is None:

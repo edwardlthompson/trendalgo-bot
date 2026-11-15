@@ -63,8 +63,7 @@ def run_sauce_only_pass(
 
     base_hint = "1h+subhour" if needs_1m_base(ordered_tf) else "1h"
     emit(f"Sauce-only: loading {load_symbol} {base_hint}…", phase="load")
-    t0 = time.perf_counter()
-    frames_by_tf, load_meta = load_scan_frames(
+    frames_by_tf, _ = load_scan_frames(
         symbol=load_symbol,
         pair=pair,
         timeframes=ordered_tf,
@@ -72,18 +71,33 @@ def run_sauce_only_pass(
         gecko_id=gecko_id,
         prefs_root=prefs_root,
     )
-    load_s = time.perf_counter() - t0
-    data_source = str(load_meta.get("data_source") or "none")
-    cache_age_s = load_meta.get("cache_age_s")
     if not frames_by_tf:
         emit("Sauce-only: no OHLCV — keeping catalog rows", phase="done", done=total)
-        return out, {
-            "include_sauce": False,
-            "sauce_only": True,
-            "phase_s": {"load_s": round(load_s, 3), "sauce_s": 0.0},
-            "data_source": data_source,
-            "cache_age_s": cache_age_s,
-        }
+        # No Market Context payload — catalog MC must not be overwritten.
+        return out, None
+
+    # Catalog pass skips Oracle; compute here so Lab has a ceiling and Results can chart it.
+    from trendalgo.backtest.ta_fleet import oracle_max_row
+    from trendalgo.device.scanner_all_ta_prune import fleet_row_to_lts
+
+    has_oracle = any(str(r.get("indicator") or "").strip() == "Oracle max" for r in out)
+    if not has_oracle:
+        for timeframe in ordered_tf:
+            frame = frames_by_tf.get(timeframe)
+            if frame is None:
+                continue
+            try:
+                oracle = oracle_max_row(frame, lookback_seconds=0, stake_usd=stake, fee=fee)
+            except Exception as exc:
+                emit(f"Oracle soft-fail ({timeframe}): {exc}", phase="load")
+                continue
+            if oracle is None:
+                continue
+            oracle = dict(oracle)
+            oracle["timeframe"] = timeframe
+            out.append(fleet_row_to_lts(oracle, symbol=symbol, stake_usd=stake, is_oracle=True))
+            emit(f"{timeframe} Oracle max recorded", phase="oracle", timeframe=timeframe)
+        publish()
 
     lab_oracle = lab_oracle_row(out)
     ss_future = None
@@ -104,7 +118,6 @@ def run_sauce_only_pass(
             fee=fee,
         )
 
-    t_sauce = time.perf_counter()
     emit(S.SCAN_PHASE_SAUCE_COINCIDENCE, phase="sauce", catalog_ready=True)
     if lab_oracle is not None:
         o_tf = str(lab_oracle.get("timeframe") or "1h")
@@ -205,15 +218,8 @@ def run_sauce_only_pass(
 
     out = stamp_rows_protective_tsl(out, frames_by_tf, fee=fee, stake=stake)
     publish()
-    sauce_s = time.perf_counter() - t_sauce
     done = total
-    ctx = {
-        "include_sauce": True,
-        "sauce_only": True,
-        "data_source": data_source,
-        "cache_age_s": cache_age_s,
-        "phase_s": {"load_s": round(load_s, 3), "sauce_s": round(sauce_s, 3)},
-    }
     emit(f"Sauce-only complete — {len(out)} rows", phase="done", done=total)
     publish()
-    return out, ctx
+    # No Market Context payload — catalog MC must not be overwritten by Sauce meta.
+    return out, None

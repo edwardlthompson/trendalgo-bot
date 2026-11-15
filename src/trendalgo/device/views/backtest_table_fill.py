@@ -142,11 +142,13 @@ def fill_backtest_table(
             parent=table.window(),
             market_context=market_context,
         )
+        # Oracle max is SS ceiling only — no Create Bot (same as B&H).
+        hide_create = (is_bh or is_oracle) and not is_sauce
         _create_bot_cell(
             table,
             row_i,
             row,
-            is_bh=is_bh and not is_sauce,
+            is_bh=hide_create,
             pair=pair,
             on_open_plan=on_open_plan,
             on_note=on_note,
