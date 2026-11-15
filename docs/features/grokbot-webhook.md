@@ -55,7 +55,7 @@ uv run python -m trendalgo.notifications.grokbot_cli
 }
 ```
 
-`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`, `weekly_digest`, `sweep_complete`.
+`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`, `weekly_digest`, `sweep_complete`, `golive_readiness`.
 
 ## Why? button (`explain_request`)
 
@@ -111,6 +111,27 @@ Emitted after an LTS backtest sweep finishes. Advisory only — ranking and orde
     "overfitting": [{"symbol": "DOGE", "flags": ["thin_sample", "high_win_thin_sample"], "trades": 3, "win_pct": 100}],
     "oos_split": null,
     "coin_count": 12
+  }
+}
+```
+
+## Go-live readiness (`golive_readiness`)
+
+Owner-auth GET/POST `/api/v1/notifications/golive-readiness`, or `uv run python -m trendalgo.notifications.golive_cli` (`--emit` POSTs). **Advisory only** — it never writes approvals, never calls `scripts/go-live-gate.sh`, and `gains.bypasses_go_live_gate` is always `false`. Filter: `GROKBOT_WEBHOOK_EVENTS=golive`.
+
+```json
+{
+  "schema_version": "1",
+  "event_type": "golive_readiness",
+  "reason": "TrendAlgo go-live readiness (advisory; does not approve live) trades=24 hints=...",
+  "gains": {
+    "advisory": true,
+    "bypasses_go_live_gate": false,
+    "trade_count": 24,
+    "max_drawdown_pct": 0.04,
+    "max_losing_streak": 2,
+    "fee_assumptions": {"backtest_fee_bps_round_trip": 52, "dry_run_slippage_bps": 0},
+    "hints": ["dry-run sample looks populated; run go-live-gate.sh --check-only"]
   }
 }
 ```

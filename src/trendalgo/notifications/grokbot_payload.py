@@ -28,6 +28,7 @@ EVENT_TYPES = (
     "explain_request",
     "weekly_digest",
     "sweep_complete",
+    "golive_readiness",
 )
 
 
