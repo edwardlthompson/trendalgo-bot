@@ -21,4 +21,4 @@ rsync -az --delete \
   ./ "${HOST}:${REMOTE_DIR}/"
 
 ssh "$HOST" "cd ${REMOTE_DIR} && docker compose -f docker/docker-compose.prod.yml up -d --build trendalgo-api"
-echo "OK deploy smoke: curl http://VPS:8080/api/v1/health"
+echo "OK deploy smoke: from your PC, ssh -N -L 8080:127.0.0.1:8080 $HOST then curl http://127.0.0.1:8080/api/v1/health"

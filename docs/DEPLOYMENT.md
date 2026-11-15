@@ -25,7 +25,7 @@ Run: `bash scripts/check-hosting-eligibility.sh`
 1. Create Oracle Cloud account; select home region with Ampere availability
 2. Create VM.Standard.A1.Flex (4 OCPU, 24 GB RAM)
 3. Ubuntu 22.04 ARM64 image
-4. Open ports 22, 443, 8080 (restrict 8080 to your IP if possible)
+4. Open ports **22** and **443** only. The API is published as `127.0.0.1:8080:8080` — do **not** open host port 8080 on a public interface. Reach it with an SSH tunnel (`ssh -N -L 8080:127.0.0.1:8080 user@vps`) or Tailscale.
 5. Install Docker + compose plugin
 6. Clone repo; copy `.env` to `/etc/trendalgo/.env`
 7. `docker compose -f docker/docker-compose.prod.yml up -d` (Sprint 4)

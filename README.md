@@ -10,399 +10,142 @@
 
 Source-available under Elastic License 2.0 — free for your own trading; no reselling as a service; no stripping billing.
 
-**TrendAlgo Bot** is a self-hosted cryptocurrency trading platform: a headless bot on your VPS plus a local PySide6 device app for research and control. It combines algorithmic spot trading, portfolio tracking, opportunity scanning, and Secret Sauce Study — without custodial accounts, proprietary SDKs, or default telemetry.
+## Pitch
 
-You own the stack, the keys, and the data. Dry-run is the default; live trading requires an explicit go-live approval for each exchange.
+**TrendAlgo Bot** is the self-hosted crypto desk you actually own: a headless native CCXT engine on your VPS, plus a local PySide6 device app for research and control. It scans the tape, tracks the book, backtests recipes, and only goes live when you say so.
 
-> **Tip:** Sections below are collapsible — click a heading to expand or collapse it.
+You keep the keys, the SQLite, and the veto. Dry-run is the default. Live trading needs `TRENDALGO_MODE=live` and `scripts/go-live-gate.sh --approve` **per exchange**. There is no Freqtrade, no custodial account, no proprietary SDK, and no telemetry unless you opt in.
 
----
+## Why it's different
 
-<details open>
-<summary><strong>Self-hosted setup guide (start here)</strong></summary>
+- **Native CCXT engine ([ADR-0010](docs/adr/0010-ccxt-native-engine.md))** — Freqtrade was removed. Spot orders, dry-run fills, and journals run in `src/trendalgo/trading/`.
+- **LTS Scanner + Secret Sauce** — opportunity tiers from live OHLCV, then a causal Enter/Exit recipe that has to beat fees and Buy & Hold under an Oracle ceiling. No forced sort.
+- **CoinStats-class portfolio** — read-only sync across nine CEX venues, charts vs an equal-weight top-10 index, on the device you already have.
+- **Hard live gate** — the bot will not place live orders because a README said “go live”. The shell gate and `LiveGate` stay in the way.
+- **Telegram first** — alerts always send on Telegram. An optional [Grok Bot webhook](docs/features/grokbot-webhook.md) can brief the same events in plain words; it is off until you set `GROKBOT_WEBHOOK_URL`, never delays Telegram, and can be filtered to save quota.
 
-This guide walks you through running **your own** TrendAlgo Bot instance from clone to daily use. For deeper runbooks, see [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md), [`docs/START_HERE.md`](docs/START_HERE.md), and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+## Features
 
-### 1. What you need
+![Device scanner](docs/assets/device-scanner-current.png)
 
-| Requirement | Minimum | Recommended |
-|-------------|---------|-------------|
-| **OS** | Windows 10+, macOS 12+, or Linux | Ubuntu 22.04 LTS on a VPS for production |
-| **Python** | 3.12 (not 3.13+ yet) | 3.12.x with [uv](https://github.com/astral-sh/uv) or `pip` |
-| **RAM** | 2 GB (local dev) | 4 GB+ on VPS |
-| **Disk** | 2 GB free | 10 GB+ for logs, SQLite, backtests |
-| **Network** | Outbound HTTPS | Static IP or domain for the VPS bot host |
-Optional: Docker (production parity), WSL2 (Windows bash scripts), Telegram account (alerts).
+| Capability | What you get |
+|------------|----------------|
+| **Native algo trading** | Templates: `macd-kraken-1h`, `multi-tf-example`, `multi-tf-ta`, `smart-dca`, `grid-trading`, `strong-uptrend-scanner` — [native trading](docs/NATIVE_TRADING.md) |
+| **LTS Scanner** | Qualified list, uniformity/gain tiers, device **Run scan** on public Kraken data (no keys) |
+| **Secret Sauce Lab** | Per-coin causal Enter/Exit on the Oracle → Sauce → B&H spectrum — [write-up](docs/features/secret-sauce.md) |
+| **Portfolio tracker** | Kraken, Binance.US, Coinbase Advanced, Gemini, Bitstamp, Crypto.com, plus Binance / Bybit / OKX with `WORLDWIDE_TRADING_ACK=1` — [exchange roadmap](docs/EXCHANGE_ROADMAP.md) |
+| **Device app** | PySide6: portfolio, scanner, backtest, plan/bots, alerts, settings. Windowed launch: `.\scripts\packaging\launch-device.ps1` |
+| **Alerts** | Telegram is primary. Optional Grok Bot HTTPS webhook for an AI companion brief |
+| **Research** | Backtest library, walk-forward, Monte Carlo, TA catalog |
+| **Safety** | Dry-run default, per-exchange go-live, loopback production API |
 
-### 2. Clone and install dependencies
+![Scanner filters](docs/assets/scanner-filters-current.png)
+
+![Portfolio overview](docs/assets/portfolio-overview-demo.png)
+
+## Quick start
+
+Python **3.12** (not 3.13+), [uv](https://github.com/astral-sh/uv) recommended. No Node, no PWA.
 
 ```bash
-git clone https://github.com/YOUR_ORG/trendalgo-bot.git
+git clone https://github.com/edwardlthompson/trendalgo-bot.git
 cd trendalgo-bot
-
-```
-
-**Python (pick one):**
-
-```bash
-# uv (recommended)
 uv sync --extra dev
-
-# or pip editable install
-pip install -e ".[dev]"
-
-```
-
-### 3. Configure environment
-
-Never commit secrets. Copy the template and edit locally:
-
-```bash
 cp .env.example .env
-
-```
-
-**Essential variables for local dry-run:**
-
-| Variable | Example | Purpose |
-|----------|---------|---------|
-| `TRENDALGO_MODE` | `dry-run` | Blocks live orders (keep this until go-live) |
-| `TRENDALGO_DATA_DIR` | `./data/dev` | SQLite, bots, portfolio DB location |
-| `TRENDALGO_API_PORT` | `8000` | FastAPI listen port |
-| `DATABASE_URL` | `sqlite:///./data/dev/trendalgo.db` | Optional; defaults under data dir |
-| `TZ` | `UTC` | Scheduler timezone (portfolio sync uses **00:00 UTC**) |
-**Windows PowerShell:**
-
-```powershell
-$env:TRENDALGO_DATA_DIR = "$PWD\data\dev"
-$env:TRENDALGO_MODE = "dry-run"
-$env:TRENDALGO_API_PORT = "8000"
-
-```
-
-### 4. Start local instance (dry-run, no API keys)
-
-**One command:**
-
-```powershell
-# Windows
-.\scripts\dev-local.ps1
-
-```
-
-```bash
-# Linux / macOS / WSL
-bash scripts/dev-local.sh
-
-```
-
-**Manual:**
-
-```bash
 export TRENDALGO_DATA_DIR=./data/dev
 export TRENDALGO_MODE=dry-run
 uv run python -m trendalgo.api.main
-
 ```
 
-Device UI (windowed, no console): `.\scripts\packaging\launch-device.ps1` (Windows) when `.venv` exists.
-
-**Verify:**
+Local API binds **`127.0.0.1:8000`** (`TRENDALGO_API_HOST` / `TRENDALGO_API_PORT` or `PORT`).
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/health
-uv run python scripts/smoke-portfolio-graph.py   # portfolio chart smoke
-
 ```
 
-Dry-run uses synthetic portfolio data (1 BTC history, multi-exchange sample balances) — no exchange keys required.
+Windows device UI (no console): `.\scripts\packaging\launch-device.ps1` after `.venv` exists. Optional extra: `uv sync --extra device`.
 
-### 5. Connect exchange API keys (read-only portfolio)
+Keep `TRENDALGO_MODE=dry-run` until you are on an external VPS and have run the go-live gate. Exchange keys are optional for dry-run; they must be **trade + query**, never withdraw.
 
-TrendAlgo syncs **read-only** balances from registry-enabled venues. Keys must have **trade + query** permissions; **never enable withdraw**.
+| Variable | Example | Purpose |
+|----------|---------|---------|
+| `TRENDALGO_MODE` | `dry-run` | Blocks live orders until you change it **and** pass the gate |
+| `TRENDALGO_DATA_DIR` | `./data/dev` | SQLite, journals, portfolio DB |
+| `TRENDALGO_API_PORT` | `8000` | Local FastAPI port |
+| `TZ` | `UTC` | Scheduler timezone (portfolio snapshot is **00:00 UTC**) |
 
-Uncomment and fill in `.env` for each exchange you use (see [`.env.example`](.env.example)):
+## Production (VPS, loopback 8080)
 
-| Exchange | Env keys |
-|----------|----------|
-| Kraken | `KRAKEN_API_KEY`, `KRAKEN_API_SECRET` |
-| Binance.US | `BINANCEUS_API_KEY`, `BINANCEUS_API_SECRET` |
-| Coinbase Advanced | `COINBASEADVANCED_API_KEY`, `COINBASEADVANCED_API_SECRET` |
-| Gemini, Bitstamp, Crypto.com | Same pattern in `.env.example` |
-| Binance / Bybit / OKX (worldwide) | Requires `WORLDWIDE_TRADING_ACK=1` for live |
-In the PWA: **Portfolio → Refresh portfolio** syncs **all** configured exchanges. Without keys, dry-run fixtures still populate the UI.
-
-### 6. Portfolio sync schedule
-
-| Trigger | When | Scope |
-|---------|------|-------|
-| **Automatic** | Every day **00:00 UTC** | All registry exchanges + daily P/L aggregate |
-| **Manual** | **Refresh portfolio** button | Same full multi-exchange sync |
-Optional: `TRENDALGO_SYNC_STAGGER_SEC=0` for instant dev sync; use `15`+ in production to respect rate limits.
-
-### 7. Enable algo trading (still dry-run)
-
-1. Open **Bot**, **Strategies**, or **Backtest** tabs in the PWA.
-2. Pick a strategy template (e.g. `multi-tf-example`, `macd-kraken-1h`).
-3. Run backtests from the **Backtest** tab — native engine, no keys needed in dry-run.
-4. Add bots via **Bot** dashboard; they simulate against the dry-run runner.
-
-### 8. Go live on a VPS (production)
-
-Production must run on an **external VPS**, not your laptop ([ADR-0002](docs/adr/0002-production-hosting.md)).
-
-**Preflight:**
+Production runs on an **external VPS**, not your laptop ([ADR-0002](docs/adr/0002-production-hosting.md)). Compose publishes the API as **`127.0.0.1:8080:8080` only**. Do not open host port 8080 on a public interface.
 
 ```bash
 bash scripts/deploy-preflight.sh
-python scripts/founder_gate.py status
-
-```
-
-**Deploy (example):**
-
-```bash
 export DEPLOY_HOST=user@your-vps.example
 bash scripts/deploy-vps.sh
-
 ```
 
-**Before live orders:**
-
-1. Set `TRENDALGO_MODE=live` on the VPS (not locally).
-2. Run `bash scripts/go-live-gate.sh --approve` per exchange.
-3. Set `GO_LIVE_APPROVED=1` and exchange keys on the VPS only.
-4. Restrict `TRENDALGO_CORS_ORIGINS` to your PWA URL.
-
-**Production compose:** `docker/docker-compose.prod.yml` — API bound to **loopback only** (`127.0.0.1:8080:8080`). Do not publish `8080` on a public interface.
-
-**Reach the API remotely (AUTH-02):** SSH tunnel or Tailscale — not a public port.
+Reach it with an SSH tunnel or Tailscale:
 
 ```bash
-# SSH tunnel from your PC to the VPS loopback API
 ssh -N -L 8080:127.0.0.1:8080 user@your-vps
-
-# Or join the VPS to your Tailscale tailnet and dial http://100.x.y.z:8080
-# (still bound on the VPS to 127.0.0.1 unless you also listen on the Tailscale IP)
-
+# then: curl http://127.0.0.1:8080/api/v1/health
 ```
 
-Verify binding: `docker compose -f docker/docker-compose.prod.yml config` must show `127.0.0.1:8080:8080`.
+Before live orders: `TRENDALGO_MODE=live` on the VPS, then `bash scripts/go-live-gate.sh --approve` per exchange. `GO_LIVE_APPROVED=1` and keys stay on the VPS.
 
-### 9. Optional integrations
+Optional: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (primary alerts). Optional Grok Bot companion: `GROKBOT_WEBHOOK_URL` + `GROKBOT_WEBHOOK_KEY` — [feature doc](docs/features/grokbot-webhook.md).
 
-| Feature | Configuration |
-|---------|----------------|
-| **Telegram alerts** | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (primary; always sent first) |
-| **Grok Bot webhook** | Optional `GROKBOT_WEBHOOK_URL` + `GROKBOT_WEBHOOK_KEY` — see [docs/features/grokbot-webhook.md](docs/features/grokbot-webhook.md) |
-| **Daily P/L hour** | `NOTIFICATION_DAILY_HOUR` (UTC; separate from midnight sync) |
-| **On-chain / DEX read** | `ETH_RPC_URL`, `BASE_RPC_URL`, `ONCHAIN_SYNC_ENABLED=1` — see [DEX roadmap](docs/DEX_ROADMAP.md) |
-| **Database** | SQLite on the VPS (single-user MVP); Postgres dual-write removed |
-| **License / billing** | Default calculation-only; see [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md) |
-### 10. Troubleshooting
-
-| Symptom | Fix |
-|---------|-----|
-| Device cannot reach API | Start API on `:8000`; check firewall / owner auth |
-| Empty portfolio chart | Delete `data/dev/portfolio.db` and reload (re-seeds 1Y history in dry-run) |
-| Sync slow / timeout | Set `TRENDALGO_SYNC_STAGGER_SEC=0` locally; reduce enabled exchanges |
-| Windows bash gates fail | Use PowerShell scripts or WSL; CI is source of truth |
-| Live orders blocked | Expected until go-live gate passes |
-**Health checks:** `GET /api/v1/health` · **Logs:** Debug tab or `GET /api/v1/debug/logs`
-
-### 11. Upgrade and backup
-
-- **Data:** Back up `$TRENDALGO_DATA_DIR` (SQLite files, `portfolio.db`, `bots.db`, journals).
-- **Updates:** `git pull`, `uv sync`, restart API / relaunch device.
-- **Hygiene:** `bash scripts/check-repo-hygiene.sh` before pushing custom forks.
-
-</details>
-
-<details open>
-<summary><strong>Secret Sauce — the star of the show</strong></summary>
-
-Most backtests dump a pile of indicators and shrug. **Secret Sauce** is TrendAlgo’s attempt to *think*: for *this* coin and *this* window it cooks a causal **Enter when… / Exit when…** recipe, then earns its seat on the results board — no forced sort, no future peek.
-
-### The spectrum (we don’t cheat)
-
-| Role | What it means |
-|------|----------------|
-| **Oracle max** | Hindsight ceiling — perfect long-only swing timing on completed bars |
-| **Secret Sauce** | Causal Lab formula that has to *earn* Net % against real fees |
-| **Buy & Hold / catalog TA** | Lazy baseline and the peer crowd |
-Secret Sauce aims for: `Oracle → Secret Sauce → peers / B&H`. We never re-order the table to fake #2.
-
-### How we cook it
-
-After Oracle is on the board, the **Secret Sauce Lab** runs as its own job (catalog Results unlock without waiting):
-
-1. **Regime detector** — structural × volatility × direction (ADX / Efficiency Ratio / Choppiness ensemble, ATR & Bollinger width percentiles, MA ribbon, volume when it’s real).
-2. **Family budgets** — soft weights across dip-in-uptrend, mean-reversion, momentum, squeeze-breakout, volume impulse. Always skim every family; fat-budget the home regime. No brittle hard-switch.
-3. **Fee-aware P&L search** — same exchange fees as the scan; prefer beating Buy & Hold when the math allows.
-4. **Plain English + dossier** — re-simulable Enter/Exit; Study shows regime chips, Oracle gap, and why this recipe won.
-
-Blind RSI mean-reversion is looking for keys under the streetlight. An uptrend wants dip-in-uptrend math; a quiet range wants mean-reversion; chop is where grown-ups skim and admit the tape is hostile. Closing every point of Oracle would mean seeing the future — we don’t. Sparse, fee-honest trades that beat B&H under the Oracle ceiling are the win.
-
-**Lab notebook (full regime catalog):** [`docs/features/secret-sauce.md`](docs/features/secret-sauce.md)
-
-</details>
-
-<details>
-<summary><strong>What it does</strong></summary>
-
-| Capability | Description |
-|------------|-------------|
-| **Secret Sauce** | Per-coin causal Lab formula on the Oracle→Sauce→B&H spectrum — [feature write-up](docs/features/secret-sauce.md) |
-| **Portfolio tracking** | Read-only sync across **9 CEX venues** — [exchange roadmap](docs/EXCHANGE_ROADMAP.md) |
-| **Performance charts** | 1Y/6M/3M/1M/14D/7D/24H views vs equal-weight **top-10 crypto index** |
-| **Algo trading** | Native [CCXT runner](docs/NATIVE_TRADING.md) (dry-run default), strategy templates, risk limits, multi-bot |
-| **Opportunity scanner** | LTS pipeline with live OHLCV (cached/degraded fallback); pair forager prototype |
-| **Research** | Backtest library, walk-forward, Monte Carlo, TA catalog |
-| **Device app** | Local PySide6 control surface — portfolio, bots, scanner, Secret Sauce Study, settings |
-| **Billing** | Performance-based license; user-initiated on-chain settlement; TERMS draft pending attorney (H-006) |
-| **Alerts** | Telegram for trades, risk events, daily P/L (requires H-008 tokens) |
-| **Platform extensions** | On-chain wallet read; Uniswap V3 LP; DEX dry-run; **DEX live = Base Phase 1 + human gates** — [DEX roadmap](docs/DEX_ROADMAP.md) |
-</details>
-
-<details>
-<summary><strong>Architecture</strong></summary>
+## Architecture
 
 ```mermaid
 flowchart LR
-  Device[PySide6 device] --> API[FastAPI]
-  API --> Portfolio[portfolio/*]
-  API --> Venues[venues/* + dex/*]
-  API --> Runner[trading/runner]
-  API --> Scanner[scanner/*]
-  API --> Billing[billing/*]
+  Device[PySide6 device] --> API[FastAPI on loopback]
+  API --> Portfolio[portfolio]
+  API --> Runner[native CCXT runner]
+  API --> Scanner[LTS scanner]
+  Runner --> Strategies[strategy templates]
   Portfolio --> CCXT[CCXT adapters]
-  Venues --> Registry[venues.registry.json]
-  Runner --> CCXT
-  Runner --> Strategies[strategies/runtime]
-
+  Scanner --> CCXT
 ```
 
 | Layer | Technology |
 |-------|------------|
 | Trading engine | Native CCXT runner ([ADR-0010](docs/adr/0010-ccxt-native-engine.md)) |
-| Domain logic | Python 3.12+ — `src/trendalgo/` |
-| API | FastAPI (headless host) |
-| Local UI | PySide6 device — `src/trendalgo/device/` |
-| Data | SQLite on VPS |
-| Exchanges | CCXT — 9 CEX venues; DEX via ADR-0011 plugins |
-Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · ADRs: [`docs/adr/`](docs/adr/) · [`DECISION_LOG.md`](DECISION_LOG.md)
+| Domain | Python 3.12 — `src/trendalgo/` |
+| Host API | FastAPI, local `127.0.0.1:8000`, prod loopback `:8080` |
+| Local UI | PySide6 — `src/trendalgo/device/` |
+| Data | SQLite on the VPS |
+| License | Elastic License 2.0 ([ADR-0018](docs/adr/0018-elastic-license-v2.md)) |
 
-</details>
+Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/START_HERE.md`](docs/START_HERE.md) · [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
 
-<details>
-<summary><strong>Safety & compliance</strong></summary>
+## Security
 
-- **Dry-run default** — no live orders until `go-live-gate.sh --approve`
-- **External VPS only** for production ([ADR-0002](docs/adr/0002-production-hosting.md))
-- **Trade + query API keys** — withdraw permission never required
-- **No KYC, no custodial funds** — calculation-only license ([ADR-0008](docs/adr/0008-legal-safe-monetization.md))
-- **Opt-in telemetry only**
-- **Risk Register Zero** — [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
+- Dry-run default; live orders blocked until `go-live-gate.sh --approve`
+- Production API on loopback; SSH tunnel or Tailscale, not a public 8080
+- Trade + query API keys only — never withdraw
+- Opt-in telemetry only
+- Secrets stay in `.env` (never git) — see [`SECURITY.md`](SECURITY.md)
 
-</details>
+## License
 
-<details>
-<summary><strong>Quick local preview</strong></summary>
+Elastic License 2.0 (source-available) — [`LICENSE`](LICENSE). Performance license notes: [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md).
 
-```powershell
-.\scripts\dev-local.ps1          # Windows
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Conventional Commits. Agents: [`AGENTS.md`](AGENTS.md) and [`docs/help/BATCH_COMMANDS.md`](docs/help/BATCH_COMMANDS.md).
 
 ```
-
-```bash
-bash scripts/dev-local.sh        # Linux / macOS / WSL
-
+src/trendalgo/   # portfolio, trading, scanner, billing, risk, API, device
+config/          # exchange registry, founder defaults
+docker/          # prod compose (loopback 8080)
+docs/            # ADRs, roadmaps, runbooks
+scripts/         # gates, deploy, packaging
+tests/           # pytest
 ```
-
-Device UI: `.\scripts\packaging\launch-device.ps1` · Full tiers: [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md)
-
-**Bootstrap checklist:**
-
-1. [`docs/START_HERE.md`](docs/START_HERE.md) + [`BUILD_PLAN.md`](BUILD_PLAN.md)
-2. `cp .env.example .env`
-3. `bash scripts/apply-founder-defaults.sh` (optional founder tooling)
-4. `python scripts/founder_gate.py preflight-sprint --sprint 0`
-
-</details>
-
-<details>
-<summary><strong>Repository layout</strong></summary>
-
-```
-src/trendalgo/       # Core — portfolio, trading, scanner, billing, risk, API, device
-config/              # Founder defaults, exchange registry
-docker/              # Compose dev + prod templates
-docs/                # ADRs, roadmaps, runbooks
-scripts/             # Gates, deploy, dev-local, validation
-tests/               # Python test suite
-
-```
-
-</details>
-
-<details>
-<summary><strong>Development</strong></summary>
-
-```bash
-uv sync --extra dev
-python scripts/run-trendalgo-tests.py
-python scripts/founder_gate.py status
-
-```
-
-Founder gates: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · Human backlog: [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
-
-</details>
-
-<details>
-<summary><strong>Roadmap</strong></summary>
-
-| Phase | Status | Focus |
-|-------|--------|-------|
-| S0–S12 | Complete | MVP engine, PWA, portfolio, billing |
-| Post-delivery | Active | Founder gates, VPS deploy, go-live |
-| S13–S20 | Complete | Registry, worldwide trading, N-exchange ops |
-| S21–S24 | Complete | DEX plugin engine (Base Phase 1) |
-Board: [`BUILD_PLAN.md`](BUILD_PLAN.md) · [Exchange roadmap](docs/EXCHANGE_ROADMAP.md) · [DEX roadmap](docs/DEX_ROADMAP.md)
-
-</details>
-
-<details>
-<summary><strong>License</strong></summary>
-
-Elastic License 2.0 (source-available) — see [`LICENSE`](LICENSE). Performance license terms: [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md).
-
-</details>
-
-<details>
-<summary><strong>How agents should work</strong></summary>
-
-1. Read [`docs/START_HERE.md`](docs/START_HERE.md) → pick Cursor mode via [`docs/CURSOR_MODES.md`](docs/CURSOR_MODES.md)
-2. Open [`BUILD_PLAN.md`](BUILD_PLAN.md) **Sequential** lane first (`[AGENT]` / `[HUMAN]` / `[AUTO]`; status 🔲 ✅ ❌)
-3. Active stack: Python (`src/trendalgo/`) including the PySide6 device UI
-4. After each agent feature step: scoped lint/type/pytest on touched paths (full `watch-agent-gates` via `/gates` or `/fix` only)
-5. Human/legal/go-live: [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) (root [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) is a pointer)
-6. Template alignment notes: [`docs/BOOTSTRAP_ALIGNMENT.md`](docs/BOOTSTRAP_ALIGNMENT.md)
-7. Branding / pitch preview: [`branding/BRANDING.md`](branding/BRANDING.md)
-
-Router: [`AGENTS.md`](AGENTS.md) · Batch commands: [`docs/help/BATCH_COMMANDS.md`](docs/help/BATCH_COMMANDS.md)
-
-</details>
-
-<details>
-<summary><strong>Contributing</strong></summary>
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md). Elastic License 2.0 applies; performance billing terms per ADR-0005 / ADR-0018.
-
-</details>
 
 ## What this is not
 
-- A finished commercial product promise
+- A Freqtrade wrapper
+- A hosted SaaS or a public trading API
 - A place for secrets or production credentials
-- An unbounded scope — see README goals above
