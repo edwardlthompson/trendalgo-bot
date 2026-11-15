@@ -55,7 +55,7 @@ uv run python -m trendalgo.notifications.grokbot_cli
 }
 ```
 
-`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`, `weekly_digest`.
+`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`, `weekly_digest`, `sweep_complete`.
 
 ## Why? button (`explain_request`)
 
@@ -93,6 +93,24 @@ Off by default. Set `WEEKLY_DIGEST_ENABLED=1` (optional `WEEKLY_DIGEST_DOW=sun`,
     "entered": ["BTC/USD"],
     "left": [],
     "recurring_pairs": ["BTC/USD"]
+  }
+}
+```
+
+## Sweep complete (`sweep_complete`)
+
+Emitted after an LTS backtest sweep finishes. Advisory only — ranking and order logic are unchanged. `gains.oos_split` is `null` (no walk-forward split in the LTS sweep). Filter: `GROKBOT_WEBHOOK_EVENTS=sweep`.
+
+```json
+{
+  "schema_version": "1",
+  "event_type": "sweep_complete",
+  "reason": "LTS sweep complete: 12 coins, 10 ranked, 2 overfitting flags",
+  "gains": {
+    "top": [{"symbol": "BTC", "strategy": "MACD", "trades": 14, "win_pct": 57.0, "net_pct": 4.2}],
+    "overfitting": [{"symbol": "DOGE", "flags": ["thin_sample", "high_win_thin_sample"], "trades": 3, "win_pct": 100}],
+    "oos_split": null,
+    "coin_count": 12
   }
 }
 ```

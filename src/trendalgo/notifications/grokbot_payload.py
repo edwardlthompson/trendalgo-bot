@@ -27,6 +27,7 @@ EVENT_TYPES = (
     "daily_summary",
     "explain_request",
     "weekly_digest",
+    "sweep_complete",
 )
 
 

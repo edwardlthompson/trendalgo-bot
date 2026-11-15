@@ -34,6 +34,8 @@ def event_allowed(event_type: str, *, tier: str | None = None) -> bool:
         return True
     if kind == "weekly_digest" and tokens & {"weekly", "weekly_digest"}:
         return True
+    if kind == "sweep_complete" and tokens & {"sweep", "sweep_complete"}:
+        return True
     if kind == "scanner_alert":
         if "scanner" in tokens:
             return True
