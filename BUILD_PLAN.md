@@ -97,3 +97,9 @@ Finished BUILD_PLAN rows live in [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 | UX-004 | Settings: danger-styled Remove key + confirm before delete | planned |
 | UX-005 | Settings: scroll-to / deep-link section from empty-state CTAs | planned |
 <!-- /ux-inventory -->
+
+## News inbox (synced)
+
+P1/P2 tasks auto-synced by News Bot from [`docs/NEWS_INBOX.md`](docs/NEWS_INBOX.md).
+
+- 🔲 [AGENT][LOCAL] Add API-key hygiene guidance to security docs — scope: docs/features/security-onboarding.md (news P2, 2026-11-13) https://insights.coinigy.com/urgent-revoke-your-exchange-api-keys-connected-to-coinigy/
