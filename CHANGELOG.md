@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.14.1...v1.15.0) (2026-11-15)
+
+
+### Added
+
+* **notifications:** add opt-in Grok Bot webhook channel ([71a8749](https://github.com/edwardlthompson/trendalgo-bot/commit/71a8749746580ec440f453a629464ce22d6b4783))
+* **notifications:** advisory golive_readiness report ([e7ca87e](https://github.com/edwardlthompson/trendalgo-bot/commit/e7ca87e911dd9db25689632537ff2e298c1e7b86))
+* **notifications:** emit sweep_complete after LTS backtest sweep ([87b55fb](https://github.com/edwardlthompson/trendalgo-bot/commit/87b55fb7d728499b9d30b4c87363040bb68e7160))
+* **notifications:** optional daily portfolio_snapshot webhook ([f339a7b](https://github.com/edwardlthompson/trendalgo-bot/commit/f339a7b01773c2e14ea57755931fc3cea718838a))
+* **notifications:** optional weekly_digest for Telegram and Grok Bot ([c52ed0f](https://github.com/edwardlthompson/trendalgo-bot/commit/c52ed0f3a09d491ae50a9c919ce534797e73e208))
+* **notifications:** Telegram Why? button for Grok explain_request ([572749d](https://github.com/edwardlthompson/trendalgo-bot/commit/572749d5f8e8bc8e812cb80cb26aab0a3dbec519))
+
+
+### Fixed
+
+* **notifications:** emit sweep_complete only when the sweep returns a summary ([e8f74cc](https://github.com/edwardlthompson/trendalgo-bot/commit/e8f74cc0a974130c8ca57d069f51b86b7a77e136))
+* **notifications:** grokbot quota, host test, and format ([bb6fe4b](https://github.com/edwardlthompson/trendalgo-bot/commit/bb6fe4bdaf3b6497420a7852dce7aad80a3ebd31))
+* **notifications:** load weekly enter/leave from device alert history ([68450f9](https://github.com/edwardlthompson/trendalgo-bot/commit/68450f96be8734b14da37cdd26971115fa2822ac))
+* **notifications:** measure losing-journal drawdown against stake ([8779ae5](https://github.com/edwardlthompson/trendalgo-bot/commit/8779ae5a6ca628c5bf978796fa271469f3d01c12))
+* **notifications:** omit idle cash from left_qualified ([dff2a80](https://github.com/edwardlthompson/trendalgo-bot/commit/dff2a8011aec2408e46e411a3e94b9f1c29e9c91))
+* **notifications:** refuse grokbot webhook redirects ([b87aad3](https://github.com/edwardlthompson/trendalgo-bot/commit/b87aad306a2409582377280d71391a20f78c4e44))
+* **notifications:** type sweep numeric parser ([dd01703](https://github.com/edwardlthompson/trendalgo-bot/commit/dd01703dbcb4347b1e582bc0df10162cbb0f58fd))
+* **notifications:** type weekly PnL map as float ([bcec85e](https://github.com/edwardlthompson/trendalgo-bot/commit/bcec85e99723135c669f58b84df1373568cd3451))
+
+
+### Changed
+
+* **build-plan:** archive filtered-alerts ship rows after v1.14.1 ([6c8c6ff](https://github.com/edwardlthompson/trendalgo-bot/commit/6c8c6ffde123c51847a4906baf4ed0217fe09473))
+* **release:** sync uv.lock package version to 1.14.1 ([20ed6f9](https://github.com/edwardlthompson/trendalgo-bot/commit/20ed6f934656e593c8fea5dc5675b7f86c43e911))
+
+
+### Documentation
+
+* **kb:** record v1.14.1 ship CI pin and lock sync ([f2a469b](https://github.com/edwardlthompson/trendalgo-bot/commit/f2a469b9b321c33db2ae1c08833321cf6a1429c2))
+* rewrite README as a native CCXT pitch ([1439c06](https://github.com/edwardlthompson/trendalgo-bot/commit/1439c063ae73e3fb753c7c066a8805bf186bbc66))
+* rewrite README as a native CCXT pitch ([ec94a5d](https://github.com/edwardlthompson/trendalgo-bot/commit/ec94a5db034bb0832ca00fcffbc2cf68fe3bd068))
+
 ## [1.14.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.14.0...v1.14.1) (2026-11-14)
 
 
