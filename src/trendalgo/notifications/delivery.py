@@ -54,7 +54,9 @@ class AlertDelivery:
 
         if prefs.push_enabled and self.telegram.enabled:
             try:
-                if not self.telegram.send_message(f"{title}\n{body}"):
+                from trendalgo.notifications.grokbot import telegram_ai_note
+
+                if not self.telegram.send_message(telegram_ai_note(f"{title}\n{body}")):
                     errors.append("telegram: delivery failed")
             except Exception as exc:
                 errors.append(f"telegram: {exc}")

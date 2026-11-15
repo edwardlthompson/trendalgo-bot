@@ -26,6 +26,8 @@ COMMANDS_PATH = "/api/v1/commands"
 PAIR_PATH = "/api/v1/pair"
 TELEGRAM_PATH = "/api/v1/telegram"
 PORTFOLIO_PATH = "/api/v1/portfolio"
+GROKBOT_PATH = "/api/v1/notifications/grokbot"
+GROKBOT_TEST_PATH = "/api/v1/notifications/grokbot/test"
 CALL_TIMEOUT_S = 10.0
 UNREACHABLE = 0
 
@@ -172,6 +174,12 @@ class HostClient:
 
     def put_telegram(self, payload: dict[str, Any]) -> HostResponse:
         return self.request("PUT", TELEGRAM_PATH, payload)
+
+    def get_grokbot_status(self) -> HostResponse:
+        return self.request("GET", GROKBOT_PATH)
+
+    def post_grokbot_test(self) -> HostResponse:
+        return self.request("POST", GROKBOT_TEST_PATH, {})
 
     def _pin_ok(self) -> bool:
         if _is_loopback_http(self._base):

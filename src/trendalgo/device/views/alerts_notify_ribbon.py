@@ -24,6 +24,7 @@ from trendalgo.device.alert_preview import (
     telegram_preview,
     windows_preview,
 )
+from trendalgo.device.grokbot_notify import send_device_test
 from trendalgo.device.notify_prefs import load_prefs, save_prefs
 from trendalgo.device.telegram_vault import load_telegram_creds
 from trendalgo.device.views.widgets import clear_problem, problem_label, show_problem
@@ -81,10 +82,13 @@ class AlertsNotifyRibbon(QWidget):
         test_win.clicked.connect(lambda _c=False: self._test_windows())
         test_tg = QPushButton(S.ALERTS_TEST_TELEGRAM)
         test_tg.clicked.connect(lambda _c=False: self._test_telegram())
+        test_gb = QPushButton(S.ALERTS_TEST_GROKBOT)
+        test_gb.clicked.connect(lambda _c=False: self._test_grokbot())
         tests = QHBoxLayout()
         tests.setContentsMargins(0, 0, 0, 0)
         tests.addWidget(test_win)
         tests.addWidget(test_tg)
+        tests.addWidget(test_gb)
         tests.addStretch(1)
         win_head = QLabel(S.ALERTS_PREVIEW_WINDOWS)
         win_head.setObjectName("subtitle")
@@ -177,3 +181,16 @@ class AlertsNotifyRibbon(QWidget):
             self._status.setText(S.ALERTS_TEST_OK)
         else:
             show_problem(self._problem, S.ALERTS_TEST_TG_FAIL)
+
+    def _test_grokbot(self) -> None:
+        clear_problem(self._problem)
+        ok, detail = send_device_test()
+        if ok:
+            self._status.setText(S.ALERTS_TEST_OK)
+            return
+        show_problem(
+            self._problem,
+            S.ALERTS_TEST_GROKBOT_NEED
+            if detail == "not_configured"
+            else S.ALERTS_TEST_GROKBOT_FAIL,
+        )

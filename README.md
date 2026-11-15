@@ -193,7 +193,8 @@ Verify binding: `docker compose -f docker/docker-compose.prod.yml config` must s
 
 | Feature | Configuration |
 |---------|----------------|
-| **Telegram alerts** | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
+| **Telegram alerts** | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (primary; always sent first) |
+| **Grok Bot webhook** | Optional `GROKBOT_WEBHOOK_URL` + `GROKBOT_WEBHOOK_KEY` — see [docs/features/grokbot-webhook.md](docs/features/grokbot-webhook.md) |
 | **Daily P/L hour** | `NOTIFICATION_DAILY_HOUR` (UTC; separate from midnight sync) |
 | **On-chain / DEX read** | `ETH_RPC_URL`, `BASE_RPC_URL`, `ONCHAIN_SYNC_ENABLED=1` — see [DEX roadmap](docs/DEX_ROADMAP.md) |
 | **Database** | SQLite on the VPS (single-user MVP); Postgres dual-write removed |

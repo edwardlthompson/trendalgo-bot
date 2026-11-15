@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from trendalgo.notifications.discord import discord_enabled, send_discord_message
 from trendalgo.notifications.email import send_smtp_email, smtp_enabled
+from trendalgo.notifications.grokbot import emit as emit_grokbot
+from trendalgo.notifications.grokbot import grokbot_enabled
+from trendalgo.notifications.grokbot_payload import envelope
 from trendalgo.notifications.ntfy import ntfy_enabled, send_ntfy
 from trendalgo.notifications.refit_pipeline import SinkResult
 from trendalgo.notifications.telegram import TelegramCommands
@@ -52,5 +55,18 @@ class EmailSink:
         return SinkResult(ok=bool(result.get("sent")), detail=str(result), sink=self.name)
 
 
-def default_sinks() -> list[NtfySink | TelegramSink | DiscordSink | EmailSink]:
-    return [NtfySink(), TelegramSink(), DiscordSink(), EmailSink()]
+class GrokbotSink:
+    name = "grokbot"
+
+    def send(self, title: str, body: str) -> SinkResult:
+        if not grokbot_enabled():
+            return SinkResult(ok=False, detail="grokbot disabled", sink=self.name)
+        result = emit_grokbot(
+            envelope(event_type="refit", reason=f"{title}\n{body}"),
+            wait=True,
+        )
+        return SinkResult(ok=bool(result.get("sent")), detail=str(result), sink=self.name)
+
+
+def default_sinks() -> list[NtfySink | TelegramSink | DiscordSink | EmailSink | GrokbotSink]:
+    return [NtfySink(), TelegramSink(), DiscordSink(), EmailSink(), GrokbotSink()]

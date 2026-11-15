@@ -41,3 +41,7 @@ CX22 (~€4/mo): same steps; x86_64 images if ARM build unavailable.
 - `scripts/deploy-vps.sh` — Sprint 4 external VPS deploy
 - `scripts/backup-restore.sh` — OPS1/OPS2 backup + restore
 - `scripts/health-check-cron.sh` — OPS4 cron probe + Telegram alert
+
+## Grok Bot webhook (optional)
+
+Telegram remains the primary channel. The Grok Bot HTTPS webhook is off until `GROKBOT_WEBHOOK_URL` is set. It never delays or replaces Telegram. Copy the URL and sender key from the Grok Bot routine panel into `/etc/trendalgo/.env` (never git). Full schema, filter, and test commands: [`docs/features/grokbot-webhook.md`](features/grokbot-webhook.md).

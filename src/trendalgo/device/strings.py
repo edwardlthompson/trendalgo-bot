@@ -479,9 +479,14 @@ ALERTS_PREVIEW_WINDOWS = "Windows toast"
 ALERTS_PREVIEW_TELEGRAM = "Telegram message"
 ALERTS_TEST_WINDOWS = "Test Windows"
 ALERTS_TEST_TELEGRAM = "Test Telegram"
+ALERTS_TEST_GROKBOT = "Test Grok Bot"
 ALERTS_TEST_OK = "Test sent."
 ALERTS_TEST_TG_NEED = "Set up Telegram in Settings first (token + chat id)."
 ALERTS_TEST_TG_FAIL = "Telegram test failed. Check token, chat id, and network."
+ALERTS_TEST_GROKBOT_NEED = (
+    "Set GROKBOT_WEBHOOK_URL (https) in .env on this PC or the host, then retry."
+)
+ALERTS_TEST_GROKBOT_FAIL = "Grok Bot test failed. Check the webhook URL, key, and network."
 ALERTS_NOTIFY_ON = "On"
 ALERTS_NOTIFY_OFF = "Off"
 SCANNER_TAB_QUALIFIED = "Qualified"
@@ -948,6 +953,22 @@ NOTIFY_WATCHLIST = "Watchlist leave alerts"
 NOTIFY_QUALIFIED = "Qualified enter alerts"
 NOTIFY_TRADES = "Trade fill alerts"
 NOTIFY_TELEGRAM = "Enable Telegram for checked kinds"
+NOTIFY_GROKBOT = "Grok Bot webhook"
+NOTIFY_GROKBOT_HELP = (
+    "Optional HTTPS webhook for an AI brief. Off by default; Telegram stays primary. "
+    "Set GROKBOT_WEBHOOK_URL and GROKBOT_WEBHOOK_KEY in the host .env (never in git). "
+    "The key is sent as Authorization: Bearer <key> unless GROKBOT_WEBHOOK_HEADER is set. "
+    "GROKBOT_WEBHOOK_EVENTS=all|trades|scanner-a (or a comma list) saves quota."
+)
+NOTIFY_GROKBOT_ON = "Grok Bot webhook is on in this process."
+NOTIFY_GROKBOT_OFF = (
+    "Grok Bot webhook is off. Add GROKBOT_WEBHOOK_URL (https) to the host .env."
+)
+NOTIFY_GROKBOT_TEST = "Test Grok Bot"
+NOTIFY_GROKBOT_NEED = (
+    "Set GROKBOT_WEBHOOK_URL (https) in .env on this PC or the host, then retry."
+)
+NOTIFY_GROKBOT_FAIL = "Grok Bot test failed. Check the webhook URL, key, and network."
 NOTIFY_TG_WATCHLIST = "Telegram: watchlist"
 NOTIFY_TG_QUALIFIED = "Telegram: qualified"
 NOTIFY_TG_TRADES = "Telegram: trades"
