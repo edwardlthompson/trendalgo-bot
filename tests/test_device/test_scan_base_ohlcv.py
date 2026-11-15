@@ -137,7 +137,7 @@ def test_fetch_tf_frame_builds_dataframe(monkeypatch) -> None:
         for i in range(60, 0, -1)
     ]
     monkeypatch.setattr(
-        "trendalgo.market.ccxt_ohlcv.fetch_exchange_ohlcv",
+        "trendalgo.market.ohlcv_provider.fetch_exchange_ohlcv",
         lambda *_a, **_k: pts,
     )
     frame = fetch_tf_frame(symbol="BTC", pair="BTCUSD", timeframe="1m", days=1)
