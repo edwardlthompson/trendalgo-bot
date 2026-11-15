@@ -78,6 +78,16 @@ def toast_lines(events: list[AlertEvent], prefs_root: Path) -> list[tuple[str, s
     return lines
 
 
+def _why_markup(event: AlertEvent, existing: str) -> str:
+    from trendalgo.notifications.grokbot_explain import why_markup
+    from trendalgo.notifications.grokbot_payload import coin_payload, envelope
+
+    kind = "qualified_enter" if event.kind == "qualified_enter" else "qualified_leave"
+    if isinstance(event.coin, dict):
+        return why_markup(coin_payload(kind, event.coin, reason=event.reason), existing)
+    return why_markup(envelope(event_type=kind, pair=event.pair, reason=event.reason), existing)
+
+
 def _emit_grokbot(event: AlertEvent) -> None:
     from trendalgo.notifications.grokbot import emit
     from trendalgo.notifications.grokbot_payload import coin_payload, envelope
@@ -101,7 +111,7 @@ def _send_telegram(event: AlertEvent, *, client: TelegramCommands | None) -> Non
     if event.kind == "qualified_enter" and event.coin is not None:
         coin = enrich_enter_coin(event.coin)
         caption = telegram_ai_note(format_qualified_enter(coin))
-        markup = reply_markup_json(coin)
+        markup = _why_markup(event, reply_markup_json(coin))
         png = enter_alert_png(coin)
         if png:
             tg.send_photo(png, caption, parse_mode="HTML", reply_markup=markup)
@@ -118,7 +128,7 @@ def _send_telegram(event: AlertEvent, *, client: TelegramCommands | None) -> Non
         caption = telegram_ai_note(
             format_watchlist_leave(symbol=event.symbol, reason=event.reason, coin=coin)
         )
-        markup = reply_markup_json(coin)
+        markup = _why_markup(event, reply_markup_json(coin))
         png = exit_alert_png(coin)
         if png:
             tg.send_photo(png, caption, parse_mode="HTML", reply_markup=markup)

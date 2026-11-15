@@ -13,7 +13,7 @@ class FailedTelegram:
     enabled = True
     calls = 0
 
-    def send_message(self, _text: str) -> bool:
+    def send_message(self, _text: str, **_k: object) -> bool:
         self.calls += 1
         return False
 

@@ -21,7 +21,7 @@ def event_tokens() -> frozenset[str]:
 def event_allowed(event_type: str, *, tier: str | None = None) -> bool:
     """Filter POSTs. ``test`` always passes when the channel is enabled."""
     kind = str(event_type or "").strip().lower()
-    if kind == "test":
+    if kind in {"test", "explain_request"}:
         return True
     tokens = event_tokens()
     if not tokens or "all" in tokens:

@@ -55,14 +55,32 @@ uv run python -m trendalgo.notifications.grokbot_cli
 }
 ```
 
-`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`.
+`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`.
+
+## Why? button (`explain_request`)
+
+Scanner and trade Telegram alerts include a **Why?** inline button. Telegram still sends first with no wait on Grok. Tapping Why POSTs `explain_request` (same fields as the original event). That POST is **not** filtered by `GROKBOT_WEBHOOK_EVENTS` — use it to spend quota only on alerts you care about.
+
+```json
+{
+  "schema_version": "1",
+  "event_type": "explain_request",
+  "timestamp_utc": "2026-11-15T00:00:00Z",
+  "bot_mode": "dry-run",
+  "pair": "BTC/USD",
+  "strategy_id": "macd-kraken-1h",
+  "exit_rule": "MACD cross down",
+  "reason": "explain trade_exit: MACD cross down",
+  "side": "sell"
+}
+```
 
 Native CCXT engine exits record the rule that fired (`MACD cross down`, `RSI threshold`, …) in the journal `rationale` and in `exit_rule`. That does not change whether an exit happens. Trailing stop / stoploss / scale-out labels appear only if those mixins actually close the trade; the scheduled runner today exits via `strategy.exit()` only.
 
 ## Filter examples
 
 ```bash
-GROKBOT_WEBHOOK_EVENTS=trades          # trade_entry + trade_exit (+ test)
+GROKBOT_WEBHOOK_EVENTS=trades          # trade_entry + trade_exit (+ test, explain_request)
 GROKBOT_WEBHOOK_EVENTS=scanner-a       # LTS Tier A scanner alerts only
 GROKBOT_WEBHOOK_EVENTS=all             # default
 ```

@@ -52,6 +52,10 @@ class TelegramIngress:
         if expected_secret and (secret is None or not hmac.compare_digest(secret, expected_secret)):
             return 403, {"accepted": False, "reason": "invalid webhook secret"}
 
+        callback = update.get("callback_query")
+        if isinstance(callback, dict):
+            return self._handle_callback(callback)
+
         message = update.get("message")
         if not isinstance(message, dict):
             return 400, {"accepted": False, "reason": "missing message"}
@@ -72,3 +76,24 @@ class TelegramIngress:
         reply = self.commands.handle(text, manager)
         sent = self.commands.send_message(reply)
         return 200, {"accepted": True, "reply": reply, "sent": sent}
+
+    def _handle_callback(self, callback: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+        from trendalgo.notifications.grokbot_explain import answer_callback, handle_why
+
+        message = callback.get("message")
+        chat = message.get("chat") if isinstance(message, dict) else None
+        if not isinstance(chat, dict):
+            origin = callback.get("from")
+            chat = origin if isinstance(origin, dict) else {}
+        chat_id = str(chat.get("id", ""))
+        allowed = self._allowed_chat_ids()
+        if not allowed or chat_id not in allowed:
+            return 403, {"accepted": False, "reason": "chat not allowlisted"}
+        if self._rate_limited(chat_id):
+            return 429, {"accepted": False, "reason": "rate limit exceeded"}
+        result = handle_why(str(callback.get("data") or ""))
+        note = (
+            "Queued for Grok Bot" if result.get("sent") else str(result.get("reason") or "failed")
+        )
+        answer_callback(self.commands.token, str(callback.get("id") or ""), note)
+        return 200, {"accepted": True, "explain": result}

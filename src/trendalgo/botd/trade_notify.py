@@ -44,26 +44,27 @@ def notify_fill(
     )
     text = telegram_ai_note(text)
     _append_device_trade_alert(root, pair=pair, reason=text)
+    payload = trade_payload(
+        pair=pair,
+        side=side,
+        amount=amount,
+        price=price,
+        realized_pnl_usd=realized_pnl_usd,
+        strategy_id=strategy_id,
+        rationale=rationale,
+        exit_rule=exit_rule,
+        exchange=exchange,
+        plan_version=plan_version,
+    )
     sent = False
     if live and trade_notify_allowed(root):
         token, chat_id = load_creds(root)
         tg = client or TelegramCommands(token=token, chat_id=chat_id)
         if tg.enabled:
-            sent = bool(tg.send_message(text))
-    emit(
-        trade_payload(
-            pair=pair,
-            side=side,
-            amount=amount,
-            price=price,
-            realized_pnl_usd=realized_pnl_usd,
-            strategy_id=strategy_id,
-            rationale=rationale,
-            exit_rule=exit_rule,
-            exchange=exchange,
-            plan_version=plan_version,
-        )
-    )
+            from trendalgo.notifications.grokbot_explain import why_markup
+
+            sent = bool(tg.send_message(text, reply_markup=why_markup(payload)))
+    emit(payload)
     return sent
 
 

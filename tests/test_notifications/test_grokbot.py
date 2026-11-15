@@ -202,7 +202,7 @@ def test_notify_fill_sends_telegram_before_grokbot(
         def __init__(self) -> None:
             super().__init__(token="t", chat_id="1")
 
-        def send_message(self, text: str) -> bool:
+        def send_message(self, text: str, **_k: object) -> bool:
             order.append("telegram")
             assert "ETH/USD" in text
             return True
@@ -235,7 +235,7 @@ def test_telegram_still_sends_when_grokbot_disabled(tmp_path: Path) -> None:
             super().__init__(token="t", chat_id="1")
             self.sent: list[str] = []
 
-        def send_message(self, text: str) -> bool:
+        def send_message(self, text: str, **_k: object) -> bool:
             self.sent.append(text)
             return True
 

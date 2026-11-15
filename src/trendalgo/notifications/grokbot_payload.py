@@ -25,6 +25,7 @@ EVENT_TYPES = (
     "test",
     "refit",
     "daily_summary",
+    "explain_request",
 )
 
 
