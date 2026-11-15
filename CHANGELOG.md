@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.15.2...v1.16.0) (2026-11-15)
+
+
+### Added
+
+* **device:** Kraken OHLCVT deep 1m and rolling tip journal ([840ffdc](https://github.com/edwardlthompson/trendalgo-bot/commit/840ffdc15cca760e52db8cfe8a2d0d92ab3c8e72))
+
+
+### Fixed
+
+* **ci:** restore codeql-action pins to v4 ([29b275a](https://github.com/edwardlthompson/trendalgo-bot/commit/29b275a0f591068647d47a33eaee5671b1259b04))
+* **deps:** sync uv.lock to 1.15.2 after Release Please ([28a4da2](https://github.com/edwardlthompson/trendalgo-bot/commit/28a4da2abacf8c30c5acce9f7bfdb1186f390191))
+
+
+### Documentation
+
+* archive Sauce/MC/logos ship and note v1.15.2 ([27aeb36](https://github.com/edwardlthompson/trendalgo-bot/commit/27aeb36c108085b5dd1820aa6b3d6bcbdc5de8ce))
+
 ## [1.15.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.15.1...v1.15.2) (2026-11-15)
 
 
