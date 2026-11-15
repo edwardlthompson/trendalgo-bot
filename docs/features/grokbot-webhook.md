@@ -99,7 +99,7 @@ Off by default. Set `WEEKLY_DIGEST_ENABLED=1` (optional `WEEKLY_DIGEST_DOW=sun`,
 
 ## Sweep complete (`sweep_complete`)
 
-Emitted after an LTS backtest sweep finishes. Advisory only — ranking and order logic are unchanged. `gains.oos_split` is `null` (no walk-forward split in the LTS sweep). Filter: `GROKBOT_WEBHOOK_EVENTS=sweep`.
+Emitted only after an LTS backtest sweep actually returns a summary (not when backtests are skipped, disabled, or raise). Advisory only — ranking and order logic are unchanged. `gains.oos_split` is `null` (no walk-forward split in the LTS sweep). Filter: `GROKBOT_WEBHOOK_EVENTS=sweep`.
 
 ```json
 {

@@ -165,7 +165,7 @@ def publish_final_results(
             progress.log(f"Backtest sweep failed: {exc}", level="error")
             bt_summary = None
     merge_backtest_into_coins(coins, bt_summary)
-    if run_backtests:
+    if bt_summary:
         from trendalgo.notifications.grokbot_sweep import emit_sweep_complete
 
         emit_sweep_complete(coins, bt_summary)
