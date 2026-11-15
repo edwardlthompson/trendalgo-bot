@@ -75,8 +75,11 @@ def test_include_sauce_false_skips_lab(monkeypatch: Any) -> None:
     monkeypatch.setattr(scan, "mine_and_eval_secret_sauce", mine)
     monkeypatch.setattr(
         scan,
-        "load_base_ohlcv_frame",
-        lambda **_k: (frame, "1h", "test", 0.0),
+        "load_scan_frames",
+        lambda **_k: (
+            {"1h": frame},
+            {"data_source": "test", "cache_age_s": 0.0, "notes": [], "base_tf": "1h"},
+        ),
     )
     monkeypatch.setattr(scan, "run_catalog_pass2", lambda **_k: ([], {}, 0, []))
     monkeypatch.setattr(scan, "deepen_seeds", lambda *_a, **_k: [])
@@ -127,8 +130,11 @@ def test_sauce_only_rows_skips_catalog_and_deepen(monkeypatch: Any) -> None:
     monkeypatch.setattr(scan, "deepen_seeds", deepen)
     monkeypatch.setattr(
         sauce_mod,
-        "load_base_ohlcv_frame",
-        lambda **_k: (frame, "1h", "test", 0.0),
+        "load_scan_frames",
+        lambda **_k: (
+            {"1h": frame},
+            {"data_source": "test", "cache_age_s": 0.0, "notes": [], "base_tf": "1h"},
+        ),
     )
     monkeypatch.setattr(sauce_mod, "mine_and_eval_secret_sauce", MagicMock(return_value=None))
     monkeypatch.setattr(sauce_mod, "coincidence_sauce_row", MagicMock(return_value=None))

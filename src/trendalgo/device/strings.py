@@ -349,7 +349,37 @@ SCAN_BT_ETA_HINT = (
 )
 SCAN_BT_TF_TITLE = "Timeframes"
 SCAN_BT_TF_SUBHOUR = "Sub-hour"
-SCAN_BT_TF_HOURS = "Hours (1h–24h)"
+SCAN_BT_TF_SUBHOUR_NOTE = (
+    "Cannot mix with 1h–24h until the rolling tip journal reaches 30 days "
+    "(see ready date) or a quarterly OHLCVT covers through today."
+)
+SCAN_BT_TF_HOURS = "Hours (1h–24h) · live 30-day window"
+SCAN_BT_OHLCVT_TITLE = "Kraken OHLCVT (30d 1m)"
+SCAN_BT_OHLCVT_PATH = "Kraken OHLCVT ZIP (e.g. Price Data\\Kraken_OHLCVT_Full.zip)"
+SCAN_BT_OHLCVT_BROWSE = "Browse ZIP…"
+
+SCAN_BT_OHLCVT_DOWNLOAD = "Download full pack (~10GB)"
+SCAN_BT_OHLCVT_TIP = "Record live 1m tip (~12h) into rolling journal"
+SCAN_BT_OHLCVT_READY = (
+    "OHLCVT ready for sub-hour depth. See status for archive end and 30d rolling-ready date."
+)
+SCAN_BT_OHLCVT_MISSING = "No archive configured — sub-hour stays ~12h live (exclusive with 1h–24h)."
+SCAN_BT_OHLCVT_DOWNLOADING = "Downloading OHLCVT full pack…"
+SCAN_BT_OHLCVT_DOWNLOAD_DONE = "Download complete — archive path updated; caches cleared."
+SCAN_BT_OHLCVT_DOWNLOAD_ACK_TITLE = "OHLCVT download complete"
+SCAN_BT_OHLCVT_DOWNLOAD_ACK_BODY = (
+    "Kraken OHLCVT full pack is ready.\n\nSaved to:\n{path}\n\n"
+    "Caches were cleared. If coverage reaches today, sub-hour and 1h–24h may mix; "
+    "otherwise see the rolling 30d ready date in Settings."
+)
+SCAN_BT_ETA_SECTION = "Estimated scan time"
+SCAN_BT_OHLCVT_SECTION = "Kraken OHLCVT"
+SCAN_BT_TF_SECTION = "Timeframes"
+SCAN_BT_TA_SECTION = "Strategies"
+SCAN_BT_EXTRAS_SECTION = "Market Context & Sauce Pan"
+SCAN_BT_OHLCVT_DOWNLOAD_FAIL_TITLE = "OHLCVT download failed"
+SCAN_BT_OHLCVT_DOWNLOAD_FAIL = "Download failed: {error}"
+
 SCAN_BT_TA_TITLE = "Strategies (All TA)"
 SCAN_BT_TA_SEARCH = "Search strategies…"
 SCAN_BT_SELECT_ALL = "All"

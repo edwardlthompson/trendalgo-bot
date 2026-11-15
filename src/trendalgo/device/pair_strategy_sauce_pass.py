@@ -9,9 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.backtest.heartbeat_tf import needs_1m_base, sort_timeframes
-from trendalgo.backtest.ohlcv_resample import frames_from_base
 from trendalgo.backtest.oracle_catalog_coincidence import coincidence_sauce_row
-from trendalgo.backtest.ta_fleet import MIN_BARS_FLOOR
 from trendalgo.device import strings as S
 from trendalgo.device.pair_strategy_secret_sauce import (
     current_lab_sauce,
@@ -24,7 +22,7 @@ from trendalgo.device.pair_strategy_secret_sauce import (
     upsert_secret_sauce_ta,
     validate_sauce_against_peers,
 )
-from trendalgo.device.scan_base_ohlcv import load_base_ohlcv_frame
+from trendalgo.device.scan_base_ohlcv import load_scan_frames
 from trendalgo.device.scanner_protective_tsl import stamp_rows_protective_tsl
 
 ProgressFn = Callable[[dict[str, Any]], None]
@@ -47,7 +45,6 @@ def run_sauce_only_pass(
     on_rows: RowsFn | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """Cook Secret Sauce on catalog rows without re-running pass2 / deepen."""
-    del prefs_root  # timing ledger optional; sauce-only is short
     out = [dict(r) for r in seed_rows]
     load_symbol = pair.split("/", 1)[0].strip().upper() if "/" in pair else symbol
     load_symbol = (load_symbol or symbol).upper()
@@ -64,18 +61,21 @@ def run_sauce_only_pass(
         if on_rows is not None:
             on_rows(list(out))
 
-    base_hint = "1m" if needs_1m_base(ordered_tf) else "1h"
+    base_hint = "1h+subhour" if needs_1m_base(ordered_tf) else "1h"
     emit(f"Sauce-only: loading {load_symbol} {base_hint}…", phase="load")
     t0 = time.perf_counter()
-    base_frame, base_tf, data_source, cache_age_s = load_base_ohlcv_frame(
+    frames_by_tf, load_meta = load_scan_frames(
         symbol=load_symbol,
         pair=pair,
         timeframes=ordered_tf,
         loader=loader,
         gecko_id=gecko_id,
+        prefs_root=prefs_root,
     )
     load_s = time.perf_counter() - t0
-    if base_frame is None or base_frame.empty:
+    data_source = str(load_meta.get("data_source") or "none")
+    cache_age_s = load_meta.get("cache_age_s")
+    if not frames_by_tf:
         emit("Sauce-only: no OHLCV — keeping catalog rows", phase="done", done=total)
         return out, {
             "include_sauce": False,
@@ -84,13 +84,6 @@ def run_sauce_only_pass(
             "data_source": data_source,
             "cache_age_s": cache_age_s,
         }
-
-    resampled = frames_from_base(base_frame, ordered_tf)
-    for timeframe in ordered_tf:
-        frame = resampled.get(timeframe)
-        if frame is None or frame.empty or len(frame) < MIN_BARS_FLOOR:
-            continue
-        frames_by_tf[timeframe] = frame
 
     lab_oracle = lab_oracle_row(out)
     ss_future = None

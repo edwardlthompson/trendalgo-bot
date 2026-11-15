@@ -11,10 +11,8 @@ from typing import Any
 import pandas as pd
 
 from trendalgo.backtest.heartbeat_tf import needs_1m_base, sort_timeframes
-from trendalgo.backtest.load_days import days_for_timeframe
-from trendalgo.backtest.ohlcv_resample import frames_from_base
 from trendalgo.backtest.oracle_catalog_coincidence import coincidence_sauce_row
-from trendalgo.backtest.ta_fleet import MIN_BARS_FLOOR, buy_and_hold_row, oracle_max_row
+from trendalgo.backtest.ta_fleet import buy_and_hold_row, oracle_max_row
 from trendalgo.device import strings as S
 from trendalgo.device.pair_strategy_pass2 import pass2_worker_count, run_catalog_pass2
 from trendalgo.device.pair_strategy_rows import (
@@ -35,7 +33,7 @@ from trendalgo.device.pair_strategy_secret_sauce import (
     upsert_secret_sauce_ta,
     validate_sauce_against_peers,
 )
-from trendalgo.device.scan_base_ohlcv import load_base_ohlcv_frame
+from trendalgo.device.scan_base_ohlcv import load_scan_frames
 from trendalgo.device.scan_unit_timing import (
     UnitSample,
     estimate_catalog_wall_s,
@@ -123,7 +121,6 @@ def scan_pair_strategies(
     deepen_s = 0.0
     sauce_s = 0.0
     base_tf = "1h"
-    base_frame: pd.DataFrame | None = None
     ledger = load_ledger(prefs_root) if prefs_root is not None else None
     catalog_units: list[UnitSample] = []
     remaining_units = [(sid, tf) for tf in ordered_tf for sid in strat_list]
@@ -157,22 +154,25 @@ def scan_pair_strategies(
         if on_rows is not None:
             on_rows(list(out))
 
-    lookback_days = days_for_timeframe("1h")
-    base_hint = "1m" if needs_1m_base(ordered_tf) else "1h"
+    base_hint = "1h+subhour" if needs_1m_base(ordered_tf) else "1h"
     emit(
-        f"Loading {load_symbol} {base_hint} ({lookback_days}d) once, then resampling…",
+        f"Loading {load_symbol} frames ({base_hint}; Kraken ~720 bars/TF)…",
         phase="load",
         timeframe=base_hint,
     )
     t_load = time.perf_counter()
-    base_frame, base_tf, data_source, cache_age_s = load_base_ohlcv_frame(
+    frames_by_tf, load_meta = load_scan_frames(
         symbol=load_symbol,
         pair=pair,
         timeframes=ordered_tf,
         loader=loader,
         gecko_id=gecko_id,
+        prefs_root=prefs_root,
     )
     load_s = time.perf_counter() - t_load
+    data_source = str(load_meta.get("data_source") or "none")
+    cache_age_s = load_meta.get("cache_age_s")
+    base_tf = str(load_meta.get("base_tf") or base_hint)
     if ledger is not None and prefs_root is not None:
         record_units(
             ledger,
@@ -187,8 +187,10 @@ def scan_pair_strategies(
             ],
         )
         flush_ledger(prefs_root, ledger)
-    if base_frame is None or base_frame.empty:
-        emit(f"No {base_tf} candles for {load_symbol}", phase="load", timeframe=base_tf)
+    for note in load_meta.get("notes") or []:
+        emit(str(note), phase="load")
+    if not frames_by_tf:
+        emit(f"No OHLCV frames for {load_symbol}", phase="load", timeframe=base_tf)
         for sid in strat_list:
             remember_skip(skip_best, sid, "insufficient_bars")
         done = total
@@ -201,29 +203,18 @@ def scan_pair_strategies(
         }
 
     emit(
-        f"Resampling {load_symbol} {base_tf} ({len(base_frame)} bars) → "
-        f"{len(ordered_tf)} timeframes…",
+        f"Loaded {load_symbol}: {len(frames_by_tf)}/{len(ordered_tf)} TFs ({base_tf})",
         phase="load",
         timeframe=base_tf,
         data_source=data_source,
         cache_age_s=cache_age_s,
     )
-    resampled = frames_from_base(base_frame, ordered_tf)
-
     for timeframe in ordered_tf:
-        frame = resampled.get(timeframe)
-        if frame is None or frame.empty or len(frame) < MIN_BARS_FLOOR:
-            n_bars = 0 if frame is None else len(frame)
-            emit(
-                f"{timeframe}: {n_bars} bars (<{MIN_BARS_FLOOR}) — "
-                f"using lower-TF results for indicators",
-                phase="load",
-                timeframe=timeframe,
-            )
+        frame = frames_by_tf.get(timeframe)
+        if frame is None:
             continue
-        frames_by_tf[timeframe] = frame
         emit(
-            f"{timeframe}: {len(frame)} bars (from {base_tf} · {lookback_days}d)",
+            f"{timeframe}: {len(frame)} bars",
             phase="load",
             timeframe=timeframe,
         )
@@ -412,7 +403,7 @@ def scan_pair_strategies(
             done=total,
             load_s=round(load_s, 3),
             base_tf=base_tf,
-            bars_base=0 if base_frame is None else len(base_frame),
+            bars_base=_bars_base(frames_by_tf),
             n_strategies=len(strat_list),
             n_timeframes=len(ordered_tf),
             had_subhour=needs_1m_base(ordered_tf),
@@ -598,7 +589,7 @@ def scan_pair_strategies(
         done=total,
         load_s=round(load_s, 3),
         base_tf=base_tf,
-        bars_base=0 if base_frame is None else len(base_frame),
+        bars_base=_bars_base(frames_by_tf),
         n_strategies=len(strat_list),
         n_timeframes=len(ordered_tf),
         had_subhour=needs_1m_base(ordered_tf),
@@ -606,3 +597,10 @@ def scan_pair_strategies(
     )
     publish()
     return out, market_context
+
+
+def _bars_base(frames: dict[str, pd.DataFrame]) -> int:
+    frame = frames.get("1h")
+    if frame is None and frames:
+        frame = next(iter(frames.values()))
+    return 0 if frame is None else len(frame)

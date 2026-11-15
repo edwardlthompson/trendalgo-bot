@@ -6,35 +6,47 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QCheckBox,
+    QApplication,
     QDialog,
     QDialogButtonBox,
-    QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QPushButton,
     QScrollArea,
-    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
-from trendalgo.backtest.heartbeat_tf import HEARTBEAT_TIMEFRAMES, SUBHOUR_TIMEFRAMES, needs_1m_base
-from trendalgo.backtest.ta_fleet import all_strategies
+from trendalgo.backtest.heartbeat_tf import (
+    HEARTBEAT_TIMEFRAMES,
+    SUBHOUR_TIMEFRAMES,
+    comparable_scan_timeframes,
+    is_subhour_tf,
+    needs_1m_base,
+)
 from trendalgo.device import strings as S
 from trendalgo.device.scan_bt_prefs import (
-    SAUCE_TOP_N_MAX,
-    SAUCE_TOP_N_MIN,
     ScanBtPrefs,
+    bands_mix_ready,
     clamp_sauce_top_n,
     enabled_strategies,
+    journal_started_date,
     load_scan_bt_prefs,
+    resolve_ohlcvt_path,
     save_scan_bt_prefs,
+    selected_timeframes,
 )
 from trendalgo.device.scan_time_history import estimate_label, load_history
 from trendalgo.device.scanner_signal_sets import BT_SET_ALL_TA
+from trendalgo.device.views.scan_bt_ohlcvt_row import build_ohlcvt_block, set_ohlcvt_journal_started
+from trendalgo.device.views.scan_bt_settings_sections import (
+    build_extras,
+    build_ta_body,
+    build_tf_host,
+    wrap_section,
+)
+from trendalgo.market.kraken_ohlcvt_copy import format_subhour_mix_note
+from trendalgo.market.kraken_ohlcvt_meta import read_archive_coverage, today_utc
+
+_SCREEN_GUTTER_PX = 24
 
 
 class ScanBacktestSettingsDialog(QDialog):
@@ -50,151 +62,142 @@ class ScanBacktestSettingsDialog(QDialog):
         self._n_coins = max(1, int(n_coins))
         self.setWindowTitle(S.SCAN_BT_SETTINGS_TITLE)
         self.setMinimumWidth(480)
-        self.setMinimumHeight(520)
         prefs = load_scan_bt_prefs(root)
+        ohlcvt_initial = resolve_ohlcvt_path(root, prefs.ohlcvt_path)
+        self._journal_started = journal_started_date(prefs, root=root) or today_utc()
+        self._mix = bands_mix_ready(prefs, root=root)
 
         self._eta = QLabel()
         self._eta.setObjectName("hint")
         self._eta.setWordWrap(True)
         self._eta.setToolTip(S.SCAN_BT_ETA_HINT)
 
-        self._tf_boxes: dict[str, QCheckBox] = {}
-        tf_host = QWidget()
-        tf_col = QVBoxLayout(tf_host)
-        tf_col.setContentsMargins(0, 0, 0, 0)
-        tf_col.setSpacing(4)
-        checked = set(prefs.timeframes)
-        tf_col.addWidget(self._tf_block_header(S.SCAN_BT_TF_SUBHOUR, SUBHOUR_TIMEFRAMES))
-        for tf in SUBHOUR_TIMEFRAMES:
-            box = QCheckBox(tf)
-            box.setChecked(tf in checked)
-            box.toggled.connect(lambda _c: self._refresh_eta())
-            self._tf_boxes[tf] = box
-            tf_col.addWidget(box)
-        tf_col.addWidget(self._tf_block_header(S.SCAN_BT_TF_HOURS, HEARTBEAT_TIMEFRAMES))
-        for tf in HEARTBEAT_TIMEFRAMES:
-            box = QCheckBox(tf)
-            box.setChecked(tf in checked if checked else True)
-            box.toggled.connect(lambda _c: self._refresh_eta())
-            self._tf_boxes[tf] = box
-            tf_col.addWidget(box)
-        tf_scroll = QScrollArea()
-        tf_scroll.setWidgetResizable(True)
-        tf_scroll.setWidget(tf_host)
-        tf_scroll.setMinimumHeight(200)
+        ohlcvt_host, self._ohlcvt_path, self._ohlcvt_tip, _st, self._ohlcvt_bar = (
+            build_ohlcvt_block(
+                self,
+                root=root,
+                initial_path=ohlcvt_initial,
+                auto_tip=bool(prefs.ohlcvt_auto_tip),
+                journal_started=self._journal_started,
+                include_title=False,
+            )
+        )
+        self._ohlcvt_host = ohlcvt_host
+        self._ohlcvt_path.textChanged.connect(self._on_ohlcvt_path_changed)
 
-        self._ta_search = QLineEdit()
-        self._ta_search.setPlaceholderText(S.SCAN_BT_TA_SEARCH)
-        self._ta_search.textChanged.connect(self._filter_ta)
-        self._ta_list = QListWidget()
-        deny = set(prefs.strategy_denylist)
-        for name in all_strategies():
-            item = QListWidgetItem(name)
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Unchecked if name in deny else Qt.CheckState.Checked)
-            self._ta_list.addItem(item)
-        self._ta_list.itemChanged.connect(lambda _i: self._refresh_eta())
+        checked = set(selected_timeframes(prefs, root=root))
+        tf_host, self._tf_boxes, self._sub_note = build_tf_host(
+            checked=checked,
+            on_tf_toggled=self._on_tf_toggled,
+            on_set_tfs=self._set_tfs,
+        )
+        self._refresh_subhour_note(ohlcvt_initial)
+
+        ta_body, _search, self._ta_list = build_ta_body(
+            denylist=set(prefs.strategy_denylist),
+            on_changed=self._refresh_eta,
+        )
+        extras, self._mc_with_scan, self._sauce_with_scan, self._sauce_top_n = build_extras(
+            market_context=bool(prefs.market_context_with_scan),
+            sauce_with=bool(prefs.sauce_with_scan),
+            sauce_top_n=prefs.sauce_top_n,
+            on_changed=self._refresh_eta,
+        )
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_host = QWidget()
+        scroll_col = QVBoxLayout(scroll_host)
+        scroll_col.setContentsMargins(4, 4, 4, 4)
+        scroll_col.setSpacing(8)
+        scroll_col.addWidget(wrap_section(S.SCAN_BT_ETA_SECTION, self._eta))
+        scroll_col.addWidget(wrap_section(S.SCAN_BT_OHLCVT_SECTION, ohlcvt_host))
+        scroll_col.addWidget(wrap_section(S.SCAN_BT_TF_SECTION, tf_host))
+        scroll_col.addWidget(wrap_section(S.SCAN_BT_TA_SECTION, ta_body))
+        scroll_col.addWidget(wrap_section(S.SCAN_BT_EXTRAS_SECTION, extras))
+        scroll_col.addStretch(1)
+        scroll.setWidget(scroll_host)
 
         body = QVBoxLayout(self)
         body.setSpacing(10)
-        eta_cap = QLabel(S.SCAN_BT_ETA_TITLE)
-        eta_cap.setObjectName("sectionTitle")
-        body.addWidget(eta_cap)
-        body.addWidget(self._eta)
-        body.addWidget(QLabel(S.SCAN_BT_TF_TITLE))
-        body.addWidget(tf_scroll)
-        body.addWidget(self._ta_header())
-        body.addWidget(self._ta_search)
-        body.addWidget(self._ta_list, 1)
-
-        self._mc_with_scan = QCheckBox(S.MARKET_CTX_WITH_SCAN)
-        self._mc_with_scan.setChecked(bool(prefs.market_context_with_scan))
-        self._mc_with_scan.setToolTip(S.MARKET_CTX_WITH_SCAN_TIP)
-        self._mc_with_scan.toggled.connect(lambda _c: self._refresh_eta())
-        sauce_title = QLabel(S.SAUCE_PAN_TITLE)
-        sauce_title.setObjectName("sectionTitle")
-        self._sauce_with_scan = QCheckBox(S.SAUCE_PAN_WITH_SCAN)
-        self._sauce_with_scan.setChecked(bool(prefs.sauce_with_scan))
-        self._sauce_with_scan.setToolTip(S.SAUCE_PAN_WITH_SCAN_TIP)
-        self._sauce_with_scan.toggled.connect(lambda _c: self._refresh_eta())
-        self._sauce_top_n = QSpinBox()
-        self._sauce_top_n.setRange(SAUCE_TOP_N_MIN, SAUCE_TOP_N_MAX)
-        self._sauce_top_n.setValue(clamp_sauce_top_n(prefs.sauce_top_n))
-        self._sauce_top_n.setToolTip(S.SAUCE_PAN_TOP_N_TIP)
-        self._sauce_top_n.valueChanged.connect(lambda _v: self._refresh_eta())
-        sauce_n_row = QWidget()
-        sauce_n_lay = QHBoxLayout(sauce_n_row)
-        sauce_n_lay.setContentsMargins(0, 0, 0, 0)
-        sauce_n_lay.addWidget(QLabel(S.SAUCE_PAN_TOP_N))
-        sauce_n_lay.addWidget(self._sauce_top_n)
-        sauce_n_lay.addStretch(1)
-        body.addWidget(self._mc_with_scan)
-        body.addWidget(sauce_title)
-        body.addWidget(self._sauce_with_scan)
-        body.addWidget(sauce_n_row)
+        body.addWidget(scroll, 1)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
         body.addWidget(buttons)
+        self._fit_screen_height()
         self._refresh_eta()
 
-    def _tf_block_header(self, title: str, tfs: tuple[str, ...]) -> QWidget:
-        row = QWidget()
-        lay = QHBoxLayout(row)
-        lay.setContentsMargins(0, 8, 0, 0)
-        lay.addWidget(QLabel(title), 1)
-        all_btn = QPushButton(S.SCAN_BT_SELECT_ALL)
-        none_btn = QPushButton(S.SCAN_BT_SELECT_NONE)
-        all_btn.clicked.connect(lambda _c=False, ids=tfs: self._set_tfs(ids, True))
-        none_btn.clicked.connect(lambda _c=False, ids=tfs: self._set_tfs(ids, False))
-        lay.addWidget(all_btn)
-        lay.addWidget(none_btn)
-        return row
+    def _fit_screen_height(self) -> None:
+        """Near full available height with gutters above and below."""
+        screen = self.screen() or QApplication.primaryScreen()
+        if screen is None:
+            self.setMinimumHeight(520)
+            return
+        geo = screen.availableGeometry()
+        height = max(520, geo.height() - 2 * _SCREEN_GUTTER_PX)
+        width = max(self.minimumWidth(), 520)
+        x = geo.x() + max(0, (geo.width() - width) // 2)
+        y = geo.y() + _SCREEN_GUTTER_PX
+        self.setGeometry(x, y, width, height)
 
-    def _ta_header(self) -> QWidget:
-        row = QWidget()
-        lay = QHBoxLayout(row)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.addWidget(QLabel(S.SCAN_BT_TA_TITLE), 1)
-        all_btn = QPushButton(S.SCAN_BT_SELECT_ALL)
-        none_btn = QPushButton(S.SCAN_BT_SELECT_NONE)
-        all_btn.setObjectName("scanBtTaAll")
-        none_btn.setObjectName("scanBtTaNone")
-        all_btn.clicked.connect(lambda _c=False: self._set_all_ta(True))
-        none_btn.clicked.connect(lambda _c=False: self._set_all_ta(False))
-        lay.addWidget(all_btn)
-        lay.addWidget(none_btn)
-        return row
-
-    def _set_tfs(self, ids: tuple[str, ...], checked: bool) -> None:
-        for tf in ids:
+    def _refresh_subhour_note(self, path: str | None = None) -> None:
+        raw = (path if path is not None else self._ohlcvt_path.text()).strip()
+        note = format_subhour_mix_note(
+            read_archive_coverage(raw) if raw else None,
+            journal_started=self._journal_started,
+        )
+        self._sub_note.setText(note)
+        for tf in SUBHOUR_TIMEFRAMES:
             box = self._tf_boxes.get(tf)
             if box is not None:
-                box.setChecked(checked)
+                box.setToolTip(note)
+        set_ohlcvt_journal_started(self._ohlcvt_host, self._journal_started)
+
+    def _on_ohlcvt_path_changed(self, _text: str = "") -> None:
+        path = self._ohlcvt_path.text().strip()
+        prefs = load_scan_bt_prefs(self._root)
+        prefs.ohlcvt_path = path
+        self._mix = bands_mix_ready(prefs, root=self._root)
+        self._refresh_subhour_note(path)
         self._refresh_eta()
 
-    def _set_all_ta(self, checked: bool) -> None:
-        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
-        self._ta_list.blockSignals(True)
-        try:
-            for i in range(self._ta_list.count()):
-                item = self._ta_list.item(i)
-                if item is not None and not item.isHidden():
-                    item.setCheckState(state)
-        finally:
-            self._ta_list.blockSignals(False)
+    def _on_tf_toggled(self, tf: str, checked: bool) -> None:
+        if checked and not self._mix:
+            clear = HEARTBEAT_TIMEFRAMES if is_subhour_tf(tf) else SUBHOUR_TIMEFRAMES
+            for other in clear:
+                box = self._tf_boxes.get(other)
+                if box is None or not box.isChecked():
+                    continue
+                box.blockSignals(True)
+                box.setChecked(False)
+                box.blockSignals(False)
         self._refresh_eta()
 
-    def _filter_ta(self, text: str) -> None:
-        needle = text.strip().lower()
-        for i in range(self._ta_list.count()):
-            item = self._ta_list.item(i)
-            item.setHidden(bool(needle) and needle not in item.text().lower())
+    def _set_tfs(self, ids: tuple[str, ...], checked: bool) -> None:
+        if checked and ids and not self._mix:
+            clear = HEARTBEAT_TIMEFRAMES if is_subhour_tf(ids[0]) else SUBHOUR_TIMEFRAMES
+            for other in clear:
+                box = self._tf_boxes.get(other)
+                if box is None:
+                    continue
+                box.blockSignals(True)
+                box.setChecked(False)
+                box.blockSignals(False)
+        for tf in ids:
+            box = self._tf_boxes.get(tf)
+            if box is None or not box.isEnabled():
+                continue
+            box.blockSignals(True)
+            box.setChecked(checked)
+            box.blockSignals(False)
+        self._refresh_eta()
 
     def _selected_tfs(self) -> list[str]:
-        return [tf for tf, box in self._tf_boxes.items() if box.isChecked()]
+        raw = [tf for tf, box in self._tf_boxes.items() if box.isChecked()]
+        return list(comparable_scan_timeframes(raw, deep_1m=self._mix))
 
     def _denylist(self) -> list[str]:
         return [
@@ -227,6 +230,7 @@ class ScanBacktestSettingsDialog(QDialog):
         if not enabled_strategies(deny):
             self._eta.setText(S.SCAN_BT_NO_STRATEGIES)
             return
+        started = self._journal_started or today_utc()
         save_scan_bt_prefs(
             self._root,
             ScanBtPrefs(
@@ -236,6 +240,9 @@ class ScanBacktestSettingsDialog(QDialog):
                 sauce_with_scan=bool(self._sauce_with_scan.isChecked()),
                 sauce_top_n=clamp_sauce_top_n(self._sauce_top_n.value()),
                 market_context_with_scan=bool(self._mc_with_scan.isChecked()),
+                ohlcvt_path=self._ohlcvt_path.text().strip(),
+                ohlcvt_auto_tip=bool(self._ohlcvt_tip.isChecked()),
+                ohlcvt_journal_started=started.isoformat(),
             ),
         )
         self.accept()

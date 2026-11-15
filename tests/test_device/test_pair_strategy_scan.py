@@ -344,4 +344,5 @@ def test_short_window_keeps_lower_tf_when_24h_skipped(monkeypatch: Any) -> None:
     rsi = next(r for r in rows if r["indicator"] == "RSI")
     assert rsi.get("skip_reason") is None
     assert rsi.get("timeframe") == "1h"
-    assert any("lower-tf" in line.lower() for line in progress)
+    # 24h drops under MIN_BARS; progress surfaces the load note, 1h still ranks.
+    assert any("24h" in line and "bars" in line.lower() for line in progress)
