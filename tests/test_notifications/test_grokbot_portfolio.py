@@ -27,6 +27,7 @@ def test_snapshot_digest_concentration_and_left() -> None:
     assert digest["concentration"]["top_asset"] == "BTC"
     assert "DOGE" in digest["left_qualified"]
     assert "BTC" not in digest["left_qualified"]
+    assert "USD" not in digest["left_qualified"]
     assert "account_id" not in digest
 
 

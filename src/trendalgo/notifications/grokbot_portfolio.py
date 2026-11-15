@@ -44,9 +44,10 @@ def snapshot_digest(overview: dict[str, Any], qualified: set[str] | None = None)
         value = float(row.get("value_usd") or 0)
         pct = (value / total) if total else 0.0
         rows.append({"asset": asset, "pct": round(pct, 4)})
-        if (asset or "").upper().split("/")[0].split("-")[0] in _IDLE:
+        idle_cash = (asset or "").upper().split("/")[0].split("-")[0] in _IDLE
+        if idle_cash:
             idle += pct
-        if asset and qualified and not asset_qualified(asset, qualified):
+        elif asset and qualified and not asset_qualified(asset, qualified):
             left.append(asset)
     alloc = [
         {"asset": str(r.get("asset") or ""), "pct": _pct(r)} for r in allocation if r.get("asset")

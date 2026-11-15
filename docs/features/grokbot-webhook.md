@@ -138,7 +138,7 @@ Owner-auth GET/POST `/api/v1/notifications/golive-readiness`, or `uv run python 
 
 ## Portfolio snapshot (`portfolio_snapshot`)
 
-Off by default. Set `PORTFOLIO_SNAPSHOT_WEBHOOK=1` to POST after the daily portfolio job. Payload has allocations, concentration, idle stable/fiat share, and holdings whose asset is not on the current Qualified list. No API keys and no account identifiers. Filter: `GROKBOT_WEBHOOK_EVENTS=portfolio`.
+Off by default. Set `PORTFOLIO_SNAPSHOT_WEBHOOK=1` to POST after the daily portfolio job. Payload has allocations, concentration, idle stable/fiat share, and non-cash holdings whose asset is not on the current Qualified list (USD/USDT/EUR cash is not listed as off-qualified). No API keys and no account identifiers. Filter: `GROKBOT_WEBHOOK_EVENTS=portfolio`.
 
 ```json
 {
