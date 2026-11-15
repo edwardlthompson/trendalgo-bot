@@ -41,9 +41,10 @@ def build_weekly_digest(
     since = (stamp - timedelta(days=7)).replace(microsecond=0).isoformat()
     week = [row for row in trades if str(row.get("created_at") or "") >= since]
     sells = [row for row in week if str(row.get("side") or "").lower() in {"sell", "short"}]
-    pnl_by: Counter[str] = Counter()
+    pnl_by: dict[str, float] = {}
     for row in sells:
-        pnl_by[str(row.get("signal_source") or "unknown")] += float(row.get("pnl_usd") or 0)
+        key = str(row.get("signal_source") or "unknown")
+        pnl_by[key] = pnl_by.get(key, 0.0) + float(row.get("pnl_usd") or 0)
     week_alerts = [row for row in alerts if str(row.get("created_at") or "") >= since]
     tiers = Counter(str(row.get("tier") or "?").upper() for row in week_alerts)
     recur = Counter(str(row.get("pair") or "") for row in week_alerts)
@@ -63,7 +64,7 @@ def build_weekly_digest(
     top_strategy = ""
     top_pnl = 0.0
     if pnl_by:
-        top_strategy, top_pnl = pnl_by.most_common(1)[0]
+        top_strategy, top_pnl = max(pnl_by.items(), key=lambda item: item[1])
     return {
         "since_utc": since,
         "entered": [p for p in entered if p][:12],
