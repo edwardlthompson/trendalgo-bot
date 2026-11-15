@@ -186,8 +186,10 @@ class ScannerPage(QWidget):
         self._cancel.clicked.connect(lambda _checked=False: self._cancel_run())
         self._filters.refresh_prices.clicked.connect(lambda _checked=False: self._refresh_prices())
         self._filters.sauce_pan.clicked.connect(lambda _c=False: self._start_sauce_pan())
+        self._filters.pool_watch.clicked.connect(lambda _c=False: self._open_pool_watch())
+        self._filters.status_btn.clicked.connect(lambda _c=False: self._show_scan_status())
         if debug_scan_enabled():
-            self._filters.force_fresh.setVisible(True)
+            self._filters.set_force_fresh_in_more(True)
             self._filters.force_fresh.clicked.connect(
                 lambda _checked=False: self._start_force_fresh()
             )
@@ -262,20 +264,59 @@ class ScannerPage(QWidget):
         self._show_tab()
 
     def _open_scan_settings(self) -> None:
+        from trendalgo.device.scan_venues import vaulted_scan_venues
+        from trendalgo.device.support_matrix import checklist_brand
         from trendalgo.device.views.scan_bt_settings_dialog import open_scan_bt_settings
 
+        chrome: dict[str, object] = {}
+        venues = vaulted_scan_venues()
+        options = [(v.exchange_id, checklist_brand(v.exchange_id, v.brand)) for v in venues]
         try:
             accepted = open_scan_bt_settings(
                 self._root,
                 n_coins=max(1, len(self._coins)),
                 parent=self.window(),
+                interval_minutes=int(self._filters.every.value()),
+                heatmap_enabled=bool(self._filters.heatmap.isChecked()),
+                min_volume_usd=float(self._filters.vol.value()),
+                scan_exchanges=list(self._filters.exchange.selected_ids()),
+                exchange_options=options,
+                chrome_out=chrome,
             )
         except Exception as exc:
             show_problem(self._problem, f"{S.SCAN_BT_SETTINGS}: {exc}")
             return
         if accepted:
+            if "interval_minutes" in chrome:
+                self._filters.every.setValue(int(chrome["interval_minutes"]))  # type: ignore[arg-type]
+            if "heatmap_enabled" in chrome:
+                self._filters.heatmap.setChecked(bool(chrome["heatmap_enabled"]))
+            if "min_volume_usd" in chrome:
+                self._filters.vol.setValue(float(chrome["min_volume_usd"]))  # type: ignore[arg-type]
+            if "scan_exchanges" in chrome:
+                selected = [str(x) for x in (chrome["scan_exchanges"] or [])]  # type: ignore[union-attr]
+                self._filters.refresh_exchange_options(selected=selected)
+            self._persist_filters()
+            self._schedule_autoscan(reset=True)
             self._refresh_scan_eta()
+            self._on_filter()
             self._status.setText(S.SCAN_BT_SETTINGS_SAVED)
+
+    def _show_scan_status(self) -> None:
+        from trendalgo.device.views.scanner_filters import show_scan_status_dialog
+
+        show_scan_status_dialog(self._filters.status_text(), parent=self.window())
+
+    def _open_pool_watch(self) -> None:
+        from trendalgo.device.views.dex_watch_panel import open_dex_watch_dialog
+
+        try:
+            result = open_dex_watch_dialog(self._root, parent=self.window())
+        except Exception as exc:
+            show_problem(self._problem, f"{S.DEX_WATCH_RUN}: {exc}")
+            return
+        if result:
+            self._status.setText(S.DEX_WATCH_STATUS.format(n=int(result.get("rows") or 0)))
 
     def _refresh_scan_eta(self) -> None:
         from trendalgo.backtest.heartbeat_tf import needs_1m_base
@@ -289,7 +330,7 @@ class ScannerPage(QWidget):
         prefs = load_scan_bt_prefs(self._root)
         tfs = selected_timeframes(prefs)
         strats = enabled_strategies(prefs.strategy_denylist)
-        self._filters.eta.setText(
+        self._filters.set_eta_text(
             estimate_label(
                 load_history(self._root),
                 n_strategies=len(strats),
@@ -337,7 +378,7 @@ class ScannerPage(QWidget):
         if not self._autoscan_enabled:
             return
         if self._pending is not None:
-            self._filters.auto_status.setText(S.AUTOSCAN_PAUSED)
+            self._filters.set_auto_status_text(S.AUTOSCAN_PAUSED)
             self._schedule_autoscan(reset=False)
             return
         self._start()
@@ -375,13 +416,12 @@ class ScannerPage(QWidget):
 
     def _refresh_auto_caption(self) -> None:
         self._maybe_rearm_autoscan()
-        label = self._filters.auto_status
         parts: list[str] = []
         last = self._caption.text().strip()
         if last:
             parts.append(last)
         if not self._autoscan_enabled:
-            label.setText(" · ".join(parts))
+            self._filters.set_auto_status_text(" · ".join(parts))
             return
         if self._pending is not None:
             parts.append(S.AUTOSCAN_PAUSED)
@@ -389,7 +429,7 @@ class ScannerPage(QWidget):
             parts.append(S.AUTOSCAN_OFF)
         else:
             parts.append(S.AUTOSCAN_NEXT.format(minutes=minutes_until(self._next_auto)))
-        label.setText(" · ".join(parts))
+        self._filters.set_auto_status_text(" · ".join(parts))
 
     def _on_header(self, section: int) -> None:
         key = COL_SORT_KEYS.get(section)
@@ -640,6 +680,7 @@ class ScannerPage(QWidget):
         filtered = self._qualified_filtered_coins()
         eligible = coins_eligible_for_sauce(filtered)
         if not eligible:
+            show_problem(self._problem, S.SAUCE_PAN_EMPTY)
             self._status.setText(S.SAUCE_PAN_EMPTY)
             return
         clear_problem(self._problem)
@@ -653,7 +694,7 @@ class ScannerPage(QWidget):
             title=S.SAUCE_PAN_TITLE,
             seed_lines=(S.SAUCE_PAN_RUN_TIP, S.SCAN_PROGRESS_STARTING),
             on_cancel=self._cancel_run,
-            prior_s=None,
+            prior_s=0.0,
             initial_total=max(1, n),
             initial_pair="—",
             initial_pairs_total=None,

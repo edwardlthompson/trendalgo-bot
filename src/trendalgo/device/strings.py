@@ -214,6 +214,7 @@ SETTINGS_KEYS_HELP = (
 SETTINGS_KEYS_SAVED = "Saved keys"
 SETTINGS_KEYS_EMPTY = "No exchange keys saved yet. Add one below."
 SETTINGS_KEYS_COL_EXCHANGE = "Exchange"
+SETTINGS_KEYS_COL_SUPPORT = "Support"
 SETTINGS_KEYS_COL_SCOPE = "Use"
 SETTINGS_KEYS_COL_STATE = "Status"
 SETTINGS_KEYS_UPDATE = "Update"
@@ -282,7 +283,7 @@ PORTFOLIO_CHART_TOP10 = "Top 10 index"
 PORTFOLIO_CHART_BUY_HOLD = "BTC buy & hold"
 PORTFOLIO_SYNC_APPLIED = "Host portfolio saved on this PC."
 PORTFOLIO_ACCOUNTS = "Exchange accounts"
-PORTFOLIO_ACCOUNT_HEADERS = ("Exchange", "Label")
+PORTFOLIO_ACCOUNT_HEADERS = ("Exchange", "Support", "Label")
 PORTFOLIO_ACCOUNTS_EMPTY = "No accounts"
 PORTFOLIO_ACCOUNTS_EMPTY_BODY = "Accounts appear after a host sync or local snapshot."
 PORTFOLIO_REBALANCE = "Rebalance suggestions"
@@ -320,16 +321,23 @@ SCANNER_SUBTITLE = (
 )
 SCANNER_EMPTY_TITLE = "No scan results on this PC yet"
 SCANNER_EMPTY_BODY = (
-    "Press Run scan for a free public Kraken opportunity board. "
-    "API keys are optional — they unlock multi-venue scan, portfolio sync, and live trading."
+    "Press Run scan for a free public Kraken opportunity board "
+    "(research desk: public scan is Kraken today). "
+    "API keys unlock keyed multi-venue scan, portfolio sync, and dry-run trading — "
+    "other CEX research depth is still thinner than Kraken."
 )
 SCANNER_EXCHANGES_NEED_KEYS = "Add keys (optional)…"
 SCANNER_EXCHANGES_NONE = "Public Kraken"
 SCANNER_EXCHANGES_ALL = "All keyed"
 SCANNER_EXCHANGES_N = "{n} exchanges"
+SCANNER_RESEARCH_HINT = (
+    "Public research desk is Kraken today. Other keyed venues: track + trade; "
+    "deep scan parity coming soon."
+)
 SCANNER_NO_EXCHANGES = (
-    "No keyed venues selected. Run scan still works on public Kraken. "
-    "Add API keys in Settings for multi-venue scan."
+    "No keyed venues selected. Run scan still works on public Kraken "
+    "(only venue with full public research desk today). "
+    "Add API keys in Settings for multi-venue keyed scan."
 )
 SCANNER_SOURCE_PUBLIC = "Source: Kraken public"
 SCANNER_SOURCE_KEYED = "Source: Keyed · {venues}"
@@ -377,6 +385,14 @@ SCAN_BT_OHLCVT_SECTION = "Kraken OHLCVT"
 SCAN_BT_TF_SECTION = "Timeframes"
 SCAN_BT_TA_SECTION = "Strategies"
 SCAN_BT_EXTRAS_SECTION = "Market Context & Sauce Pan"
+SCAN_BT_CHROME_SECTION = "Scan schedule & board"
+SCAN_BT_RESULTS_SECTION = "Results view"
+SCANNER_MORE = "More"
+SCANNER_MORE_TIP = "Secret Sauce, pool watch, refresh prices, and share"
+SCANNER_STATUS = "Scan status"
+SCANNER_STATUS_TIP = "Last scan, ETA, and next auto-scan"
+SCANNER_STATUS_EMPTY = "No scan status yet. Run a scan to fill this."
+SCANNER_STATUS_EVERY = "every {minutes} min"
 SCAN_BT_OHLCVT_DOWNLOAD_FAIL_TITLE = "OHLCVT download failed"
 SCAN_BT_OHLCVT_DOWNLOAD_FAIL = "Download failed: {error}"
 
@@ -956,6 +972,23 @@ ACCENT_DEFAULT = "TrendAlgo (default)"
 ACCENT_NAMES: tuple[str, ...] = ("Blue", "Green", "Amber", "Red", "Violet")
 ABOUT_TITLE = "About"
 ABOUT_VERSION = "Version {version}"
+ABOUT_SUPPORT = (
+    "Research desk: Kraken today · thin pool watch: Ethereum/Base · "
+    "Portfolio: 9 CEX + DEX wallets · TradFi: Alpaca paper sync."
+)
+DEX_WATCH_RUN = "Pool watch (Base/Ethereum)"
+DEX_WATCH_HINT = (
+    "Thin Uniswap V3 pool watch — not Opportunity, All-TA, or Sauce. "
+    "Uses dry-run metrics unless you wire a live RPC later."
+)
+DEX_WATCH_EMPTY = "No pool-watch rows yet. Run Pool watch to load curated Base/Ethereum pools."
+DEX_WATCH_STATUS = "{n} pool-watch row(s) on this PC."
+DEX_WATCH_RUNNING = "Running pool watch…"
+DEX_WATCH_ERROR = "Pool watch failed."
+DEX_BT_DISCLAIMER = (
+    "Not on-chain fills — DEX research candles are a labeled CEX spot proxy or synthetic. "
+    "Do not treat backtests as Uniswap execution prices."
+)
 ABOUT_BODY = (
     "TrendAlgo Bot is free and open source (MIT). Scans and backtests run on this PC. "
     "A headless host you control can run an approved plan. This app never stores exchange keys."

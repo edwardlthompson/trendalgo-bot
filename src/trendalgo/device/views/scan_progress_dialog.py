@@ -125,7 +125,8 @@ class ScanProgressDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self._on_cancel = on_cancel
-        self._prior_s = max(0.0, float(prior_s))
+        # None / missing prior is treated as unknown ETA (0), not a TypeError.
+        self._prior_s = max(0.0, float(prior_s or 0.0))
         self._total = max(1, int(initial_total))
         self._t0 = time.perf_counter()
         self._log_lines: list[str] = []

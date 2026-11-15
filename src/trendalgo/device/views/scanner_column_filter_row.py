@@ -17,7 +17,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from trendalgo.device import strings as S
 from trendalgo.device.scan_venues import vaulted_scan_venues
+from trendalgo.device.support_matrix import checklist_brand
 from trendalgo.device.views.exchange_checklist import ExchangeChecklist
 from trendalgo.device.views.scanner_table import COLUMNS
 
@@ -106,7 +108,7 @@ class ScannerColumnFilterRow(QWidget):
         self.uniformity_min = self._combo(_UNIT_OPTS, tip="Min uniformity")
         self.vol_accel = self._combo(_VOL_ACCEL_OPTS, tip="Volume acceleration")
         self.exchange = ExchangeChecklist()
-        self.exchange.setToolTip("Show rows for these exchanges only")
+        self.exchange.setToolTip(S.SCANNER_RESEARCH_HINT)
         self.refresh_exchange_options()
         self.vol24_min = self._combo(_VOL24_OPTS, tip="Min 24h volume")
         self._by_col: dict[int, QWidget] = {
@@ -214,7 +216,7 @@ class ScannerColumnFilterRow(QWidget):
 
     def refresh_exchange_options(self, selected: list[str] | None = None) -> None:
         venues = vaulted_scan_venues()
-        opts = [(v.exchange_id, v.brand) for v in venues]
+        opts = [(v.exchange_id, checklist_brand(v.exchange_id, v.brand)) for v in venues]
         self.exchange.set_options(opts, selected=selected)
 
     def dump(self) -> dict[str, Any]:

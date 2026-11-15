@@ -74,6 +74,54 @@ HUMAN_RULES: list[tuple[re.Pattern[str], str, object]] = [
     ),
     (re.compile(r"Fill stack-local config|app-update\.json", re.I), "human", automate_stack_config),
     (re.compile(r"Approve ADR|Approve.*BUILD_PLAN", re.I), "human", automate_approve_adr),
+    (
+        re.compile(
+            r"Approve multi-venue|Approve TradFi|Approve.*research parity|H-040|TF-H1|MVP-H0",
+            re.I,
+        ),
+        "human",
+        automate_approve_adr,
+    ),
+    (
+        re.compile(r"CoinMarketCal|Coindar|PF-H1|calendar API", re.I),
+        "human",
+        lambda r, c: AttemptResult(
+            1,
+            "calendar-keys",
+            "Optional live calendar keys require human signup; empty-state CI ok without them",
+            True,
+        ),
+    ),
+    (
+        re.compile(r"per-venue historical packs|CEX-P3c", re.I),
+        "human",
+        lambda r, c: AttemptResult(
+            1,
+            "historical-packs",
+            "Paid/optional historical packs need HUMAN cost approval",
+            True,
+        ),
+    ),
+    (
+        re.compile(r"H-032|CEXes beyond nine|CEX-P4b", re.I),
+        "human",
+        lambda r, c: AttemptResult(
+            1,
+            "cex-expand",
+            "Hard gate H-032 — founder must approve venues beyond nine",
+            True,
+        ),
+    ),
+    (
+        re.compile(r"DEX-P4a|trading_enabled Arbitrum|H-036", re.I),
+        "human",
+        lambda r, c: AttemptResult(
+            1,
+            "dex-live-chains",
+            "Hard gate — live DEX beyond Base needs HUMAN + ack",
+            True,
+        ),
+    ),
     (re.compile(r"Optional product smoke", re.I), "human", automate_product_smoke),
     (re.compile(r"Approve release tag", re.I), "human", automate_release_tag),
     (

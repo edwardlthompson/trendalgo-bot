@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -30,7 +29,6 @@ from trendalgo.device.backtest_sort import (
 )
 from trendalgo.device.context import DeviceContext
 from trendalgo.device.flow_layout import FlowLayout
-from trendalgo.device.icons import nav_icon
 from trendalgo.device.pair_scan_partial import clear_partial_rows
 from trendalgo.device.pair_scan_progress import clear_progress, read_progress
 from trendalgo.device.pair_strategy_scan_job import pair_strategy_scan_job
@@ -40,8 +38,6 @@ from trendalgo.device.results_view_prefs import (
     save_results_prefs,
 )
 from trendalgo.device.sauce_names import is_sauce
-from trendalgo.device.theme import active_mode
-from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.backtest_column_filter_row import FILTER_ROW, BacktestColumnFilterRow
 from trendalgo.device.views.backtest_page_job import (
     apply_scan_result,
@@ -127,25 +123,30 @@ class BacktestPage(QWidget):
         self._cancel = QPushButton(S.CANCEL)
         self._cancel.setEnabled(False)
         self._cancel.setVisible(False)
-        self._share = QToolButton()
+        self._share = QPushButton(S.BACKTEST_SHARE)
         self._share.setObjectName("shareButton")
-        self._share.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self._share.setIcon(nav_icon("share", colors_for(active_mode())["onSurfaceVariant"], 20))
         self._share.setToolTip(S.BACKTEST_SHARE_TIP)
         self._share.setAccessibleName(S.BACKTEST_SHARE)
+        # View toggles live in Settings — keep widgets for prefs / fill_table.
         self._heatmap = QCheckBox(S.SCANNER_COLOR_RANKS)
         self._heatmap.setChecked(prefs.heatmap_enabled)
+        self._heatmap.hide()
         self._perfect = QCheckBox(S.BACKTEST_PERFECT_ONLY)
         self._perfect.setChecked(prefs.perfect_only)
         self._perfect.setToolTip(S.BACKTEST_PERFECT_HELP)
+        self._perfect.hide()
         self._derive = QPushButton(S.BACKTEST_DERIVE_RULE)
         self._derive.setToolTip(S.BACKTEST_DERIVE_RULE_HELP)
         self._derive.clicked.connect(lambda _c=False: self._derive_oracle_rule())
+        self._status_btn = QPushButton(S.SCANNER_STATUS)
+        self._status_btn.setObjectName("backtestStatus")
+        self._status_btn.setToolTip(S.SCANNER_STATUS_TIP)
         self._heatmap.toggled.connect(lambda _c: self._on_view_toggle())
         self._perfect.toggled.connect(lambda _c: self._on_view_toggle())
         self._status = QLabel()
         self._status.setObjectName("hint")
         self._status.setWordWrap(True)
+        self._status.hide()
         self._problem = problem_label()
         self._empty = EmptyState(S.BACKTEST_EMPTY_TITLE, S.BACKTEST_EMPTY_BODY)
         self._market_ctx = MarketContextPane(
@@ -171,20 +172,18 @@ class BacktestPage(QWidget):
         for widget in (
             pair_label,
             self._pair,
-            self._settings,
             self._run,
-            self._refresh_prices,
             self._cancel,
+            self._settings,
+            self._refresh_prices,
             self._share,
-            self._heatmap,
-            self._perfect,
             self._derive,
+            self._status_btn,
         ):
             toolbar.addWidget(widget)
 
         layout = QVBoxLayout(self)
         layout.addLayout(toolbar)
-        layout.addWidget(self._status)
         layout.addWidget(self._problem)
         layout.addWidget(self._market_ctx)
         layout.addWidget(self._empty)
@@ -198,8 +197,17 @@ class BacktestPage(QWidget):
         self._refresh_prices.clicked.connect(lambda _c=False: self._refresh_prices_clicked())
         self._cancel.clicked.connect(lambda _c=False: self._cancel_run())
         self._share.clicked.connect(lambda _c=False: self._share_png())
+        self._status_btn.clicked.connect(lambda _c=False: self._show_scan_status())
         if not self._restore_last_backtest():
             self._show_empty()
+
+    def _show_scan_status(self) -> None:
+        from trendalgo.device.views.scanner_filters import show_scan_status_dialog
+
+        show_scan_status_dialog(
+            self._status.text().strip() or S.SCANNER_STATUS_EMPTY,
+            parent=self.window(),
+        )
 
     def _refresh_prices_clicked(self) -> None:
         from trendalgo.device.price_cache_clear import clear_price_caches
@@ -231,12 +239,25 @@ class BacktestPage(QWidget):
     def _open_scan_settings(self) -> None:
         from trendalgo.device.views.scan_bt_settings_dialog import open_scan_bt_settings
 
+        results: dict[str, object] = {}
         try:
-            accepted = open_scan_bt_settings(self._root, n_coins=1, parent=self.window())
+            accepted = open_scan_bt_settings(
+                self._root,
+                n_coins=1,
+                parent=self.window(),
+                results_heatmap=bool(self._heatmap.isChecked()),
+                results_perfect=bool(self._perfect.isChecked()),
+                results_out=results,
+            )
         except Exception as exc:
             show_problem(self._problem, f"{S.SCAN_BT_SETTINGS}: {exc}")
             return
         if accepted:
+            if "heatmap_enabled" in results:
+                self._heatmap.setChecked(bool(results["heatmap_enabled"]))
+            if "perfect_only" in results:
+                self._perfect.setChecked(bool(results["perfect_only"]))
+            self._on_view_toggle()
             self._status.setText(S.SCAN_BT_SETTINGS_SAVED)
 
     def _start(self) -> None:

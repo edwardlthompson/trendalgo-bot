@@ -19,8 +19,10 @@ def holdings_from_ccxt_balance(
     tickers: dict[str, Any],
     *,
     usd_aliases: frozenset[str] = frozenset({"USD", "ZUSD", "USDT"}),
+    quote_currency: str = "USD",
 ) -> tuple[list[HoldingRow], float]:
     """Map CCXT balance + tickers to HoldingRow list and total USD."""
+    quote = quote_currency.strip().upper() or "USD"
     holdings: list[HoldingRow] = []
     total_usd = 0.0
     for asset, qty in balance.get("total", {}).items():
@@ -31,8 +33,11 @@ def holdings_from_ccxt_balance(
         if normalized in usd_aliases or normalized.startswith("USD"):
             price = 1.0
         else:
-            pair = f"{normalized}/USD"
-            ticker = tickers.get(pair) or tickers.get(f"{normalized}/USDT")
+            ticker = tickers.get(f"{normalized}/{quote}")
+            if ticker is None and quote != "USD":
+                ticker = tickers.get(f"{normalized}/USD")
+            if ticker is None and quote != "USDT":
+                ticker = tickers.get(f"{normalized}/USDT")
             price = float(ticker["last"]) if ticker and ticker.get("last") else 0.0
         value = amount * price
         cost = value * 0.92 if normalized not in usd_aliases else value

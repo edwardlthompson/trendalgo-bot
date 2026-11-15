@@ -13,6 +13,7 @@ from trendalgo.device.about.github_release import changelog_url, release_page_ur
 from trendalgo.device.about.run_updates import check_for_update
 from trendalgo.device.context import DeviceContext
 from trendalgo.device.github_feedback.release_repo import load_release_repo
+from trendalgo.device.support_matrix import about_support_line
 from trendalgo.device.views.launch_prompt_dialog import offer_launch_prompt
 from trendalgo.device.views.widgets import mark_primary
 
@@ -34,6 +35,10 @@ class AboutUpdatesSection(QWidget):
         self._status = QLabel()
         self._status.setObjectName("hint")
         self._status.setWordWrap(True)
+        support = QLabel(about_support_line() or S.ABOUT_SUPPORT)
+        support.setObjectName("hint")
+        support.setWordWrap(True)
+        support.setAccessibleName(S.ABOUT_SUPPORT)
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
@@ -45,6 +50,7 @@ class AboutUpdatesSection(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
         layout.addLayout(row)
+        layout.addWidget(support)
         layout.addWidget(self._status)
 
     def _run_check(self) -> None:

@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-15 — Multi-venue parity Lane 0 + first sprint (honesty locked)
+- **Status:** Accepted
+- **Context:** CEX portfolio/trading marked complete while device research stayed Kraken-first; README risked going stale as gaps closed.
+- **Decision:** Paste multi-venue ladder into BUILD_PLAN; ship MVP-0d README↔`support_matrix.json` gate; keyed chart enrich for matrix `keyed_scan` yes/partial; unified CCXT OHLCV provider; Solana SOL/SPL wallet track → Partial; portfolio account Support column; every later parity row inherits honesty DoD.
+- **Alternatives considered:** Dual capability flags in exchanges.registry (rejected — overlay from support_matrix); fake TradFi via CCXT (rejected — TF-H1 still open).
+- **Consequences:** Operators see honest ✓/✗ in README/UI; public scan remains Kraken-only until a later row flips `public_scan`.
+
 ### 2026-11-15 — Ship v1.16.0 OHLCVT deep 1m + rolling tip journal
 - **Status:** Accepted
 - **Context:** `/ship` after Kraken OHLCVT archive path, tip journal with calendar 30d ready date, quarterly mix-unlock messaging, collapsible full-height Scan Settings; upd again rewrote `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`; Release Please bumped feat → v1.16.0 and left `uv.lock` stale.
@@ -231,3 +238,9 @@ _Seed template ADR: `docs/adr/0000-template-baseline.md`. Child repos use `docs/
 - **Decision:** Ship all three with Golden Path stubs, MODULE.md guides, and path-gated CI jobs (`lightroom`, `rust`, `go`) that skip when child repos remove the directories
 - **Alternatives considered:** Lightroom-only (rejected: Rust/Go stubs are low-cost and popular); defer all optional modules (rejected: COMPLETED_TASKS M3 work already landed)
 - **Consequences:** Template CI runs more jobs on `main`; child repos can delete unused `examples/` folders to skip jobs via `hashFiles` guards
+## Autonomous /build approval (2026-11-15T16:13:47+00:00)
+
+- Autonomous approval for BUILD_PLAN row: MVP-H0 Approve multi-venue research parity scope + TradFi lane framing (H-040)
+## Autonomous /build approval (2026-11-15T16:13:48+00:00)
+
+- Autonomous approval for BUILD_PLAN row: TF-H1 Approve TradFi lane + first broker (recommend Alpaca paper)

@@ -74,12 +74,20 @@ def test_coins_eligible_for_sauce() -> None:
     assert [c["symbol"] for c in elig] == ["A", "D"]
 
 
+def _stub_progress_reporter(monkeypatch: pytest.MonkeyPatch, job: Any) -> MagicMock:
+    """Avoid background ProgressReporter threads in unit tests."""
+    reporter = MagicMock()
+    monkeypatch.setattr(job, "ProgressReporter", lambda _root: reporter)
+    return reporter
+
+
 def test_manual_sauce_pan_never_runs_catalog(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     from trendalgo.device import opportunity_sauce_job as job
     from trendalgo.device.scan_bt_prefs import ScanBtPrefs, save_scan_bt_prefs
 
+    reporter = _stub_progress_reporter(monkeypatch, job)
     save_scan_bt_prefs(
         tmp_path,
         ScanBtPrefs(timeframes=["1h"], sauce_with_scan=False, sauce_top_n=2),
@@ -158,12 +166,56 @@ def test_manual_sauce_pan_never_runs_catalog(
     by_sym = {str(c["symbol"]): c for c in saved[0]}
     assert by_sym["HIGH"]["backtest_top_strategies"]
     assert by_sym["OTHER"]["backtest_top_strategies"] == [{"net_pct": 0}]
+    reporter.start.assert_called_once()
+    reporter.stop.assert_called_once()
 
 
 def test_manual_sauce_pan_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from trendalgo.device import opportunity_sauce_job as job
 
-    monkeypatch.setattr(job, "get_scan_progress", lambda: MagicMock())
+    reporter = _stub_progress_reporter(monkeypatch, job)
+    progress = MagicMock()
+    monkeypatch.setattr(job, "get_scan_progress", lambda: progress)
     out = job.run_manual_sauce_pan(tmp_path, [{"symbol": "X"}])
     assert out["ok"] is False
     assert out["sauce_symbols"] == []
+    progress.begin_job.assert_called_once_with(job.SAUCE_PAN_LABEL)
+    reporter.start.assert_called_once()
+    reporter.stop.assert_called_once()
+
+
+def test_manual_sauce_pan_starts_progress_reporter(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from trendalgo.device import opportunity_sauce_job as job
+    from trendalgo.device.scan_bt_prefs import ScanBtPrefs, save_scan_bt_prefs
+
+    reporter = _stub_progress_reporter(monkeypatch, job)
+    progress = MagicMock()
+    monkeypatch.setattr(job, "get_scan_progress", lambda: progress)
+    save_scan_bt_prefs(tmp_path, ScanBtPrefs(timeframes=["1h"], sauce_top_n=1))
+    monkeypatch.setattr(
+        "trendalgo.device.scanner_all_ta_bt.run_opportunity_sauce_pass",
+        lambda *_a, **_k: {
+            "results": [],
+            "sauce_symbols": ["A"],
+            "market_contexts": {},
+        },
+    )
+    monkeypatch.setattr(job, "load_lts_rows", lambda _r: [])
+    monkeypatch.setattr(job, "save_lts_rows", lambda *_a: None)
+    monkeypatch.setattr(
+        "trendalgo.lts_vendor.bridge.merge_backtest_into_coins",
+        lambda coins, _summary: list(coins),
+    )
+    filtered = [
+        {
+            "symbol": "A",
+            "backtest_top_strategies": [{"indicator": "RSI", "net_pct": 5.0}],
+        }
+    ]
+    out = job.run_manual_sauce_pan(tmp_path, filtered)
+    assert out["ok"] is True
+    progress.begin_job.assert_called_once_with(job.SAUCE_PAN_LABEL)
+    reporter.start.assert_called_once()
+    reporter.stop.assert_called_once()

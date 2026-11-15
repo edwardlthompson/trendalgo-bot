@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QHBoxLayout,
     QLabel,
     QScrollArea,
     QVBoxLayout,
@@ -38,7 +41,9 @@ from trendalgo.device.scan_time_history import estimate_label, load_history
 from trendalgo.device.scanner_signal_sets import BT_SET_ALL_TA
 from trendalgo.device.views.scan_bt_ohlcvt_row import build_ohlcvt_block, set_ohlcvt_journal_started
 from trendalgo.device.views.scan_bt_settings_sections import (
+    build_chrome,
     build_extras,
+    build_results_view,
     build_ta_body,
     build_tf_host,
     wrap_section,
@@ -56,12 +61,25 @@ class ScanBacktestSettingsDialog(QDialog):
         *,
         n_coins: int = 1,
         parent: QWidget | None = None,
+        interval_minutes: int = 60,
+        heatmap_enabled: bool = False,
+        min_volume_usd: float = 0.0,
+        scan_exchanges: list[str] | None = None,
+        exchange_options: list[tuple[str, str]] | None = None,
+        chrome_out: dict[str, Any] | None = None,
+        results_heatmap: bool | None = None,
+        results_perfect: bool | None = None,
+        results_out: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(parent)
         self._root = root
         self._n_coins = max(1, int(n_coins))
+        self._chrome_out = chrome_out
+        self._results_out = results_out
+        self._results_heatmap: QCheckBox | None = None
+        self._results_perfect: QCheckBox | None = None
         self.setWindowTitle(S.SCAN_BT_SETTINGS_TITLE)
-        self.setMinimumWidth(480)
+        self.setMinimumWidth(720)
         prefs = load_scan_bt_prefs(root)
         ohlcvt_initial = resolve_ohlcvt_path(root, prefs.ohlcvt_path)
         self._journal_started = journal_started_date(prefs, root=root) or today_utc()
@@ -103,19 +121,40 @@ class ScanBacktestSettingsDialog(QDialog):
             sauce_top_n=prefs.sauce_top_n,
             on_changed=self._refresh_eta,
         )
+        chrome, self._every, self._heatmap, self._vol, self._exchange = build_chrome(
+            interval_minutes=interval_minutes,
+            heatmap_enabled=heatmap_enabled,
+            min_volume_usd=min_volume_usd,
+            exchange_options=exchange_options or [],
+            scan_exchanges=scan_exchanges,
+        )
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll_host = QWidget()
-        scroll_col = QVBoxLayout(scroll_host)
-        scroll_col.setContentsMargins(4, 4, 4, 4)
-        scroll_col.setSpacing(8)
-        scroll_col.addWidget(wrap_section(S.SCAN_BT_ETA_SECTION, self._eta))
-        scroll_col.addWidget(wrap_section(S.SCAN_BT_OHLCVT_SECTION, ohlcvt_host))
-        scroll_col.addWidget(wrap_section(S.SCAN_BT_TF_SECTION, tf_host))
-        scroll_col.addWidget(wrap_section(S.SCAN_BT_TA_SECTION, ta_body))
-        scroll_col.addWidget(wrap_section(S.SCAN_BT_EXTRAS_SECTION, extras))
-        scroll_col.addStretch(1)
+        cols = QHBoxLayout(scroll_host)
+        cols.setContentsMargins(4, 4, 4, 4)
+        cols.setSpacing(12)
+        left = QVBoxLayout()
+        right = QVBoxLayout()
+        left.setSpacing(8)
+        right.setSpacing(8)
+        left.addWidget(wrap_section(S.SCAN_BT_CHROME_SECTION, chrome))
+        if results_out is not None:
+            results, self._results_heatmap, self._results_perfect = build_results_view(
+                heatmap_enabled=bool(results_heatmap),
+                perfect_only=bool(results_perfect),
+            )
+            left.addWidget(wrap_section(S.SCAN_BT_RESULTS_SECTION, results))
+        left.addWidget(wrap_section(S.SCAN_BT_ETA_SECTION, self._eta))
+        left.addWidget(wrap_section(S.SCAN_BT_OHLCVT_SECTION, ohlcvt_host))
+        left.addWidget(wrap_section(S.SCAN_BT_EXTRAS_SECTION, extras))
+        left.addStretch(1)
+        right.addWidget(wrap_section(S.SCAN_BT_TF_SECTION, tf_host))
+        right.addWidget(wrap_section(S.SCAN_BT_TA_SECTION, ta_body))
+        right.addStretch(1)
+        cols.addLayout(left, 1)
+        cols.addLayout(right, 1)
         scroll.setWidget(scroll_host)
 
         body = QVBoxLayout(self)
@@ -138,7 +177,7 @@ class ScanBacktestSettingsDialog(QDialog):
             return
         geo = screen.availableGeometry()
         height = max(520, geo.height() - 2 * _SCREEN_GUTTER_PX)
-        width = max(self.minimumWidth(), 520)
+        width = max(self.minimumWidth(), min(1100, geo.width() - 2 * _SCREEN_GUTTER_PX))
         x = geo.x() + max(0, (geo.width() - width) // 2)
         y = geo.y() + _SCREEN_GUTTER_PX
         self.setGeometry(x, y, width, height)
@@ -245,10 +284,48 @@ class ScanBacktestSettingsDialog(QDialog):
                 ohlcvt_journal_started=started.isoformat(),
             ),
         )
+        if self._chrome_out is not None:
+            self._every.interpretText()
+            self._vol.interpretText()
+            self._chrome_out["interval_minutes"] = int(self._every.value())
+            self._chrome_out["heatmap_enabled"] = bool(self._heatmap.isChecked())
+            self._chrome_out["min_volume_usd"] = float(self._vol.value())
+            self._chrome_out["scan_exchanges"] = self._exchange.selected_ids()
+        if self._results_out is not None and self._results_heatmap is not None:
+            self._results_out["heatmap_enabled"] = bool(self._results_heatmap.isChecked())
+            assert self._results_perfect is not None
+            self._results_out["perfect_only"] = bool(self._results_perfect.isChecked())
         self.accept()
 
 
-def open_scan_bt_settings(root: Path, *, n_coins: int = 1, parent: QWidget | None = None) -> bool:
-    dlg = ScanBacktestSettingsDialog(root, n_coins=n_coins, parent=parent)
+def open_scan_bt_settings(
+    root: Path,
+    *,
+    n_coins: int = 1,
+    parent: QWidget | None = None,
+    interval_minutes: int = 60,
+    heatmap_enabled: bool = False,
+    min_volume_usd: float = 0.0,
+    scan_exchanges: list[str] | None = None,
+    exchange_options: list[tuple[str, str]] | None = None,
+    chrome_out: dict[str, Any] | None = None,
+    results_heatmap: bool | None = None,
+    results_perfect: bool | None = None,
+    results_out: dict[str, Any] | None = None,
+) -> bool:
+    dlg = ScanBacktestSettingsDialog(
+        root,
+        n_coins=n_coins,
+        parent=parent,
+        interval_minutes=interval_minutes,
+        heatmap_enabled=heatmap_enabled,
+        min_volume_usd=min_volume_usd,
+        scan_exchanges=scan_exchanges,
+        exchange_options=exchange_options,
+        chrome_out=chrome_out,
+        results_heatmap=results_heatmap,
+        results_perfect=results_perfect,
+        results_out=results_out,
+    )
     dlg.setWindowModality(Qt.WindowModality.WindowModal)
     return dlg.exec() == QDialog.DialogCode.Accepted

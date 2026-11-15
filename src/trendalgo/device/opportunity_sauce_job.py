@@ -8,9 +8,12 @@ from typing import Any
 from trendalgo.device.lts_scan_model import load_lts_rows, save_lts_rows
 from trendalgo.device.opportunity_sauce import oracle_rank_score, select_sauce_symbols
 from trendalgo.device.scan_bt_prefs import load_scan_bt_prefs
+from trendalgo.device.scan_progress import ProgressReporter
 from trendalgo.scanner.progress import get_scan_progress
 
 __all__ = ["coins_eligible_for_sauce", "run_manual_sauce_pan"]
+
+SAUCE_PAN_LABEL = "Sauce Pan"
 
 
 def coins_eligible_for_sauce(filtered: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -40,8 +43,24 @@ def run_manual_sauce_pan(
     """Cook Sauce on Oracle top-N of ``filtered_coins``; merge into full LTS board.
 
     Never runs catalog/deepen. Returns ``{ok, message, sauce_symbols, ...}``.
+    Flushes ``scan_progress.json`` so ScanProgressDialog can follow along.
     """
     progress = get_scan_progress()
+    progress.begin_job(SAUCE_PAN_LABEL)
+    reporter = ProgressReporter(root)
+    reporter.start()
+    try:
+        return _run_manual_sauce_pan_body(root, filtered_coins, progress=progress)
+    finally:
+        reporter.stop()
+
+
+def _run_manual_sauce_pan_body(
+    root: Path,
+    filtered_coins: list[dict[str, Any]],
+    *,
+    progress: Any,
+) -> dict[str, Any]:
     prefs = load_scan_bt_prefs(root)
     top_n = int(prefs.sauce_top_n)
     eligible = coins_eligible_for_sauce(filtered_coins)

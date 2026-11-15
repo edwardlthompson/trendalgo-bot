@@ -82,8 +82,30 @@ Additional worldwide CEX venues beyond the current nine remain **H-032** gated a
 
 | Venue | Reason |
 |-------|--------|
-| DEX / on-chain | S12 `onchain.py` lane — separate from CEX |
+| DEX / on-chain | Separate lane — [`docs/DEX_ROADMAP.md`](DEX_ROADMAP.md); not CEX CCXT |
 | US-blocked retail venues | Operator responsibility; registry flags `us_restricted` |
+| TradFi / stocks | Separate broker lane (post H-040 / TF-H1) — never fake via CCXT |
+---
+
+## Research parity (honest)
+
+CEX **portfolio + trading** for nine venues is program-complete. **Device research** (public Opportunity scan, deep OHLCV/OHLCVT, All-TA / Secret Sauce) is still **Kraken-first**.
+
+Canonical truth for operators and the pitch README:
+
+- [`docs/SUPPORT_MATRIX.md`](SUPPORT_MATRIX.md)
+- [`src/trendalgo/device/data/support_matrix.json`](../src/trendalgo/device/data/support_matrix.json)
+- Root [`README.md`](../README.md) Exchange support table (must match JSON — `scripts/check-support-matrix-readme.py`)
+
+Ladder used for gap closure: **P1 portfolio → P2 scan → P3 OHLCV/backtest → P4 live trade**. Every BUILD_PLAN multi-venue row that moves a cell must update the matrix + README in the same change.
+
+| Today | Gap |
+|-------|-----|
+| Public scan without keys | Kraken only (Opportunity desk); see `scanner/public_scan_capability.py` for which Tier A/B can load CCXT markets without keys |
+| Keyed scan + chart enrich | All vaulted CEX (partial depth) |
+| Deep history / OHLCVT | Kraken archive; others via CCXT provider |
+| DEX research desk | Not ready — wallet track only |
+| TradFi | Registry scaffolded (Alpaca paper); sync coming |
 ---
 
 ## Module layout

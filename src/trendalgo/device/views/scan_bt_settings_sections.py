@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
+    QDoubleSpinBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -23,6 +24,7 @@ from trendalgo.backtest.ta_fleet import all_strategies
 from trendalgo.device import strings as S
 from trendalgo.device.scan_bt_prefs import SAUCE_TOP_N_MAX, SAUCE_TOP_N_MIN, clamp_sauce_top_n
 from trendalgo.device.views.collapsible_section import CollapsibleSection
+from trendalgo.device.views.exchange_checklist import ExchangeChecklist
 
 
 def wrap_section(title: str, widget: QWidget, *, expanded: bool = True) -> CollapsibleSection:
@@ -85,6 +87,86 @@ def build_ta_body(
     col.addWidget(search)
     col.addWidget(ta_list)
     return body, search, ta_list
+
+
+def build_chrome(
+    *,
+    interval_minutes: int,
+    heatmap_enabled: bool,
+    min_volume_usd: float,
+    exchange_options: Sequence[tuple[str, str]],
+    scan_exchanges: Sequence[str] | None,
+) -> tuple[QWidget, QSpinBox, QCheckBox, QDoubleSpinBox, ExchangeChecklist]:
+    """Board filters + schedule (Exchange, min vol, interval, Color ranks)."""
+    host = QWidget()
+    col = QVBoxLayout(host)
+    col.setContentsMargins(0, 0, 0, 0)
+    col.setSpacing(8)
+    note = QLabel(S.SCANNER_RESEARCH_HINT)
+    note.setObjectName("hint")
+    note.setWordWrap(True)
+    col.addWidget(note)
+
+    exchange = ExchangeChecklist()
+    exchange.setToolTip(S.SCANNER_RESEARCH_HINT)
+    exchange.set_options(list(exchange_options), selected=list(scan_exchanges or []))
+    ex_row = QWidget()
+    ex_lay = QHBoxLayout(ex_row)
+    ex_lay.setContentsMargins(0, 0, 0, 0)
+    ex_lay.addWidget(QLabel(S.SCANNER_FILTER_EXCHANGE))
+    ex_lay.addWidget(exchange, 1)
+    col.addWidget(ex_row)
+
+    vol_row = QWidget()
+    vol_lay = QHBoxLayout(vol_row)
+    vol_lay.setContentsMargins(0, 0, 0, 0)
+    vol_lay.addWidget(QLabel(S.SCANNER_FILTER_VOL))
+    vol = QDoubleSpinBox()
+    vol.setRange(0, 1e12)
+    vol.setDecimals(0)
+    vol.setPrefix("$")
+    vol.setSingleStep(100_000)
+    vol.setValue(float(min_volume_usd))
+    vol_lay.addWidget(vol)
+    vol_lay.addStretch(1)
+    col.addWidget(vol_row)
+
+    every_row = QWidget()
+    every_lay = QHBoxLayout(every_row)
+    every_lay.setContentsMargins(0, 0, 0, 0)
+    every_lay.addWidget(QLabel(S.SCANNER_FILTER_EVERY))
+    every = QSpinBox()
+    every.setRange(60, 1440)
+    every.setSuffix(" min")
+    every.setValue(max(60, min(1440, int(interval_minutes))))
+    every_lay.addWidget(every)
+    every_lay.addStretch(1)
+    col.addWidget(every_row)
+
+    heatmap = QCheckBox(S.SCANNER_COLOR_RANKS)
+    heatmap.setChecked(bool(heatmap_enabled))
+    col.addWidget(heatmap)
+    return host, every, heatmap, vol, exchange
+
+
+def build_results_view(
+    *,
+    heatmap_enabled: bool,
+    perfect_only: bool,
+) -> tuple[QWidget, QCheckBox, QCheckBox]:
+    """Backtest results view toggles (Color ranks, Perfect Strategies)."""
+    host = QWidget()
+    col = QVBoxLayout(host)
+    col.setContentsMargins(0, 0, 0, 0)
+    col.setSpacing(6)
+    heatmap = QCheckBox(S.SCANNER_COLOR_RANKS)
+    heatmap.setChecked(bool(heatmap_enabled))
+    perfect = QCheckBox(S.BACKTEST_PERFECT_ONLY)
+    perfect.setChecked(bool(perfect_only))
+    perfect.setToolTip(S.BACKTEST_PERFECT_HELP)
+    col.addWidget(heatmap)
+    col.addWidget(perfect)
+    return host, heatmap, perfect
 
 
 def build_extras(

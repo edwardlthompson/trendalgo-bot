@@ -7,10 +7,10 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from trendalgo.exchanges.adapters.factory import portfolio_adapter_for
 from trendalgo.exchanges.adapters.generic import GenericCcxtPortfolioAdapter
 from trendalgo.exchanges.registry import (
     ExchangeEntry,
-    get_entry,
     list_portfolio_exchanges,
     load_registry,
 )
@@ -20,7 +20,7 @@ SyncFn = Callable[[PortfolioStore, ExchangeEntry, bool], dict[str, Any]]
 
 
 def get_portfolio_adapter(exchange_id: str) -> GenericCcxtPortfolioAdapter:
-    return GenericCcxtPortfolioAdapter(get_entry(exchange_id))
+    return portfolio_adapter_for(exchange_id)
 
 
 def _default_sync(store: PortfolioStore, entry: ExchangeEntry, dry_run: bool) -> dict[str, Any]:

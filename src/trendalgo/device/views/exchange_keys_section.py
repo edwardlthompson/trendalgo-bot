@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import strings as S
 from trendalgo.device.secrets_vault import VaultEntry, VaultSecretStore, memory_vault_for_tests
+from trendalgo.device.support_matrix import venue_by_id
 from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.exchange_keys_inventory import ExchangeKeysInventory
@@ -45,7 +46,9 @@ class ExchangeKeysSection(QWidget):
         )
         self._exchange = QComboBox()
         for entry in load_registry().exchanges:
-            self._exchange.addItem(entry.brand, entry.id)
+            venue = venue_by_id(entry.id)
+            label = venue.badge_text() if venue is not None else entry.brand
+            self._exchange.addItem(label, entry.id)
         configure_combo_popup(self._exchange)
         self._scope = QComboBox()
         self._scope.addItem(S.SETTINGS_KEYS_SCOPE_QUERY, "query")

@@ -102,9 +102,10 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
             timings[f"pipeline_{eid}_s"] = round(time.perf_counter() - t, 3)
             last_snap = snap
             t = time.perf_counter()
-            # Chart enrich still hits public OHLCV; keep False for non-Kraken speed/safety,
-            # True only for kraken to preserve prior spark behavior when possible.
-            enrich = eid == "kraken"
+            # Chart enrich uses public OHLCV per venue when the support matrix allows it.
+            from trendalgo.device.support_matrix import can_keyed_chart_enrich
+
+            enrich = can_keyed_chart_enrich(eid)
             venue_rows = build_lts_rows(snap, enrich_charts=enrich, exchange_id=eid)
             timings[f"build_{eid}_s"] = round(time.perf_counter() - t, 3)
             all_rows.extend(venue_rows)

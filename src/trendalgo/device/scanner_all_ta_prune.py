@@ -231,8 +231,12 @@ def deepen_seeds(
     return [row for row in slotted if row is not None]
 
 
-def fee_for_bps(fee_bps_round_trip: float) -> ExchangeFeeSchedule:
-    return fee_for_exchange("kraken", fee_bps_round_trip)
+def fee_for_bps(
+    fee_bps_round_trip: float,
+    *,
+    exchange_id: str = "kraken",
+) -> ExchangeFeeSchedule:
+    return fee_for_exchange(exchange_id, fee_bps_round_trip)
 
 
 def fee_for_exchange(

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from trendalgo.device import strings as S
 from trendalgo.device.views.scan_progress_dialog import (
+    ScanProgressDialog,
     format_pair_label,
     format_pairs_remaining,
     glance_from_progress,
@@ -77,3 +79,23 @@ def test_scan_progress_stamps_pair_fields_on_bt_events() -> None:
 
 def snap_state_pair(prog: ScanProgress) -> str:
     return str(prog.snapshot()["state"]["current_pair"])
+
+
+def test_sauce_pan_dialog_accepts_none_prior(qtbot) -> None:
+    """Sauce Pan used to pass prior_s=None → float(None) killed the click handler."""
+    dialog = ScanProgressDialog(
+        None,
+        title=S.SAUCE_PAN_TITLE,
+        seed_lines=(S.SAUCE_PAN_RUN_TIP, S.SCAN_PROGRESS_STARTING),
+        on_cancel=lambda: None,
+        prior_s=None,  # type: ignore[arg-type]
+        initial_total=3,
+        initial_pair="—",
+        initial_pairs_total=None,
+        count_label=S.SCAN_PROGRESS_STEPS,
+    )
+    qtbot.addWidget(dialog)
+    assert dialog.windowTitle() == S.SAUCE_PAN_TITLE
+    assert dialog._prior_s == 0.0  # noqa: SLF001
+    dialog._allow_close = True  # noqa: SLF001
+    dialog.close()

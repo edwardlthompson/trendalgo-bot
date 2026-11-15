@@ -1,19 +1,17 @@
-"""Solana wallet read plugin (S21)."""
+"""Solana wallet read plugin — native SOL + known SPL tokens."""
 
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import re
-import urllib.error
-import urllib.request
-from typing import Any
 
 from trendalgo.portfolio.db import HoldingRow
 from trendalgo.venues.base import VenueEntry
+from trendalgo.venues.plugins.solana_rpc import sol_balance, spl_token_balances
 
 _SOL_ADDRESS_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
+_USD_STABLE = frozenset({"USDC", "USDT"})
 
 
 class SolanaWalletReadPlugin:
@@ -50,31 +48,34 @@ class SolanaWalletReadPlugin:
             ),
         ]
 
-    def _rpc_lamports(self, address: str) -> float | None:
+    def _live_holdings(self, address: str) -> list[HoldingRow] | None:
         rpc_url = os.environ.get(self.entry.rpc_env, "").strip()
         if not rpc_url:
             return None
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "getBalance",
-            "params": [address],
-            "id": 1,
-        }
-        req = urllib.request.Request(
-            rpc_url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                body: dict[str, Any] = json.loads(resp.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError):
+        sol_qty = sol_balance(rpc_url, address)
+        if sol_qty is None:
             return None
-        value = body.get("result", {}).get("value")
-        if not isinstance(value, int):
-            return None
-        return value / 1e9
+        rows = [
+            HoldingRow(
+                asset="SOL",
+                quantity=round(sol_qty, 4),
+                price_usd=150.0,
+                value_usd=round(sol_qty * 150.0, 2),
+                cost_basis_usd=0.0,
+            )
+        ]
+        for symbol, amount in spl_token_balances(rpc_url, address):
+            price = 1.0 if symbol in _USD_STABLE else 0.0
+            rows.append(
+                HoldingRow(
+                    asset=symbol,
+                    quantity=round(amount, 8),
+                    price_usd=price,
+                    value_usd=round(amount * price, 2),
+                    cost_basis_usd=0.0,
+                )
+            )
+        return rows
 
     def read_balances(self, address: str, *, dry_run: bool = True) -> list[HoldingRow]:
         addr = self.validate_address(address)
@@ -84,15 +85,7 @@ class SolanaWalletReadPlugin:
             and os.environ.get(self.entry.rpc_env, "").strip()
         )
         if live_ok:
-            sol_qty = self._rpc_lamports(addr)
-            if sol_qty is not None:
-                return [
-                    HoldingRow(
-                        asset="SOL",
-                        quantity=round(sol_qty, 4),
-                        price_usd=150.0,
-                        value_usd=round(sol_qty * 150.0, 2),
-                        cost_basis_usd=0.0,
-                    )
-                ]
+            live = self._live_holdings(addr)
+            if live is not None:
+                return live
         return self._dry_holdings(addr)

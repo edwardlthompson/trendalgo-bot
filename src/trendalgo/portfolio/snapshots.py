@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -24,8 +25,9 @@ def capture_portfolio_snapshot(
     dry_run: bool = True,
     on_log: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
-    """Sync all exchanges, record today's aggregate on the primary account."""
+    """Sync all CEX exchanges (+ optional DEX wallets), record today's aggregate."""
     sync_all_exchanges(store, dry_run=dry_run)
+    _sync_dex_wallets(store, dry_run=dry_run)
     account_id = store.get_or_create_account("kraken", "default")
     if dry_run:
         ensure_btc_dry_run_fixture(store, account_id)
@@ -79,6 +81,22 @@ def scheduled_portfolio_job(
     from trendalgo.notifications.grokbot_portfolio import maybe_emit_snapshot
 
     maybe_emit_snapshot(overview)
+
+
+def _sync_dex_wallets(store: PortfolioStore, *, dry_run: bool) -> None:
+    """Best-effort DEX wallet sync when TRENDALGO_WALLET_ADDRESS is set."""
+    address = (
+        os.environ.get("TRENDALGO_WALLET_ADDRESS", "").strip()
+        or os.environ.get("ONCHAIN_WALLET_ADDRESS", "").strip()
+    )
+    if not address:
+        return
+    try:
+        from trendalgo.venues.orchestrator import sync_all_wallet_venues
+
+        sync_all_wallet_venues(store, address, dry_run=dry_run, include_lp=True)
+    except Exception:
+        return
 
 
 def start_portfolio_scheduler(

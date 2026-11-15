@@ -79,7 +79,7 @@ def fetch_tf_frame(
     days: int = SCAN_LOOKBACK_DAYS,
     exchange_id: str = "kraken",
 ) -> pd.DataFrame | None:
-    from trendalgo.market.ccxt_ohlcv import fetch_exchange_ohlcv
+    from trendalgo.market.ohlcv_provider import fetch_ohlcv
 
     text = str(pair or "").strip().upper()
     if "/" not in text:
@@ -87,7 +87,7 @@ def fetch_tf_frame(
     until = datetime.now(tz=UTC)
     since = until - timedelta(days=max(1, int(days)))
     try:
-        points = fetch_exchange_ohlcv(exchange_id, text, timeframe, since, until)
+        points = fetch_ohlcv(exchange_id, text, timeframe, since, until)
     except Exception:
         return None
     if not points:

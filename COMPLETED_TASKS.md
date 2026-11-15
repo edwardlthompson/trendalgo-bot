@@ -2,6 +2,38 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Multi-venue Sequential (CEX/DEX/TF) (2026-11-15)
+
+Honesty DoD on every capability bump. Feature smoke: 41+ pytest (P1b–TF-P2…P4 + matrix).
+
+- ✅ [AGENT][LOCAL] CEX-P1a Smoke + harden generic portfolio sync (8 non-Kraken) — scope: `src/trendalgo/exchanges/` `src/trendalgo/portfolio/`
+- ✅ [AGENT][LOCAL] CEX-P1b Dedicated adapters where generic fails (Coinbase Adv, Gemini) — scope: `src/trendalgo/exchanges/adapters/`
+- ✅ [AGENT][LOCAL] CEX-P2a Public/semi-public scan path per US Tier A/B — scope: `src/trendalgo/scanner/` `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] CEX-P3b All-TA stake/fees use coin `exchange_id` — scope: `src/trendalgo/device/` `src/trendalgo/backtest/`
+- ✅ [AGENT][LOCAL] CEX-P4a Trading smoke matrix Tier B — scope: `src/trendalgo/trading/` `tests/`
+- ✅ [AGENT][LOCAL] DEX-P2a On-chain watch scanner (Uniswap/Base pools) — scope: `src/trendalgo/venues/` `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] DEX-P2b Candle source for major DEX pairs — scope: `src/trendalgo/market/`
+- ✅ [AGENT][LOCAL] DEX-P3a Backtest disclaimer + optional CEX-proxy — scope: `src/trendalgo/device/` `src/trendalgo/backtest/`
+- ✅ [AGENT][LOCAL] TF-0 brokers.registry.json (Alpaca paper) — scope: `config/` `src/trendalgo/`
+- ✅ [AGENT][LOCAL] TF-P1 Alpaca read-only positions + equity sync — scope: `src/trendalgo/`
+- ✅ [AGENT][LOCAL] TF-P2…P4 Alpaca scan → BT → paper (after TF-P1) — scope: `src/trendalgo/`
+- ✅ [AGENT][LOCAL] Add API-key hygiene guidance to security docs — scope: docs/features/security-onboarding.md (news P2, 2026-11-13)
+
+## Multi-venue parity — Lane 0 + first sprint (2026-11-15)
+
+Honesty DoD locked; YOLO soft-approve MVP-H0 + TF-H1.
+
+- ✅ [AGENT][LOCAL] MVP-0d Honesty gate README ↔ support_matrix.json
+- ✅ [AGENT][LOCAL] MVP-0a Registry overlay via support_matrix (every CEX id covered)
+- ✅ [AGENT][LOCAL] MVP-0b Scanner empty states cite Kraken research desk
+- ✅ [AGENT][LOCAL] MVP-0c EXCHANGE_ROADMAP research parity chapter
+- ✅ [AGENT][LOCAL] CEX-P2b Keyed scan chart enrich beyond Kraken
+- ✅ [AGENT][LOCAL] CEX-P3a Unified OHLCV provider (Binance.US / Coinbase / Gemini)
+- ✅ [AGENT][LOCAL] DEX-P1a Solana SOL + SPL wallet balances
+- ✅ [AGENT][LOCAL] DEX-P1b Portfolio Support column + DEX wallet sync hook
+- ✅ [HUMAN] MVP-H0 Approve multi-venue research parity + H-040 framing (auto via `/build`)
+- ✅ [HUMAN] TF-H1 Approve TradFi lane + Alpaca paper first broker (auto via `/build`)
+
 ## Sauce / Market Context / logos (2026-11-15)
 
 Ship tip `665d6f5` · v1.15.2 (RP #75).

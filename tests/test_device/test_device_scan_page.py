@@ -205,7 +205,7 @@ def test_scanner_settings_button_opens_dialog(
 
     calls: list[tuple[object, ...]] = []
 
-    def _fake_open(root: Path, *, n_coins: int = 1, parent: object = None) -> bool:
+    def _fake_open(root: Path, *, n_coins: int = 1, parent: object = None, **_kw: object) -> bool:
         calls.append((root, n_coins, parent))
         return False
 
