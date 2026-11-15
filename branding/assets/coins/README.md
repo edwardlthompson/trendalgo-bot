@@ -2,11 +2,19 @@
 
 Put official coin logo files here (`BTC.png`, `ETH.png`, …), or use one of the search paths below.
 
+Curated extras for newer Kraken tickers (AKE, LIGHTER, AUDX, …) live in this folder and in
+`config/coin-icon-extras.json`. Refresh them with:
+
+```bash
+uv run python scripts/sync-icon-registry.py --extras
+
+```
+
 ## Resolution order
 
 1. `TRENDALGO_COIN_ICONS` environment variable (directory of icons)
-2. `branding/assets/coins/from-retired-web-backup/` (local junction; **do not commit**)
-3. `branding/assets/coins/` (curated files you choose to commit)
+2. `branding/assets/coins/` (curated files — overlays the bulk pack)
+3. `branding/assets/coins/from-retired-web-backup/` (local junction; **do not commit**)
 4. `examples/web/public/icons/coins/` (retired tree; may be absent)
 
 ## Local junction (recommended for PWA look)
@@ -16,12 +24,14 @@ If you still have the 2026-10-10 PWA backup:
 ```powershell
 New-Item -ItemType Junction -Path "branding\assets\coins\from-retired-web-backup" `
   -Target "C:\Users\edwar\trendalgo-retired-pwa-2026-10-10\examples\web\public\icons\coins"
+
 ```
 
 Or set:
 
 ```powershell
 $env:TRENDALGO_COIN_ICONS = "C:\Users\edwar\trendalgo-retired-pwa-2026-10-10\examples\web\public\icons\coins"
+
 ```
 
 Do **not** `git add` the full icon dump (~977 files). Repo hygiene keeps that out of history.

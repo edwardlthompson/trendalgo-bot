@@ -342,6 +342,11 @@ SCAN_BT_SETTINGS = "Settings"
 SCAN_BT_SETTINGS_TIP = "Timeframes, strategies, and scan-time estimate"
 SCAN_BT_SETTINGS_TITLE = "Scan & backtest settings"
 SCAN_BT_SETTINGS_SAVED = "Scan settings saved."
+SCAN_BT_ETA_TITLE = "Estimated scan time"
+SCAN_BT_ETA_HINT = (
+    "Updates as you change timeframes, strategies, or Sauce Pan — "
+    "scaled from recent scan timing for the current pair count."
+)
 SCAN_BT_TF_TITLE = "Timeframes"
 SCAN_BT_TF_SUBHOUR = "Sub-hour"
 SCAN_BT_TF_HOURS = "Hours (1h–24h)"
@@ -351,6 +356,28 @@ SCAN_BT_SELECT_ALL = "All"
 SCAN_BT_SELECT_NONE = "None"
 SCAN_BT_NO_TFS = "Select at least one timeframe in Settings."
 SCAN_BT_NO_STRATEGIES = "Enable at least one strategy in Settings."
+MARKET_CTX_WITH_SCAN = "Include Market Context with scan"
+MARKET_CTX_WITH_SCAN_TIP = (
+    "Pair-level Signal / Levels / Risk / Structure after candles load "
+    "(~1s per coin). Turn off to skip when you only need strategy tables."
+)
+SAUCE_PAN_TITLE = "Sauce Pan"
+SAUCE_PAN_WITH_SCAN = "Include Secret Sauce with scan"
+SAUCE_PAN_WITH_SCAN_TIP = (
+    "When off, Opportunity still runs catalog + deepen for every BT candidate; "
+    "only the Sauce Lab pass is skipped."
+)
+SAUCE_PAN_TOP_N = "Sauce pairs (top N)"
+SAUCE_PAN_TOP_N_TIP = "Oracle-ranked pairs to cook in Sauce Pan (auto with scan or manual)."
+SAUCE_PAN_RUN = "Run Secret Sauce"
+SAUCE_PAN_RUN_TIP = (
+    "Sauce Pan: cook Secret Sauce on filtered Qualified coins that already have "
+    "backtests (top N only). Does not re-run TA catalog or deepen."
+)
+SAUCE_PAN_BUSY = "Sauce Pan is busy — wait for the current job to finish."
+SAUCE_PAN_EMPTY = "Sauce Pan: no filtered Qualified coins with backtests to cook."
+SAUCE_PAN_DONE = "Sauce Pan finished — Qualified list and Results updated."
+SAUCE_PAN_FAILED = "Sauce Pan failed: {error}"
 SCANNER_NONE_TITLE = "The last scan qualified no pairs"
 SCANNER_NONE_BODY = "Nothing passed the filters in that scan. Press Run scan to check again."
 SCANNER_FILTER_NONE_TITLE = "No coins match these column filters"

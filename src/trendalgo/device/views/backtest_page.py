@@ -119,10 +119,10 @@ class BacktestPage(QWidget):
         self._run.setDefault(True)
         self._refresh_prices = QPushButton(S.BACKTEST_REFRESH_PRICES)
         self._refresh_prices.setToolTip(S.BACKTEST_REFRESH_PRICES_TIP)
-        self._settings = QToolButton()
+        self._settings = QPushButton(S.SCAN_BT_SETTINGS)
         self._settings.setObjectName("scanBtSettings")
-        self._settings.setText(S.SCAN_BT_SETTINGS)
         self._settings.setToolTip(S.SCAN_BT_SETTINGS_TIP)
+        self._settings.setCursor(Qt.CursorShape.PointingHandCursor)
         self._settings.clicked.connect(lambda _c=False: self._open_scan_settings())
         self._cancel = QPushButton(S.CANCEL)
         self._cancel.setEnabled(False)
@@ -231,7 +231,12 @@ class BacktestPage(QWidget):
     def _open_scan_settings(self) -> None:
         from trendalgo.device.views.scan_bt_settings_dialog import open_scan_bt_settings
 
-        if open_scan_bt_settings(self._root, n_coins=1, parent=self):
+        try:
+            accepted = open_scan_bt_settings(self._root, n_coins=1, parent=self.window())
+        except Exception as exc:
+            show_problem(self._problem, f"{S.SCAN_BT_SETTINGS}: {exc}")
+            return
+        if accepted:
             self._status.setText(S.SCAN_BT_SETTINGS_SAVED)
 
     def _start(self) -> None:
@@ -365,6 +370,7 @@ class BacktestPage(QWidget):
             heatmap=bool(self._heatmap.isChecked()),
             sort_key=self._sort_key,
             sort_dir=self._sort_dir,
+            market_context=self._market_context,
         )
         if note:
             self._create_note.setText(note)

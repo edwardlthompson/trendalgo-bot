@@ -52,6 +52,33 @@ def test_filtered_leave_uses_board_metrics_for_reason() -> None:
     assert leave.coin.get("bot_best_net_pct") == 12.0
 
 
+def test_off_board_leave_cites_scan_board_drop() -> None:
+    """CAP-style: left filtered set because coin vanished from scan board."""
+    previous = {"CAP", "KEEP"}
+    current = [{"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0}]
+    board = [{"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0}]
+    prev_coins = {
+        "CAP": {
+            "symbol": "CAP",
+            "pair": "CAP/USD",
+            "bot_best_net_pct": 55.0,
+            "volume_24h": 2_000_000,
+        },
+        "KEEP": {"symbol": "KEEP", "pair": "KEEP/USD", "bot_best_net_pct": 50.0},
+    }
+    events = diff_alerts(
+        previous=previous,
+        current_coins=current,
+        watchlist=set(),
+        previous_coins=prev_coins,
+        board_coins=board,
+        floors={"min_best_bt": 30.0, "min_volume_usd": 1_000_000},
+    )
+    leave = next(e for e in events if e.kind == "watchlist_leave" and e.symbol == "CAP")
+    assert "no longer on scan board" in leave.reason
+    assert "dropped from qualified set" not in leave.reason
+
+
 def test_leave_reason_uses_floors_and_snapshot() -> None:
     from trendalgo.device.scanner_alert_diff import leave_reason
 

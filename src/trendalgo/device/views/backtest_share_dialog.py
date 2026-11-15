@@ -22,6 +22,7 @@ def run_backtest_share_dialog(
     heatmap: bool,
     sort_key: str,
     sort_dir: int,
+    market_context: dict[str, Any] | None = None,
 ) -> str | None:
     """Show save dialog, export, confirm. Returns status note or None when cancelled."""
     if not rows:
@@ -46,6 +47,7 @@ def run_backtest_share_dialog(
             heatmap=heatmap,
             sort_key=sort_key,
             sort_dir=sort_dir,
+            market_context=market_context,
         )
     except (OSError, ValueError) as exc:
         QMessageBox.warning(parent, S.BACKTEST_SHARE, str(exc))

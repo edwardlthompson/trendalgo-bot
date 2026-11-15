@@ -70,6 +70,7 @@ def export_scanner_list_png(
     heatmap: bool = False,
     sort_key: str = "health",
     sort_dir: int = -1,
+    include_market_context: bool = True,
 ) -> Path:
     if not coins:
         raise ValueError("no rows to export")
@@ -82,6 +83,7 @@ def export_scanner_list_png(
         heatmap=heatmap,
         sort_key=sort_key,
         sort_dir=sort_dir,
+        include_market_context=include_market_context,
     )
     try:
         panel.adjustSize()
@@ -102,6 +104,7 @@ def export_strategy_sheet_png(
     filters: dict[str, Any] | None = None,
     sort_key: str = "net_pct",
     sort_dir: int = -1,
+    market_context: dict[str, Any] | None = None,
 ) -> Path:
     from trendalgo.device.backtest_share import export_backtest_table_png
 
@@ -113,4 +116,5 @@ def export_strategy_sheet_png(
         heatmap=heatmap,
         sort_key=sort_key,
         sort_dir=sort_dir,
+        market_context=market_context,
     )

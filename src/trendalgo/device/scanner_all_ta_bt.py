@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import time
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -27,14 +26,64 @@ from trendalgo.device.scan_parallel import (
 )
 from trendalgo.device.scan_stake import DEFAULT_SCAN_EXCHANGE, DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scan_time_history import TimingSample, record_sample
-from trendalgo.device.scanner_all_ta_coin import backtest_one_coin
+from trendalgo.device.scanner_all_ta_pool import run_opportunity_sauce_pass, run_pool
 from trendalgo.device.scanner_all_ta_prune import fee_for_exchange, fleet_row_to_lts
 from trendalgo.device.sim_accel_label import catalog_accel_label
 from trendalgo.scanner.progress import get_scan_progress
 
-__all__ = ["all_ta_coin_workers", "fleet_row_to_lts", "run_all_ta_scan_backtests"]
+# Compat alias for tests that patch ``mod._run_pool``.
+_run_pool = run_pool
 
-CoinResult = tuple[str, list[dict[str, Any]], dict[str, float], dict[str, Any] | None]
+
+def _sauce_pool_on_seeds(
+    sauce_coins: list[dict[str, Any]],
+    *,
+    loader_factory: Any,
+    timeframes: tuple[str, ...],
+    strat_list: tuple[str, ...],
+    stake: float,
+    fee: Any,
+    fee_bps: float,
+    prefs_root: Path,
+    progress: Any,
+    seed_rows_by_symbol: dict[str, list[dict[str, Any]]],
+    on_ok: Any,
+    on_ctx: Any,
+) -> bool:
+    """Serial Sauce-only via ``_run_pool`` (patchable in tests)."""
+    if not sauce_coins:
+        return False
+    set_coin_parallel(1)
+    progress.phase("Backtest (Secret Sauce)…", total=len(sauce_coins), unit="coins")
+    progress.log(
+        f"Sauce pass: {len(sauce_coins)} coins · sauce-only · {parallel_log_bits()} (serial)"
+    )
+    _run_pool(
+        sauce_coins,
+        workers=1,
+        include_sauce=True,
+        loader_factory=loader_factory,
+        timeframes=timeframes,
+        strat_list=strat_list,
+        stake=stake,
+        fee=fee,
+        fee_bps=fee_bps,
+        prefs_root=prefs_root,
+        progress=progress,
+        on_ok=on_ok,
+        on_ctx=on_ctx,
+        on_score=None,
+        seed_rows_by_symbol=seed_rows_by_symbol,
+    )
+    return True
+
+
+__all__ = [
+    "all_ta_coin_workers",
+    "fleet_row_to_lts",
+    "run_all_ta_scan_backtests",
+    "run_opportunity_sauce_pass",
+]
 
 
 def run_all_ta_scan_backtests(
@@ -44,7 +93,7 @@ def run_all_ta_scan_backtests(
     timeframes: tuple[str, ...] | None = None,
     prefs_root: Path | None = None,
 ) -> dict[str, Any] | None:
-    """Catalog+deepen all coins; Sauce Lab only for top Oracle-N (default 10)."""
+    """Catalog+deepen all coins; Sauce Lab only when sauce_with_scan (top-N)."""
     if not coins:
         return None
     if os.environ.get("BACKTEST_ENABLED", "1").strip().lower() in {"0", "false", "no", "off"}:
@@ -71,12 +120,19 @@ def run_all_ta_scan_backtests(
     subhour = needs_1m_base(tf_list)
     workers = min(all_ta_coin_workers(), max(1, len(coins)))
     set_coin_parallel(workers)
+    sauce_top_n = int(
+        getattr(prefs, "sauce_top_n", OPPORTUNITY_SAUCE_TOP_N) or OPPORTUNITY_SAUCE_TOP_N
+    )
+    sauce_with = bool(getattr(prefs, "sauce_with_scan", True))
+    mc_with = bool(getattr(prefs, "market_context_with_scan", True))
+    sauce_note = f"Sauce top {sauce_top_n}" if sauce_with else "Sauce off"
+    mc_note = "MC on" if mc_with else "MC off"
     progress.log(
         f"All-TA stake=${stake:.0f} · fees={fee.exchange_id} "
         f"taker={fee.taker_pct * 100:.2f}% · {catalog_accel_label()} · "
         f"{parallel_log_bits()} · "
         f"{len(tf_list)} TFs · {len(strat_list)} strategies · "
-        f"Sauce top {OPPORTUNITY_SAUCE_TOP_N} only" + (" · 1m base" if subhour else "")
+        f"{sauce_note} · {mc_note}" + (" · 1m base" if subhour else "")
     )
 
     def loader_factory() -> Any:
@@ -129,13 +185,14 @@ def run_all_ta_scan_backtests(
                     had_subhour=subhour,
                     bars_base=int(stats.get("bars_base", 0) or 0),
                     ts=time.time(),
+                    mc_s=float(stats.get("mc_s", 0.0) or 0.0),
+                    sauce_s=float(stats.get("sauce_s", 0.0) or 0.0),
                 ),
             )
         except OSError:
             pass
 
     try:
-        # Pass 1 — catalog + deepen for every qualified coin (no Sauce).
         progress.phase("Backtest (All TA catalog)…", total=len(coins), unit="coins")
         progress.log(f"Pass-1 catalog+deepen on {len(coins)} coins (Sauce deferred)")
         _run_pool(
@@ -153,27 +210,20 @@ def run_all_ta_scan_backtests(
             on_ok=lambda s, r, st: _accumulate(s, r, st, tally=True, label="catalog"),
             on_ctx=lambda sym, ctx: market_contexts.__setitem__(sym, ctx),
             on_score=lambda sym, rows: scored.append((sym, oracle_rank_score(rows))),
+            include_market_context=mc_with,
         )
 
-        sauce_syms = select_sauce_symbols(scored, top_n=OPPORTUNITY_SAUCE_TOP_N)
-        sauce_coins = [coin_by_sym[s] for s in sauce_syms if s in coin_by_sym]
-        progress.log(
-            f"Sauce: {len(sauce_coins)} of {len(coins)} "
-            f"(top{OPPORTUNITY_SAUCE_TOP_N} only; "
-            f"{', '.join(sauce_syms) or 'none'})"
-        )
-        if sauce_coins:
-            # Serial Sauce-only on pass-1 rows (no re-catalog / deepen).
-            set_coin_parallel(1)
-            progress.phase("Backtest (Secret Sauce)…", total=len(sauce_coins), unit="coins")
+        if not sauce_with:
+            progress.log("Sauce skipped (sauce_with_scan=false); catalog+deepen complete")
+        else:
+            sauce_syms = select_sauce_symbols(scored, top_n=sauce_top_n)
+            sauce_coins = [coin_by_sym[s] for s in sauce_syms if s in coin_by_sym]
             progress.log(
-                f"Sauce pass: {len(sauce_coins)} coins · sauce-only · "
-                f"{parallel_log_bits()} (serial)"
+                f"Sauce: {len(sauce_coins)} of {len(coins)} "
+                f"(top{sauce_top_n}; {', '.join(sauce_syms) or 'none'})"
             )
-            _run_pool(
+            if sauce_coins and _sauce_pool_on_seeds(
                 sauce_coins,
-                workers=1,
-                include_sauce=True,
                 loader_factory=loader_factory,
                 timeframes=tf_list,
                 strat_list=strat_list,
@@ -182,12 +232,11 @@ def run_all_ta_scan_backtests(
                 fee_bps=rp.backtest_fee_bps_round_trip,
                 prefs_root=root,
                 progress=progress,
+                seed_rows_by_symbol=by_symbol,
                 on_ok=lambda s, r, st: _accumulate(s, r, st, tally=False, label="sauce"),
                 on_ctx=lambda sym, ctx: market_contexts.__setitem__(sym, ctx),
-                on_score=None,
-                seed_rows_by_symbol=by_symbol,
-            )
-            mark_sauce_ever(root, sauce_syms)
+            ):
+                mark_sauce_ever(root, sauce_syms)
     finally:
         set_coin_parallel(1)
 
@@ -221,71 +270,6 @@ def run_all_ta_scan_backtests(
         "per_coin_s": per_coin,
         "market_contexts": market_contexts,
         "sauce_symbols": sauce_syms,
-        "sauce_top_n": OPPORTUNITY_SAUCE_TOP_N,
+        "sauce_top_n": sauce_top_n,
+        "sauce_with_scan": sauce_with,
     }
-
-
-def _run_pool(
-    coins: list[dict[str, Any]],
-    *,
-    workers: int,
-    include_sauce: bool,
-    loader_factory: Any,
-    timeframes: tuple[str, ...],
-    strat_list: tuple[str, ...],
-    stake: float,
-    fee: Any,
-    fee_bps: float,
-    prefs_root: Path,
-    progress: Any,
-    on_ok: Any,
-    on_ctx: Any,
-    on_score: Any,
-    seed_rows_by_symbol: dict[str, list[dict[str, Any]]] | None = None,
-) -> None:
-    n_coins = len(coins)
-    if n_coins == 0:
-        return
-    done = 0
-    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
-        futs: dict[Future[CoinResult], dict[str, Any]] = {}
-        for c in coins:
-            sym = str(c.get("symbol") or c.get("pair") or "?")
-            sym_key = str(c.get("symbol") or "").strip().upper()
-            if include_sauce:
-                progress.log(f"Sauce cooking {sym}…")
-            seed = None
-            if seed_rows_by_symbol is not None and sym_key:
-                seed = list(seed_rows_by_symbol.get(sym_key) or [])
-            futs[
-                pool.submit(
-                    backtest_one_coin,
-                    c,
-                    loader_factory=loader_factory,
-                    timeframes=timeframes,
-                    strat_list=strat_list,
-                    stake=stake,
-                    fee=fee,
-                    fee_bps_round_trip=fee_bps,
-                    prefs_root=prefs_root,
-                    include_sauce=include_sauce,
-                    sauce_only_rows=seed,
-                )
-            ] = c
-        for fut in as_completed(futs):
-            done += 1
-            coin = futs[fut]
-            fallback = str(coin.get("symbol") or coin.get("pair") or "")
-            try:
-                symbol, rows, stats, market_context = fut.result()
-            except Exception as exc:
-                progress.log(f"All-TA coin failed: {exc}", level="error")
-                progress.step(done, total=n_coins, pair=fallback)
-                continue
-            if symbol:
-                on_ok(symbol, rows, stats)
-                if on_score is not None:
-                    on_score(symbol, rows)
-                if isinstance(market_context, dict):
-                    on_ctx(str(symbol).upper(), market_context)
-            progress.step(done, total=n_coins, pair=symbol or fallback)

@@ -195,6 +195,32 @@ def test_scanner_page_has_pwa_filter_strip(
     assert not hasattr(page, "_compare")
 
 
+def test_scanner_settings_button_opens_dialog(
+    qtbot: QtBot,
+    ctx: DeviceContext,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QPushButton
+
+    calls: list[tuple[object, ...]] = []
+
+    def _fake_open(root: Path, *, n_coins: int = 1, parent: object = None) -> bool:
+        calls.append((root, n_coins, parent))
+        return False
+
+    monkeypatch.setattr(
+        "trendalgo.device.views.scan_bt_settings_dialog.open_scan_bt_settings",
+        _fake_open,
+    )
+    page = ScannerPage(ctx)
+    qtbot.addWidget(page)
+    assert isinstance(page._filters.settings, QPushButton)
+    qtbot.mouseClick(page._filters.settings, Qt.MouseButton.LeftButton)
+    assert len(calls) == 1
+    assert calls[0][0] == ctx.root
+
+
 def test_filter_bar_keeps_zero_gains_as_integers(qtbot: QtBot) -> None:
     from trendalgo.device.views.scanner_column_filter_row import GainMinEdit, ScannerColumnFilterRow
     from trendalgo.device.views.scanner_filters import ScannerFilterBar

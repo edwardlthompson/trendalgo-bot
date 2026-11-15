@@ -17,21 +17,15 @@ class AlertEvent:
 
 def coin_keys(coins: list[dict[str, Any]]) -> set[str]:
     """Normalized symbol keys for qualified coins."""
-    out: set[str] = set()
-    for coin in coins:
-        key = _key(coin)
-        if key:
-            out.add(key)
-    return out
+    return {k for c in coins if (k := _key(c))}
 
 
 def watchlist_keys(pairs: list[str]) -> set[str]:
     out: set[str] = set()
     for raw in pairs:
         text = str(raw or "").strip().upper()
-        if not text:
-            continue
-        out.add(text.split("/", 1)[0] if "/" in text else text)
+        if text:
+            out.add(text.split("/", 1)[0] if "/" in text else text)
     return out
 
 
@@ -43,22 +37,18 @@ def diff_alerts(
     *,
     previous: set[str],
     current_coins: list[dict[str, Any]],
-    watchlist: set[str] | None = None,  # noqa: ARG001 — kept for call-site compat
+    watchlist: set[str] | None = None,  # noqa: ARG001 — call-site compat
     previous_coins: dict[str, dict[str, Any]] | None = None,
     board_coins: list[dict[str, Any]] | None = None,
     floors: dict[str, float] | None = None,
 ) -> list[AlertEvent]:
-    """New filtered enters + every coin that left the filtered Qualified set.
-
-    Kind remains ``watchlist_leave`` for NotifyPrefs / history compatibility.
-    Leave reasons prefer current full-board metrics when the coin is still
-    scan-qualified but filtered out.
-    """
-    del watchlist  # leave is filtered-set based, not watchlist-gated
+    """Filtered enters + leaves. Kind stays ``watchlist_leave`` for prefs compat."""
+    del watchlist
     by_key = coins_by_key(current_coins)
     current = set(by_key)
     prev_coins = previous_coins or {}
     board_by_key = coins_by_key(board_coins) if board_coins else {}
+    board_provided = board_coins is not None
     events: list[AlertEvent] = []
     for key in sorted(current - previous):
         coin = by_key[key]
@@ -72,13 +62,14 @@ def diff_alerts(
             )
         )
     for key in sorted(previous - current):
+        on_board = key in board_by_key if board_provided else None
         snap = board_by_key.get(key) or prev_coins.get(key)
         events.append(
             AlertEvent(
                 kind="watchlist_leave",
                 symbol=key,
                 pair=str((snap or {}).get("pair") or f"{key}/USD"),
-                reason=leave_reason(key, snap, floors=floors),
+                reason=leave_reason(key, snap, floors=floors, on_board=on_board),
                 coin=snap,
             )
         )
@@ -90,11 +81,22 @@ def leave_reason(
     snap: dict[str, Any] | None,
     *,
     floors: dict[str, float] | None = None,
+    on_board: bool | None = None,
 ) -> str:
-    """Field-level leave reason from last snapshot vs Qualified-column floors."""
+    """Floor misses + off-board note for Telegram / Grok Bot ``reason``."""
     if snap is None:
+        if on_board is False:
+            return f"{symbol} left qualified: no longer on scan board"
         return f"{symbol} left the qualified list (not in qualified set)"
-    floors = floors or {}
+    parts = _floor_misses(snap, floors or {})
+    if on_board is False:
+        parts.insert(0, "no longer on scan board")
+    if parts:
+        return f"{symbol} left qualified: " + "; ".join(parts)
+    return f"{symbol} left the qualified list (dropped from qualified set)"
+
+
+def _floor_misses(snap: dict[str, Any], floors: dict[str, float]) -> list[str]:
     parts: list[str] = []
     vol = _num(snap.get("volume_24h") or snap.get("volume_usd"))
     min_vol = _floor(floors, "vol24_min", "min_volume_usd")
@@ -102,7 +104,7 @@ def leave_reason(
         parts.append(f"Volume ${vol:,.0f} below min ${min_vol:,.0f}")
     uni = _num(snap.get("uniformity_score") or snap.get("uniformity"))
     min_uni = _floor(floors, "uniformity_min", "min_uniformity")
-    if min_uni is not None and uni is not None and uni < min_uni:
+    if min_uni is not None and uni is not None and uni < _uni_floor(min_uni, uni):
         parts.append(f"Uniformity {uni:.2f} < {min_uni:.2f}")
     gains = snap.get("gains") if isinstance(snap.get("gains"), dict) else {}
     gain7 = _num(snap.get("gain_7d") or gains.get("7d"))
@@ -134,9 +136,15 @@ def leave_reason(
         dist = _num(snap.get(field))
         if cap is not None and dist is not None and dist > cap:
             parts.append(f"{label} {dist:.1f}% above max {cap:.1f}%")
-    if parts:
-        return f"{symbol} left qualified: " + "; ".join(parts)
-    return f"{symbol} left the qualified list (dropped from qualified set)"
+    return parts
+
+
+def _uni_floor(floor: float, uni: float) -> float:
+    if floor <= 1.0 and uni > 1.5:
+        return floor * 100.0
+    if floor > 1.5 and uni <= 1.5:
+        return floor / 100.0
+    return floor
 
 
 def _floor(floors: dict[str, float], *keys: str) -> float | None:
@@ -150,7 +158,6 @@ def _floor(floors: dict[str, float], *keys: str) -> float | None:
 
 
 def _pct_pair(value: float, floor: float) -> tuple[float, float]:
-    """Normalize gain/floor that may be fraction (0.2) or percent (20)."""
     floor_pct = floor * 100.0 if floor <= 1.0 else floor
     value_pct = value * 100.0 if abs(value) <= 1.5 else value
     return value_pct, floor_pct

@@ -110,6 +110,7 @@ class ScannerPage(QWidget):
         self._on_alerts_changed = on_alerts_changed
         self._pool = WorkerPool(workers=1)
         self._pending: AsyncResult[Any] | None = None
+        self._job_kind: str = "scan"
         self._scan_dialog: ScanProgressDialog | None = None
         self._coins: list[dict[str, Any]] = []
         self._shown: list[dict[str, Any]] = []
@@ -184,6 +185,7 @@ class ScannerPage(QWidget):
         self._run.clicked.connect(lambda _checked=False: self._start())
         self._cancel.clicked.connect(lambda _checked=False: self._cancel_run())
         self._filters.refresh_prices.clicked.connect(lambda _checked=False: self._refresh_prices())
+        self._filters.sauce_pan.clicked.connect(lambda _c=False: self._start_sauce_pan())
         if debug_scan_enabled():
             self._filters.force_fresh.setVisible(True)
             self._filters.force_fresh.clicked.connect(
@@ -262,11 +264,16 @@ class ScannerPage(QWidget):
     def _open_scan_settings(self) -> None:
         from trendalgo.device.views.scan_bt_settings_dialog import open_scan_bt_settings
 
-        if open_scan_bt_settings(
-            self._root,
-            n_coins=max(1, len(self._coins)),
-            parent=self,
-        ):
+        try:
+            accepted = open_scan_bt_settings(
+                self._root,
+                n_coins=max(1, len(self._coins)),
+                parent=self.window(),
+            )
+        except Exception as exc:
+            show_problem(self._problem, f"{S.SCAN_BT_SETTINGS}: {exc}")
+            return
+        if accepted:
             self._refresh_scan_eta()
             self._status.setText(S.SCAN_BT_SETTINGS_SAVED)
 
@@ -289,6 +296,9 @@ class ScannerPage(QWidget):
                 n_timeframes=len(tfs),
                 had_subhour=needs_1m_base(tfs),
                 n_coins=max(1, len(self._coins) or 1),
+                market_context=bool(prefs.market_context_with_scan),
+                sauce_with_scan=bool(prefs.sauce_with_scan),
+                sauce_top_n=int(prefs.sauce_top_n),
             )
         )
 
@@ -617,6 +627,48 @@ class ScannerPage(QWidget):
             return S.SCANNER_SOURCE_KEYED.format(venues=", ".join(venues))
         return S.SCANNER_SOURCE_PUBLIC
 
+    def _start_sauce_pan(self) -> None:
+        """Sauce Pan manual cook — filtered Qualified + existing BT only (no TA scan)."""
+        if self._pending is not None or self._scan_dialog is not None:
+            show_problem(self._problem, S.SAUCE_PAN_BUSY)
+            return
+        from trendalgo.device.opportunity_sauce_job import (
+            coins_eligible_for_sauce,
+            run_manual_sauce_pan,
+        )
+
+        filtered = self._qualified_filtered_coins()
+        eligible = coins_eligible_for_sauce(filtered)
+        if not eligible:
+            self._status.setText(S.SAUCE_PAN_EMPTY)
+            return
+        clear_problem(self._problem)
+        clear_progress(self._root)
+        self._logs.clear()
+        self._log_seq = 0
+        self._job_kind = "sauce"
+        n = len(eligible)
+        dialog = ScanProgressDialog(
+            self.window(),
+            title=S.SAUCE_PAN_TITLE,
+            seed_lines=(S.SAUCE_PAN_RUN_TIP, S.SCAN_PROGRESS_STARTING),
+            on_cancel=self._cancel_run,
+            prior_s=None,
+            initial_total=max(1, n),
+            initial_pair="—",
+            initial_pairs_total=None,
+            count_label=S.SCAN_PROGRESS_STEPS,
+        )
+        self._scan_dialog = dialog
+        apply_main_blur(self.window(), enabled=True)
+        self._pending = self._pool.submit(run_manual_sauce_pan, self._root, filtered)
+        self._filters.set_running(True)
+        self._refresh_auto_caption()
+        self._timer.start()
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+
     def _start(self, *, force_fresh: bool = False) -> None:
         if self._pending is not None or self._scan_dialog is not None:
             return
@@ -652,6 +704,7 @@ class ScannerPage(QWidget):
         self._log_seq = 0
         if not force_fresh:
             self._force_fresh_pending = False
+        self._job_kind = "scan"
         mode = self._scan_mode_label()
         n_coins = max(1, len(self._coins) or 1)
         had_subhour = needs_1m_base(tfs) if tfs else False
@@ -723,6 +776,8 @@ class ScannerPage(QWidget):
             return
         self._timer.stop()
         self._pending = None
+        job_kind = self._job_kind
+        self._job_kind = "scan"
         self._close_scan_dialog()
         self._filters.set_running(False)
         problem = ""
@@ -733,11 +788,26 @@ class ScannerPage(QWidget):
             problem = S.SCAN_BUSY
         except ScanUnavailableError:
             problem = S.SCAN_UNAVAILABLE
-        except Exception:
-            problem = S.SCAN_FAILED
+        except Exception as exc:
+            problem = (
+                S.SAUCE_PAN_FAILED.format(error=str(exc)) if job_kind == "sauce" else S.SCAN_FAILED
+            )
 
         self._tabs.setCurrentIndex(TAB_QUALIFIED)
         self.reload()
+        if job_kind == "sauce":
+            if problem:
+                show_problem(self._problem, problem)
+            elif isinstance(result, dict) and not result.get("ok"):
+                show_problem(
+                    self._problem,
+                    str(result.get("message") or S.SAUCE_PAN_EMPTY),
+                )
+            else:
+                self._status.setText(S.SAUCE_PAN_DONE)
+                self._emit_scan_alerts()
+            self._schedule_autoscan(reset=False)
+            return
         source = ""
         if isinstance(result, dict):
             source = str(result.get("data_source") or "").strip()
@@ -822,6 +892,7 @@ class ScannerPage(QWidget):
     def _cancel_run(self) -> None:
         self._timer.stop()
         self._pending = None
+        self._job_kind = "scan"
         self._pool.cancel()
         self._close_scan_dialog()
         self._filters.set_running(False)

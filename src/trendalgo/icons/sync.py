@@ -15,9 +15,11 @@ from trendalgo.icons.store import IconStore
 
 _REPO = Path(__file__).resolve().parents[3]
 _EXCHANGE_CONFIG = _REPO / "config" / "exchange-icons.json"
+_COIN_EXTRAS = _REPO / "config" / "coin-icon-extras.json"
 _WEB_REGISTRY = _REPO / "examples" / "web" / "public" / "icon-registry"
 _EXCHANGE_ICON_DIR = _REPO / "examples" / "web" / "public" / "icons" / "exchanges"
 _COIN_ICON_DIR = _REPO / "examples" / "web" / "public" / "icons" / "coins"
+_CURATED_COIN_DIR = _REPO / "branding" / "assets" / "coins"
 _COINGECKO = "https://api.coingecko.com/api/v3"
 _USER_AGENT = "TrendAlgo-Bot/1.0 (FOSS; icon-registry-sync)"
 
@@ -254,10 +256,56 @@ def apply_coin_aliases() -> dict[str, Any]:
     return {"aliases_added": added, "coin_count": len(coins)}
 
 
+def sync_coin_extras(store: IconStore | None = None, *, refresh: bool = False) -> dict[str, Any]:
+    """Download curated scanner tickers (AKE, LIGHTER, …) into branding/assets/coins."""
+    if not _COIN_EXTRAS.is_file():
+        return {"extra_count": 0}
+    raw = json.loads(_COIN_EXTRAS.read_text(encoding="utf-8"))
+    coins: dict[str, dict[str, Any]] = dict(raw.get("coins") or {})
+    _CURATED_COIN_DIR.mkdir(parents=True, exist_ok=True)
+    junction = _CURATED_COIN_DIR / "from-retired-web-backup"
+    written = 0
+    for symbol, meta in coins.items():
+        cid = str(meta.get("coingecko_id") or "").strip()
+        if not cid:
+            continue
+        dest = _CURATED_COIN_DIR / f"{symbol.upper()}.png"
+        if dest.exists() and not refresh:
+            written += 1
+            continue
+        data = _fetch_json(f"{_COINGECKO}/coins/{cid}")
+        image = data.get("image") if isinstance(data.get("image"), dict) else {}
+        remote = str(
+            (image or {}).get("large")
+            or (image or {}).get("small")
+            or (image or {}).get("thumb")
+            or ""
+        )
+        if not remote:
+            continue
+        ext = _extension_from_url(remote)
+        dest = _CURATED_COIN_DIR / f"{symbol.upper()}{ext}"
+        _download_file(remote, dest)
+        if junction.is_dir():
+            (junction / dest.name).write_bytes(dest.read_bytes())
+        if store is not None:
+            store.upsert_coin(
+                symbol.upper(),
+                str(meta.get("name") or data.get("name") or symbol),
+                cid,
+                f"/icons/coins/{dest.name}",
+                int(data.get("market_cap_rank") or 0) or None,
+            )
+        written += 1
+        time.sleep(0.8)
+    return {"extra_count": written}
+
+
 def sync_all(*, coin_limit: int = 1000, refresh: bool = False) -> dict[str, Any]:
     data_dir = Path(os.environ.get("TRENDALGO_DATA_DIR", "data"))
     store = IconStore(data_dir / "icon-registry.db")
     exchanges = sync_exchanges(store, refresh=refresh)
     coins = sync_coins(store, limit=coin_limit, refresh=refresh)
+    extras = sync_coin_extras(store, refresh=refresh)
     aliases = apply_coin_aliases()
-    return {**exchanges, **coins, **aliases, "db_path": str(store.db_path)}
+    return {**exchanges, **coins, **extras, **aliases, "db_path": str(store.db_path)}

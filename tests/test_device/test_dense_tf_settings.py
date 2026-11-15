@@ -243,6 +243,7 @@ def test_scan_bt_settings_dialog_wires_dump_keys(tmp_path: Path, qtbot: QtBot) -
     qtbot.addWidget(dlg)
     assert dlg.windowTitle()
     assert dlg._eta.text()
+    assert S.SCAN_BT_ETA_TITLE
     dlg._tf_boxes["5m"].setChecked(True)
     dlg._tf_boxes["1h"].setChecked(True)
     for tf, box in dlg._tf_boxes.items():
@@ -258,3 +259,22 @@ def test_scan_bt_settings_dialog_wires_dump_keys(tmp_path: Path, qtbot: QtBot) -
         box.setChecked(False)
     dlg._save()
     assert dlg._eta.text() == S.SCAN_BT_NO_TFS
+
+
+def test_scan_bt_settings_ta_all_none(tmp_path: Path, qtbot: QtBot) -> None:
+    from PySide6.QtCore import Qt
+
+    dlg = ScanBacktestSettingsDialog(tmp_path, n_coins=2)
+    qtbot.addWidget(dlg)
+    assert "for 2 coin" in dlg._eta.text()
+    dlg._set_all_ta(False)
+    assert all(
+        dlg._ta_list.item(i).checkState() == Qt.CheckState.Unchecked
+        for i in range(dlg._ta_list.count())
+    )
+    dlg._set_all_ta(True)
+    assert all(
+        dlg._ta_list.item(i).checkState() == Qt.CheckState.Checked
+        for i in range(dlg._ta_list.count())
+    )
+    assert "TA" in dlg._eta.text()

@@ -82,6 +82,7 @@ def scan_pair_strategies(
     on_rows: RowsFn | None = None,
     include_sauce: bool = True,
     sauce_only_rows: list[dict[str, Any]] | None = None,
+    include_market_context: bool = True,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """Signal-only all TF → best TF → params → TSL grid (trades ≥ 3).
 
@@ -89,6 +90,7 @@ def scan_pair_strategies(
     When ``include_sauce`` is false, catalog + deepen + protective TSL only (Opportunity
     pass-1); Secret Sauce Lab / coincidence / helpers are skipped.
     When ``sauce_only_rows`` is set, skip catalog/deepen and cook Sauce on those rows.
+    When ``include_market_context`` is false, skip ``compute_market_context`` (empty ctx).
     """
     if sauce_only_rows is not None:
         from trendalgo.device.pair_strategy_sauce_pass import run_sauce_only_pass
@@ -240,25 +242,31 @@ def scan_pair_strategies(
         publish()
 
     # Pair-level Market Context (primary TF or first loaded frame) — not a strategy row.
-    try:
-        from trendalgo.analytics.market_context import compute_market_context
+    t_mc = time.perf_counter()
+    mc_s = 0.0
+    if include_market_context:
+        try:
+            from trendalgo.analytics.market_context import compute_market_context
 
-        primary = frames_by_tf.get("1h")
-        if primary is None:
-            primary = frames_by_tf.get("4h")
-        if primary is None and frames_by_tf:
-            primary = next(iter(frames_by_tf.values()))
-        if primary is not None and not primary.empty:
-            market_context = compute_market_context(primary).to_dict()
-    except Exception as exc:
-        emit(f"Market Context soft-fail: {exc}", phase="load")
-        market_context = None
+            primary = frames_by_tf.get("1h")
+            if primary is None:
+                primary = frames_by_tf.get("4h")
+            if primary is None and frames_by_tf:
+                primary = next(iter(frames_by_tf.values()))
+            if primary is not None and not primary.empty:
+                market_context = compute_market_context(primary).to_dict()
+                mc_s = time.perf_counter() - t_mc
+        except Exception as exc:
+            emit(f"Market Context soft-fail: {exc}", phase="load")
+            market_context = None
     if market_context is None:
         from trendalgo.analytics.market_context import MarketContext
 
-        market_context = MarketContext.empty("unavailable").to_dict()
+        reason = "skipped" if not include_market_context else "unavailable"
+        market_context = MarketContext.empty(reason).to_dict()
     market_context["data_source"] = data_source
     market_context["cache_age_s"] = cache_age_s
+    market_context["mc_s"] = round(mc_s, 3)
 
     ss_future: Future[dict[str, Any] | None] | None = None
     ss_pool: ThreadPoolExecutor | None = None
@@ -395,6 +403,7 @@ def scan_pair_strategies(
             "pass1_s": round(pass1_s, 3),
             "deepen_s": round(deepen_s, 3),
             "sauce_s": 0.0,
+            "mc_s": round(float(market_context.get("mc_s") or 0.0), 3),
         }
         market_context["include_sauce"] = False
         emit(
@@ -580,6 +589,7 @@ def scan_pair_strategies(
         "pass1_s": round(pass1_s, 3),
         "deepen_s": round(deepen_s, 3),
         "sauce_s": round(sauce_s, 3),
+        "mc_s": round(float(market_context.get("mc_s") or 0.0), 3),
     }
     market_context["include_sauce"] = True
     emit(

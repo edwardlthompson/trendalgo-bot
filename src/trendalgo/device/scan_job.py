@@ -121,17 +121,14 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
         from trendalgo.device.lts_scan_model import coins_for_backtest
 
         bt_candidates = coins_for_backtest(all_rows, saved)
-        skipped = len(all_rows) - len(bt_candidates)
-        if skipped:
-            progress.log(
-                f"Pre-BT volume floor skips {skipped} of {len(all_rows)} coins "
-                "(column gain filters do not skip BT)"
-            )
-        progress.log(f"Pass-1 backtest queue: {len(bt_candidates)} qualified coins")
+        progress.log(
+            f"Pass-1 backtest + Market Context queue: {len(bt_candidates)} scan coins "
+            "(Qualified filters hide rows in the table only)"
+        )
         t = time.perf_counter()
         bt_rows, bt_meta = _merge_pass1_backtests(bt_candidates, root)
         timings["backtest_s"] = round(time.perf_counter() - t, 3)
-        bt_meta["pre_bt_skipped"] = skipped
+        bt_meta["pre_bt_skipped"] = 0
         by_key = {row_key(c): c for c in bt_rows}
         rows = [by_key.get(row_key(c), c) for c in all_rows]
         t = time.perf_counter()
@@ -189,17 +186,14 @@ def _finish_public_pipeline(
 
         saved = filters or {}
         bt_candidates = coins_for_backtest(rows, saved)
-        skipped = len(rows) - len(bt_candidates)
-        if skipped:
-            progress.log(
-                f"Pre-BT volume floor skips {skipped} of {len(rows)} coins "
-                "(column gain filters do not skip BT)"
-            )
-        progress.log(f"Pass-1 backtest queue: {len(bt_candidates)} qualified coins")
+        progress.log(
+            f"Pass-1 backtest + Market Context queue: {len(bt_candidates)} scan coins "
+            "(Qualified filters hide rows in the table only)"
+        )
         t = time.perf_counter()
         bt_rows, bt_meta = _merge_pass1_backtests(bt_candidates, root)
         timings["backtest_s"] = round(time.perf_counter() - t, 3)
-        bt_meta["pre_bt_skipped"] = skipped
+        bt_meta["pre_bt_skipped"] = 0
         by_key = {row_key(c): c for c in bt_rows}
         rows = [by_key.get(row_key(c), c) for c in rows]
     save_lts_rows(root, rows)

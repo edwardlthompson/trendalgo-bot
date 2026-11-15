@@ -68,40 +68,47 @@ def test_export_strategy_sheet_png_forwards_filters(
         _fake,
     )
     out = tmp_path / "ake.png"
+    ctx = {"ok": True, "regime_label": "Ranging", "consensus": {"signal": "Buy", "confidence": 70}}
     export_strategy_sheet_png(
         out,
         pair="AKE/USD",
         rows=[{"indicator": "RSI", "net_pct": 40.0}],
         heatmap=False,
         filters={"min_net_pct": 30, "min_win_pct": 50, "max_tsl_hit_pct": 50},
+        market_context=ctx,
     )
     assert captured.get("filters") == {
         "min_net_pct": 30,
         "min_win_pct": 50,
         "max_tsl_hit_pct": 50,
     }
+    assert captured.get("market_context") == ctx
+
+
+def _sample_coin(**extra: object) -> dict:
+    base = {
+        "symbol": "BTC",
+        "name": "Bitcoin",
+        "pair": "BTC/USD",
+        "gains": {"7d": 5.0, "30d": 12.0},
+        "spark_closes_7d": [1.0, 1.1, 1.2, 1.15, 1.25],
+        "spark_closes_30d": [1.0, 1.05, 1.1, 1.2, 1.3],
+        "bot_best_net_pct": 40.0,
+        "bot_vs_bh_pct": 8.0,
+        "uniformity_score": 80.0,
+        "health_score": 70.0,
+        "hv_7d_pct": 40.0,
+        "max_drawdown_pct": 12.0,
+        "volume_acceleration_pct": 5.0,
+        "listed_on": ["kraken"],
+        "volume_24h": 2_000_000,
+    }
+    base.update(extra)
+    return base
 
 
 def test_export_scanner_list_png_writes_file(qapp: QApplication, tmp_path: Path) -> None:
-    coins = [
-        {
-            "symbol": "BTC",
-            "name": "Bitcoin",
-            "pair": "BTC/USD",
-            "gains": {"7d": 5.0, "30d": 12.0},
-            "spark_closes_7d": [1.0, 1.1, 1.2, 1.15, 1.25],
-            "spark_closes_30d": [1.0, 1.05, 1.1, 1.2, 1.3],
-            "bot_best_net_pct": 40.0,
-            "bot_vs_bh_pct": 8.0,
-            "uniformity_score": 80.0,
-            "health_score": 70.0,
-            "hv_7d_pct": 40.0,
-            "max_drawdown_pct": 12.0,
-            "volume_acceleration_pct": 5.0,
-            "listed_on": ["kraken"],
-            "volume_24h": 2_000_000,
-        }
-    ]
+    coins = [_sample_coin()]
     out = tmp_path / "scanner.png"
     path = export_scanner_list_png(
         out,
@@ -114,4 +121,49 @@ def test_export_scanner_list_png_writes_file(qapp: QApplication, tmp_path: Path)
     )
     assert path == out
     assert out.is_file()
+    assert out.stat().st_size > 500
+
+
+def test_export_scanner_list_png_includes_market_context_band(
+    qapp: QApplication, tmp_path: Path
+) -> None:
+    coins = [
+        _sample_coin(
+            market_context={
+                "ok": True,
+                "regime_label": "Trending Up",
+                "consensus": {"signal": "Buy", "score": 1.4, "confidence": 80},
+                "structure": {"nearest_sr_name": "S1", "confluence": 2},
+                "risk": {"rr_to_r1": 2.1},
+            }
+        )
+    ]
+    out = tmp_path / "scanner-mc.png"
+    path = export_scanner_list_png(
+        out,
+        coins=coins,
+        title="Scanner · 1 pairs",
+        heatmap=False,
+    )
+    assert path == out
+    assert out.stat().st_size > 800
+
+
+def test_export_strategy_sheet_png_with_market_context(qapp: QApplication, tmp_path: Path) -> None:
+    out = tmp_path / "pair-mc.png"
+    path = export_strategy_sheet_png(
+        out,
+        pair="BTC/USD",
+        rows=[{"indicator": "RSI", "net_pct": 12.0, "timeframe": "1h"}],
+        heatmap=False,
+        market_context={
+            "ok": True,
+            "regime_label": "Ranging",
+            "consensus": {"signal": "Neutral", "confidence": 55, "score": 0.1},
+            "pivots": {"levels": [{"name": "PP", "price": 100.0, "strength": 50}]},
+            "risk": {"stop_distance_pct": 2.0, "stop_distance_atr": 1.5, "rr_to_r1": 1.2},
+            "structure": {},
+        },
+    )
+    assert path == out
     assert out.stat().st_size > 500

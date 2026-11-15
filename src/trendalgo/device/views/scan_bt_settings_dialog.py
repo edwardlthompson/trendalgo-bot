@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -24,7 +25,10 @@ from trendalgo.backtest.heartbeat_tf import HEARTBEAT_TIMEFRAMES, SUBHOUR_TIMEFR
 from trendalgo.backtest.ta_fleet import all_strategies
 from trendalgo.device import strings as S
 from trendalgo.device.scan_bt_prefs import (
+    SAUCE_TOP_N_MAX,
+    SAUCE_TOP_N_MIN,
     ScanBtPrefs,
+    clamp_sauce_top_n,
     enabled_strategies,
     load_scan_bt_prefs,
     save_scan_bt_prefs,
@@ -52,6 +56,7 @@ class ScanBacktestSettingsDialog(QDialog):
         self._eta = QLabel()
         self._eta.setObjectName("hint")
         self._eta.setWordWrap(True)
+        self._eta.setToolTip(S.SCAN_BT_ETA_HINT)
 
         self._tf_boxes: dict[str, QCheckBox] = {}
         tf_host = QWidget()
@@ -92,12 +97,41 @@ class ScanBacktestSettingsDialog(QDialog):
 
         body = QVBoxLayout(self)
         body.setSpacing(10)
+        eta_cap = QLabel(S.SCAN_BT_ETA_TITLE)
+        eta_cap.setObjectName("sectionTitle")
+        body.addWidget(eta_cap)
+        body.addWidget(self._eta)
         body.addWidget(QLabel(S.SCAN_BT_TF_TITLE))
         body.addWidget(tf_scroll)
-        body.addWidget(self._eta)
-        body.addWidget(QLabel(S.SCAN_BT_TA_TITLE))
+        body.addWidget(self._ta_header())
         body.addWidget(self._ta_search)
         body.addWidget(self._ta_list, 1)
+
+        self._mc_with_scan = QCheckBox(S.MARKET_CTX_WITH_SCAN)
+        self._mc_with_scan.setChecked(bool(prefs.market_context_with_scan))
+        self._mc_with_scan.setToolTip(S.MARKET_CTX_WITH_SCAN_TIP)
+        self._mc_with_scan.toggled.connect(lambda _c: self._refresh_eta())
+        sauce_title = QLabel(S.SAUCE_PAN_TITLE)
+        sauce_title.setObjectName("sectionTitle")
+        self._sauce_with_scan = QCheckBox(S.SAUCE_PAN_WITH_SCAN)
+        self._sauce_with_scan.setChecked(bool(prefs.sauce_with_scan))
+        self._sauce_with_scan.setToolTip(S.SAUCE_PAN_WITH_SCAN_TIP)
+        self._sauce_with_scan.toggled.connect(lambda _c: self._refresh_eta())
+        self._sauce_top_n = QSpinBox()
+        self._sauce_top_n.setRange(SAUCE_TOP_N_MIN, SAUCE_TOP_N_MAX)
+        self._sauce_top_n.setValue(clamp_sauce_top_n(prefs.sauce_top_n))
+        self._sauce_top_n.setToolTip(S.SAUCE_PAN_TOP_N_TIP)
+        self._sauce_top_n.valueChanged.connect(lambda _v: self._refresh_eta())
+        sauce_n_row = QWidget()
+        sauce_n_lay = QHBoxLayout(sauce_n_row)
+        sauce_n_lay.setContentsMargins(0, 0, 0, 0)
+        sauce_n_lay.addWidget(QLabel(S.SAUCE_PAN_TOP_N))
+        sauce_n_lay.addWidget(self._sauce_top_n)
+        sauce_n_lay.addStretch(1)
+        body.addWidget(self._mc_with_scan)
+        body.addWidget(sauce_title)
+        body.addWidget(self._sauce_with_scan)
+        body.addWidget(sauce_n_row)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
@@ -119,11 +153,38 @@ class ScanBacktestSettingsDialog(QDialog):
         lay.addWidget(none_btn)
         return row
 
+    def _ta_header(self) -> QWidget:
+        row = QWidget()
+        lay = QHBoxLayout(row)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(QLabel(S.SCAN_BT_TA_TITLE), 1)
+        all_btn = QPushButton(S.SCAN_BT_SELECT_ALL)
+        none_btn = QPushButton(S.SCAN_BT_SELECT_NONE)
+        all_btn.setObjectName("scanBtTaAll")
+        none_btn.setObjectName("scanBtTaNone")
+        all_btn.clicked.connect(lambda _c=False: self._set_all_ta(True))
+        none_btn.clicked.connect(lambda _c=False: self._set_all_ta(False))
+        lay.addWidget(all_btn)
+        lay.addWidget(none_btn)
+        return row
+
     def _set_tfs(self, ids: tuple[str, ...], checked: bool) -> None:
         for tf in ids:
             box = self._tf_boxes.get(tf)
             if box is not None:
                 box.setChecked(checked)
+        self._refresh_eta()
+
+    def _set_all_ta(self, checked: bool) -> None:
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        self._ta_list.blockSignals(True)
+        try:
+            for i in range(self._ta_list.count()):
+                item = self._ta_list.item(i)
+                if item is not None and not item.isHidden():
+                    item.setCheckState(state)
+        finally:
+            self._ta_list.blockSignals(False)
         self._refresh_eta()
 
     def _filter_ta(self, text: str) -> None:
@@ -136,27 +197,26 @@ class ScanBacktestSettingsDialog(QDialog):
         return [tf for tf, box in self._tf_boxes.items() if box.isChecked()]
 
     def _denylist(self) -> list[str]:
-        out: list[str] = []
-        for i in range(self._ta_list.count()):
-            item = self._ta_list.item(i)
-            if item.checkState() != Qt.CheckState.Checked:
-                out.append(item.text())
-        return out
+        return [
+            self._ta_list.item(i).text()
+            for i in range(self._ta_list.count())
+            if self._ta_list.item(i).checkState() != Qt.CheckState.Checked
+        ]
 
     def _refresh_eta(self) -> None:
-        tfs = self._selected_tfs()
-        deny = self._denylist()
+        tfs, deny = self._selected_tfs(), self._denylist()
         strats = enabled_strategies(deny)
-        hist = load_history(self._root)
-        self._eta.setText(
-            estimate_label(
-                hist,
-                n_strategies=len(strats),
-                n_timeframes=len(tfs),
-                had_subhour=needs_1m_base(tfs),
-                n_coins=self._n_coins,
-            )
+        label = estimate_label(
+            load_history(self._root),
+            n_strategies=len(strats),
+            n_timeframes=len(tfs),
+            had_subhour=needs_1m_base(tfs),
+            n_coins=self._n_coins,
+            market_context=bool(self._mc_with_scan.isChecked()),
+            sauce_with_scan=bool(self._sauce_with_scan.isChecked()),
+            sauce_top_n=int(self._sauce_top_n.value()),
         )
+        self._eta.setText(f"{label} · {len(strats)} TA · {len(tfs)} TF")
 
     def _save(self) -> None:
         tfs = self._selected_tfs()
@@ -173,16 +233,15 @@ class ScanBacktestSettingsDialog(QDialog):
                 timeframes=tfs,
                 strategy_denylist=deny,
                 bt_signal_set=BT_SET_ALL_TA,
+                sauce_with_scan=bool(self._sauce_with_scan.isChecked()),
+                sauce_top_n=clamp_sauce_top_n(self._sauce_top_n.value()),
+                market_context_with_scan=bool(self._mc_with_scan.isChecked()),
             ),
         )
         self.accept()
 
 
-def open_scan_bt_settings(
-    root: Path,
-    *,
-    n_coins: int = 1,
-    parent: QWidget | None = None,
-) -> bool:
+def open_scan_bt_settings(root: Path, *, n_coins: int = 1, parent: QWidget | None = None) -> bool:
     dlg = ScanBacktestSettingsDialog(root, n_coins=n_coins, parent=parent)
+    dlg.setWindowModality(Qt.WindowModality.WindowModal)
     return dlg.exec() == QDialog.DialogCode.Accepted

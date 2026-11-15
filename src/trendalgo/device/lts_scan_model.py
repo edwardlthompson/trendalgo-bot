@@ -164,40 +164,14 @@ def save_filters(root: Path, filters: dict[str, Any]) -> None:
 def coins_for_backtest(
     coins: list[dict[str, Any]], filters: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    """Pass-1 BT queue: every Qualified coin that still clears the scan volume floor.
+    """Pass-1 BT + Market Context queue: every coin that made the scan board.
 
-    Column 7d/30d / chart-dist / health filters only narrow the *table* view
-    (`scanner_page`). Re-applying them here left Qualified rows with empty
-    Results after a volume-first scan.
+    Column 7d/30d / chart-dist / health / volume filters only narrow the *table*
+    view (`scanner_page`). Analyzing the full scan set keeps Results / MC stamped
+    on every pair; UI filters still hide rows on Qualified.
     """
-    return filter_coins(
-        coins,
-        vol24_min=_positive_floor(
-            filters.get("vol24_min")
-            if filters.get("vol24_min") not in (None, "")
-            else filters.get("min_volume_usd")
-        ),
-    )
-
-
-def _positive_floor(raw: object) -> float | None:
-    value = _opt_filter_float(raw)
-    return value if value is not None and value > 0 else None
-
-
-def _opt_filter_float(raw: object) -> float | None:
-    if raw is None or raw == "":
-        return None
-    if isinstance(raw, bool):
-        return None
-    if isinstance(raw, (int, float)):
-        return float(raw)
-    if isinstance(raw, str):
-        try:
-            return float(raw)
-        except ValueError:
-            return None
-    return None
+    _ = filters  # retained for call-site compatibility
+    return list(coins)
 
 
 def filter_coins(

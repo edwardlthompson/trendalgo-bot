@@ -253,12 +253,14 @@ def show_results_dialog(
         out = Path(chosen) if chosen.lower().endswith(".png") else Path(f"{chosen}.png")
         try:
             active = filters.dump() if filters is not None else {}
+            raw_mc = coin.get("market_context")
             export_strategy_sheet_png(
                 out,
                 pair=pair or symbol,
                 rows=export_rows,
                 heatmap=heatmap,
                 filters=active,
+                market_context=raw_mc if isinstance(raw_mc, dict) else None,
             )
         except (OSError, ValueError) as exc:
             QMessageBox.warning(dialog, S.SCANNER_SHARE, str(exc))

@@ -48,6 +48,7 @@ def export_backtest_table_png(
     heatmap: bool,
     sort_key: str,
     sort_dir: int,
+    market_context: dict[str, Any] | None = None,
 ) -> Path:
     """Render filtered rows + active filters into a content-sized PNG at *path*."""
     if not rows:
@@ -61,6 +62,7 @@ def export_backtest_table_png(
         heatmap=heatmap,
         sort_key=sort_key,
         sort_dir=sort_dir,
+        market_context=market_context,
     )
     try:
         panel.adjustSize()

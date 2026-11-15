@@ -5,8 +5,48 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from trendalgo.icons.aliases import resolve_symbol
 from trendalgo.icons.store import IconStore
-from trendalgo.icons.sync import sync_exchanges
+from trendalgo.icons.sync import sync_coin_extras, sync_exchanges
+
+
+def test_lighter_alias_maps_to_lit() -> None:
+    assert resolve_symbol("LIGHTER") == "LIT"
+
+
+def test_sync_coin_extras_writes_curated(tmp_path: Path, monkeypatch) -> None:
+    extras = tmp_path / "coin-icon-extras.json"
+    curated = tmp_path / "coins"
+    extras.write_text(
+        json.dumps(
+            {
+                "coins": {
+                    "AKE": {"coingecko_id": "akedo", "name": "Akedo"},
+                    "LIGHTER": {"coingecko_id": "lighter", "name": "Lighter"},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("trendalgo.icons.sync._COIN_EXTRAS", extras)
+    monkeypatch.setattr("trendalgo.icons.sync._CURATED_COIN_DIR", curated)
+    monkeypatch.setattr(
+        "trendalgo.icons.sync._fetch_json",
+        lambda _url: {
+            "name": "Akedo",
+            "market_cap_rank": 100,
+            "image": {"large": "https://example.com/ake.png"},
+        },
+    )
+    monkeypatch.setattr(
+        "trendalgo.icons.sync._download_file",
+        lambda _url, dest: dest.write_bytes(b"fake-png"),
+    )
+    store = IconStore(tmp_path / "icon-registry.db")
+    result = sync_coin_extras(store, refresh=True)
+    assert result["extra_count"] == 2
+    assert (curated / "AKE.png").is_file()
+    assert (curated / "LIGHTER.png").is_file()
 
 
 def test_sync_exchanges_writes_db(tmp_path: Path, monkeypatch) -> None:

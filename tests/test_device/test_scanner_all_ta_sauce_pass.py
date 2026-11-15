@@ -78,7 +78,17 @@ def test_run_all_ta_sauces_only_top_oracle(monkeypatch: pytest.MonkeyPatch, tmp_
     monkeypatch.setitem(sys.modules, "trendalgo.lts_vendor.backtesting.params", params_mod)
     monkeypatch.setitem(sys.modules, "trendalgo.lts_vendor.shims.database_cache", shims_mod)
 
-    monkeypatch.setattr(mod, "load_scan_bt_prefs", lambda _r: MagicMock(strategy_denylist=()))
+    def _prefs(**kw: object) -> MagicMock:
+        base = MagicMock(
+            strategy_denylist=(),
+            sauce_with_scan=True,
+            sauce_top_n=2,
+        )
+        for key, val in kw.items():
+            setattr(base, key, val)
+        return base
+
+    monkeypatch.setattr(mod, "load_scan_bt_prefs", lambda _r: _prefs())
     monkeypatch.setattr(mod, "enabled_strategies", lambda *_a, **_k: ("RSI",))
     monkeypatch.setattr(mod, "selected_timeframes", lambda *_a, **_k: ("1h",))
     monkeypatch.setattr(
@@ -91,12 +101,12 @@ def test_run_all_ta_sauces_only_top_oracle(monkeypatch: pytest.MonkeyPatch, tmp_
     monkeypatch.setattr(mod, "set_coin_parallel", lambda *_a, **_k: None)
     monkeypatch.setattr(mod, "record_sample", lambda *_a, **_k: None)
     monkeypatch.setattr(mod, "get_scan_progress", lambda: MagicMock())
-    monkeypatch.setattr(mod, "OPPORTUNITY_SAUCE_TOP_N", 2)
 
     out = mod.run_all_ta_scan_backtests(coins, prefs_root=tmp_path)
     assert out is not None
     # Top-N only (no first-join expansion) — LOW stays off the Sauce pass.
     assert out["sauce_symbols"] == ["HIGH", "MID"]
+    assert out["sauce_top_n"] == 2
     assert len(pool_calls) == 2
     assert pool_calls[0]["include_sauce"] is False
     assert pool_calls[0]["sauce_only"] is False
@@ -107,7 +117,18 @@ def test_run_all_ta_sauces_only_top_oracle(monkeypatch: pytest.MonkeyPatch, tmp_
     assert set(pool_calls[1]["seed_syms"]) >= {"HIGH", "MID"}
 
     pool_calls.clear()
-    out2 = mod.run_all_ta_scan_backtests(coins, prefs_root=tmp_path)
-    assert out2 is not None
-    assert out2["sauce_symbols"] == ["HIGH", "MID"]
-    assert pool_calls[1]["syms"] == ["HIGH", "MID"]
+    monkeypatch.setattr(mod, "load_scan_bt_prefs", lambda _r: _prefs(sauce_with_scan=False))
+    out_off = mod.run_all_ta_scan_backtests(coins, prefs_root=tmp_path)
+    assert out_off is not None
+    assert out_off["sauce_symbols"] == []
+    assert out_off["sauce_with_scan"] is False
+    assert len(pool_calls) == 1
+    assert pool_calls[0]["include_sauce"] is False
+    assert set(pool_calls[0]["syms"]) == {"HIGH", "MID", "LOW"}
+
+    pool_calls.clear()
+    monkeypatch.setattr(mod, "load_scan_bt_prefs", lambda _r: _prefs(sauce_top_n=3))
+    out3 = mod.run_all_ta_scan_backtests(coins, prefs_root=tmp_path)
+    assert out3 is not None
+    assert out3["sauce_symbols"] == ["HIGH", "MID", "LOW"]
+    assert pool_calls[1]["syms"] == ["HIGH", "MID", "LOW"]

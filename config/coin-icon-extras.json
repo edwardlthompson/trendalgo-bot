@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "source": "coingecko",
+  "notes": "Kraken/scanner tickers missing from the retired top-1000 pack. sync-icon-registry --extras downloads these into branding/assets/coins/.",
+  "coins": {
+    "AKE": {
+      "coingecko_id": "akedo",
+      "name": "Akedo"
+    },
+    "LIGHTER": {
+      "coingecko_id": "lighter",
+      "name": "Lighter",
+      "alias_of_ticker": "LIT"
+    },
+    "AUDX": {
+      "coingecko_id": "aussie-dollar-token",
+      "name": "Aussie Dollar Token"
+    }
+  }
+}

@@ -39,6 +39,7 @@
 
 | ID | Task | Owner | Status |
 |----|------|-------|--------|
+| SAUCE-CTRL-1 | Sauce Pan: with-scan toggle + top-N prefs; gate Pass 2 only; manual Sauce-only on filtered Qualified — scope: `scan_bt_prefs.py`, `scanner_all_ta_bt.py`, `opportunity_sauce_job.py`, scanner UI, tests | `[AGENT][LOCAL]` | ✅ |
 ### Open HUMAN
 
 - 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)

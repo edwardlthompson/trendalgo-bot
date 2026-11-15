@@ -20,6 +20,7 @@ def backtest_one_coin(
     prefs_root: Any = None,
     include_sauce: bool = True,
     sauce_only_rows: list[dict[str, Any]] | None = None,
+    include_market_context: bool = True,
 ) -> tuple[str, list[dict[str, Any]], dict[str, float], dict[str, Any] | None]:
     """Run the Backtest-tab All-TA path for one Opportunity coin."""
     from pathlib import Path
@@ -36,6 +37,7 @@ def backtest_one_coin(
         "pass1_s": 0.0,
         "deepen_s": 0.0,
         "sauce_s": 0.0,
+        "mc_s": 0.0,
     }
     if not symbol:
         return symbol, [], {**stats, "elapsed_s": 0.0}, None
@@ -60,6 +62,7 @@ def backtest_one_coin(
         prefs_root=root,
         include_sauce=include_sauce if sauce_only_rows is None else True,
         sauce_only_rows=sauce_only_rows,
+        include_market_context=include_market_context,
     )
     deepened = sum(1 for r in rows if r.get("optimized"))
     stats["deepened"] = float(deepened)
@@ -71,6 +74,7 @@ def backtest_one_coin(
             stats["pass1_s"] = float(phase.get("pass1_s") or 0.0)
             stats["deepen_s"] = float(phase.get("deepen_s") or 0.0)
             stats["sauce_s"] = float(phase.get("sauce_s") or 0.0)
+            stats["mc_s"] = float(phase.get("mc_s") or market_context.get("mc_s") or 0.0)
     bid = coin.get("bid")
     ask = coin.get("ask")
     if market_context and isinstance(market_context, dict) and (bid is not None or ask is not None):
