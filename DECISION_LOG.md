@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-15 — Ship v1.16.0 OHLCVT deep 1m + rolling tip journal
+- **Status:** Accepted
+- **Context:** `/ship` after Kraken OHLCVT archive path, tip journal with calendar 30d ready date, quarterly mix-unlock messaging, collapsible full-height Scan Settings; upd again rewrote `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`; Release Please bumped feat → v1.16.0 and left `uv.lock` stale.
+- **Decision:** Ship OHLCVT/journal UX; keep exclusive TF bands until archive covers today or rolling 30d ready; restore CodeQL `@v4`; sync `uv.lock` post-release. Merge Release Please #76 → v1.16.0.
+- **Alternatives considered:** Apply upd CodeQL bundle tags (rejected); wait for OpenVEX asset before ship close (deferred — SBOM present, OpenVEX still missing on release assets).
+- **Consequences:** Sub-hour scans can use archive 1m; Settings shows rolling-ready date (start+30d); mix unlocks earlier when quarterly coverage reaches today.
+
 ### 2026-11-15 — Ship v1.15.2 Sauce / MC / leave / logos
 - **Status:** Accepted
 - **Context:** `/ship` after Sauce Pan prefs, Market Context settings toggle + ETA + PNG gfx exports, off-board leave reason for Grok/Telegram, curated coin logos; upd dry-run tried to rewrite `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`.

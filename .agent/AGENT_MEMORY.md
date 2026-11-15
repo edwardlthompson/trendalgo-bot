@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board HUMAN-only after `/ship` v1.15.2. Open: PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
+**Current sprint:** Board HUMAN-only after `/ship` v1.16.0. Open: PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
 
-**Tests:** Local `pre-release-gate --local` PASS (one flaky python-test retry). Required GitHub CI/CodeQL/Security green; CodeQL must stay `@v4` (upd still tries `vcodeql-bundle-*` — revert those workflow diffs before push).
+**Tests:** Local `pre-release-gate --local` PASS. Required GitHub CI/CodeQL/Security green on `8a2942f`; CodeQL must stay `@v4` (upd still tries `vcodeql-bundle-*` — revert those workflow diffs before push). Sync `uv.lock` after every Release Please version bump.
 
-**Recent:** v1.15.2 — Sauce Pan + Market Context toggle/ETA/export gfx; off-board leave reasons; curated AKE/LIGHTER/AUDX logos. Tip after RP #75 merge.
+**Recent:** v1.16.0 — Kraken OHLCVT deep 1m + rolling tip journal (30d ready date), exclusive TF bands until mix, collapsible full-height Settings. RP #76. Residual: OpenVEX asset still missing on GitHub Release (SBOM present).
 
 **Canonical plan:** `docs/specs/audit-remediation.md` · `docs/CANONICAL_PLAN.md`.
 
