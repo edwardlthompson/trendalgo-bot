@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-15 — Ship v1.17.0 multi-venue parity + quieter chrome
+- **Status:** Accepted
+- **Context:** `/ship` after CEX dedicated adapters / Tier B smoke, DEX candle+watch honesty, Alpaca paper dry-run, Scanner/Backtest chrome fold into Settings; upd again tried bad CodeQL bundle tags; Release Please #77 → 1.17.0 left `uv.lock` stale (`uv sync --locked` failed on merge CI).
+- **Decision:** Ship product WIP; revert CodeQL pin rewrites; sync `uv.lock` post-merge (`6f8c2a7`); accept OpenVEX gap (SBOM + MSI/setup published).
+- **Alternatives considered:** Apply upd CodeQL bundle tags (rejected); block ship on OpenVEX (deferred — same residual as v1.16.0).
+- **Consequences:** Operators get quieter scan/BT chrome + multi-venue honesty ladder; RP auto-opens 1.17.1 for the lockfix; keep post-RP lock sync in ship muscle memory.
+
 ### 2026-11-15 — Multi-venue parity Lane 0 + first sprint (honesty locked)
 - **Status:** Accepted
 - **Context:** CEX portfolio/trading marked complete while device research stayed Kraken-first; README risked going stale as gaps closed.

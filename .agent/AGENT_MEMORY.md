@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board HUMAN-only after `/ship` v1.16.0. Open: PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
+**Current sprint:** Board HUMAN-only after `/ship` v1.17.0. Open: DEX-P4b CLOUD + PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
 
-**Tests:** Local `pre-release-gate --local` PASS. Required GitHub CI/CodeQL/Security green on `8a2942f`; CodeQL must stay `@v4` (upd still tries `vcodeql-bundle-*` — revert those workflow diffs before push). Sync `uv.lock` after every Release Please version bump.
+**Tests:** Local `pre-release-gate --local` PASS before push. Required GitHub CI/CodeQL/Security green on `6f8c2a7`. CodeQL must stay `@v4` (upd still tries `vcodeql-bundle-*` — revert those workflow diffs). Sync `uv.lock` after every Release Please version bump.
 
-**Recent:** v1.16.0 — Kraken OHLCVT deep 1m + rolling tip journal (30d ready date), exclusive TF bands until mix, collapsible full-height Settings. RP #76. Residual: OpenVEX asset still missing on GitHub Release (SBOM present).
+**Recent:** v1.17.0 — multi-venue parity ladder (CEX adapters + Tier B smoke, DEX candles/watch, Alpaca TradFi dry-run), quieter Scanner/Backtest chrome (Settings 2-col + Status). RP #77. Post-RP `uv.lock` sync → RP opened 1.17.1. Residual: OpenVEX still missing on GitHub Release (SBOM + MSI/setup present).
 
 **Canonical plan:** `docs/specs/audit-remediation.md` · `docs/CANONICAL_PLAN.md`.
 
