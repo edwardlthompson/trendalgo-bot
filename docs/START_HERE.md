@@ -10,7 +10,7 @@ For template-only usage, see upstream [agent-project-bootstrap](https://github.c
 
 ## Which repo mode are you in?
 
-- **Child / product (this repo):** TrendAlgo Bot — Python + Web PWA. Read `docs/CURSOR_MODES.md`, then `AGENTS.md` + `BUILD_PLAN.md` Sequential. Template alignment: [`BOOTSTRAP_ALIGNMENT.md`](BOOTSTRAP_ALIGNMENT.md).
+- **Child / product (this repo):** TrendAlgo Bot — Python + PySide6 device. Read `docs/CURSOR_MODES.md`, then `AGENTS.md` + `BUILD_PLAN.md` Sequential. Template alignment: [`BOOTSTRAP_ALIGNMENT.md`](BOOTSTRAP_ALIGNMENT.md).
 - **Bootstrap:** New project from **Use this template** → read `docs/CURSOR_MODES.md`, then `docs/INITIALIZATION_PROMPT.md`
 - **Reference:** Existing project using this repo as rules reference → read `docs/CURSOR_MODES.md`, then `docs/FOR_AGENTS.md`
 
