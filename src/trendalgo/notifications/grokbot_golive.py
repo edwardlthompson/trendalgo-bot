@@ -14,7 +14,7 @@ _TRUE = frozenset({"1", "true", "yes", "on"})
 
 
 def journal_stats(trades: list[dict[str, Any]]) -> dict[str, Any]:
-    equity = peak = max_dd = max_dd_pct = 0.0
+    equity = peak = max_dd = max_dd_pct = stake_sum = 0.0
     streak = max_streak = sells = 0
     last_at = ""
     for row in reversed(trades):
@@ -25,11 +25,14 @@ def journal_stats(trades: list[dict[str, Any]]) -> dict[str, Any]:
             continue
         sells += 1
         pnl = float(row.get("pnl_usd") or 0)
+        stake_sum += float(row.get("stake_usd") or 0)
         equity += pnl
         peak = max(peak, equity)
         dd = peak - equity
         if dd > max_dd:
-            max_dd, max_dd_pct = dd, (dd / peak if peak else 0.0)
+            max_dd = dd
+            denom = peak if peak > 0 else (stake_sum if stake_sum > 0 else dd)
+            max_dd_pct = dd / denom if denom else 0.0
         if pnl < 0:
             streak += 1
             max_streak = max(max_streak, streak)
