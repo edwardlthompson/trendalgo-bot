@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
 
 from trendalgo.notifications.grokbot_filter import event_allowed
-from trendalgo.notifications.grokbot_weekly import build_weekly_digest, format_weekly_telegram
+from trendalgo.notifications.grokbot_weekly import (
+    build_weekly_digest,
+    format_weekly_telegram,
+    load_alert_history,
+)
 
 
 def test_weekly_digest_summarizes_trades_and_alerts() -> None:
@@ -38,6 +43,17 @@ def test_weekly_digest_summarizes_trades_and_alerts() -> None:
     text = format_weekly_telegram(digest)
     assert "TrendAlgo weekly" in text
     assert "macd-kraken-1h" in text
+
+
+def test_load_alert_history_reads_device_alerts_wrapper(tmp_path: Path) -> None:
+    path = tmp_path / "scanner_alerts.json"
+    path.write_text(
+        '{"alerts":[{"kind":"qualified_enter","pair":"ETH/USD","at":"2026-11-14T00:00:00+00:00"}]}',
+        encoding="utf-8",
+    )
+    rows = load_alert_history(tmp_path)
+    assert rows[0]["kind"] == "qualified_enter"
+    assert rows[0]["pair"] == "ETH/USD"
 
 
 def test_weekly_filter_alias(monkeypatch: pytest.MonkeyPatch) -> None:
