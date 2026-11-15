@@ -26,6 +26,7 @@ EVENT_TYPES = (
     "refit",
     "daily_summary",
     "explain_request",
+    "weekly_digest",
 )
 
 

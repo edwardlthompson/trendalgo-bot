@@ -55,7 +55,7 @@ uv run python -m trendalgo.notifications.grokbot_cli
 }
 ```
 
-`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`.
+`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`, `weekly_digest`.
 
 ## Why? button (`explain_request`)
 
@@ -76,6 +76,26 @@ Scanner and trade Telegram alerts include a **Why?** inline button. Telegram sti
 ```
 
 Native CCXT engine exits record the rule that fired (`MACD cross down`, `RSI threshold`, …) in the journal `rationale` and in `exit_rule`. That does not change whether an exit happens. Trailing stop / stoploss / scale-out labels appear only if those mixins actually close the trade; the scheduled runner today exits via `strategy.exit()` only.
+
+## Weekly digest (`weekly_digest`)
+
+Off by default. Set `WEEKLY_DIGEST_ENABLED=1` (optional `WEEKLY_DIGEST_DOW=sun`, `WEEKLY_DIGEST_HOUR=0` UTC). Telegram gets a compact weekly note first; Grok gets the same summary in `reason` plus structured counts in `gains`. Filter with `GROKBOT_WEBHOOK_EVENTS=weekly` or `all`.
+
+```json
+{
+  "schema_version": "1",
+  "event_type": "weekly_digest",
+  "reason": "TrendAlgo weekly\nEntered: BTC/USD\nLeft: —\nTiers A:3\nTrades: 4  PnL: $+2.10\nTop strategy: macd-kraken-1h $+2.10\nRecurring: BTC/USD",
+  "gains": {
+    "trade_count": 4,
+    "pnl_usd": 2.1,
+    "tier_counts": {"A": 3},
+    "entered": ["BTC/USD"],
+    "left": [],
+    "recurring_pairs": ["BTC/USD"]
+  }
+}
+```
 
 ## Filter examples
 

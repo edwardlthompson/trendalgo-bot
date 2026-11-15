@@ -32,6 +32,8 @@ def event_allowed(event_type: str, *, tier: str | None = None) -> bool:
         return True
     if kind in {"trade_entry", "trade_exit"} and tokens & _TRADE:
         return True
+    if kind == "weekly_digest" and tokens & {"weekly", "weekly_digest"}:
+        return True
     if kind == "scanner_alert":
         if "scanner" in tokens:
             return True

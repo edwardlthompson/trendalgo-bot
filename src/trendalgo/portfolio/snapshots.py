@@ -98,5 +98,19 @@ def start_portfolio_scheduler(
         id="trendalgo-portfolio-daily",
         replace_existing=True,
     )
+    from trendalgo.notifications.grokbot_weekly import (
+        run_scheduled,
+        weekly_dow,
+        weekly_enabled,
+        weekly_hour,
+    )
+
+    if weekly_enabled():
+        scheduler.add_job(
+            lambda: run_scheduled(on_log=on_log),
+            CronTrigger(day_of_week=weekly_dow(), hour=weekly_hour(), minute=0, timezone="UTC"),
+            id="trendalgo-weekly-digest",
+            replace_existing=True,
+        )
     scheduler.start()
     return cast(object, scheduler)
