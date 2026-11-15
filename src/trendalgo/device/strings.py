@@ -961,13 +961,9 @@ NOTIFY_GROKBOT_HELP = (
     "GROKBOT_WEBHOOK_EVENTS=all|trades|scanner-a (or a comma list) saves quota."
 )
 NOTIFY_GROKBOT_ON = "Grok Bot webhook is on in this process."
-NOTIFY_GROKBOT_OFF = (
-    "Grok Bot webhook is off. Add GROKBOT_WEBHOOK_URL (https) to the host .env."
-)
+NOTIFY_GROKBOT_OFF = "Grok Bot webhook is off. Add GROKBOT_WEBHOOK_URL (https) to the host .env."
 NOTIFY_GROKBOT_TEST = "Test Grok Bot"
-NOTIFY_GROKBOT_NEED = (
-    "Set GROKBOT_WEBHOOK_URL (https) in .env on this PC or the host, then retry."
-)
+NOTIFY_GROKBOT_NEED = "Set GROKBOT_WEBHOOK_URL (https) in .env on this PC or the host, then retry."
 NOTIFY_GROKBOT_FAIL = "Grok Bot test failed. Check the webhook URL, key, and network."
 NOTIFY_TG_WATCHLIST = "Telegram: watchlist"
 NOTIFY_TG_QUALIFIED = "Telegram: qualified"

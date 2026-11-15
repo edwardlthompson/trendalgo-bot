@@ -26,6 +26,7 @@ from trendalgo.device.alert_preview import (
 )
 from trendalgo.device.grokbot_notify import send_device_test
 from trendalgo.device.notify_prefs import load_prefs, save_prefs
+from trendalgo.device.profile import SETTINGS_FILE
 from trendalgo.device.telegram_vault import load_telegram_creds
 from trendalgo.device.views.widgets import clear_problem, problem_label, show_problem
 from trendalgo.notifications.telegram import TelegramCommands
@@ -184,7 +185,7 @@ class AlertsNotifyRibbon(QWidget):
 
     def _test_grokbot(self) -> None:
         clear_problem(self._problem)
-        ok, detail = send_device_test()
+        ok, detail = send_device_test(self._root / SETTINGS_FILE)
         if ok:
             self._status.setText(S.ALERTS_TEST_OK)
             return

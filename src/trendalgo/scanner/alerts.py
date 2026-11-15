@@ -38,9 +38,8 @@ def emit_alerts_for_snapshot(
         if event and on_alert:
             event_type = str(event["type"]).replace("_", " ").title()
             on_alert("market", event_type, str(event["message"]))
-        _emit_grokbot_scanner(opp, tier, message)
-        if event:
-            _emit_grokbot_scanner(opp, tier, str(event["message"]))
+        reason = str(event["message"]) if event else message
+        _emit_grokbot_scanner(opp, tier, reason)
 
 
 def _emit_grokbot_scanner(opp: OpportunityRow, tier: str, reason: str) -> None:

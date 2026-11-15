@@ -301,6 +301,45 @@ def test_api_test_route_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert result["sent"] is False
 
 
+def test_scanner_snapshot_posts_one_grokbot_event_per_opportunity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from datetime import UTC, datetime
+
+    from trendalgo.scanner.alerts import emit_alerts_for_snapshot
+    from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
+    from trendalgo.scanner.store import ScannerStore
+
+    posted: list[str] = []
+
+    def capture(payload: dict[str, Any], **_k: Any) -> dict[str, Any]:
+        posted.append(str(payload.get("pair")))
+        return {"sent": True, "queued": True}
+
+    monkeypatch.setenv("GROKBOT_WEBHOOK_URL", "https://example.invalid/hook")
+    monkeypatch.setattr("trendalgo.notifications.grokbot.emit", capture)
+    now = datetime.now(UTC)
+    emit_alerts_for_snapshot(
+        ScannerStore(tmp_path / "scanner.db"),
+        QualifiedSnapshot(
+            generated_at=now,
+            as_of=now,
+            scan_id=1,
+            opportunities=[
+                OpportunityRow(
+                    rank=1,
+                    pair="BTC/USD",
+                    uniformity=0.8,
+                    gain_pct=0.06,
+                    volume_score=3,
+                    entry_signal=True,
+                )
+            ],
+        ),
+    )
+    assert posted == ["BTC/USD"]
+
+
 def test_describe_exit_macd_label() -> None:
     import pandas as pd
 

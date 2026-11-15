@@ -101,7 +101,9 @@ class NotifySettingsSection(QWidget):
         self._autostart.setChecked(prefs.start_with_windows)
         self._sync_tg_children(self._tg.isChecked())
         self._grokbot.setText(
-            S.NOTIFY_GROKBOT_ON if grokbot_status_line() == "on" else S.NOTIFY_GROKBOT_OFF
+            S.NOTIFY_GROKBOT_ON
+            if grokbot_status_line(self._ctx.settings_path) == "on"
+            else S.NOTIFY_GROKBOT_OFF
         )
 
     def save(self) -> None:
