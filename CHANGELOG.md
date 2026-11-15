@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.16.0...v1.17.0) (2026-11-15)
+
+
+### Added
+
+* multi-venue parity ladder and quieter Scanner/Backtest chrome ([d377e3a](https://github.com/edwardlthompson/trendalgo-bot/commit/d377e3a8e7fbbc4e9b4d74c7bb5d348ce0f5ae8f))
+
+
+### Fixed
+
+* **deps:** bump fastapi floor to 0.163.1 ([ef7254d](https://github.com/edwardlthompson/trendalgo-bot/commit/ef7254d5ca5ec06626410f8664803fb29de4a893))
+* **deps:** sync uv.lock to 1.16.0 after Release Please ([8a2942f](https://github.com/edwardlthompson/trendalgo-bot/commit/8a2942f70c104382d4770a298e0b52b481050ed7))
+* **device:** preserve MC, SS-only Oracle, richer leave reasons ([78063ae](https://github.com/edwardlthompson/trendalgo-bot/commit/78063aebef4036ac8e27e453d93c45d7359b23be))
+* **test:** patch ohlcv_provider import for fetch_tf_frame ([30e2c99](https://github.com/edwardlthompson/trendalgo-bot/commit/30e2c99ce6694914d769a612cf6d6d4b453396c1))
+* **types:** satisfy mypy for Alpaca, DEX prefer, and adapter factory ([d45adcd](https://github.com/edwardlthompson/trendalgo-bot/commit/d45adcdcc97c80711b3eb5056399bc328dfbde31))
+
+
+### Documentation
+
+* **news:** inbox + build plan 2026-11-15 [skip ci] ([b969fff](https://github.com/edwardlthompson/trendalgo-bot/commit/b969fffb0effcdb7e1a5b65b8443cf785dbe747c))
+* note v1.16.0 OHLCVT ship in decision log and memory ([040bf59](https://github.com/edwardlthompson/trendalgo-bot/commit/040bf593bcaa810584f2f0973d6f4ab18cc415b1))
+
 ## [1.16.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.15.2...v1.16.0) (2026-11-15)
 
 
