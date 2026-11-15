@@ -29,6 +29,7 @@ EVENT_TYPES = (
     "weekly_digest",
     "sweep_complete",
     "golive_readiness",
+    "portfolio_snapshot",
 )
 
 

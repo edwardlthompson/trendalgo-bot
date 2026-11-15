@@ -55,7 +55,7 @@ uv run python -m trendalgo.notifications.grokbot_cli
 }
 ```
 
-`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`, `weekly_digest`, `sweep_complete`, `golive_readiness`.
+`event_type`: `scanner_alert`, `qualified_enter`, `qualified_leave`, `trade_entry`, `trade_exit`, `test`, `refit`, `daily_summary`, `explain_request`, `weekly_digest`, `sweep_complete`, `golive_readiness`, `portfolio_snapshot`.
 
 ## Why? button (`explain_request`)
 
@@ -132,6 +132,25 @@ Owner-auth GET/POST `/api/v1/notifications/golive-readiness`, or `uv run python 
     "max_losing_streak": 2,
     "fee_assumptions": {"backtest_fee_bps_round_trip": 52, "dry_run_slippage_bps": 0},
     "hints": ["dry-run sample looks populated; run go-live-gate.sh --check-only"]
+  }
+}
+```
+
+## Portfolio snapshot (`portfolio_snapshot`)
+
+Off by default. Set `PORTFOLIO_SNAPSHOT_WEBHOOK=1` to POST after the daily portfolio job. Payload has allocations, concentration, idle stable/fiat share, and holdings whose asset is not on the current Qualified list. No API keys and no account identifiers. Filter: `GROKBOT_WEBHOOK_EVENTS=portfolio`.
+
+```json
+{
+  "schema_version": "1",
+  "event_type": "portfolio_snapshot",
+  "reason": "Portfolio snapshot holdings=4 idle_stable=12% top=BTC",
+  "gains": {
+    "allocations": [{"asset": "BTC", "pct": 0.55}, {"asset": "USD", "pct": 0.12}],
+    "concentration": {"top_asset": "BTC", "top_pct": 0.55, "hhi": 0.35},
+    "left_qualified": ["DOGE"],
+    "idle_stable_share": 0.12,
+    "holding_count": 4
   }
 }
 ```

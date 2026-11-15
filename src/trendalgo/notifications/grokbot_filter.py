@@ -38,6 +38,8 @@ def event_allowed(event_type: str, *, tier: str | None = None) -> bool:
         return True
     if kind == "golive_readiness" and tokens & {"golive", "golive_readiness", "go-live"}:
         return True
+    if kind == "portfolio_snapshot" and tokens & {"portfolio", "portfolio_snapshot"}:
+        return True
     if kind == "scanner_alert":
         if "scanner" in tokens:
             return True

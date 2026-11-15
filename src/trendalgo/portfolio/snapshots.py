@@ -76,6 +76,9 @@ def scheduled_portfolio_job(
     overview = overview_builder()
     check_portfolio_alerts(store, store.get_or_create_account("kraken", "default"), overview)
     run_daily_notification(store, overview, dry_run=dry_run)
+    from trendalgo.notifications.grokbot_portfolio import maybe_emit_snapshot
+
+    maybe_emit_snapshot(overview)
 
 
 def start_portfolio_scheduler(
