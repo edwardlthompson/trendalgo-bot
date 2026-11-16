@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import os
+
+import pytest
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
 from trendalgo.device import strings as S
 from trendalgo.device.views.scan_progress_dialog import (
     ScanProgressDialog,
@@ -97,5 +103,23 @@ def test_sauce_pan_dialog_accepts_none_prior(qtbot) -> None:
     qtbot.addWidget(dialog)
     assert dialog.windowTitle() == S.SAUCE_PAN_TITLE
     assert dialog._prior_s == 0.0  # noqa: SLF001
+    dialog._allow_close = True  # noqa: SLF001
+    dialog.close()
+
+
+def test_scan_progress_dialog_is_non_modal(qtbot) -> None:
+    pytest.importorskip("PySide6")
+    from PySide6.QtCore import Qt
+
+    dialog = ScanProgressDialog(
+        None,
+        title="t",
+        seed_lines=("a",),
+        on_cancel=lambda: None,
+        prior_s=0.0,
+        initial_total=1,
+    )
+    qtbot.addWidget(dialog)
+    assert dialog.windowModality() == Qt.WindowModality.NonModal
     dialog._allow_close = True  # noqa: SLF001
     dialog.close()

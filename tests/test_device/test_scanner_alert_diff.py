@@ -76,7 +76,8 @@ def test_off_board_leave_cites_gate_and_last_seen() -> None:
         floors={"min_best_bt": 30.0, "min_volume_usd": 1_000_000},
     )
     leave = next(e for e in events if e.kind == "watchlist_leave" and e.symbol == "CAP")
-    assert "removed from scan board (must clear min 24h vol $1,000,000)" in leave.reason
+    assert "must clear min 24h vol" not in leave.reason
+    assert "delisted, fetch miss" in leave.reason
     assert "last seen:" in leave.reason
     assert "Vol $2.0M" in leave.reason
     assert "Best BT 55.0%" in leave.reason
@@ -93,7 +94,7 @@ def test_off_board_leave_cites_volume_miss_when_last_below_min() -> None:
         floors={"min_volume_usd": 1_000_000},
         on_board=False,
     )
-    assert "removed from scan board (must clear min 24h vol $1,000,000)" in reason
+    assert "must clear min 24h vol" not in reason
     assert "Volume $800,000 below min $1,000,000" in reason
     assert "last seen:" in reason
 
@@ -102,8 +103,44 @@ def test_off_board_leave_no_snap() -> None:
     from trendalgo.device.scanner_alert_diff import leave_reason
 
     reason = leave_reason("ZZZ", None, floors={"min_volume_usd": 1_000_000}, on_board=False)
-    assert "removed from scan board (must clear min 24h vol $1,000,000)" in reason
+    assert "delisted, fetch miss" in reason
     assert "no last metrics saved" in reason
+
+
+def test_off_board_leave_night_high_vol_does_not_blame_volume() -> None:
+    from trendalgo.device.scanner_alert_diff import leave_reason
+
+    reason = leave_reason(
+        "NIGHT",
+        {
+            "volume_24h": 3_900_000,
+            "bot_best_net_pct": 49.7,
+            "gain_7d": 25.4,
+            "gain_30d": 22.8,
+            "health_score": 49.5,
+            "pair": "NIGHT/USD",
+        },
+        floors={"min_volume_usd": 500_000},
+        on_board=False,
+    )
+    assert "must clear min 24h vol" not in reason
+    assert "Volume $" not in reason or "below min" not in reason
+    assert "delisted, fetch miss" in reason
+    assert "Vol $3.9M" in reason
+
+
+def test_off_board_leave_cites_idle_1h_when_continuous_on() -> None:
+    from trendalgo.device import strings as S
+    from trendalgo.device.scanner_alert_diff import leave_reason
+
+    reason = leave_reason(
+        "THIN",
+        {"volume_24h": 900_000, "pair": "THIN/USD"},
+        floors={"min_volume_usd": 100_000, "require_continuous_1h": 1.0},
+        on_board=False,
+    )
+    assert S.SCANNER_LEAVE_IDLE_1H in reason
+    assert "must clear min 24h vol" not in reason
 
 
 def test_leave_reason_uses_floors_and_snapshot() -> None:
@@ -111,11 +148,11 @@ def test_leave_reason_uses_floors_and_snapshot() -> None:
 
     reason = leave_reason(
         "AAA",
-        {"volume_24h": 12_000, "uniformity_score": 0.41, "pair": "AAA/USD"},
-        floors={"min_volume_usd": 50_000, "min_uniformity": 0.55},
+        {"volume_24h": 12_000, "pair": "AAA/USD"},
+        floors={"min_volume_usd": 50_000},
     )
     assert "Volume $12,000 below min $50,000" in reason
-    assert "Uniformity 0.41 < 0.55" in reason
+    assert "Uniformity" not in reason
     assert "scan floors" not in reason.lower()
     assert "removed from scan board" not in reason
 

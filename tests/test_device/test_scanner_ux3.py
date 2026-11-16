@@ -25,11 +25,10 @@ from trendalgo.device.views.scanner_table import COL_WATCH, fill_lts_table  # no
 from trendalgo.device.views.widgets import read_only_table  # noqa: E402
 
 
-def test_health_differs_from_uniformity_when_gains_differ() -> None:
+def test_health_differs_when_gains_differ() -> None:
     low = normalize_coin(
         {
             "symbol": "A",
-            "uniformity_score": 60.0,
             "gains": {"7d": -40.0},
             "volume_acceleration_pct": -40.0,
             "hv_7d_pct": 80.0,
@@ -39,14 +38,12 @@ def test_health_differs_from_uniformity_when_gains_differ() -> None:
     high = normalize_coin(
         {
             "symbol": "B",
-            "uniformity_score": 60.0,
             "gains": {"7d": 40.0},
             "volume_acceleration_pct": 40.0,
             "hv_7d_pct": 10.0,
             "max_drawdown_pct": -5.0,
         }
     )
-    assert low["uniformity_score"] == high["uniformity_score"]
     assert low["health_score"] != high["health_score"]
     assert high["health_score"] > low["health_score"]
     assert compute_coin_health(high) == high["health_score"]

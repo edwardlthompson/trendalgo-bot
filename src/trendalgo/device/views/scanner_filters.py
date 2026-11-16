@@ -23,7 +23,6 @@ from trendalgo.device.views.exchange_checklist import ExchangeChecklist
 from trendalgo.device.views.widgets import mark_primary
 
 _DEFAULT_VOL = 0
-_DEFAULT_UNIT = 0.20
 _DEFAULT_EVERY = 60
 
 
@@ -48,6 +47,7 @@ class ScannerFilterBar(QWidget):
         self.every.setSuffix(" min")
         self.every.setParent(self)
         self.every.hide()
+        self._interval_floor = 60
         self.heatmap = QCheckBox(S.SCANNER_COLOR_RANKS)
         self.heatmap.setChecked(False)
         self.heatmap.setParent(self)
@@ -81,13 +81,18 @@ class ScannerFilterBar(QWidget):
         self.force_fresh = QPushButton(S.SCAN_FORCE_FRESH_DEBUG)
         self.force_fresh.setToolTip(S.SCAN_FORCE_FRESH_TIP)
         self.force_fresh.setVisible(False)
+        # Auto-scan lives in Scan settings / Market lanes — keep a hidden compat stub.
+        self.auto_scan = QCheckBox(S.LANE_AUTO_SCAN)
+        self.auto_scan.setParent(self)
+        self.auto_scan.hide()
 
         self._eta_part = ""
         self._auto_part = ""
+        self._last_took_part = ""
         self.auto_status = QLabel()
         self.auto_status.hide()
         self.eta = _EtaProxy(self)
-        self._min_uniformity = _DEFAULT_UNIT
+        self._require_continuous_1h = True
         self.research_hint = QLabel(S.SCANNER_RESEARCH_HINT)
         self.research_hint.hide()
         # Compat stub — strip no longer uses a More menu.
@@ -119,9 +124,25 @@ class ScannerFilterBar(QWidget):
         bits = [S.SCANNER_STATUS_EVERY.format(minutes=int(self.every.value()))]
         if self._eta_part:
             bits.append(self._eta_part)
+        if self._last_took_part:
+            bits.append(self._last_took_part)
         if self._auto_part:
             bits.append(self._auto_part)
         return " · ".join(bits)
+
+    def set_last_took_text(self, text: str) -> None:
+        self._last_took_part = str(text or "").strip()
+        self.auto_status.setText(self.status_text())
+
+    def set_last_elapsed_s(self, elapsed_s: float | None) -> None:
+        if elapsed_s is None:
+            self.set_last_took_text("")
+            return
+        from trendalgo.device.backtest_notify import format_elapsed_s
+
+        self.set_last_took_text(
+            S.SCANNER_STATUS_LAST_TOOK.format(elapsed=format_elapsed_s(elapsed_s))
+        )
 
     def set_force_fresh_in_more(self, enabled: bool) -> None:
         self.force_fresh.setVisible(bool(enabled))
@@ -137,6 +158,18 @@ class ScannerFilterBar(QWidget):
     def refresh_compact_status(self) -> None:
         self.auto_status.setText(self.status_text())
 
+    def set_interval_floor(self, minutes: int) -> None:
+        """Clamp auto-scan spinbox minimum (Forex AlgoSpecial path uses 90)."""
+        floor = max(1, int(minutes))
+        self._interval_floor = floor
+        self.every.setRange(floor, 1440)
+        if int(self.every.value()) < floor:
+            self.every.setValue(floor)
+        if floor >= 90:
+            self.every.setToolTip(S.FOREX_ALGOSPECIAL_INTERVAL_TIP)
+        else:
+            self.every.setToolTip("")
+
     def refresh_exchange_options(self, selected: list[str] | None = None) -> None:
         venues = vaulted_scan_venues()
         opts = [(v.exchange_id, checklist_brand(v.exchange_id, v.brand)) for v in venues]
@@ -148,8 +181,16 @@ class ScannerFilterBar(QWidget):
         self.refresh_exchange_options(selected=selected)
         self.vol.setValue(int(self._num(saved.get("min_volume_usd"), _DEFAULT_VOL)))
         self.every.setValue(int(self._num(saved.get("interval_minutes"), _DEFAULT_EVERY)))
-        self._min_uniformity = self._num(saved.get("min_uniformity"), _DEFAULT_UNIT)
+        if "require_continuous_1h" in saved:
+            self._require_continuous_1h = bool(saved.get("require_continuous_1h"))
+        else:
+            self._require_continuous_1h = True
         self.heatmap.setChecked(bool(saved.get("heatmap_enabled", False)))
+        raw_elapsed = saved.get("last_scan_elapsed_s")
+        try:
+            self.set_last_elapsed_s(float(raw_elapsed) if raw_elapsed is not None else None)
+        except (TypeError, ValueError):
+            self.set_last_elapsed_s(None)
         self.refresh_compact_status()
 
     @staticmethod
@@ -161,6 +202,12 @@ class ScannerFilterBar(QWidget):
         except (TypeError, ValueError):
             return default
 
+    def set_require_continuous_1h(self, value: bool) -> None:
+        self._require_continuous_1h = bool(value)
+
+    def require_continuous_1h(self) -> bool:
+        return bool(self._require_continuous_1h)
+
     def dump(self) -> dict[str, Any]:
         self.vol.interpretText()
         self.every.interpretText()
@@ -168,7 +215,7 @@ class ScannerFilterBar(QWidget):
             "exchange": "All",
             "scan_exchanges": self.exchange.selected_ids(),
             "min_volume_usd": float(self.vol.value()),
-            "min_uniformity": float(self._min_uniformity),
+            "require_continuous_1h": bool(self._require_continuous_1h),
             "interval_minutes": int(self.every.value()),
             "heatmap_enabled": bool(self.heatmap.isChecked()),
         }

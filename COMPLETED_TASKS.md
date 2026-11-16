@@ -2,6 +2,55 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Scan UX desk + AlgoSpecial Forex H1 (2026-11-15)
+
+Plans: `scan_ux_desk_fixes` · `algospecial_fx_feed`. Scoped smoke: 33 pytest (AlgoSpecial parse/budget, forex_bars facade, NonModal progress, Sauce, share, health edit, move-cut). Full `watch-agent-gates` aborted (multi-stack hang); hygiene OK.
+
+- ✅ [AGENT][LOCAL] UX-S1 Chunk `on_progress` in Alpaca multi + wire TradFi daily/1h; audit long paths — scope: `src/trendalgo/market/alpaca_ohlcv.py` · `lane_scan_job.py` · `lane_chart_fetch.py`
+- ✅ [AGENT][LOCAL] UX-S2 ScanProgressDialog NonModal; remove main-window blur on scan/sauce start — scope: `src/trendalgo/device/views/scan_progress_dialog.py` · `scanner_page.py` · `backtest_page.py`
+- ✅ [AGENT][LOCAL] UX-S3 TradFi/FX sparks from daily 7/22 bars even after 1h enrich — scope: `src/trendalgo/device/lts_scan_model.py`
+- ✅ [AGENT][LOCAL] UX-S4 Show Run Secret Sauce on TradFi/Forex; lane-aware handler — scope: `src/trendalgo/device/views/scanner_page.py` · `opportunity_sauce_job.py`
+- ✅ [AGENT][LOCAL] UX-S5 TradFi PNG export logos: pass `icon_root`+`lane`; sync FMP before grab — scope: `src/trendalgo/device/scanner_export_render.py` · `scanner_share.py` · `lane_icons.py`
+- ✅ [AGENT][LOCAL] UX-S6 Health filter: replace QComboBox with validated line edit — scope: `src/trendalgo/device/views/scanner_column_filter_row.py` · `scanner_page.py`
+- ✅ [AGENT][LOCAL] UX-S7 Scoped tests + relaunch for Scan UX desk fixes — scope: `tests/test_device/`
+- ✅ [AGENT][LOCAL] FX-AS1 AlgoSpecial H1 provider + parse to OhlcvPoint; derive D1 from H1 — scope: `src/trendalgo/market/algospecial_forex.py`
+- ✅ [AGENT][LOCAL] FX-AS2 Day budget (1000/day) + ≤50/min pace + hard 90m live-refresh floor — scope: `src/trendalgo/market/algospecial_budget.py`
+- ✅ [AGENT][LOCAL] FX-AS3 Wire Forex scan/enrich: Alpaca → AlgoSpecial H1 → cache; empty only if all fail — scope: `src/trendalgo/device/lane_scan_job.py` · `lane_chart_fetch.py` · `alpaca_forex.py`
+- ✅ [AGENT][LOCAL] FX-AS4 Forex interval/auto-scan min clamp 90m + tip when on AlgoSpecial — scope: `src/trendalgo/device/views/` · `strings.py`
+- ✅ [AGENT][LOCAL] FX-AS5 Tests parser/budget/TTL/job + scoped pytest — scope: `tests/test_market/` · `tests/test_device/`
+
+## TradFi top-500 + Forex research (2026-11-15)
+
+Specs: `docs/specs/tradfi-market-data.md` · `docs/specs/forex-lane.md`. Scoped smoke: 37 pytest (OHLCV/sessions/lanes/NASDAQ/universe/forex/matrix).
+
+- ✅ [AGENT][LOCAL] TF-P5 Alpaca equity OHLCV provider + keyed research BT — scope: `src/trendalgo/brokers/` `src/trendalgo/market/`
+- ✅ [AGENT][LOCAL] TF-P6 US RTH/holiday session + gap validation — scope: `src/trendalgo/market/`
+- ✅ [AGENT][LOCAL] TF-P7 Registry + support_matrix honesty (equity scan/BT) — scope: `config/` `src/trendalgo/device/data/` `docs/`
+- ✅ [AGENT][LOCAL] TF-P8 Device Backtest searchable TradFi path — scope: `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] TF-P9 Show crypto / TradFi / Forex toggles — scope: `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] TF-P10 NASDAQ earnings throttle + Events UI for TradFi — scope: `src/trendalgo/device/calendar/`
+- ✅ [AGENT][LOCAL] TF-P11 Top-500 universe manifest + disk OHLCV cache + BT any of 500 — scope: `config/` `src/trendalgo/`
+- ✅ [AGENT][LOCAL] FX-P1 Forex asset_class + forex_universe.json + matrix — scope: `config/` `src/trendalgo/brokers/` `docs/`
+- ✅ [AGENT][LOCAL] FX-P2 Alpaca forex rates provider + FX session rules — scope: `src/trendalgo/market/` `src/trendalgo/brokers/`
+- ✅ [AGENT][LOCAL] FX-P3 Device Backtest/picker for FX + toggle wiring — scope: `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] FX-P4 Keyless macro calendar + Events when Show Forex — scope: `src/trendalgo/device/calendar/`
+
+## Legal Tier A — residual-risk owner-only+foss (2026-11-15)
+
+ADR-0020 Legal Research Desk. Notes: `residual-risk owner-only+foss`. **H-006b** remains open (Tier B non-owner billing).
+
+- ✅ [HUMAN] H-006 Tier A ADR-0008 + founder residual-risk posture
+- ✅ [HUMAN] H-022 Tier A license ADRs via Legal Research Desk
+- ✅ [HUMAN] H-023 / R-Audit-8.9 Tier A TERMS + packet + FOUNDER_LEGAL_POSTURE
+- ✅ [HUMAN] H-007 S1 scope — ADR-0010 native CCXT (Freqtrade superseded)
+- ✅ [HUMAN] H-003 Branch protection verified on `main`
+- ✅ [HUMAN] H-008 Telegram token in local `.env` (already connected)
+- ✅ [HUMAN] PF-H1 CoinMarketCal key in CredMgr (live API verified)
+
+## Registry fix (2026-11-15)
+
+- ✅ [AGENT][LOCAL] Register `/legal-desk` in batch + Cursor skills registry (unblocks validate-bootstrap)
+
 ## Multi-venue Sequential (CEX/DEX/TF) (2026-11-15)
 
 Honesty DoD on every capability bump. Feature smoke: 41+ pytest (P1b–TF-P2…P4 + matrix).

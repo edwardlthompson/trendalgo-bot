@@ -31,7 +31,6 @@ def scanner_filter_summary(filters: dict[str, Any]) -> str:
         "chart_dist_max_7d": "max dist 7d%",
         "chart_dist_max_30d": "max dist 30d%",
         "health_min": "min health",
-        "uniformity_min": "min uniformity",
         "vol_accel_filter": "vol Δ",
         "vol24_min": "min 24h vol$",
         "bt_signal_set": "signals",
@@ -71,6 +70,8 @@ def export_scanner_list_png(
     sort_key: str = "health",
     sort_dir: int = -1,
     include_market_context: bool = True,
+    icon_root: Path | None = None,
+    lane: str = "crypto",
 ) -> Path:
     if not coins:
         raise ValueError("no rows to export")
@@ -84,6 +85,8 @@ def export_scanner_list_png(
         sort_key=sort_key,
         sort_dir=sort_dir,
         include_market_context=include_market_context,
+        icon_root=icon_root,
+        lane=lane,
     )
     try:
         panel.adjustSize()

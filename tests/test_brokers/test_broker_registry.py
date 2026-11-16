@@ -22,6 +22,10 @@ def test_alpaca_is_default_paper_broker() -> None:
     assert not alpaca.live_enabled
     assert alpaca.lane == "tradfi"
     assert "us_equity" in alpaca.asset_classes
+    assert "forex" in alpaca.asset_classes
+    assert alpaca.scan_enabled
+    assert alpaca.backtest_enabled
+    assert not alpaca.trading_enabled
 
 
 def test_list_brokers_nonempty() -> None:

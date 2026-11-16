@@ -23,7 +23,8 @@ def test_alpaca_scan_universe() -> None:
 def test_alpaca_buy_hold_bt() -> None:
     result = alpaca_buy_hold_bt("SPY")
     assert result.bar_count >= 1
-    assert "synthetic" in result.disclaimer.lower() or "TradFi" in result.disclaimer
+    assert result.source in {"synthetic", "alpaca"}
+    assert "synthetic" in result.disclaimer.lower() or "Alpaca" in result.disclaimer
 
 
 def test_alpaca_paper_order() -> None:
@@ -47,3 +48,4 @@ def test_matrix_tradfi_research_partial() -> None:
     assert tradfi is not None
     assert tradfi.public_scan in {"thin", "partial"}
     assert tradfi.deep_ohlcv_bt in {"thin", "partial"}
+    assert tradfi.live_trade == "no"

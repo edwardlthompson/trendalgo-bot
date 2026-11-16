@@ -13,8 +13,8 @@ US/PR regulatory exposure for trading tools and performance-linked fees.
 2. **Software vendor framing** — not investment advice, not a broker/dealer.
 3. **Data minimization** — no IP/email in fee ledger by default (`docs/DATA_MINIMIZATION.md`).
 4. **Disclaimers** in UI, TERMS, and AI output (S7/S11).
-5. **Attorney review** before public beta (H-006, H-023).
+5. **Tiered legal gates (ADR-0020):** Tier A founder residual-risk for owner-only + FOSS (H-006 / H-022 / H-023); Tier B counsel/clinic before non-owner billing (H-006b).
 
 ## Consequences
 
-`docs/LEGAL.md`, TERMS draft S10; pseudonymous referral/leaderboard S11.
+`docs/LEGAL.md`, TERMS; Legal Research Desk; pseudonymous referral/leaderboard S11.

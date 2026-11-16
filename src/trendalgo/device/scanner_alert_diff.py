@@ -96,31 +96,39 @@ def leave_reason(
 
 
 def _off_board_reason(symbol: str, snap: dict[str, Any] | None, floors: dict[str, float]) -> str:
-    """Coin vanished from the full scan board — cite gate + last-seen metrics."""
-    parts: list[str] = [_scan_board_gate(floors)]
+    """Coin vanished from the full scan board — cite evidence, not a blanket volume blame."""
+    from trendalgo.device import strings as S
+
+    parts: list[str] = []
     if snap is None:
+        parts.append(_scan_board_gate_unknown())
         parts.append("no last metrics saved")
         return f"{symbol} left qualified: " + "; ".join(parts)
-    vol_miss = _volume_miss(snap, floors)
-    if vol_miss:
-        parts.append(vol_miss)
+    evidence = _floor_misses(snap, floors)
+    idle = bool(snap.get("idle_1h") or snap.get("failed_continuous_1h"))
+    cont_on = float(floors.get("require_continuous_1h") or 0) > 0
+    vol_ok = _volume_miss(snap, floors) is None
+    if idle or (cont_on and vol_ok and not evidence):
+        parts.append(S.SCANNER_LEAVE_IDLE_1H)
+    elif evidence:
+        parts.append("removed from scan board")
+        parts.extend(evidence)
+    else:
+        parts.append(_scan_board_gate_unknown())
     seen = _last_seen_bits(snap)
     if seen:
         parts.append("last seen: " + " · ".join(seen))
     return f"{symbol} left qualified: " + "; ".join(parts)
 
 
-def _scan_board_gate(floors: dict[str, float]) -> str:
-    min_vol = _floor(floors, "vol24_min", "min_volume_usd")
-    if min_vol is not None:
-        return f"removed from scan board (must clear min 24h vol ${min_vol:,.0f})"
-    return "removed from scan board (delisted or failed live volume/listing gate)"
+def _scan_board_gate_unknown() -> str:
+    return "removed from scan board (delisted, fetch miss, or failed live listing/volume gate)"
 
 
 def _volume_miss(snap: dict[str, Any], floors: dict[str, float]) -> str | None:
     vol = _num(snap.get("volume_24h") or snap.get("volume_usd"))
     min_vol = _floor(floors, "vol24_min", "min_volume_usd")
-    if min_vol is not None and vol is not None and vol < min_vol:
+    if min_vol is not None and min_vol > 0 and vol is not None and vol < min_vol:
         return f"Volume ${vol:,.0f} below min ${min_vol:,.0f}"
     return None
 
@@ -159,10 +167,6 @@ def _floor_misses(snap: dict[str, Any], floors: dict[str, float]) -> list[str]:
     vol_miss = _volume_miss(snap, floors)
     if vol_miss:
         parts.append(vol_miss)
-    uni = _num(snap.get("uniformity_score") or snap.get("uniformity"))
-    min_uni = _floor(floors, "uniformity_min", "min_uniformity")
-    if min_uni is not None and uni is not None and uni < _uni_floor(min_uni, uni):
-        parts.append(f"Uniformity {uni:.2f} < {min_uni:.2f}")
     gains = snap.get("gains") if isinstance(snap.get("gains"), dict) else {}
     gain7 = _num(snap.get("gain_7d") or gains.get("7d"))
     min_g7 = _floor(floors, "min_gain_7d")
@@ -194,14 +198,6 @@ def _floor_misses(snap: dict[str, Any], floors: dict[str, float]) -> list[str]:
         if cap is not None and dist is not None and dist > cap:
             parts.append(f"{label} {dist:.1f}% above max {cap:.1f}%")
     return parts
-
-
-def _uni_floor(floor: float, uni: float) -> float:
-    if floor <= 1.0 and uni > 1.5:
-        return floor * 100.0
-    if floor > 1.5 and uni <= 1.5:
-        return floor / 100.0
-    return floor
 
 
 def _floor(floors: dict[str, float], *keys: str) -> float | None:

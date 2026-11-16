@@ -81,6 +81,7 @@ def scan_pair_strategies(
     include_sauce: bool = True,
     sauce_only_rows: list[dict[str, Any]] | None = None,
     include_market_context: bool = True,
+    exchange_id: str = "kraken",
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """Signal-only all TF → best TF → params → TSL grid (trades ≥ 3).
 
@@ -106,6 +107,7 @@ def scan_pair_strategies(
             prefs_root=prefs_root,
             on_progress=on_progress,
             on_rows=on_rows,
+            exchange_id=exchange_id,
         )
     out: list[dict[str, Any]] = []
     skip_best: dict[str, str] = {}
@@ -156,8 +158,10 @@ def scan_pair_strategies(
             on_rows(list(out))
 
     base_hint = "1h+subhour" if needs_1m_base(ordered_tf) else "1h"
+    eid = (exchange_id or "kraken").strip().lower() or "kraken"
+    src_hint = "Alpaca" if eid in {"tradfi", "forex"} else "Kraken ~720 bars/TF"
     emit(
-        f"Loading {load_symbol} frames ({base_hint}; Kraken ~720 bars/TF)…",
+        f"Loading {load_symbol} frames ({base_hint}; {src_hint})…",
         phase="load",
         timeframe=base_hint,
     )
@@ -169,6 +173,7 @@ def scan_pair_strategies(
         loader=loader,
         gecko_id=gecko_id,
         prefs_root=prefs_root,
+        exchange_id=eid,
     )
     load_s = time.perf_counter() - t_load
     data_source = str(load_meta.get("data_source") or "none")

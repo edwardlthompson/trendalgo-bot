@@ -39,18 +39,22 @@ def _seed_rows(coin: dict[str, Any]) -> list[dict[str, Any]]:
 def run_manual_sauce_pan(
     root: Path,
     filtered_coins: list[dict[str, Any]],
+    lane: str = "crypto",
 ) -> dict[str, Any]:
     """Cook Sauce on Oracle top-N of ``filtered_coins``; merge into full LTS board.
 
     Never runs catalog/deepen. Returns ``{ok, message, sauce_symbols, ...}``.
     Flushes ``scan_progress.json`` so ScanProgressDialog can follow along.
+    ``lane`` is positional so WorkerPool.submit can pass it.
     """
     progress = get_scan_progress()
     progress.begin_job(SAUCE_PAN_LABEL)
     reporter = ProgressReporter(root)
     reporter.start()
     try:
-        return _run_manual_sauce_pan_body(root, filtered_coins, progress=progress)
+        return _run_manual_sauce_pan_body(
+            root, filtered_coins, progress=progress, lane=lane or "crypto"
+        )
     finally:
         reporter.stop()
 
@@ -60,6 +64,7 @@ def _run_manual_sauce_pan_body(
     filtered_coins: list[dict[str, Any]],
     *,
     progress: Any,
+    lane: str = "crypto",
 ) -> dict[str, Any]:
     prefs = load_scan_bt_prefs(root)
     top_n = int(prefs.sauce_top_n)
@@ -91,7 +96,7 @@ def _run_manual_sauce_pan_body(
         return {"ok": False, "message": msg, "sauce_symbols": []}
 
     progress.log(
-        f"Sauce Pan manual: {len(sauce_coins)} of {len(eligible)} eligible "
+        f"Sauce Pan manual ({lane}): {len(sauce_coins)} of {len(eligible)} eligible "
         f"(top{top_n}; {', '.join(sauce_syms)}) — Sauce-only, no catalog"
     )
     from trendalgo.device.scanner_all_ta_bt import run_opportunity_sauce_pass
@@ -109,7 +114,7 @@ def _run_manual_sauce_pan_body(
 
     from trendalgo.lts_vendor.bridge import merge_backtest_into_coins
 
-    board = load_lts_rows(root)
+    board = load_lts_rows(root, lane=lane)
     if not board:
         board = list(filtered_coins)
     sauced_keys = {str(s).strip().upper() for s in summary.get("sauce_symbols") or sauce_syms}
@@ -122,7 +127,7 @@ def _run_manual_sauce_pan_body(
         key = str(coin.get("symbol") or "").strip().upper()
         if key in by_upd:
             board[i] = by_upd[key]
-    save_lts_rows(root, board)
+    save_lts_rows(root, board, lane=lane)
     progress.log(
         f"Sauce Pan merge done: {len(by_upd)} coins updated · "
         f"sauced={', '.join(sorted(sauced_keys)) or 'none'}"

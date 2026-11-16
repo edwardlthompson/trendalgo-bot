@@ -11,10 +11,10 @@ from trendalgo.scanner.store import ScannerStore
 AlertSink = Callable[[str, str, str], object]
 
 
-def tier_for_opportunity(uniformity: float, gain_pct: float) -> str:
-    if uniformity >= 0.7 and gain_pct >= 0.05:
+def tier_for_opportunity(gain_pct: float) -> str:
+    if gain_pct >= 0.05:
         return "A"
-    if uniformity >= 0.6 or gain_pct >= 0.03:
+    if gain_pct >= 0.03:
         return "B"
     return "C"
 
@@ -25,8 +25,8 @@ def emit_alerts_for_snapshot(
     on_alert: AlertSink | None = None,
 ) -> None:
     for opp in snapshot.opportunities[:5]:
-        tier = tier_for_opportunity(opp.uniformity, opp.gain_pct)
-        message = f"{opp.pair} uniformity={opp.uniformity:.2f} gain={opp.gain_pct * 100:.1f}%"
+        tier = tier_for_opportunity(opp.gain_pct)
+        message = f"{opp.pair} gain={opp.gain_pct * 100:.1f}% vol={opp.volume_score:,.0f}"
         store.log_alert(
             tier,
             opp.pair,

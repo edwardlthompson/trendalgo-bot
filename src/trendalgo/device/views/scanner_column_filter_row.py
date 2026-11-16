@@ -24,8 +24,6 @@ from trendalgo.device.views.exchange_checklist import ExchangeChecklist
 from trendalgo.device.views.scanner_table import COLUMNS
 
 _CHART_OPTS = (("", "·"), ("5", "5%"), ("10", "10%"), ("15", "15%"))
-_HEALTH_OPTS = (("", "·"), ("60", "60"), ("65", "65"), ("70", "70"))
-_UNIT_OPTS = (("", "·"), ("20", "20"), ("30", "30"), ("40", "40"), ("50", "50"), ("60", "60"))
 _VOL_ACCEL_OPTS = (("", "·"), ("pos", "+"), ("25", "25%"), ("50", "50%"))
 _VOL24_OPTS = (
     ("", "·"),
@@ -41,7 +39,7 @@ FILTER_ROW_PX = 28
 
 _COL_GAIN7, _COL_SPARK7, _COL_GAIN30, _COL_SPARK30 = 3, 4, 5, 6
 _COL_BEST, _COL_BOT_VS_BH = 7, 8
-_COL_UNIT, _COL_HEALTH, _COL_VOL_ACCEL, _COL_EXCHANGE, _COL_VOL24 = 9, 10, 13, 14, 15
+_COL_HEALTH, _COL_VOL_ACCEL, _COL_EXCHANGE, _COL_VOL24 = 9, 12, 13, 14
 
 
 class GainMinEdit(QLineEdit):
@@ -84,6 +82,15 @@ class GainMinEdit(QLineEdit):
         return "%"
 
 
+class HealthMinEdit(GainMinEdit):
+    """Min health 0–100; empty = no filter."""
+
+    def __init__(self, tip: str) -> None:
+        super().__init__(tip)
+        self.setPlaceholderText("min")
+        self.setValidator(QIntValidator(0, 100, self))
+
+
 class ScannerColumnFilterRow(QWidget):
     """Owns filter controls and mounts them into table row 0 after each fill."""
 
@@ -104,8 +111,9 @@ class ScannerColumnFilterRow(QWidget):
         )
         self.chart_dist_7d = self._combo(_CHART_OPTS, tip="Max 7d chart dist from high")
         self.chart_dist_30d = self._combo(_CHART_OPTS, tip="Max 30d chart dist from high")
-        self.health_min = self._combo(_HEALTH_OPTS, tip="Min health")
-        self.uniformity_min = self._combo(_UNIT_OPTS, tip="Min uniformity")
+        self.health_min = HealthMinEdit(
+            "Min health score — leave empty for all. Type e.g. 65 then Enter."
+        )
         self.vol_accel = self._combo(_VOL_ACCEL_OPTS, tip="Volume acceleration")
         self.exchange = ExchangeChecklist()
         self.exchange.setToolTip(S.SCANNER_RESEARCH_HINT)
@@ -118,7 +126,6 @@ class ScannerColumnFilterRow(QWidget):
             _COL_SPARK30: self.chart_dist_30d,
             _COL_BEST: self.best_bt,
             _COL_BOT_VS_BH: self.bot_vs_bh,
-            _COL_UNIT: self.uniformity_min,
             _COL_HEALTH: self.health_min,
             _COL_VOL_ACCEL: self.vol_accel,
             _COL_EXCHANGE: self.exchange,
@@ -204,8 +211,7 @@ class ScannerColumnFilterRow(QWidget):
         self._set(self.bot_vs_bh, saved.get("bot_vs_bh_filter"))
         self._set(self.chart_dist_7d, saved.get("chart_dist_max_7d"))
         self._set(self.chart_dist_30d, saved.get("chart_dist_max_30d"))
-        self._set(self.health_min, saved.get("health_min"))
-        self._set(self.uniformity_min, saved.get("uniformity_min"))
+        self.health_min.setValue(self._load_floor(saved.get("health_min")))
         self._set(self.vol_accel, saved.get("vol_accel_filter"))
         self._set(self.vol24_min, saved.get("vol24_min"))
         view = saved.get("view_exchanges")
@@ -223,9 +229,11 @@ class ScannerColumnFilterRow(QWidget):
         self.gain_7d.interpretText()
         self.gain_30d.interpretText()
         self.best_bt.interpretText()
+        self.health_min.interpretText()
         g7 = self.gain_7d.floor()
         g30 = self.gain_30d.floor()
         best = self.best_bt.floor()
+        health = self.health_min.floor()
         return {
             "min_gain_7d": None if g7 is None else float(g7),
             "min_gain_30d": None if g30 is None else float(g30),
@@ -234,8 +242,7 @@ class ScannerColumnFilterRow(QWidget):
             "bot_vs_bh_filter": self._val(self.bot_vs_bh),
             "chart_dist_max_7d": self._val(self.chart_dist_7d),
             "chart_dist_max_30d": self._val(self.chart_dist_30d),
-            "health_min": self._val(self.health_min),
-            "uniformity_min": self._val(self.uniformity_min),
+            "health_min": "" if health is None else str(health),
             "vol_accel_filter": self._val(self.vol_accel),
             "view_exchanges": self.exchange.selected_ids(),
             "vol24_min": self._val(self.vol24_min),

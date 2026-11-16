@@ -1,6 +1,6 @@
 # ADR-0017 — Multi-user seams and performance-license terms
 
-- **Status:** Accepted for the seams and the owner-approved terms (2026-10-09). Counsel sign-off under H-006 is still required before any non-owner use, and H-022 attorney review of ADR-0005 is still open.
+- **Status:** Accepted for the seams and the owner-approved terms (2026-10-09). Tier A (ADR-0020): FOSS publish + owner-only OK after founder residual-risk posture. Tier B: counsel/clinic (H-006b) still required before any **non-owner charge**. H-022 Tier A closes via Legal Research Desk + posture (license model docs); counsel before monetizing others.
 - **Date:** 2026-10-09
 - **Relates to:** ADR-0005 (amended by this ADR when Accepted), ADR-0008 (kept), ADR-0016 (host architecture), [docs/MONETIZATION.md](../MONETIZATION.md), [docs/LEGAL_SAFETY.md](../LEGAL_SAFETY.md), AGENTS.md (`distribution_tier: foss`)
 
@@ -43,7 +43,7 @@
    - A closed statement period is never recalculated under new terms.
    - The owner's own host is not charged, because the owner is not an enrolled user.
 8. **Distribution tier.** This ADR does not change `distribution_tier: foss`, and the code stays MIT. Any paid feature for other people needs a tier ADR first, after `commercial-compliance.mdc` review (M9).
-9. **Legal scope before any non-owner charge.** H-006 must cover performance-fee and adviser-style rules, not only money transmission (M3). H-023 covers the terms and privacy text. Venue rules per jurisdiction are needed before public copy (M4).
+9. **Legal scope before any non-owner charge (Tier B / H-006b).** Performance-fee and adviser-style rules, not only money transmission (M3). TERMS/privacy for fee enrollment (H-023 Tier B). Venue rules per jurisdiction before public billing copy (M4). Tier A FOSS publish does not require counsel (ADR-0020).
 10. **Not in v1.** Stripe or fiat (rejected in ADR-0008), auto-withdraw, subaccount fee routing, vendor-run bots for others, and a strategy marketplace.
 
 ## Amends ADR-0005
@@ -56,9 +56,9 @@
 ## Consequences
 
 - The fee code in `src/trendalgo/billing/` (`profit.py`, `rules.py`, `engine.py`, `schema.py`) must not produce any statement until P8 rewrites the math on the host, with rule tests.
-- `docs/MONETIZATION.md` still describes the older model. It must not be shown to non-owners until P8 and counsel sign-off.
-- The wizard shows the fee terms at step W0, and again before the first live order for non-owner use. Owner use shows them as information only.
-- Public copy waits for counsel review (H-006, H-023).
+- `docs/MONETIZATION.md` must not drive non-owner enrollment until P8 and Tier B (H-006b).
+- The wizard shows fee terms as information for owner use; non-owner enrollment stays off until H-006b.
+- FOSS / source-available public copy OK after Tier A posture (ADR-0020); fee marketing waits for Tier B.
 
 ## Alternatives considered
 
@@ -69,6 +69,7 @@
 
 ## Open items
 
-- H-006 scope (M3), H-022 review of ADR-0005, and H-023 terms.
-- Jurisdiction rules per venue (M4).
-- Tier and license decision (M9), including the AGPL and MIT conflict in ADR-0005 item 3.
+- Tier A: H-006 / H-022 / H-023 via Legal Research Desk + founder residual-risk posture (ADR-0020).
+- Tier B: H-006b counsel/clinic before non-owner charges (M3).
+- Jurisdiction rules per venue before public billing copy (M4).
+- Product license is ELv2 (ADR-0018); M9 AGPL/MIT conflict closed for product license.

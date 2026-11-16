@@ -77,6 +77,36 @@ def pair_picker(parent: QWidget | None = None) -> SearchablePicker:
     )
 
 
+def research_picker(
+    choices: Sequence[str],
+    *,
+    parent: QWidget | None = None,
+) -> SearchablePicker:
+    """TradFi/FX/crypto combined searchable list (lane-filtered)."""
+    return SearchablePicker(
+        choices,
+        placeholder=S.PAIR_PICKER_PLACEHOLDER,
+        allow_custom=True,
+        parent=parent,
+    )
+
+
+def set_picker_choices(picker: SearchablePicker, choices: Sequence[str]) -> None:
+    current = picker.text()
+    picker.blockSignals(True)
+    picker.clear()
+    picker._all_choices = tuple(choices)
+    picker.addItems(list(picker._all_choices))
+    completer = QCompleter(list(picker._all_choices), picker)
+    completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+    completer.setFilterMode(Qt.MatchFlag.MatchContains)
+    completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+    picker.setCompleter(completer)
+    if current:
+        picker.set_text(current)
+    picker.blockSignals(False)
+
+
 def indicator_picker(parent: QWidget | None = None) -> SearchablePicker:
     return SearchablePicker(
         LIVE_V1_INDICATORS,

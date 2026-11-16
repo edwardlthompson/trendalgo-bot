@@ -265,21 +265,35 @@ def show_scanner_chart_dialog(
     show_trades.toggled.connect(_refresh)
     group.idToggled.connect(lambda _id, on: _refresh() if on else None)
     _refresh()
-    _open_windowed(dialog)
+    chart_root = candles_db.parent if candles_db is not None else None
+    _open_windowed(dialog, root=chart_root)
     dialog.exec()
 
 
-def _open_windowed(dialog: QDialog) -> None:
-    """Fill the available screen as a normal maximizable window (split-screen friendly)."""
+def _open_windowed(dialog: QDialog, *, root: Path | None = None) -> None:
+    """Restore remembered size/maximize, else a usable default window."""
+    from trendalgo.device.dialog_geometry import bind_dialog_geometry, restore_dialog_geometry
+
+    if root is not None:
+        restore_dialog_geometry(root, dialog, "scanner_chart", default_w=900, default_h=640)
+        bind_dialog_geometry(root, dialog, "scanner_chart")
+        return
     screen = dialog.screen() or QApplication.primaryScreen()
     if screen is not None:
-        dialog.setGeometry(screen.availableGeometry())
-    dialog.showMaximized()
+        geo = screen.availableGeometry()
+        dialog.resize(min(1100, geo.width() - 48), min(720, geo.height() - 48))
 
 
 def _closes_for_window(coin: dict[str, Any], window: str) -> list[float]:
     key = "spark_closes_30d" if window == "30d" else "spark_closes_7d"
-    raw = coin.get(key) or coin.get("closes_1h") or coin.get("chart_closes_1h") or []
+    raw = (
+        coin.get(key)
+        or coin.get("closes_1d")
+        or coin.get("chart_closes_1d")
+        or coin.get("closes_1h")
+        or coin.get("chart_closes_1h")
+        or []
+    )
     if not isinstance(raw, list):
         return []
     return [float(x) for x in raw if isinstance(x, (int, float))]

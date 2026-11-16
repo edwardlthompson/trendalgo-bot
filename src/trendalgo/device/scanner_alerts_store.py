@@ -60,8 +60,6 @@ def save_previous_qualified(
                     "pair",
                     "volume_24h",
                     "volume_usd",
-                    "uniformity_score",
-                    "uniformity",
                     "gain_30d",
                     "gain_pct",
                     "gain_7d",

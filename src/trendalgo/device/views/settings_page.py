@@ -41,9 +41,11 @@ from trendalgo.device.settings_model import (
 from trendalgo.device.theme import apply_theme
 from trendalgo.device.views.about_feedback_section import AboutFeedbackSection
 from trendalgo.device.views.about_updates_section import AboutUpdatesSection
+from trendalgo.device.views.alpaca_wizard import AlpacaWizardDialog
 from trendalgo.device.views.crash_privacy_settings import CrashPrivacySection
 from trendalgo.device.views.dashboard_modules_settings import DashboardModulesSection
 from trendalgo.device.views.exchange_keys_section import ExchangeKeysSection
+from trendalgo.device.views.lanes_settings_section import LanesSettingsSection
 from trendalgo.device.views.notify_settings import NotifySettingsSection
 from trendalgo.device.views.settings_grid_canvas import SettingsGridCanvas
 from trendalgo.device.views.telegram_wizard import TelegramWizardDialog
@@ -66,6 +68,7 @@ _SECTION_TITLES: dict[str, str] = {
     "appearance": S.SETTINGS_APPEARANCE,
     "keys": S.SETTINGS_KEYS,
     "venue": S.SETTINGS_VENUE,
+    "lanes": S.LANES_SECTION,
     "dashboard": S.SETTINGS_DASHBOARD_MODULES,
     "privacy": S.SETTINGS_PRIVACY,
     "data": S.SETTINGS_DATA,
@@ -116,6 +119,10 @@ class SettingsPage(QWidget):
         self._telegram.setMinimumHeight(44)
         self._telegram.setObjectName("settingsRibbonTelegram")
         self._telegram.clicked.connect(lambda _checked=False: self._open_telegram())
+        self._alpaca = QPushButton(S.NOTIFY_ALPACA_WIZARD)
+        self._alpaca.setMinimumHeight(44)
+        self._alpaca.setObjectName("settingsRibbonAlpaca")
+        self._alpaca.clicked.connect(lambda _checked=False: self._open_alpaca())
 
         self._edit = QCheckBox(S.SETTINGS_LAYOUT_EDIT)
         self._edit.setToolTip(S.SETTINGS_LAYOUT_EDIT_TIP)
@@ -128,6 +135,7 @@ class SettingsPage(QWidget):
         ribbon.addWidget(self._save, 0, Qt.AlignmentFlag.AlignVCenter)
         ribbon.addWidget(self._setup, 0, Qt.AlignmentFlag.AlignVCenter)
         ribbon.addWidget(self._telegram, 0, Qt.AlignmentFlag.AlignVCenter)
+        ribbon.addWidget(self._alpaca, 0, Qt.AlignmentFlag.AlignVCenter)
         ribbon.addWidget(self._status, 0, Qt.AlignmentFlag.AlignVCenter)
         ribbon.addStretch(1)
 
@@ -184,6 +192,9 @@ class SettingsPage(QWidget):
         venue, venue_lay = _card_body("settingsSectionVenue")
         venue_lay.addWidget(VenueSection(self._ctx.root))
 
+        lanes, lanes_lay = _card_body("settingsSectionLanes")
+        lanes_lay.addWidget(LanesSettingsSection(self._ctx.root))
+
         dashboard, dash_lay = _card_body("settingsSectionDashboard")
         dash_lay.addWidget(
             DashboardModulesSection(
@@ -234,6 +245,7 @@ class SettingsPage(QWidget):
             "appearance": appearance,
             "keys": keys,
             "venue": venue,
+            "lanes": lanes,
             "dashboard": dashboard,
             "privacy": privacy_wrap,
             "data": data,
@@ -271,6 +283,9 @@ class SettingsPage(QWidget):
 
     def _open_telegram(self) -> None:
         TelegramWizardDialog(self._ctx, parent=self).exec()
+
+    def _open_alpaca(self) -> None:
+        AlpacaWizardDialog(parent=self).exec()
 
     def _load(self) -> None:
         try:

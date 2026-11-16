@@ -6,7 +6,7 @@ from typing import Any
 
 from trendalgo.device.lts_scan_model import cell_gain
 
-# Column index → sort key (Watch=0 Logo=1 Name=2 … Results=16).
+# Column index → sort key (Watch=0 Logo=1 Name=2 … Results=15).
 COL_SORT_KEYS: dict[int, str] = {
     2: "symbol",
     3: "g7pct",
@@ -15,13 +15,12 @@ COL_SORT_KEYS: dict[int, str] = {
     6: "g30hi",
     7: "btbest",
     8: "btvbh",
-    9: "uniformity",
-    10: "health",
-    11: "hv7",
-    12: "mdd",
-    13: "volaccel",
-    14: "venue",
-    15: "vol24h",
+    9: "health",
+    10: "hv7",
+    11: "mdd",
+    12: "volaccel",
+    13: "venue",
+    14: "vol24h",
 }
 
 DEFAULT_SORT_KEY = "health"
@@ -76,8 +75,6 @@ def _field(coin: dict[str, Any], key: str) -> object:
         return coin.get("bot_best_net_pct")
     if key == "btvbh":
         return coin.get("bot_vs_bh_pct")
-    if key == "uniformity":
-        return coin.get("uniformity_score")
     if key == "health":
         return coin.get("health_score")
     if key == "hv7":

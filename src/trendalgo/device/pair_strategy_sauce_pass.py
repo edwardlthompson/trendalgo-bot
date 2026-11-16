@@ -43,6 +43,7 @@ def run_sauce_only_pass(
     prefs_root: Path | None = None,
     on_progress: ProgressFn | None = None,
     on_rows: RowsFn | None = None,
+    exchange_id: str = "kraken",
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     """Cook Secret Sauce on catalog rows without re-running pass2 / deepen."""
     out = [dict(r) for r in seed_rows]
@@ -52,6 +53,7 @@ def run_sauce_only_pass(
     total = SAUCE_STEPS
     done = 0
     frames_by_tf: dict[str, Any] = {}
+    eid = (exchange_id or "kraken").strip().lower() or "kraken"
 
     def emit(message: str, **extra: Any) -> None:
         if on_progress is not None:
@@ -70,6 +72,7 @@ def run_sauce_only_pass(
         loader=loader,
         gecko_id=gecko_id,
         prefs_root=prefs_root,
+        exchange_id=eid,
     )
     if not frames_by_tf:
         emit("Sauce-only: no OHLCV — keeping catalog rows", phase="done", done=total)

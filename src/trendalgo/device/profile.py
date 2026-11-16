@@ -10,6 +10,7 @@ import os
 import tempfile
 import threading
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -92,8 +93,36 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
     Parallel All-TA coins hit the same prefs files; retry Windows Access Denied on replace.
     Locks are per-path so ``scan_progress.json`` cannot stall catalog timing writes.
     """
-    path.parent.mkdir(parents=True, exist_ok=True)
     lock = _lock_for(path)
+    with lock:
+        _write_json_unlocked(path, data)
+
+
+def mutate_json(path: Path, mutator: Callable[[dict[str, Any]], None]) -> dict[str, Any]:
+    """Load → mutate → write under the path lock (avoids lost updates across threads)."""
+    lock = _lock_for(path)
+    with lock:
+        raw = _read_json_unlocked(path)
+        data: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
+        mutator(data)
+        _write_json_unlocked(path, data)
+        return data
+
+
+def _read_json_unlocked(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ProfileError(f"{path.name} cannot be read. Move it aside, then try again.") from exc
+    if not isinstance(data, dict):
+        raise ProfileError(f"{path.name} must hold a JSON object.")
+    return data
+
+
+def _write_json_unlocked(path: Path, data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     last_err: OSError | None = None
     payload = json.dumps(data, indent=2, sort_keys=True)
     for attempt in range(_REPLACE_TRIES):
@@ -103,8 +132,7 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
                 handle.write(payload)
                 handle.flush()
                 os.fsync(handle.fileno())
-            with lock:
-                os.replace(tmp_name, path)
+            os.replace(tmp_name, path)
             return
         except OSError as exc:
             last_err = exc

@@ -19,8 +19,84 @@ _SPEC.loader.exec_module(founder_gate)
 
 def test_hard_gates_match_build_plan() -> None:
     assert founder_gate.HARD_GATES == frozenset(
-        {"H-006", "H-008", "H-010", "H-011", "H-023", "H-028", "H-031", "H-032", "H-036"}
+        {
+            "H-006",
+            "H-006b",
+            "H-008",
+            "H-010",
+            "H-011",
+            "H-023",
+            "H-028",
+            "H-031",
+            "H-032",
+            "H-036",
+        }
     )
+
+
+def test_legal_tier_a_gates() -> None:
+    assert founder_gate.LEGAL_TIER_A_GATES == frozenset({"H-006", "H-022", "H-023"})
+
+
+def test_posture_ok_requires_scope_and_date() -> None:
+    assert founder_gate._posture_ok("Accepted-scope: owner-only+foss\nAccepted-date: 2026-11-15\n")
+    assert not founder_gate._posture_ok("Accepted-scope: owner-only+foss\n")
+    assert not founder_gate._posture_ok("Accepted-date: 2026-11-15\n")
+
+
+def test_legal_approve_note_requires_residual_risk(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(founder_gate, "ROOT", tmp_path)
+    (tmp_path / "docs" / "legal-desk" / "counsel").mkdir(parents=True)
+    ok, reason = founder_gate._legal_approve_note_ok("H-006", "looks fine")
+    assert not ok and "residual-risk" in reason
+    ok, reason = founder_gate._legal_approve_note_ok("H-006", "residual-risk owner-only+foss desk")
+    assert ok and reason == "ok"
+
+
+def test_legal_approve_refuses_attorney_approved_without_counsel(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr(founder_gate, "ROOT", tmp_path)
+    (tmp_path / "docs" / "legal-desk" / "counsel").mkdir(parents=True)
+    ok, reason = founder_gate._legal_approve_note_ok(
+        "H-006", "residual-risk owner-only+foss attorney approved"
+    )
+    assert not ok and "attorney approved" in reason
+
+
+def test_preflight_legal_packet_requires_posture(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(founder_gate, "ROOT", tmp_path)
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "legal-review-packet.md").write_text("packet", encoding="utf-8")
+    (tmp_path / "TERMS.md").write_text("terms", encoding="utf-8")
+    code, msg = founder_gate.preflight_legal_packet()
+    assert code == 1 and "missing" in msg
+    posture = docs / "FOUNDER_LEGAL_POSTURE.md"
+    posture.write_text("Accepted-scope: owner-only+foss\n", encoding="utf-8")
+    code, msg = founder_gate.preflight_legal_packet()
+    assert code == 1 and "Accepted-date" in msg
+    posture.write_text(
+        "Accepted-scope: owner-only+foss\nAccepted-date: 2026-11-15\n",
+        encoding="utf-8",
+    )
+    code, msg = founder_gate.preflight_legal_packet()
+    assert code == 2
+    assert "Tier A" in msg and "H-006b" in msg
+
+
+def test_packet_generator_lists_required_adrs() -> None:
+    script = (ROOT / "scripts" / "generate-legal-review-packet.sh").read_text(encoding="utf-8")
+    for need in (
+        "0007-legal-framework",
+        "0008-legal-safe-monetization",
+        "0017-multi-user-monetization",
+        "0018-elastic-license-v2",
+        "0020-legal-research-desk",
+        "FOUNDER_LEGAL_POSTURE",
+        "LEGAL_SAFETY",
+    ):
+        assert need in script
 
 
 def test_repo_path_becomes_root_relative_posix() -> None:

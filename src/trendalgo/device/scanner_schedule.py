@@ -6,14 +6,22 @@ from datetime import UTC, datetime, timedelta
 
 MIN_INTERVAL = 60
 MAX_INTERVAL = 1440
+# AlgoSpecial free tier: 59 pairs × 16 refreshes/day → ≥90m live floor.
+FOREX_MIN_INTERVAL = 90
 
 
-def clamp_interval_minutes(raw: int | float | None, default: int = MIN_INTERVAL) -> int:
+def clamp_interval_minutes(
+    raw: int | float | None,
+    default: int = MIN_INTERVAL,
+    *,
+    floor: int | None = None,
+) -> int:
     try:
         value = int(raw) if raw is not None else default
     except (TypeError, ValueError):
         value = default
-    return max(MIN_INTERVAL, min(MAX_INTERVAL, value))
+    lo = max(1, int(floor)) if floor is not None else MIN_INTERVAL
+    return max(lo, min(MAX_INTERVAL, value))
 
 
 def _as_utc(dt: datetime) -> datetime:

@@ -193,6 +193,43 @@ def test_scanner_page_has_pwa_filter_strip(
     assert page._filters.share.objectName() == "shareButton"
     assert page._filters.share.toolTip() == S.SCANNER_SHARE_TIP
     assert not hasattr(page, "_compare")
+    assert page._filters.auto_scan.isVisibleTo(page)
+    assert page._filters.sauce_pan.isVisibleTo(page)
+
+
+def test_tradfi_desk_hides_crypto_actions_and_gates_autoscan(
+    qtbot: QtBot,
+    ctx: DeviceContext,
+) -> None:
+    from trendalgo.device.lane_prefs import LanePrefs, save_lane_prefs
+
+    save_lane_prefs(
+        ctx.root,
+        LanePrefs(auto_scan_crypto=True, auto_scan_tradfi=False, auto_scan_forex=False),
+    )
+    page = ScannerPage(ctx, lane="tradfi")
+    qtbot.addWidget(page)
+    assert page._table_title == S.SCANNER_TITLE_TRADFI
+    assert page._filters.sauce_pan.isHidden()
+    assert page._filters.pool_watch.isHidden()
+    assert page._filters.auto_scan.isChecked() is False
+    page._schedule_autoscan(reset=True)
+    assert not page._auto_timer.isActive()
+    page._filters.auto_scan.setChecked(True)
+    page._schedule_autoscan(reset=True)
+    assert page._auto_timer.isActive()
+    page.stop_autoscan()
+
+
+def test_forex_desk_title_and_auto_scan_default_off(
+    qtbot: QtBot,
+    ctx: DeviceContext,
+) -> None:
+    page = ScannerPage(ctx, lane="forex")
+    qtbot.addWidget(page)
+    assert page._table_title == S.SCANNER_TITLE_FOREX
+    assert page._filters.auto_scan.isChecked() is False
+    page.stop_autoscan()
 
 
 def test_scanner_settings_button_opens_dialog(

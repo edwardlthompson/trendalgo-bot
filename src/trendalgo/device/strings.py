@@ -5,7 +5,10 @@ NAV_LABEL = "Main navigation"
 NAV_PORTFOLIO = "Dashboard"
 NAV_ALERTS = "Alerts"
 NAV_STATUS = "Bots"
-NAV_SCANNER = "Scanner"
+NAV_SCANNER = "Crypto"
+NAV_CRYPTO = "Crypto"
+NAV_TRADFI = "TradFi"
+NAV_FOREX = "Forex"
 NAV_BACKTESTS = "Backtest"
 NAV_PLAN = "Plan"
 NAV_MORE = "More"
@@ -381,11 +384,18 @@ SCAN_BT_OHLCVT_DOWNLOAD_ACK_BODY = (
     "otherwise see the rolling 30d ready date in Settings."
 )
 SCAN_BT_ETA_SECTION = "Estimated scan time"
+SCAN_BT_ETA_CRYPTO = "Crypto"
+SCAN_BT_ETA_TRADFI = "TradFi"
+SCAN_BT_ETA_FOREX = "Forex"
+SCAN_BT_ETA_TOTAL = "Grand total (auto-scan on)"
+SCAN_BT_ETA_LANE_NOTE = "TF/FX ≈ bars + All-TA on every pair that passes desk filters."
+SCAN_BT_AUTO_SECTION = "Auto-scan desks"
 SCAN_BT_OHLCVT_SECTION = "Kraken OHLCVT"
 SCAN_BT_TF_SECTION = "Timeframes"
 SCAN_BT_TA_SECTION = "Strategies"
 SCAN_BT_EXTRAS_SECTION = "Market Context & Sauce Pan"
 SCAN_BT_CHROME_SECTION = "Scan schedule & board"
+SCAN_BT_PRIMARY_SECTION = "Primary scan filters"
 SCAN_BT_RESULTS_SECTION = "Results view"
 SCANNER_MORE = "More"
 SCANNER_MORE_TIP = "Secret Sauce, pool watch, refresh prices, and share"
@@ -393,6 +403,13 @@ SCANNER_STATUS = "Scan status"
 SCANNER_STATUS_TIP = "Last scan, ETA, and next auto-scan"
 SCANNER_STATUS_EMPTY = "No scan status yet. Run a scan to fill this."
 SCANNER_STATUS_EVERY = "every {minutes} min"
+SCANNER_STATUS_LAST_TOOK = "Last scan took {elapsed}"
+SCANNER_FILTER_VOL_HINT = "Soft 24h floor. Lower freely when continuous 1h trades is on."
+SCANNER_FILTER_CONTINUOUS_1H = "Require continuous 1h trades"
+SCANNER_FILTER_CONTINUOUS_1H_TIP = (
+    "Drop pairs with any zero-volume hour in the last 24h so thin names cannot starve fills."
+)
+SCANNER_LEAVE_IDLE_1H = "Dropped: zero-volume 1h bar(s) in last 24h (thin / no trades)"
 SCAN_BT_OHLCVT_DOWNLOAD_FAIL_TITLE = "OHLCVT download failed"
 SCAN_BT_OHLCVT_DOWNLOAD_FAIL = "Download failed: {error}"
 
@@ -447,13 +464,13 @@ SCANNER_LTS_HEADERS = (
     "30D",
     "Best BT %",
     "Bot vs B&H",
-    "Uniformity",
     "Health",
     "HV 7D",
     "Max DD",
     "Vol Δ%",
     "Exchange",
     "24H Vol",
+    "Events",
     "Backtest",
 )
 # Match retired LTS dashboard column titles (hover help for new users).
@@ -467,15 +484,27 @@ SCANNER_LTS_HEADER_TIPS = (
     "Thirty-day hourly sparkline; % below window high. Orange line is last close.",
     "Highest backtest net percent and winning trailing stop (TSL) when not buy and hold",
     "Edge of the best strategy over buy and hold net % (when strategy beats B&H)",
-    "OHLCV uniformity score",
-    "Composite health score",
+    "Composite health score (gain, volume accel, risk)",
     "Annualized historical volatility from about 7d of hourly closes",
     "Peak-to-trough drawdown over about 30d of hourly closes",
     "Volume acceleration vs baseline window",
     "Listing venue for this row",
     "Approximate 24h USD volume on Kraken spot for this base (all quotes; not CoinMarketCap global)",
+    "Open coin event timeline when the local calendar cache has dates in window",
     "Open optimizer results when a pass-1 backtest is saved for this pair",
 )
+COIN_EVENTS_CALENDAR = "Events"
+COIN_EVENTS_CALENDAR_TIP = (
+    "30-day price with numbered calendar events (cache only; Free CoinMarketCal = next 7 days)."
+)
+COIN_EVENTS_TITLE = "Events — {symbol}"
+COIN_EVENTS_HINT = (
+    "Price is the last 30 days. Markers are from your local calendar cache "
+    "(CoinMarketCal Free: upcoming ≤7 days, no historical API)."
+)
+COIN_EVENTS_ESTIMATED = "estimated date"
+COIN_EVENTS_NONE = "No events in the calendar window for this coin."
+COIN_EVENTS_QUOTA = "Calendar refresh skipped (CoinMarketCal Free quota reserve)."
 SCANNER_COLOR_RANKS = "Color ranks"
 BACKTEST_PERFECT_ONLY = "Perfect Strategies"
 BACKTEST_PERFECT_HELP = (
@@ -571,12 +600,10 @@ SCANNER_FILTER_VOL = "Min vol"
 SCANNER_FILTER_GAIN = "Min gain %"
 SCANNER_FILTER_GAIN_7D = "Min gain 7D"
 SCANNER_FILTER_GAIN_30D = "Min gain 30D"
-SCANNER_FILTER_UNIT = "Uniformity"
 SCANNER_FILTER_EVERY = "Scan every"
 SCANNER_FILTER_CHART_7D = "7d chart"
 SCANNER_FILTER_CHART_30D = "30d chart"
 SCANNER_FILTER_HEALTH = "Health"
-SCANNER_FILTER_UNIT_MIN = "Unit ≥"
 SCANNER_FILTER_VOL_ACCEL = "Vol Δ"
 SCANNER_FILTER_VOL24 = "24h vol"
 SCANNER_CHIP_QUALIFIED = "Qualified coins"
@@ -742,6 +769,7 @@ BACKTEST_RESULT_HEADERS = (
     "TSL Hits",
     "TSL Hit %",
     "Strength",
+    "Events",
     "Show Chart",
     "Create Bot",
 )
@@ -974,7 +1002,7 @@ ABOUT_TITLE = "About"
 ABOUT_VERSION = "Version {version}"
 ABOUT_SUPPORT = (
     "Research desk: Kraken today · thin pool watch: Ethereum/Base · "
-    "Portfolio: 9 CEX + DEX wallets · TradFi: Alpaca paper sync."
+    "Portfolio: 9 CEX + DEX wallets · TradFi: Alpaca equity BT · Forex: rates research."
 )
 DEX_WATCH_RUN = "Pool watch (Base/Ethereum)"
 DEX_WATCH_HINT = (
@@ -1131,7 +1159,116 @@ CAL_WIZARD_SAVED = "Saved to Credential Manager."
 CAL_WIZARD_NEED_TEST = "Test the key successfully before saving."
 CAL_EVENTS_EMPTY = "No upcoming events match your filters."
 CAL_EVENTS_NO_KEYS = "Connect CoinMarketCal or Coindar to load crypto event dates."
+CAL_EVENTS_NO_TRADFI = "TradFi earnings use the free NASDAQ calendar (throttled)."
+CAL_EVENTS_NO_FOREX = "Forex events use a keyless macro calendar on the Forex desk."
 CAL_EVENTS_REFRESH = "Refresh events"
+LANE_AUTO_SCAN = "Auto-scan"
+LANE_AUTO_SCAN_TIP = "When on, this desk runs on the Scan every N min schedule. Manual Run scan still works when off."
+LANE_AUTO_SCAN_CRYPTO = "Crypto auto-scan"
+LANE_AUTO_SCAN_TRADFI = "TradFi auto-scan"
+LANE_AUTO_SCAN_FOREX = "Forex auto-scan"
+LANES_SECTION = "Market lanes"
+LANES_SETTINGS_HINT = (
+    "Turn Auto-scan on or off per desk (Crypto, TradFi, Forex). "
+    "Cadence is Scan every N min in that desk’s Settings. Tabs stay available either way. "
+    "TradFi and Forex scans require Alpaca paper API keys."
+)
+LANES_ALPACA_HINT = "TradFi/Forex opportunity scans need Alpaca paper keys (IEX / rates research)."
+SCANNER_TITLE_CRYPTO = "Crypto opportunity"
+SCANNER_TITLE_TRADFI = "TradFi opportunity"
+SCANNER_TITLE_FOREX = "Forex opportunity"
+SCANNER_EMPTY_TRADFI_BODY = (
+    "TradFi desk uses the Alpaca equity universe (~30d daily bars). "
+    "Set up Alpaca paper keys, then Run scan. Research/BT only — no live TradFi trading."
+)
+SCANNER_EMPTY_FOREX_BODY = (
+    "Forex desk uses Alpaca Forex rates when granted, otherwise free AlgoSpecial H1 "
+    "(D1 derived). Auto-scan floor is 90 minutes on the AlgoSpecial path. "
+    "Synthetic bars are disabled. No FX live trading."
+)
+SCAN_FOREX_DATA_DENIED = (
+    "No Forex bars from Alpaca or AlgoSpecial (and no usable cache). "
+    "Check network / AlgoSpecial cool-down, or enable Alpaca Forex data, then Run scan again. "
+    "Synthetic data is not used."
+)
+FOREX_ALGOSPECIAL_INTERVAL_TIP = (
+    "Forex auto-scan is at least 90 minutes so free AlgoSpecial stays under "
+    "1000 calls/day (59 pairs). Alpaca Forex grant can refresh faster when available."
+)
+SCAN_ALPACA_REQUIRED = (
+    "Alpaca paper API keys are required for TradFi and Forex scans. "
+    "Open Set up Alpaca… in Settings (or below), then Test and Save."
+)
+SCANNER_SOURCE_ALPACA = "Alpaca paper (keyed)"
+NOTIFY_ALPACA_WIZARD = "Set up Alpaca…"
+LANE_FILTER_SECTION = "TradFi scan filters"
+LANE_FILTER_UNIVERSE_NOTE = (
+    "Universe: all tradable US equities from Alpaca (free plan paced). "
+    "Filters below cut flats before All-TA."
+)
+LANE_FILTER_ABS_GAIN = "Min |30d move| %"
+LANE_FILTER_ABS_GAIN_TIP = (
+    "Drop names whose absolute close-to-close change over ~22 sessions "
+    "is below this. Flat charts waste All-TA. 0 = off."
+)
+LANE_FILTER_RANGE = "Min range %"
+LANE_FILTER_RANGE_TIP = (
+    "(Highest high − lowest low) / mid over that same window. "
+    "Cuts slow grinders that barely left a tight band. 0 = off."
+)
+LANE_FILTER_TOP_N = "Top-N by |move|"
+LANE_FILTER_TOP_N_TIP = (
+    "After the filters above, keep only the N largest movers for All-TA. "
+    "0 = keep every name that passed."
+)
+LANE_FILTER_TOP_N_OFF = "All"
+LANE_FILTER_ADV = "Min ADV $"
+LANE_FILTER_ADV_TIP = (
+    "Optional average daily dollar volume (close × shares) over ~20 sessions. "
+    "Default $0 (off) — TradFi bots are rarely volume-constrained. "
+    "Raise only if you want an extra liquidity floor."
+)
+LANE_FILTER_PRICE = "Min price $"
+LANE_FILTER_PRICE_TIP = "Drop names below this last close. Default $0 (off)."
+LANE_FILTER_PRESET = "Filter level"
+LANE_FILTER_PRESET_TIP = (
+    "Wide → Strict sets Min |30d move|, Min range, and Top-N together. "
+    "ADV stays off; Min price is unchanged. Save Settings to persist."
+)
+LANE_FILTER_PRESET_WIDE = "Wide"
+LANE_FILTER_PRESET_BALANCED = "Balanced"
+LANE_FILTER_PRESET_TIGHT = "Tight"
+LANE_FILTER_PRESET_STRICT = "Strict"
+BOARD_LOAD_STATUS = "Loading board {done}/{total}…"
+BOARD_LOAD_TAB = "{label} · {pct}%"
+SCAN_LANE_EMPTY_RESULT = (
+    "Scan finished with 0 pairs after filters (skipped {skipped}). "
+    "Lower Min |30d move|, Min range, or raise Top-N, then run again."
+)
+ALPACA_WIZARD_TITLE = "Alpaca paper keys"
+ALPACA_WIZARD_INTRO = (
+    "TradFi and Forex desks pull ~30 days of daily bars from Alpaca. "
+    "Use free paper trading keys (IEX). Secrets stay in Windows Credential Manager — "
+    "never in a profile file. These desks do not place live TradFi or FX orders."
+)
+ALPACA_WIZARD_STEP1 = "1. Get paper API keys"
+ALPACA_WIZARD_STEP1_HELP = (
+    "Create or sign in at app.alpaca.markets → switch to Paper Trading → "
+    "API Keys → Generate New Keys. Copy Key ID and Secret (secret shown once)."
+)
+ALPACA_WIZARD_OPEN = "Open Alpaca dashboard"
+ALPACA_WIZARD_STEP2 = "2. Paste keys"
+ALPACA_WIZARD_KEY = "API Key ID"
+ALPACA_WIZARD_SECRET = "API Secret"
+ALPACA_WIZARD_STEP3 = "3. Test and save"
+ALPACA_WIZARD_TEST = "Test connection"
+ALPACA_WIZARD_SAVE = "Save keys"
+ALPACA_WIZARD_REMOVE = "Remove keys"
+ALPACA_WIZARD_OK = "Alpaca keys work."
+ALPACA_WIZARD_FAIL = "Alpaca could not authenticate. Check Key ID, Secret, and network."
+ALPACA_WIZARD_NEED = "Enter both Key ID and Secret."
+ALPACA_WIZARD_SAVED = "Saved to Credential Manager."
+ALPACA_WIZARD_REMOVED = "Alpaca keys removed from this PC."
 CAL_FILTER_HOLDINGS = "My holdings"
 CAL_FILTER_30D = "30D"
 CAL_FILTER_IMPACT = "Medium+"

@@ -14,7 +14,7 @@
 | Exchange | 9 portfolio / 7 trading venues | Registry v5; worldwide Phase 1 (S18) |
 | DEX | Venue plugin engine (ADR-0011) | S21–S24; Base Phase 1 live path; H-036 open |
 | Scanner | linear-trend-spotter → `scanner/` | ADR-0006 absorption S4.5 |
-| License | Elastic License 2.0 (ADR-0018) | Source-available; Alpha Share billing; attorney H-023 open |
+| License | Elastic License 2.0 (ADR-0018) | Source-available; Tier A legal ✅; H-006b before non-owner Alpha Share |
 ## Active Modules
 
 - ✅ Python (`modules/python/MODULE.md`)
@@ -40,7 +40,7 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board HUMAN-only after `/ship` v1.17.0. Open: DEX-P4b CLOUD + PF-H1 + attorney H-006/H-023 + ops/H-032/H-036.
+**Current sprint:** Board HUMAN after `/ship` v1.17.0. Tier A legal H-006/H-022/H-023 ✅ (ADR-0020). Open: H-006b Tier B + DEX-P4b CLOUD + PF-H1 + ops/H-032/H-036.
 
 **Tests:** Local `pre-release-gate --local` PASS before push. Required GitHub CI/CodeQL/Security green on `6f8c2a7`. CodeQL must stay `@v4` (upd still tries `vcodeql-bundle-*` — revert those workflow diffs). Sync `uv.lock` after every Release Please version bump.
 

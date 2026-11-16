@@ -31,7 +31,7 @@ Secret Sauce has to beat fees and Buy & Hold under an honest Oracle ceiling — 
 
 - ✗ **Multi-CEX public scan parity** — keyed chart enrich works on vaulted CEX; full public desk still Kraken-first
 - ✗ **DEX research desk** — thin Uniswap pool watch (Ethereum/Base) exists; Opportunity / All-TA / Sauce on-chain is not ready
-- ✗ **TradFi live trade** — Alpaca paper: portfolio sync, thin scan universe, synthetic BT, paper dry-run; live still gated
+- ✗ **TradFi / Forex live trade** — Alpaca equity BT (top-500) + forex rates research; paper dry-run only; live still gated
 
 ## Exchange support
 
@@ -54,7 +54,8 @@ Honest capability ladder — not every venue is “Kraken-complete.” Detail: [
 | Base (Uniswap) | wallet/LP | thin | ✗ | partial | Base only* | **Partial** |
 | Arbitrum One | wallet/LP | ✗ | ✗ | ✗ | ✗ | **Partial** |
 | Solana DEX | ✓ | ✗ | ✗ | ✗ | ✗ | **Partial** |
-| TradFi (Alpaca etc.) | partial | thin | ✗ | partial | ✗ | **Partial** |
+| TradFi (Alpaca etc.) | partial | partial | thin | partial | ✗ | **Partial** |
+| Forex (Alpaca rates) | ✗ | thin | thin | partial | ✗ | **Partial** |
 <!-- support-matrix:end -->
 
 \*Live trade starts in dry-run; live orders need the go-live gate per exchange. Worldwide CEX also need `WORLDWIDE_TRADING_ACK=1`. **Partial** = works, but thinner than Kraken public research.

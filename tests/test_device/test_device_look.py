@@ -69,10 +69,12 @@ def test_the_main_window_shows_primary_tabs_and_more(
     window._navbar.setFixedWidth(2000)
     window._rebuild_nav(force=True)
     labels = [window._nav.tabText(index) for index in range(window._nav.count())]
-    assert labels[:5] == [
+    assert labels[:7] == [
         S.NAV_PORTFOLIO,
         S.NAV_ALERTS,
-        S.NAV_SCANNER,
+        S.NAV_CRYPTO,
+        S.NAV_TRADFI,
+        S.NAV_FOREX,
         S.NAV_BACKTESTS,
         S.NAV_STATUS,
     ]

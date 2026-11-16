@@ -141,6 +141,13 @@ class BacktestPage(QWidget):
         self._status_btn = QPushButton(S.SCANNER_STATUS)
         self._status_btn.setObjectName("backtestStatus")
         self._status_btn.setToolTip(S.SCANNER_STATUS_TIP)
+        self._calendar = QPushButton(S.COIN_EVENTS_CALENDAR)
+        self._calendar.setObjectName("backtestCalendar")
+        self._calendar.setToolTip(S.COIN_EVENTS_CALENDAR_TIP)
+        self._calendar.setAccessibleName(S.COIN_EVENTS_CALENDAR)
+        self._calendar.setVisible(False)
+        self._calendar.clicked.connect(lambda _c=False: self._open_coin_events())
+        self._pair.editTextChanged.connect(lambda _t="": self._refresh_calendar_btn())
         self._heatmap.toggled.connect(lambda _c: self._on_view_toggle())
         self._perfect.toggled.connect(lambda _c: self._on_view_toggle())
         self._status = QLabel()
@@ -177,10 +184,12 @@ class BacktestPage(QWidget):
             self._settings,
             self._refresh_prices,
             self._share,
+            self._calendar,
             self._derive,
             self._status_btn,
         ):
             toolbar.addWidget(widget)
+        self._refresh_calendar_btn()
 
         layout = QVBoxLayout(self)
         layout.addLayout(toolbar)
@@ -208,6 +217,22 @@ class BacktestPage(QWidget):
             self._status.text().strip() or S.SCANNER_STATUS_EMPTY,
             parent=self.window(),
         )
+
+    def _refresh_calendar_btn(self) -> None:
+        from trendalgo.device.calendar.coin_window import has_coin_events
+
+        pair = self._pair.text().strip()
+        show = bool(pair) and "/" in pair and has_coin_events(self._root, pair)
+        self._calendar.setVisible(show)
+
+    def _open_coin_events(self) -> None:
+        from trendalgo.device.views.coin_event_timeline_dialog import open_coin_event_timeline
+
+        pair = self._pair.text().strip()
+        if not pair or "/" not in pair:
+            return
+        coin = {"symbol": pair.split("/", 1)[0], "pair": pair}
+        open_coin_event_timeline(self._root, coin, parent=self.window())
 
     def _refresh_prices_clicked(self) -> None:
         from trendalgo.device.price_cache_clear import clear_price_caches
@@ -304,7 +329,6 @@ class BacktestPage(QWidget):
             root=self._root,
         )
         self._scan_dialog = dialog
-        apply_main_blur(self.window(), enabled=True)
         self._pending = self._pool.submit(pair_strategy_scan_job, self._root, pair)
         self._timer.start()
         dialog.show()
@@ -317,7 +341,7 @@ class BacktestPage(QWidget):
         ready = bool(job is not None and job.ready())
         if self._scan_dialog is not None:
             self._scan_dialog.update_progress(raw, worker_ready=ready)
-        # No partial table fills while modal is open (charts stay still behind blur).
+        # Defer table fill until the worker finishes (progress dialog is non-modal).
         if job is None:
             self._timer.stop()
             return

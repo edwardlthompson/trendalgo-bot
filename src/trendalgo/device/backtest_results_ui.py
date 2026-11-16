@@ -11,11 +11,12 @@ from trendalgo.device.scanner_signal_sets import is_three_commas_indicator
 from trendalgo.device.trade_counts import open_trades, win_pct, wins_losses
 
 _BH = "B&H"
-# Column indices matching BACKTEST_RESULT_HEADERS (Show Chart + Create Bot are widgets).
+# Column indices matching BACKTEST_RESULT_HEADERS (Events / Show Chart / Create Bot are widgets).
 NET_COL = 3
 STRENGTH_COL = 12
-SHOW_CHART_COL = 13
-CREATE_BOT_COL = 14
+EVENTS_COL = 13
+SHOW_CHART_COL = 14
+CREATE_BOT_COL = 15
 # invert=True → lower is greener (fewer fees / open / losses / hits / hit%).
 HEAT_COLS: dict[int, tuple[str, bool]] = {
     3: ("net_pct", False),

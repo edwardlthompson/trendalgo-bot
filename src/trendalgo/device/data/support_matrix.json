@@ -1,7 +1,7 @@
 {
   "version": 1,
   "footnote": "Live trade always starts in dry-run; live orders need TRENDALGO_MODE=live and go-live gate per exchange. Partial means track/trade works but public research depth is thinner than Kraken.",
-  "about_line": "Research desk: Kraken today · thin pool watch: Ethereum/Base · Portfolio: 9 CEX + DEX wallets · TradFi: Alpaca paper sync.",
+  "about_line": "Research desk: Kraken today · thin pool watch: Ethereum/Base · Portfolio: 9 CEX + DEX wallets · TradFi: Alpaca equity BT · Forex: rates research.",
   "venues": [
     {
       "id": "kraken",
@@ -177,13 +177,26 @@
       "brand": "TradFi (Alpaca etc.)",
       "lane": "tradfi",
       "portfolio": "partial",
-      "public_scan": "thin",
-      "keyed_scan": "no",
+      "public_scan": "partial",
+      "keyed_scan": "thin",
       "deep_ohlcv_bt": "partial",
       "live_trade": "no",
       "status": "partial",
       "status_label": "Partial",
-      "notes": "Alpaca paper: portfolio sync + thin scan universe + synthetic BT + paper dry-run orders."
+      "notes": "Alpaca paper: portfolio sync; equity scan/BT via market data when keyed (IEX), synthetic offline; paper dry-run only; commission-free paper caveat."
+    },
+    {
+      "id": "forex",
+      "brand": "Forex (Alpaca rates)",
+      "lane": "forex",
+      "portfolio": "no",
+      "public_scan": "thin",
+      "keyed_scan": "thin",
+      "deep_ohlcv_bt": "partial",
+      "live_trade": "no",
+      "status": "partial",
+      "status_label": "Partial",
+      "notes": "Research/BT via Alpaca forex rates only — Alpaca does not trade FX."
     }
   ]
 }

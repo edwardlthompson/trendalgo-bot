@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -27,9 +28,15 @@ from trendalgo.device.views.collapsible_section import CollapsibleSection
 from trendalgo.device.views.exchange_checklist import ExchangeChecklist
 
 
-def wrap_section(title: str, widget: QWidget, *, expanded: bool = True) -> CollapsibleSection:
-    sec = CollapsibleSection(title, expanded=expanded)
-    sec.add_widget(widget)
+def wrap_section(
+    title: str,
+    widget: QWidget,
+    *,
+    expanded: bool = True,
+    expanding: bool = False,
+) -> CollapsibleSection:
+    sec = CollapsibleSection(title, expanded=expanded, expanding=expanding)
+    sec.add_widget(widget, stretch=1 if expanding else 0)
     return sec
 
 
@@ -71,11 +78,14 @@ def build_ta_body(
     on_changed: Callable[[], None],
 ) -> tuple[QWidget, QLineEdit, QListWidget]:
     body = QWidget()
+    body.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
     col = QVBoxLayout(body)
     col.setContentsMargins(0, 0, 0, 0)
     search = QLineEdit()
     search.setPlaceholderText(S.SCAN_BT_TA_SEARCH)
     ta_list = QListWidget()
+    ta_list.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+    ta_list.setMinimumHeight(240)
     for name in all_strategies():
         item = QListWidgetItem(name)
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
@@ -85,19 +95,19 @@ def build_ta_body(
     search.textChanged.connect(lambda text: _filter_ta(ta_list, text))
     col.addWidget(_ta_header(ta_list, on_changed))
     col.addWidget(search)
-    col.addWidget(ta_list)
+    col.addWidget(ta_list, 1)
     return body, search, ta_list
 
 
 def build_chrome(
     *,
     interval_minutes: int,
+    min_interval_minutes: int = 60,
     heatmap_enabled: bool,
-    min_volume_usd: float,
     exchange_options: Sequence[tuple[str, str]],
     scan_exchanges: Sequence[str] | None,
-) -> tuple[QWidget, QSpinBox, QCheckBox, QDoubleSpinBox, ExchangeChecklist]:
-    """Board filters + schedule (Exchange, min vol, interval, Color ranks)."""
+) -> tuple[QWidget, QSpinBox, QCheckBox, ExchangeChecklist]:
+    """Schedule + exchange + Color ranks (Auto-scan lives on each desk tab)."""
     host = QWidget()
     col = QVBoxLayout(host)
     col.setContentsMargins(0, 0, 0, 0)
@@ -117,6 +127,40 @@ def build_chrome(
     ex_lay.addWidget(exchange, 1)
     col.addWidget(ex_row)
 
+    every_row = QWidget()
+    every_lay = QHBoxLayout(every_row)
+    every_lay.setContentsMargins(0, 0, 0, 0)
+    every_lay.addWidget(QLabel(S.SCANNER_FILTER_EVERY))
+    every = QSpinBox()
+    floor = max(1, int(min_interval_minutes))
+    every.setRange(floor, 1440)
+    every.setSuffix(" min")
+    every.setValue(max(floor, min(1440, int(interval_minutes))))
+    if floor >= 90:
+        every.setToolTip(S.FOREX_ALGOSPECIAL_INTERVAL_TIP)
+    every_lay.addWidget(every)
+    every_lay.addStretch(1)
+    col.addWidget(every_row)
+
+    heatmap = QCheckBox(S.SCANNER_COLOR_RANKS)
+    heatmap.setChecked(bool(heatmap_enabled))
+    col.addWidget(heatmap)
+
+    return host, every, heatmap, exchange
+
+
+def build_primary_filters(
+    *,
+    min_volume_usd: float,
+    require_continuous_1h: bool = True,
+    on_changed: Callable[[], None] | None = None,
+) -> tuple[QWidget, QDoubleSpinBox, QCheckBox]:
+    """Volume + continuous 1h (extensible primary-scan filter rows)."""
+    host = QWidget()
+    col = QVBoxLayout(host)
+    col.setContentsMargins(0, 0, 0, 0)
+    col.setSpacing(8)
+
     vol_row = QWidget()
     vol_lay = QHBoxLayout(vol_row)
     vol_lay.setContentsMargins(0, 0, 0, 0)
@@ -127,26 +171,24 @@ def build_chrome(
     vol.setPrefix("$")
     vol.setSingleStep(100_000)
     vol.setValue(float(min_volume_usd))
+    vol.setToolTip(S.SCANNER_FILTER_VOL_HINT)
     vol_lay.addWidget(vol)
     vol_lay.addStretch(1)
     col.addWidget(vol_row)
+    vol_hint = QLabel(S.SCANNER_FILTER_VOL_HINT)
+    vol_hint.setObjectName("hint")
+    vol_hint.setWordWrap(True)
+    col.addWidget(vol_hint)
 
-    every_row = QWidget()
-    every_lay = QHBoxLayout(every_row)
-    every_lay.setContentsMargins(0, 0, 0, 0)
-    every_lay.addWidget(QLabel(S.SCANNER_FILTER_EVERY))
-    every = QSpinBox()
-    every.setRange(60, 1440)
-    every.setSuffix(" min")
-    every.setValue(max(60, min(1440, int(interval_minutes))))
-    every_lay.addWidget(every)
-    every_lay.addStretch(1)
-    col.addWidget(every_row)
+    continuous = QCheckBox(S.SCANNER_FILTER_CONTINUOUS_1H)
+    continuous.setToolTip(S.SCANNER_FILTER_CONTINUOUS_1H_TIP)
+    continuous.setChecked(bool(require_continuous_1h))
+    col.addWidget(continuous)
 
-    heatmap = QCheckBox(S.SCANNER_COLOR_RANKS)
-    heatmap.setChecked(bool(heatmap_enabled))
-    col.addWidget(heatmap)
-    return host, every, heatmap, vol, exchange
+    if on_changed is not None:
+        vol.valueChanged.connect(lambda _v: on_changed())
+        continuous.toggled.connect(lambda _on: on_changed())
+    return host, vol, continuous
 
 
 def build_results_view(
@@ -167,6 +209,150 @@ def build_results_view(
     col.addWidget(heatmap)
     col.addWidget(perfect)
     return host, heatmap, perfect
+
+
+def build_lane_filters(
+    *,
+    lane: str,
+    min_adv_usd: float,
+    min_price: float,
+    min_abs_gain_pct: float = 5.0,
+    min_range_pct: float = 8.0,
+    top_n: int = 120,
+    on_changed: Callable[[], None] | None = None,
+) -> tuple[
+    QWidget,
+    QDoubleSpinBox,
+    QDoubleSpinBox,
+    QDoubleSpinBox,
+    QDoubleSpinBox,
+    QSpinBox,
+    list[QPushButton],
+]:
+    """TradFi move/range/top-N filters (+ optional ADV/price) with preset chips."""
+    from trendalgo.device.lane_scan_filters import (  # noqa: PLC0415
+        LaneScanFilters,
+        apply_preset,
+    )
+
+    del lane  # TradFi-only builder; Forex desk omits this section.
+    host = QWidget()
+    col = QVBoxLayout(host)
+    col.setContentsMargins(0, 0, 0, 0)
+    col.setSpacing(8)
+
+    note = QLabel(S.LANE_FILTER_UNIVERSE_NOTE)
+    note.setWordWrap(True)
+    note.setToolTip(S.LANE_FILTER_UNIVERSE_NOTE)
+    col.addWidget(note)
+
+    preset_row = QWidget()
+    preset_lay = QHBoxLayout(preset_row)
+    preset_lay.setContentsMargins(0, 0, 0, 0)
+    preset_lay.addWidget(QLabel(S.LANE_FILTER_PRESET))
+    chips: list[QPushButton] = []
+    labels = (
+        ("wide", S.LANE_FILTER_PRESET_WIDE),
+        ("balanced", S.LANE_FILTER_PRESET_BALANCED),
+        ("tight", S.LANE_FILTER_PRESET_TIGHT),
+        ("strict", S.LANE_FILTER_PRESET_STRICT),
+    )
+
+    abs_gain = QDoubleSpinBox()
+    abs_gain.setRange(0, 100)
+    abs_gain.setDecimals(1)
+    abs_gain.setSuffix("%")
+    abs_gain.setSingleStep(0.5)
+    abs_gain.setValue(float(min_abs_gain_pct))
+    abs_gain.setToolTip(S.LANE_FILTER_ABS_GAIN_TIP)
+
+    range_pct = QDoubleSpinBox()
+    range_pct.setRange(0, 200)
+    range_pct.setDecimals(1)
+    range_pct.setSuffix("%")
+    range_pct.setSingleStep(0.5)
+    range_pct.setValue(float(min_range_pct))
+    range_pct.setToolTip(S.LANE_FILTER_RANGE_TIP)
+
+    top = QSpinBox()
+    top.setRange(0, 50_000)
+    top.setSingleStep(10)
+    top.setSpecialValueText(S.LANE_FILTER_TOP_N_OFF)
+    top.setValue(int(top_n))
+    top.setToolTip(S.LANE_FILTER_TOP_N_TIP)
+
+    adv = QDoubleSpinBox()
+    adv.setRange(0, 1e12)
+    adv.setDecimals(0)
+    adv.setPrefix("$")
+    adv.setSingleStep(1_000_000)
+    adv.setValue(float(min_adv_usd))
+    adv.setToolTip(S.LANE_FILTER_ADV_TIP)
+
+    price = QDoubleSpinBox()
+    price.setRange(0, 1e6)
+    price.setDecimals(2)
+    price.setPrefix("$")
+    price.setSingleStep(1.0)
+    price.setValue(float(min_price))
+    price.setToolTip(S.LANE_FILTER_PRICE_TIP)
+
+    def _apply_chip(key: str) -> None:
+        cur = LaneScanFilters(
+            min_adv_usd=adv.value(),
+            min_price=price.value(),
+            min_abs_gain_pct=abs_gain.value(),
+            min_range_pct=range_pct.value(),
+            top_n=int(top.value()),
+        )
+        nxt = apply_preset("tradfi", key, cur)
+        for box in (adv, price, abs_gain, range_pct, top):
+            box.blockSignals(True)
+        try:
+            adv.setValue(nxt.min_adv_usd)
+            price.setValue(nxt.min_price)
+            abs_gain.setValue(nxt.min_abs_gain_pct)
+            range_pct.setValue(nxt.min_range_pct)
+            top.setValue(nxt.top_n)
+        finally:
+            for box in (adv, price, abs_gain, range_pct, top):
+                box.blockSignals(False)
+        if on_changed is not None:
+            on_changed()
+
+    for key, label in labels:
+        btn = QPushButton(label)
+        btn.setObjectName(f"laneFilterPreset_{key}")
+        btn.setToolTip(S.LANE_FILTER_PRESET_TIP)
+        btn.clicked.connect(lambda _c=False, k=key: _apply_chip(k))
+        chips.append(btn)
+        preset_lay.addWidget(btn)
+    preset_lay.addStretch(1)
+    col.addWidget(preset_row)
+
+    def _row(label: str, tip: str, widget: QWidget) -> QWidget:
+        row = QWidget()
+        lay = QHBoxLayout(row)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lab = QLabel(label)
+        lab.setToolTip(tip)
+        widget.setToolTip(tip)
+        lay.addWidget(lab)
+        lay.addWidget(widget)
+        lay.addStretch(1)
+        return row
+
+    col.addWidget(_row(S.LANE_FILTER_ABS_GAIN, S.LANE_FILTER_ABS_GAIN_TIP, abs_gain))
+    col.addWidget(_row(S.LANE_FILTER_RANGE, S.LANE_FILTER_RANGE_TIP, range_pct))
+    col.addWidget(_row(S.LANE_FILTER_TOP_N, S.LANE_FILTER_TOP_N_TIP, top))
+    col.addWidget(_row(S.LANE_FILTER_ADV, S.LANE_FILTER_ADV_TIP, adv))
+    col.addWidget(_row(S.LANE_FILTER_PRICE, S.LANE_FILTER_PRICE_TIP, price))
+
+    if on_changed is not None:
+        for box in (adv, price, abs_gain, range_pct):
+            box.valueChanged.connect(lambda _v: on_changed())
+        top.valueChanged.connect(lambda _v: on_changed())
+    return host, adv, price, abs_gain, range_pct, top, chips
 
 
 def build_extras(

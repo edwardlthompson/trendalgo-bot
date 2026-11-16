@@ -103,14 +103,28 @@ def resolve_ohlcv_frame(
     """OHLCV for chart display or overlay replay.
 
     Overlay / Results parity: load via BacktestDataLoader (same cache + 30d as All-TA).
+    TradFi/FX display: prefer enrich-stamped real OHLC wicks over synthetic closes.
     Display-only: fall back to spark closes when the loader has no bars.
     """
+    from trendalgo.device.lane_chart_enrich import frame_from_lane_ohlc
+    from trendalgo.device.scan_identity import coin_exchange_id
+
     tf = _normalize_tf(timeframe)
+    eid = coin_exchange_id(coin)
+    # Prefer real Alpaca 1h OHLC for TradFi/FX charts (true high/low wicks).
+    if eid in {"tradfi", "forex"} and not for_overlay and tf in {"1h", "60m", "60"}:
+        lane_frame = frame_from_lane_ohlc(coin)
+        if not lane_frame.empty:
+            return lane_frame
     if for_overlay or closes is None:
         frame = _load_scan_frame(coin, timeframe=tf)
         if not frame.empty:
             return frame
     step_h = timeframe_hours(tf) or max(1, (timeframe_minutes(tf) or 60) // 60)
+    if eid in {"tradfi", "forex"} and not for_overlay:
+        lane_frame = frame_from_lane_ohlc(coin)
+        if not lane_frame.empty:
+            return lane_frame
     if closes is not None:
         return frame_from_closes(closes, hours_step=step_h)
     spark = _coin_closes(coin)

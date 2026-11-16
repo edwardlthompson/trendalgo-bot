@@ -7,13 +7,14 @@ from typing import Any
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QApplication,
     QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QDoubleSpinBox,
     QHBoxLayout,
-    QLabel,
     QScrollArea,
+    QSizePolicy,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -26,6 +27,17 @@ from trendalgo.backtest.heartbeat_tf import (
     needs_1m_base,
 )
 from trendalgo.device import strings as S
+from trendalgo.device.dialog_geometry import (
+    bind_dialog_geometry,
+    enable_minmax,
+    restore_dialog_geometry,
+)
+from trendalgo.device.lane_scan_filters import (
+    LaneScanFilters,
+    load_lane_scan_filters,
+    save_lane_scan_filters,
+)
+from trendalgo.device.lts_scan_model import load_filters
 from trendalgo.device.scan_bt_prefs import (
     ScanBtPrefs,
     bands_mix_ready,
@@ -37,12 +49,14 @@ from trendalgo.device.scan_bt_prefs import (
     save_scan_bt_prefs,
     selected_timeframes,
 )
-from trendalgo.device.scan_time_history import estimate_label, load_history
 from trendalgo.device.scanner_signal_sets import BT_SET_ALL_TA
+from trendalgo.device.views.scan_bt_eta_header import ScanBtEtaHeader
 from trendalgo.device.views.scan_bt_ohlcvt_row import build_ohlcvt_block, set_ohlcvt_journal_started
 from trendalgo.device.views.scan_bt_settings_sections import (
     build_chrome,
     build_extras,
+    build_lane_filters,
+    build_primary_filters,
     build_results_view,
     build_ta_body,
     build_tf_host,
@@ -51,7 +65,7 @@ from trendalgo.device.views.scan_bt_settings_sections import (
 from trendalgo.market.kraken_ohlcvt_copy import format_subhour_mix_note
 from trendalgo.market.kraken_ohlcvt_meta import read_archive_coverage, today_utc
 
-_SCREEN_GUTTER_PX = 24
+_DIALOG_ID = "scan_bt_settings"
 
 
 class ScanBacktestSettingsDialog(QDialog):
@@ -64,31 +78,45 @@ class ScanBacktestSettingsDialog(QDialog):
         interval_minutes: int = 60,
         heatmap_enabled: bool = False,
         min_volume_usd: float = 0.0,
+        require_continuous_1h: bool = True,
         scan_exchanges: list[str] | None = None,
         exchange_options: list[tuple[str, str]] | None = None,
         chrome_out: dict[str, Any] | None = None,
         results_heatmap: bool | None = None,
         results_perfect: bool | None = None,
         results_out: dict[str, Any] | None = None,
+        lane: str = "crypto",
     ) -> None:
         super().__init__(parent)
         self._root = root
         self._n_coins = max(1, int(n_coins))
         self._chrome_out = chrome_out
         self._results_out = results_out
+        self._lane = (lane or "crypto").strip().lower()
         self._results_heatmap: QCheckBox | None = None
         self._results_perfect: QCheckBox | None = None
+        self._lane_adv: QDoubleSpinBox | None = None
+        self._lane_price: QDoubleSpinBox | None = None
+        self._lane_abs_gain: QDoubleSpinBox | None = None
+        self._lane_range: QDoubleSpinBox | None = None
+        self._lane_top_n: QSpinBox | None = None
+        # Ensure lane-scoped filter JSON exists / is readable for this desk.
+        load_filters(root, lane=self._lane)
         self.setWindowTitle(S.SCAN_BT_SETTINGS_TITLE)
-        self.setMinimumWidth(720)
+        self.setMinimumWidth(960)
+        enable_minmax(self)
         prefs = load_scan_bt_prefs(root)
         ohlcvt_initial = resolve_ohlcvt_path(root, prefs.ohlcvt_path)
         self._journal_started = journal_started_date(prefs, root=root) or today_utc()
         self._mix = bands_mix_ready(prefs, root=root)
 
-        self._eta = QLabel()
-        self._eta.setObjectName("hint")
-        self._eta.setWordWrap(True)
-        self._eta.setToolTip(S.SCAN_BT_ETA_HINT)
+        self._eta_header = ScanBtEtaHeader(
+            root,
+            crypto_n=self._n_coins,
+            on_auto_changed=self._refresh_eta,
+        )
+        # Legacy label target for validation messages.
+        self._eta = self._eta_header
 
         ohlcvt_host, self._ohlcvt_path, self._ohlcvt_tip, _st, self._ohlcvt_bar = (
             build_ohlcvt_block(
@@ -121,12 +149,20 @@ class ScanBacktestSettingsDialog(QDialog):
             sauce_top_n=prefs.sauce_top_n,
             on_changed=self._refresh_eta,
         )
-        chrome, self._every, self._heatmap, self._vol, self._exchange = build_chrome(
+        fx_floor = 90 if self._lane == "forex" else 60
+        chrome, self._every, self._heatmap, self._exchange = build_chrome(
             interval_minutes=interval_minutes,
+            min_interval_minutes=fx_floor,
             heatmap_enabled=heatmap_enabled,
-            min_volume_usd=min_volume_usd,
             exchange_options=exchange_options or [],
             scan_exchanges=scan_exchanges,
+        )
+        if self._lane != "crypto":
+            self._exchange.hide()
+        primary, self._vol, self._continuous = build_primary_filters(
+            min_volume_usd=min_volume_usd,
+            require_continuous_1h=require_continuous_1h,
+            on_changed=self._refresh_eta,
         )
 
         scroll = QScrollArea()
@@ -134,31 +170,59 @@ class ScanBacktestSettingsDialog(QDialog):
         scroll_host = QWidget()
         cols = QHBoxLayout(scroll_host)
         cols.setContentsMargins(4, 4, 4, 4)
-        cols.setSpacing(12)
-        left = QVBoxLayout()
-        right = QVBoxLayout()
-        left.setSpacing(8)
-        right.setSpacing(8)
-        left.addWidget(wrap_section(S.SCAN_BT_CHROME_SECTION, chrome))
+        cols.setSpacing(16)
+        col1 = QVBoxLayout()
+        col2 = QVBoxLayout()
+        col3 = QVBoxLayout()
+        for lay in (col1, col2, col3):
+            lay.setSpacing(8)
+        col1.addWidget(wrap_section(S.SCAN_BT_CHROME_SECTION, chrome))
+        # Min vol / continuous 1h are crypto board filters — hide on TradFi/FX desks.
+        if self._lane == "crypto":
+            col1.addWidget(wrap_section(S.SCAN_BT_PRIMARY_SECTION, primary))
+        if self._lane == "tradfi":
+            lane_prefs = load_lane_scan_filters(root, "tradfi")
+            (
+                lane_host,
+                self._lane_adv,
+                self._lane_price,
+                self._lane_abs_gain,
+                self._lane_range,
+                self._lane_top_n,
+                _chips,
+            ) = build_lane_filters(
+                lane="tradfi",
+                min_adv_usd=lane_prefs.min_adv_usd,
+                min_price=lane_prefs.min_price,
+                min_abs_gain_pct=lane_prefs.min_abs_gain_pct,
+                min_range_pct=lane_prefs.min_range_pct,
+                top_n=lane_prefs.top_n,
+                on_changed=self._refresh_eta,
+            )
+            col1.addWidget(wrap_section(S.LANE_FILTER_SECTION, lane_host))
+        if self._lane == "crypto":
+            col1.addWidget(wrap_section(S.SCAN_BT_OHLCVT_SECTION, ohlcvt_host))
+        col1.addWidget(wrap_section(S.SCAN_BT_EXTRAS_SECTION, extras))
         if results_out is not None:
             results, self._results_heatmap, self._results_perfect = build_results_view(
                 heatmap_enabled=bool(results_heatmap),
                 perfect_only=bool(results_perfect),
             )
-            left.addWidget(wrap_section(S.SCAN_BT_RESULTS_SECTION, results))
-        left.addWidget(wrap_section(S.SCAN_BT_ETA_SECTION, self._eta))
-        left.addWidget(wrap_section(S.SCAN_BT_OHLCVT_SECTION, ohlcvt_host))
-        left.addWidget(wrap_section(S.SCAN_BT_EXTRAS_SECTION, extras))
-        left.addStretch(1)
-        right.addWidget(wrap_section(S.SCAN_BT_TF_SECTION, tf_host))
-        right.addWidget(wrap_section(S.SCAN_BT_TA_SECTION, ta_body))
-        right.addStretch(1)
-        cols.addLayout(left, 1)
-        cols.addLayout(right, 1)
+            col1.addWidget(wrap_section(S.SCAN_BT_RESULTS_SECTION, results))
+        col1.addStretch(1)
+        col2.addWidget(wrap_section(S.SCAN_BT_TF_SECTION, tf_host))
+        col2.addStretch(1)
+        ta_sec = wrap_section(S.SCAN_BT_TA_SECTION, ta_body, expanding=True)
+        ta_body.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        col3.addWidget(ta_sec, 1)
+        cols.addLayout(col1, 1)
+        cols.addLayout(col2, 1)
+        cols.addLayout(col3, 1)
         scroll.setWidget(scroll_host)
 
         body = QVBoxLayout(self)
         body.setSpacing(10)
+        body.addWidget(self._eta_header)
         body.addWidget(scroll, 1)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
@@ -166,21 +230,9 @@ class ScanBacktestSettingsDialog(QDialog):
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
         body.addWidget(buttons)
-        self._fit_screen_height()
+        restore_dialog_geometry(root, self, _DIALOG_ID, default_w=1100, default_h=720)
+        bind_dialog_geometry(root, self, _DIALOG_ID)
         self._refresh_eta()
-
-    def _fit_screen_height(self) -> None:
-        """Near full available height with gutters above and below."""
-        screen = self.screen() or QApplication.primaryScreen()
-        if screen is None:
-            self.setMinimumHeight(520)
-            return
-        geo = screen.availableGeometry()
-        height = max(520, geo.height() - 2 * _SCREEN_GUTTER_PX)
-        width = max(self.minimumWidth(), min(1100, geo.width() - 2 * _SCREEN_GUTTER_PX))
-        x = geo.x() + max(0, (geo.width() - width) // 2)
-        y = geo.y() + _SCREEN_GUTTER_PX
-        self.setGeometry(x, y, width, height)
 
     def _refresh_subhour_note(self, path: str | None = None) -> None:
         raw = (path if path is not None else self._ohlcvt_path.text()).strip()
@@ -248,26 +300,30 @@ class ScanBacktestSettingsDialog(QDialog):
     def _refresh_eta(self) -> None:
         tfs, deny = self._selected_tfs(), self._denylist()
         strats = enabled_strategies(deny)
-        label = estimate_label(
-            load_history(self._root),
+        self._vol.interpretText()
+        tradfi_top: int | None = None
+        if self._lane_top_n is not None:
+            tradfi_top = int(self._lane_top_n.value())
+        self._eta_header.refresh(
             n_strategies=len(strats),
             n_timeframes=len(tfs),
             had_subhour=needs_1m_base(tfs),
-            n_coins=self._n_coins,
             market_context=bool(self._mc_with_scan.isChecked()),
             sauce_with_scan=bool(self._sauce_with_scan.isChecked()),
             sauce_top_n=int(self._sauce_top_n.value()),
+            min_volume_usd=float(self._vol.value()),
+            require_continuous_1h=bool(self._continuous.isChecked()),
+            tradfi_top_n=tradfi_top,
         )
-        self._eta.setText(f"{label} · {len(strats)} TA · {len(tfs)} TF")
 
     def _save(self) -> None:
         tfs = self._selected_tfs()
         if not tfs:
-            self._eta.setText(S.SCAN_BT_NO_TFS)
+            self._eta_header.set_status(S.SCAN_BT_NO_TFS)
             return
         deny = self._denylist()
         if not enabled_strategies(deny):
-            self._eta.setText(S.SCAN_BT_NO_STRATEGIES)
+            self._eta_header.set_status(S.SCAN_BT_NO_STRATEGIES)
             return
         started = self._journal_started or today_utc()
         save_scan_bt_prefs(
@@ -290,7 +346,31 @@ class ScanBacktestSettingsDialog(QDialog):
             self._chrome_out["interval_minutes"] = int(self._every.value())
             self._chrome_out["heatmap_enabled"] = bool(self._heatmap.isChecked())
             self._chrome_out["min_volume_usd"] = float(self._vol.value())
+            self._chrome_out["require_continuous_1h"] = bool(self._continuous.isChecked())
             self._chrome_out["scan_exchanges"] = self._exchange.selected_ids()
+        if (
+            self._lane == "tradfi"
+            and self._lane_adv is not None
+            and self._lane_price is not None
+            and self._lane_abs_gain is not None
+            and self._lane_range is not None
+            and self._lane_top_n is not None
+        ):
+            prefs = LaneScanFilters(
+                min_adv_usd=float(self._lane_adv.value()),
+                min_price=float(self._lane_price.value()),
+                min_abs_gain_pct=float(self._lane_abs_gain.value()),
+                min_range_pct=float(self._lane_range.value()),
+                top_n=int(self._lane_top_n.value()),
+            )
+            save_lane_scan_filters(self._root, "tradfi", prefs)
+            if self._chrome_out is not None:
+                clipped = prefs.clamped(lane="tradfi")
+                self._chrome_out["lane_min_adv_usd"] = clipped.min_adv_usd
+                self._chrome_out["lane_min_price"] = clipped.min_price
+                self._chrome_out["lane_min_abs_gain_pct"] = clipped.min_abs_gain_pct
+                self._chrome_out["lane_min_range_pct"] = clipped.min_range_pct
+                self._chrome_out["lane_top_n"] = clipped.top_n
         if self._results_out is not None and self._results_heatmap is not None:
             self._results_out["heatmap_enabled"] = bool(self._results_heatmap.isChecked())
             assert self._results_perfect is not None
@@ -306,12 +386,14 @@ def open_scan_bt_settings(
     interval_minutes: int = 60,
     heatmap_enabled: bool = False,
     min_volume_usd: float = 0.0,
+    require_continuous_1h: bool = True,
     scan_exchanges: list[str] | None = None,
     exchange_options: list[tuple[str, str]] | None = None,
     chrome_out: dict[str, Any] | None = None,
     results_heatmap: bool | None = None,
     results_perfect: bool | None = None,
     results_out: dict[str, Any] | None = None,
+    lane: str = "crypto",
 ) -> bool:
     dlg = ScanBacktestSettingsDialog(
         root,
@@ -320,12 +402,14 @@ def open_scan_bt_settings(
         interval_minutes=interval_minutes,
         heatmap_enabled=heatmap_enabled,
         min_volume_usd=min_volume_usd,
+        require_continuous_1h=require_continuous_1h,
         scan_exchanges=scan_exchanges,
         exchange_options=exchange_options,
         chrome_out=chrome_out,
         results_heatmap=results_heatmap,
         results_perfect=results_perfect,
         results_out=results_out,
+        lane=lane,
     )
     dlg.setWindowModality(Qt.WindowModality.WindowModal)
     return dlg.exec() == QDialog.DialogCode.Accepted

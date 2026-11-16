@@ -57,8 +57,22 @@ def load_scan_frames(
     prefs_root: Path | None = None,
     ohlcvt_path: str | Path | None = None,
     ohlcvt_auto_tip: bool = True,
+    exchange_id: str = "kraken",
 ) -> tuple[dict[str, pd.DataFrame], dict[str, Any]]:
-    """Hour band: live 30d 1h. Sub-hour: OHLCVT+journal when configured, else live ~12h."""
+    """Hour band: live 30d 1h. Sub-hour: OHLCVT+journal when configured, else live ~12h.
+
+    TradFi/Forex skip Kraken OHLCVT and load Alpaca bands instead.
+    """
+    from trendalgo.device.scan_base_ohlcv_alpaca import is_alpaca_lane, load_alpaca_band_frames
+
+    if is_alpaca_lane(exchange_id):
+        return load_alpaca_band_frames(
+            symbol=symbol,
+            pair=pair,
+            timeframes=timeframes,
+            exchange_id=exchange_id,
+            prefs_root=prefs_root,
+        )
     path, tip_on, mix = _resolve_ohlcvt(prefs_root, ohlcvt_path, ohlcvt_auto_tip)
     ordered = comparable_scan_timeframes(timeframes, deep_1m=mix)
     sub_only = tuple(tf for tf in ordered if is_subhour_tf(tf))

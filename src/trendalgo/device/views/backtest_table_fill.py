@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 from trendalgo.device import strings as S
 from trendalgo.device.backtest_results_ui import (
     CREATE_BOT_COL,
+    EVENTS_COL,
     NET_COL,
     SHOW_CHART_COL,
     STRENGTH_COL,
@@ -134,6 +135,12 @@ def fill_backtest_table(
                     item.setBackground(QColor(bg))
                     item.setForeground(QColor(fg_for_bg(bg)))
             table.setItem(row_i, c, item)
+        # Events live on the Backtest toolbar (solitary), not per strategy row.
+        blank = QWidget()
+        blank_lay = QHBoxLayout(blank)
+        blank_lay.setContentsMargins(2, 2, 2, 2)
+        blank_lay.addWidget(QLabel("—"))
+        table.setCellWidget(row_i, EVENTS_COL, blank)
         _show_chart_cell(
             table,
             row_i,

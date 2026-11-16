@@ -100,7 +100,7 @@ def test_header_chevron_on_active_sort(qtbot: QtBot) -> None:
         sort_key="health",
         sort_dir=-1,
     )
-    item = table.horizontalHeaderItem(10)
+    item = table.horizontalHeaderItem(9)  # Health column after Uniformity removal
     assert item is not None
     assert "▼" in item.text()
 
@@ -148,8 +148,9 @@ def test_results_sheet_cells() -> None:
     assert cells[10] == "2"
     assert "20" in cells[11]  # tsl hit %
     assert cells[12]  # Strength
-    # Show Chart + Create Bot are widget columns, not text cells.
-    assert len(cells) == len(headers) - 2
+    # Events + Show Chart + Create Bot are widget columns, not text cells.
+    assert len(cells) == len(headers) - 3
+    assert headers[-3] == "Events"
     assert headers[-2] == "Show Chart"
     assert headers[-1] == "Create Bot"
     bh = row_cells({"indicator": "B&H", "net_pct": 4.0, "fees_paid": 5.2}, is_bh=True)

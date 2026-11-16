@@ -31,8 +31,8 @@ def all_ta_coin_workers() -> int:
         except ValueError:
             pass
     budget = cpu_budget()
-    # Cap outer coins at 6 so pass2 keeps ~budget/6 workers (was 12 → pass2=2 thrash).
-    return max(1, min(budget // 2, 6))
+    # Cap outer coins at 10 so pass2 keeps ~budget/3 workers on high-core CPUs.
+    return max(1, min(budget // 3, 10))
 
 
 def pass2_worker_count() -> int:
@@ -40,7 +40,7 @@ def pass2_worker_count() -> int:
     raw = os.environ.get("TRENDALGO_PASS2_WORKERS", "").strip()
     if raw:
         try:
-            return max(1, min(16, int(raw)))
+            return max(1, min(24, int(raw)))
         except ValueError:
             pass
     return max(1, cpu_budget() // coin_parallel())

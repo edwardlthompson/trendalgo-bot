@@ -33,7 +33,6 @@ def _sample_coin() -> dict[str, object]:
         "pair": SAMPLE_PAIR,
         "gains": {"7d": 12.5, "30d": 28.0},
         "health_score": 82.0,
-        "uniformity_score": 71.0,
         "volume_24h": 12_500_000,
         "listed_on": ["kraken", "coinbase"],
         "exchange_volumes": {"kraken": 8_000_000, "coinbase": 4_500_000},
@@ -91,7 +90,7 @@ def sample_event(kind: str) -> AlertEvent:
             kind="qualified_enter",
             symbol=SAMPLE_SYMBOL,
             pair=SAMPLE_PAIR,
-            reason="Passed volume + uniformity gates",
+            reason="Passed volume + continuous 1h gates",
             coin=_sample_coin(),
         )
     if kind == "left":

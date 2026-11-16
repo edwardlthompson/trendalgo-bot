@@ -16,6 +16,7 @@ from typing import Any
 
 from trendalgo.device.db import enable_wal
 from trendalgo.device.lts_scan_model import build_lts_rows, load_filters, save_lts_rows
+from trendalgo.device.scan_eta_filters import merge_scan_meta
 from trendalgo.device.scan_identity import row_key
 from trendalgo.device.scan_lock import try_acquire_scan_lock
 from trendalgo.device.scan_model import ScanUnavailableError, device_scan_settings, scan_store_path
@@ -83,6 +84,9 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
 
         all_rows: list[dict[str, Any]] = []
         last_snap: QualifiedSnapshot | None = None
+        listed_n = 0
+        after_volume_n = 0
+        after_activity_n = 0
         registry = load_registry()
         for eid in venues:
             entry = registry.by_id(eid)
@@ -93,14 +97,20 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
                 progress.log(f"Venue {eid}: no API key — skipped", level="warn")
                 continue
             t = time.perf_counter()
+            venue_funnel: dict[str, float | int] = {}
             try:
                 client = ccxt_client(entry, store=vault)
-                snap = run_venue_pipeline(settings, entry, client=client)
+                snap = run_venue_pipeline(settings, entry, client=client, funnel_out=venue_funnel)
             except Exception as exc:
                 progress.log(f"Venue {eid}: failed ({exc})", level="error")
                 continue
             timings[f"pipeline_{eid}_s"] = round(time.perf_counter() - t, 3)
             last_snap = snap
+            listed_n += int(venue_funnel.get("listed_n") or 0)
+            after_volume_n += int(venue_funnel.get("after_volume_n") or 0)
+            after_activity_n += int(
+                venue_funnel.get("after_activity_n") or venue_funnel.get("after_volume_n") or 0
+            )
             t = time.perf_counter()
             # Chart enrich uses public OHLCV per venue when the support matrix allows it.
             from trendalgo.device.support_matrix import can_keyed_chart_enrich
@@ -114,6 +124,16 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
             raise ScanUnavailableError("no venues returned qualified pairs")
 
         assert last_snap is not None
+        funnel = {
+            "listed_n": listed_n,
+            "after_volume_n": after_volume_n,
+            "after_activity_n": after_activity_n,
+            "qualified_n": len(all_rows),
+            "min_volume_usd": float(settings.min_volume_usd),
+            "require_continuous_1h": (
+                1 if bool(getattr(settings, "require_continuous_1h", True)) else 0
+            ),
+        }
         t = time.perf_counter()
         scan_id = _save(root, last_snap)
         timings["save_scan_s"] = round(time.perf_counter() - t, 3)
@@ -123,7 +143,7 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
 
         bt_candidates = coins_for_backtest(all_rows, saved)
         progress.log(
-            f"Pass-1 backtest + Market Context queue: {len(bt_candidates)} scan coins "
+            f"Pass-1 backtest + Market Context sweep: {len(bt_candidates)} scan coins "
             "(Qualified filters hide rows in the table only)"
         )
         t = time.perf_counter()
@@ -136,6 +156,7 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
         save_lts_rows(root, rows)
         timings["save_rows_s"] = round(time.perf_counter() - t, 3)
         timings["total_s"] = round(time.perf_counter() - t0, 3)
+        merge_scan_meta(root, elapsed_s=timings["total_s"], funnel=funnel)
         return {
             "scan_id": scan_id,
             "pairs": len(rows),
@@ -145,6 +166,7 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
             "venues": venues,
             "scan_mode": "keyed",
             "data_source": f"Keyed · {', '.join(venues)}",
+            "funnel": funnel,
         }
     finally:
         set_secret_store(None)
@@ -171,8 +193,9 @@ def _finish_public_pipeline(
 
         if tuple(listings.verify_kraken_listings()) == DEFAULT_KRAKEN_SPOT:
             raise ScanUnavailableError("the Kraken pair list was not available")
+    funnel: dict[str, float | int] = {}
     try:
-        snapshot = run_pipeline(settings, fetcher=fetcher)
+        snapshot = run_pipeline(settings, fetcher=fetcher, funnel_out=funnel)
     except RuntimeError as exc:
         raise ScanUnavailableError(str(exc) or "the Kraken market data was not available") from exc
     if snapshot.degraded and require_live_listings:
@@ -188,7 +211,7 @@ def _finish_public_pipeline(
         saved = filters or {}
         bt_candidates = coins_for_backtest(rows, saved)
         progress.log(
-            f"Pass-1 backtest + Market Context queue: {len(bt_candidates)} scan coins "
+            f"Pass-1 backtest + Market Context sweep: {len(bt_candidates)} scan coins "
             "(Qualified filters hide rows in the table only)"
         )
         t = time.perf_counter()
@@ -199,6 +222,7 @@ def _finish_public_pipeline(
         rows = [by_key.get(row_key(c), c) for c in rows]
     save_lts_rows(root, rows)
     timings["total_s"] = round(time.perf_counter() - t0, 3)
+    merge_scan_meta(root, elapsed_s=timings["total_s"], funnel=funnel or None)
     return {
         "scan_id": scan_id,
         "pairs": len(snapshot.opportunities),
@@ -208,6 +232,7 @@ def _finish_public_pipeline(
         "venues": ["kraken"],
         "scan_mode": "public",
         "data_source": "Kraken public",
+        "funnel": dict(funnel) if funnel else {},
     }
 
 

@@ -1,4 +1,4 @@
-"""Shared ApplicationModal scan progress — bar, pair glance, ETA, activity log."""
+"""Shared non-modal scan progress — bar, pair glance, ETA, activity log."""
 
 from __future__ import annotations
 
@@ -136,7 +136,8 @@ class ScanProgressDialog(QDialog):
 
         self.setWindowTitle(title)
         self.setMinimumSize(420, 400)
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        # Non-modal so other desks/tabs stay usable while the list builds.
+        self.setWindowModality(Qt.WindowModality.NonModal)
         self.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
 

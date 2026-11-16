@@ -70,6 +70,7 @@ def backtest_one_coin(
         include_sauce=include_sauce if sauce_only_rows is None else True,
         sauce_only_rows=sauce_only_rows,
         include_market_context=include_market_context,
+        exchange_id=eid,
     )
     deepened = sum(1 for r in rows if r.get("optimized"))
     stats["deepened"] = float(deepened)

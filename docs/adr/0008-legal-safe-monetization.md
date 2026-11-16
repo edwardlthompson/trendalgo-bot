@@ -1,7 +1,7 @@
 # ADR-0008: Legal-Safe Monetization — Anti-MSB
 
-- **Status:** Proposed (H-006 attorney sign-off required)
-- **Date:** 2026-06-25
+- **Status:** Accepted for Tier A (ADR-0020); Tier B counsel still required before non-owner charges (H-006b)
+- **Date:** 2026-06-25 (tiered 2026-11-15)
 
 ## Context
 
@@ -22,3 +22,5 @@ Stripe; auto-withdraw; institutional auto-collect; hosted custodial SaaS.
 ## Consequences
 
 R-006 eliminated; Sprint 10 billing UX; `docs/LEGAL_SAFETY.md`.
+
+**Gates (ADR-0020):** Tier A — founder residual-risk posture closes H-006 for owner-only + FOSS distribution. Tier B — H-006b blocks non-owner Alpha Share / performance-fee enrollment until counsel or clinic.

@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-15 — Legal Research Desk (ADR-0020) replaces paid-attorney blocker
+- **Status:** Accepted
+- **Context:** Founder cannot afford counsel; H-006/H-022/H-023 blocked FOSS publish. An “Attorney Grok Bot” would be false security.
+- **Decision:** Ship Legal Research Desk (`/legal-desk`) + Founder Legal Posture; Tier A closes owner-only+foss with residual-risk notes; Tier B H-006b keeps non-owner billing deferred until counsel/clinic.
+- **Alternatives considered:** Fake attorney-approved stamps (rejected); keep all legal gates blocked forever (rejected — blocks FOSS).
+- **Consequences:** TERMS aligned to ELv2; packet embeds legal ADRs; `founder_gate` refuses “attorney approved” without `docs/legal-desk/counsel/`.
+
 ### 2026-11-15 — Ship v1.17.0 multi-venue parity + quieter chrome
 - **Status:** Accepted
 - **Context:** `/ship` after CEX dedicated adapters / Tier B smoke, DEX candle+watch honesty, Alpaca paper dry-run, Scanner/Backtest chrome fold into Settings; upd again tried bad CodeQL bundle tags; Release Please #77 → 1.17.0 left `uv.lock` stale (`uv sync --locked` failed on merge CI).

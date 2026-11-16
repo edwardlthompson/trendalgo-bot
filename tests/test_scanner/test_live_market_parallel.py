@@ -1,4 +1,4 @@
-"""Staged live-market fetch: volume → gain → 5m; soft-fail per pair."""
+"""Staged live-market fetch: volume → continuous 1h → gain (no 5m)."""
 
 from __future__ import annotations
 
@@ -46,10 +46,13 @@ def test_fetch_live_market_parallel(monkeypatch: pytest.MonkeyPatch) -> None:
         return _bars(n)
 
     monkeypatch.setattr("trendalgo.scanner.live_market.fetch_ohlcv", fake_fetch)
-    rows = fetch_live_market(["SOL/USD", "BAD/USD", "DOT/USD"])
+    rows = fetch_live_market(
+        ["SOL/USD", "BAD/USD", "DOT/USD"],
+        require_continuous_1h=False,
+    )
     assert [r.pair for r in rows] == ["SOL/USD", "DOT/USD"]
     assert rows[0].gain_pct != 0
-    assert rows[0].bars
+    assert rows[0].bars == []
 
 
 def test_fetch_live_market_all_fail(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -58,7 +61,7 @@ def test_fetch_live_market_all_fail(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda *_a, **_k: (_ for _ in ()).throw(RuntimeError("down")),
     )
     with pytest.raises(RuntimeError, match="live OHLCV"):
-        fetch_live_market(["X/USD"], max_retries=1, backoff_seconds=0)
+        fetch_live_market(["X/USD"], max_retries=1, backoff_seconds=0, require_continuous_1h=False)
 
 
 def test_ticker_prefilter_drops_low_volume_before_ohlcv(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -78,6 +81,7 @@ def test_ticker_prefilter_drops_low_volume_before_ohlcv(monkeypatch: pytest.Monk
         ["SOL/USD", "BTC/USD"],
         min_volume_usd=1_000_000,
         min_gain_pct=0.0,
+        require_continuous_1h=False,
     )
     assert [r.pair for r in rows] == ["BTC/USD"]
     assert not any(c.startswith("SOL/USD:") for c in calls)
@@ -97,6 +101,7 @@ def test_volume_floor_skips_gain_and_five_minute(monkeypatch: pytest.MonkeyPatch
         ["SOL/USD"],
         min_volume_usd=10**18,
         min_gain_pct=0.0,
+        require_continuous_1h=False,
     )
     assert rows == []
     assert any(c.endswith(":1h") for c in calls)
@@ -104,7 +109,7 @@ def test_volume_floor_skips_gain_and_five_minute(monkeypatch: pytest.MonkeyPatch
     assert not any(c.endswith(":5m") for c in calls)
 
 
-def test_gain_floor_skips_five_minute_after_volume_pass(
+def test_gain_floor_skips_daily_after_volume_pass(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[str] = []
@@ -134,6 +139,7 @@ def test_gain_floor_skips_five_minute_after_volume_pass(
         ["SOL/USD"],
         min_volume_usd=0.0,
         min_gain_pct=0.5,
+        require_continuous_1h=False,
     )
     assert rows == []
     assert any(c.endswith(":1h") for c in calls)
@@ -164,12 +170,17 @@ def test_zero_gain_floor_keeps_negative_30d_pairs(
         return bars
 
     monkeypatch.setattr("trendalgo.scanner.live_market.fetch_ohlcv", fake_fetch)
-    rows = fetch_live_market(["SOL/USD"], min_volume_usd=0.0, min_gain_pct=0.0)
+    rows = fetch_live_market(
+        ["SOL/USD"],
+        min_volume_usd=0.0,
+        min_gain_pct=0.0,
+        require_continuous_1h=False,
+    )
     assert len(rows) == 1
     assert rows[0].gain_pct < 0
 
 
-def test_full_pass_fetches_volume_then_gain_then_five_m(
+def test_full_pass_fetches_volume_then_gain_no_five_m(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     order: list[str] = []
@@ -180,12 +191,18 @@ def test_full_pass_fetches_volume_then_gain_then_five_m(
         return _bars(n)
 
     monkeypatch.setattr("trendalgo.scanner.live_market.fetch_ohlcv", fake_fetch)
-    rows = fetch_live_market(["SOL/USD"], min_volume_usd=0.0, min_gain_pct=0.0)
+    rows = fetch_live_market(
+        ["SOL/USD"],
+        min_volume_usd=0.0,
+        min_gain_pct=0.0,
+        require_continuous_1h=False,
+    )
     assert len(rows) == 1
-    assert order == ["1h", "1d", "5m"]
+    assert order == ["1h", "1d"]
+    assert rows[0].bars == []
 
 
-def test_gain7d_floor_skips_daily_and_five_m(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_gain7d_floor_skips_daily(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[str] = []
 
     def fake_fetch(pair: str, timeframe: str, *_a, **_k):
@@ -212,6 +229,7 @@ def test_gain7d_floor_skips_daily_and_five_m(monkeypatch: pytest.MonkeyPatch) ->
         min_volume_usd=0.0,
         min_gain_pct=0.0,
         min_gain_7d_pct=0.05,
+        require_continuous_1h=False,
     )
     assert rows == []
     assert any(c.endswith(":1h") for c in calls)

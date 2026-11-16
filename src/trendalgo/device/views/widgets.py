@@ -135,6 +135,8 @@ class EmptyState(QFrame):
         body: str,
         action: str = "",
         on_action: Callable[[], None] | None = None,
+        *,
+        center_action: bool = False,
     ) -> None:
         super().__init__()
         self.setObjectName("emptyState")
@@ -144,17 +146,44 @@ class EmptyState(QFrame):
         self._title.setWordWrap(True)
         self._body = QLabel(body)
         self._body.setWordWrap(True)
+        if center_action:
+            self._title.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            self._body.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout.addWidget(self._title)
         layout.addWidget(self._body)
+        self._on_action: Callable[[], None] | None = on_action
         self.button = QPushButton(action)
         self.button.setVisible(bool(action) and on_action is not None)
-        if on_action is not None:
-            self.button.clicked.connect(lambda _checked=False: on_action())
-        layout.addWidget(self.button, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.button.clicked.connect(self._fire_action)
+        align = Qt.AlignmentFlag.AlignHCenter if center_action else Qt.AlignmentFlag.AlignLeft
+        layout.addWidget(self.button, alignment=align)
+        if center_action:
+            layout.addStretch(1)
+
+    def _fire_action(self, _checked: bool = False) -> None:
+        if self._on_action is not None:
+            self._on_action()
 
     def set_text(self, title: str, body: str) -> None:
         self._title.setText(title)
         self._body.setText(body)
+
+    def set_action(
+        self,
+        action: str,
+        on_action: Callable[[], None] | None = None,
+        *,
+        visible: bool = True,
+    ) -> None:
+        self.button.setText(action)
+        if on_action is not None:
+            self._on_action = on_action
+        elif not action:
+            self._on_action = None
+        show = bool(visible and action and self._on_action is not None)
+        if on_action is None and not action:
+            show = False
+        self.button.setVisible(show)
 
 
 def read_only_table(headers: Sequence[str], name: str) -> QTableWidget:

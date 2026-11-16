@@ -13,9 +13,9 @@
 | Critiques C-001–C-021 | ✅ all closed in catalog |
 | Tests | 332 pass · ~87% `trendalgo` coverage (cov-fail-under=86%) |
 | Founder gates H-001–H-036 | 🔲 backlog — preflights mostly runnable |
-| Public beta | ❌ blocked on H-006, H-023 |
+| Public FOSS (Tier A) | ✅ H-006 / H-022 / H-023 cleared 2026-11-15 (ADR-0020) |
+| Non-owner billing (Tier B) | ❌ blocked on H-006b |
 | Live trading | ❌ blocked on H-010, H-028, H-031, H-032, H-036, secrets |
-
 ---
 
 ## Phase 1 — Clear founder gates (this week)
@@ -27,6 +27,7 @@ python scripts/founder_gate.py preflight-sprint --sprint 0
 python scripts/founder_gate.py preflight-sprint --sprint 1
 # … through --sprint 12
 python scripts/founder_gate.py status
+
 ```
 
 ### Batch approve (soft gates only)
@@ -36,6 +37,7 @@ After each `preflight` returns **PASS**, one command clears the gate:
 ```bash
 python scripts/founder_gate.py approve H-007
 python scripts/founder_gate.py approve-bundle pre-sprint-1   # H-001, H-005, H-007
+
 ```
 
 Recommended order:
@@ -44,7 +46,7 @@ Recommended order:
 2. **Scope gates** — H-013, H-015, H-018, H-019, H-020, H-024, H-025 (after sprint preflight PASS)
 3. **Infra checks** — H-009, H-012, H-014, H-016, H-017 (script artifacts)
 4. **Secrets** — H-008, H-011 (hard — requires `.env` with real tokens)
-5. **Legal** — H-006, H-022, H-023 (hard — attorney; cannot batch approve)
+5. **Legal Tier A** — H-006, H-022, H-023 (`residual-risk owner-only+foss`; Legal Research Desk) · **Tier B** H-006b (counsel before non-owner billing)
 6. **Go-live** — H-010, H-028 (hard — only when deploying live)
 
 ---
@@ -58,10 +60,10 @@ Recommended order:
 | Deploy dry-run stack | HUMAN/AGENT | H-004, docker compose |
 | Validate portfolio vs CoinStats | HUMAN | H-017, `compare-portfolio-parity.sh` |
 | Archive standalone LTS repo | HUMAN | H-014, `lts-parity-check.sh` |
-| Attorney TERMS review | HUMAN | H-006, H-023 |
+| Tier A TERMS + posture | HUMAN | H-006, H-022, H-023 |
+| Tier B counsel before non-owner billing | HUMAN | H-006b |
 | Enable Dependabot alerts | HUMAN | GitHub settings |
 | First live enable | HUMAN | H-010, H-028, `go-live-gate.sh --approve` |
-
 ---
 
 ## Phase 3 — Ongoing controls (no end date)
@@ -79,13 +81,13 @@ These **ongoing risks** in the catalog are **controls**, not open backlog items:
 | R-020 | Backup / restore | Monthly | `backup-restore.sh` |
 | R-036 | File size limits | CI | `check-file-limits.sh` |
 | R-039 | CCXT / deps pin | CI + Dependabot | `uv.lock`, Dependabot |
-
 **Accepted (documented, no action):** R-012 AGPL fork · R-027 pseudonym limits · R-030 withdraw-before-pay · R-038 VPS SPOF
 
 **Verify ongoing controls:**
 
 ```bash
 python scripts/check_risk_mitigations.py --ongoing --strict
+
 ```
 
 ---
@@ -99,7 +101,8 @@ python scripts/check_risk_mitigations.py --ongoing --strict
 | H-003 | Branch protection | ✅ script present | ✅ soft | Run `setup-github-repo.sh` once |
 | H-004 | VPS hosting choice | ✅ eligibility script | ✅ soft | **Provision** Oracle/Hetzner account |
 | H-005 | Founder defaults | ✅ defaults file | ✅ soft | Override only if changing defaults |
-| H-006 | Attorney + ADR-0008 | ⚠️ legal packet exists | ❌ **hard** | **Attorney consult** |
+| H-006 | Tier A ADR-0008 + posture | ⚠️ packet + FOUNDER_LEGAL_POSTURE | ❌ **hard** | **residual-risk owner-only+foss** |
+| H-006b | Tier B non-owner billing | ⚠️ when-to-get-counsel | ❌ **hard** | **Counsel/clinic** |
 | H-007 | ADR-0001 / S1 scope | ✅ ADR + bootstrap | ✅ soft | Read ADR-0001 |
 | H-008 | Telegram token | ⚠️ `.env` exists | ❌ **hard** | **Create bot, paste secrets** |
 | H-009 | Playwright smoke | ✅ config exists | ✅ soft | CI runs tests |
@@ -115,8 +118,8 @@ python scripts/check_risk_mitigations.py --ongoing --strict
 | H-019 | S7 scope | ✅ sprint-preflight S7 | ✅ soft | Read scope |
 | H-020 | S8 scope | ✅ sprint-preflight S8 | ✅ soft | Read scope |
 | H-021 | Second exchange / futures | ❌ product decision | ❌ hard | **Choose exchange + timeline** |
-| H-022 | License ADR attorney | ⚠️ legal docs exist | ❌ **hard** | **Attorney on license model** |
-| H-023 | TERMS sign-off | ⚠️ TERMS.md exists | ❌ **hard** | **Attorney approval** |
+| H-022 | License ADRs Tier A | ⚠️ legal docs + posture | ❌ **hard** | **residual-risk owner-only+foss** |
+| H-023 | TERMS + packet Tier A | ⚠️ TERMS + posture | ❌ **hard** | **residual-risk owner-only+foss** |
 | H-024 | S11 scope (no marketplace) | ✅ sprint-preflight S11 | ✅ soft | Confirm ADR-0009 |
 | H-025 | S12 on-chain provider | ✅ sprint-preflight S12 | ⚠️ soft | **Approve provider or stay dry-run** |
 | H-026 | Portfolio integrity review | ✅ script report | ⚠️ AUTO runs; human **reviews** | Read monthly report |
@@ -127,7 +130,6 @@ python scripts/check_risk_mitigations.py --ongoing --strict
 | H-031 | ADR-0010 + FT removal | ⚠️ ADR exists | ❌ **hard** | **Explicit FT removal consent** |
 | H-032 | Worldwide bot trading | ⚠️ roadmap § Tier D | ❌ **hard** | **Approve phase plan** |
 | H-034 | Local preview sign-off | ✅ LOCAL_DEV + scripts | ✅ soft | **Run L1 preview** |
-
 ### Already fully automated (no backlog row)
 
 H-003 · H-009 · H-012 · H-029 · H-005 (defaults applied)
@@ -137,6 +139,7 @@ H-003 · H-009 · H-012 · H-029 · H-005 (defaults applied)
 ```bash
 python scripts/founder_gate.py approve-all-soft --dry-run
 python scripts/founder_gate.py approve-all-soft
+
 ```
 
 ### Recommended AGENT follow-ups (optional)
@@ -163,7 +166,8 @@ Do **not** re-open closed risks unless a regression is found; log new issues as 
 - [ ] All soft founder gates `approved` in `.cursor/founder-gates.json`
 - [ ] VPS running dry-run bot + API + PWA
 - [ ] H-017 parity validated; CoinStats cancelled
-- [ ] H-006 + H-023 cleared for public beta
+- [x] H-006 + H-022 + H-023 cleared for Tier A FOSS (residual-risk owner-only+foss)
+- [ ] H-006b still open until counsel before non-owner billing
 - [ ] Dependabot alerts enabled
 - [ ] First `go-live-gate.sh --approve` recorded (if live trading desired)
 - [ ] Monthly cron: backup, cost, portfolio integrity, ongoing risk check

@@ -22,6 +22,7 @@ SKILLS = (
     "local-models",
     "emulator",
     "adr",
+    "legal-desk",
     "ux-review",
     "blender-icons",
 )
@@ -36,6 +37,7 @@ COMMAND_SKILL = {
     "best-of-n.md": ("best-of-n",),
     "emulator.md": ("emulator",),
     "adr.md": ("adr",),
+    "legal-desk.md": ("legal-desk",),
     "ux-review.md": ("ux-review",),
     "ux-apply.md": ("ux-review",),
 }

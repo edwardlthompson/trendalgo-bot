@@ -136,8 +136,17 @@ def show_results_dialog(
     status.setObjectName("hint")
     status.setWordWrap(True)
     prefs_for_ctx = load_results_prefs(export_root) if export_root is not None else None
+
+    def _on_mc_collapse(collapsed: bool) -> None:
+        if prefs_root is None:
+            return
+        prefs = load_results_prefs(prefs_root)
+        prefs.market_context_collapsed = bool(collapsed)
+        save_results_prefs(prefs_root, prefs)
+
     market_pane = MarketContextPane(
         expanded=not (prefs_for_ctx.market_context_collapsed if prefs_for_ctx else False),
+        on_collapse=_on_mc_collapse,
     )
     raw_ctx = coin.get("market_context")
     if isinstance(raw_ctx, dict):
@@ -182,6 +191,7 @@ def show_results_dialog(
             filter_row=filters,
             on_create_bot=on_create_bot,
             indicator_label=indicator_display_label,
+            calendar_root=export_root,
         )
         filter_timer = QTimer(dialog)
         filter_timer.setSingleShot(True)
@@ -202,6 +212,7 @@ def show_results_dialog(
                 filter_row=filters,
                 on_create_bot=on_create_bot,
                 indicator_label=indicator_display_label,
+                calendar_root=export_root,
             )
 
         def _on_filter_changed(_text: str = "") -> None:
@@ -287,6 +298,10 @@ def show_results_dialog(
             prefs.results_dialog_width = max(520, dialog.width())
             prefs.results_dialog_height = max(360, dialog.height())
         save_results_prefs(prefs_root, prefs)
+        if filters is not None:
+            from trendalgo.device.results_pair_prefs import save_pair_filters
+
+            save_pair_filters(prefs_root, pair, filters.dump())
 
     dialog.finished.connect(_persist_geometry)
     if prefs_root is not None:

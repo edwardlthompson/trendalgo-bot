@@ -141,9 +141,9 @@ def test_manual_sauce_pan_never_runs_catalog(
     monkeypatch.setattr(bt_mod, "run_opportunity_sauce_pass", fake_sauce_pass)
 
     board = list(filtered) + [{"symbol": "OTHER", "backtest_top_strategies": [{"net_pct": 0}]}]
-    monkeypatch.setattr(job, "load_lts_rows", lambda _r: list(board))
+    monkeypatch.setattr(job, "load_lts_rows", lambda _r, **_k: list(board))
     saved: list[list[dict[str, Any]]] = []
-    monkeypatch.setattr(job, "save_lts_rows", lambda _r, rows: saved.append(list(rows)))
+    monkeypatch.setattr(job, "save_lts_rows", lambda _r, rows, **_k: saved.append(list(rows)))
     monkeypatch.setattr(
         "trendalgo.lts_vendor.bridge.merge_backtest_into_coins",
         lambda coins, summary: [
@@ -202,8 +202,8 @@ def test_manual_sauce_pan_starts_progress_reporter(
             "market_contexts": {},
         },
     )
-    monkeypatch.setattr(job, "load_lts_rows", lambda _r: [])
-    monkeypatch.setattr(job, "save_lts_rows", lambda *_a: None)
+    monkeypatch.setattr(job, "load_lts_rows", lambda _r, **_k: [])
+    monkeypatch.setattr(job, "save_lts_rows", lambda *_a, **_k: None)
     monkeypatch.setattr(
         "trendalgo.lts_vendor.bridge.merge_backtest_into_coins",
         lambda coins, _summary: list(coins),

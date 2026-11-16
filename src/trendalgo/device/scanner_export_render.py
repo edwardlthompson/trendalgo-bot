@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt
@@ -32,6 +33,8 @@ def build_scanner_export_panel(
     sort_key: str,
     sort_dir: int,
     include_market_context: bool = True,
+    icon_root: Path | None = None,
+    lane: str = "crypto",
 ) -> QWidget:
     theme = colors_for(active_mode())
     panel = QWidget()
@@ -56,6 +59,16 @@ def build_scanner_export_panel(
         picks_band = build_buy_picks_gfx_band(coins)
         if picks_band is not None:
             layout.addWidget(picks_band)
+    if icon_root is not None and (lane or "").strip().lower() == "tradfi":
+        from trendalgo.device.lane_icons import prefetch_equity_logo
+
+        for coin in coins:
+            sym = str(coin.get("symbol") or "").strip()
+            if sym:
+                try:
+                    prefetch_equity_logo(icon_root, sym)
+                except Exception:  # noqa: BLE001 — export must not fail on one logo
+                    continue
     table = QTableWidget()
     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
     table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -70,6 +83,8 @@ def build_scanner_export_panel(
         sort_dir=sort_dir,
         heatmap=heatmap,
         filter_row=False,
+        icon_root=icon_root,
+        lane=lane,
     )
     for col in _HIDE:
         table.setColumnHidden(col, True)
