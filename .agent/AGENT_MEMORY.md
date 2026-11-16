@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board HUMAN after `/ship` v1.17.0. Tier A legal H-006/H-022/H-023 ✅ (ADR-0020). Open: H-006b Tier B + DEX-P4b CLOUD + PF-H1 + ops/H-032/H-036.
+**Current sprint:** Board HUMAN after `/ship` v1.18.0. Tier A legal H-006/H-022/H-023 ✅ (ADR-0020). Open: H-006b Tier B + DEX-P4b CLOUD + ops/H-032/H-036.
 
-**Tests:** Local `pre-release-gate --local` PASS before push. Required GitHub CI/CodeQL/Security green on `6f8c2a7`. CodeQL must stay `@v4` (upd still tries `vcodeql-bundle-*` — revert those workflow diffs). Sync `uv.lock` after every Release Please version bump.
+**Tests:** Required GitHub CI/CodeQL/Security green on `0264401` before RP #78 merge. CodeQL must stay `@v4`. Sync `uv.lock` after every Release Please version bump.
 
-**Recent:** v1.17.0 — multi-venue parity ladder (CEX adapters + Tier B smoke, DEX candles/watch, Alpaca TradFi dry-run), quieter Scanner/Backtest chrome (Settings 2-col + Status). RP #77. Post-RP `uv.lock` sync → RP opened 1.17.1. Residual: OpenVEX still missing on GitHub Release (SBOM + MSI/setup present).
+**Recent:** v1.18.0 — TradFi/FX Opportunity desks (Alpaca + AlgoSpecial H1 fallback, 90m floor), Scan UX desk fixes, Tier A legal-desk artifacts. RP #78. Residual: OpenVEX still missing on GitHub Release.
 
 **Canonical plan:** `docs/specs/audit-remediation.md` · `docs/CANONICAL_PLAN.md`.
 

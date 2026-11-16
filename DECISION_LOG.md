@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-16 — Ship v1.18.0 TradFi/FX desks + Scan UX + AlgoSpecial
+- **Status:** Accepted
+- **Context:** Uncommitted multi-lane WIP (TradFi top-500, Forex research, Scan UX, AlgoSpecial H1) needed a release; first push CI failed on stale `test_live_fetch_retries` (idle-1h + 5m assumptions).
+- **Decision:** Commit/push product + legal-desk; fix scanner retry test for staged 1h/1d; merge Release Please #78 → **v1.18.0**.
+- **Alternatives considered:** Split into multiple PRs (deferred — human asked ship now); keep desks unreleased (rejected).
+- **Consequences:** Forex free path uses AlgoSpecial with 90m auto-scan floor; Alpaca FX grant still preferred when available.
+
 ### 2026-11-15 — Legal Research Desk (ADR-0020) replaces paid-attorney blocker
 - **Status:** Accepted
 - **Context:** Founder cannot afford counsel; H-006/H-022/H-023 blocked FOSS publish. An “Attorney Grok Bot” would be false security.
