@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.17.0...v1.18.0) (2026-11-16)
+
+
+### Added
+
+* **device:** TradFi/FX desks, Scan UX, AlgoSpecial H1 ([939c9c8](https://github.com/edwardlthompson/trendalgo-bot/commit/939c9c8b2fcd7306b3cd416bf7eb812d58860ad4))
+
+
+### Fixed
+
+* **deps:** sync uv.lock to 1.17.0 after Release Please ([6f8c2a7](https://github.com/edwardlthompson/trendalgo-bot/commit/6f8c2a7b96b5bc6d9f3e66ba783aace10d6cd2d0))
+* **test:** align live-market retry test with staged 1h/1d fetch ([0264401](https://github.com/edwardlthompson/trendalgo-bot/commit/02644012b13ce291749878a53cb3958d2dbb7f6d))
+
+
+### Documentation
+
+* note v1.17.0 multi-venue ship in memory and decision log ([54b409c](https://github.com/edwardlthompson/trendalgo-bot/commit/54b409c9b57e6ea7843d0d7c07bf06fa40433501))
+
 ## [1.17.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.16.0...v1.17.0) (2026-11-15)
 
 
