@@ -37,3 +37,15 @@ A Cursor planning agent should review these items and fold the useful ones into 
 
 - [ ] Bump fastapi to 0.163.1 and throttle exchange-hitting endpoints with Depends(max_concurrency=...) — Replaces ad-hoc locks around portfolio sync and backtest triggers with a built-in limit. Label: `[AGENT]` · Priority: P3 · https://github.com/fastapi/fastapi/releases/tag/0.163.0
 - [ ] Confirm Gate.io access goes only through ccxt and keep installs locked — No gate SDK should appear in uv.lock, and `uv sync --locked` (no ad-hoc pip installs of exchange SDKs on the VPS) blocks these typosquats. Label: `[AGENT]` · Priority: P3 · https://github.com/advisories/GHSA-xjgf-m5q9-6gpf
+
+## 2026-11-16
+
+**News and updates**
+
+- Proxima post-mortem: a debug log line wrote wallet private keys, production logging went to DEBUG, and an exposed SigNoz instance leaked them (5,324 SOL from 870 wallets, Nov 14). [source](https://cryptowatchdesk.com/news/security-alert-proxima-post-mortem-debug-logs-held-private-keys-5324-sol-181-users-firewall-rule-removed)
+- Kraken Futures removes POST /withdrawal and GET /transfers on Nov 30 (use POST /transfer and GET /transfer/assets); Maker Protection rejections now return `makerProtectionOrderLimitExceeded` instead of `tooManyOrders`. [source](https://docs.kraken.com/exchange/changelog)
+
+**Tasks for the planning agent**
+
+- [x] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — SecretRedactor masks only watched env values today, so add pattern-based masking plus a test that DEBUG output of wallet/DEX and exchange-key paths holds no secrets, and keep any log UI on the VPS bound to localhost. Label: `[AGENT]` · Priority: P2 · https://cryptowatchdesk.com/news/security-alert-proxima-post-mortem-debug-logs-held-private-keys-5324-sol-181-users-firewall-rule-removed (synced to BUILD_PLAN)
+- [ ] Confirm nothing calls Kraken Futures /withdrawal or /transfers and map makerProtectionOrderLimitExceeded to a backoff — Avoids a silent break on Nov 30 and stops the new error being read as an open-order-limit failure. Label: `[AGENT]` · Priority: P3 · https://docs.kraken.com/exchange/changelog

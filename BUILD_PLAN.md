@@ -109,3 +109,5 @@ Finished BUILD_PLAN rows live in [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 P1/P2 tasks auto-synced by News Bot from [`docs/NEWS_INBOX.md`](docs/NEWS_INBOX.md).
 
 > Security onboarding API-key hygiene (news P2) archived in COMPLETED_TASKS.md (2026-11-15).
+
+- 🔲 [AGENT][LOCAL] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — scope: src/trendalgo/exchanges/secrets.py (news P2, 2026-11-16) https://cryptowatchdesk.com/news/security-alert-proxima-post-mortem-debug-logs-held-private-keys-5324-sol-181-users-firewall-rule-removed
