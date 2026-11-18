@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.18.0...v1.19.0) (2026-11-18)
+
+
+### Added
+
+* **forex:** expand AlgoSpecial desk with icons, metrics, and Bot vs B&H clarity ([45e1094](https://github.com/edwardlthompson/trendalgo-bot/commit/45e10946753af298996801b9127f8d79a0cb570e))
+
+
+### Fixed
+
+* **ci:** ruff-format scan page test and restore CodeQL upload-sarif@v4 ([2bb5562](https://github.com/edwardlthompson/trendalgo-bot/commit/2bb55625461558248a2bdcc9169e05a09ae7ddf1))
+* **security:** harden SecretRedactor and bump FastAPI body limits ([7db2336](https://github.com/edwardlthompson/trendalgo-bot/commit/7db233651dc66987f2df6e7790e7332a20f442d2))
+
+
+### Changed
+
+* **argus:** Append missing BUILD_PLAN marker lanes ([ac7629e](https://github.com/edwardlthompson/trendalgo-bot/commit/ac7629eee842d5afac9d2af55f7c7e0199ba2735))
+* **argus:** Move agent memory/log files into .agent/ ([#81](https://github.com/edwardlthompson/trendalgo-bot/issues/81)) ([a72ff3e](https://github.com/edwardlthompson/trendalgo-bot/commit/a72ff3e35edf12b9996aa46d408ed5d1c43cb247))
+
+
+### Documentation
+
+* **news:** inbox + build plan 2026-11-16 [skip ci] ([4024d19](https://github.com/edwardlthompson/trendalgo-bot/commit/4024d197eb56793be7ae6dfff64d9500e2767a06))
+* **news:** inbox + build plan 2026-11-18 [skip ci] ([9877ade](https://github.com/edwardlthompson/trendalgo-bot/commit/9877adef349f515534650bb061042a6ad0698a37))
+* note v1.18.0 TradFi/FX Scan UX ship in memory and decision log ([046c856](https://github.com/edwardlthompson/trendalgo-bot/commit/046c856295292581d9aad377e80f57dafdc9023e))
+
 ## [1.18.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.17.0...v1.18.0) (2026-11-16)
 
 
