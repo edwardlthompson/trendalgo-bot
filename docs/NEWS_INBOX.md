@@ -49,3 +49,18 @@ A Cursor planning agent should review these items and fold the useful ones into 
 
 - [x] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — SecretRedactor masks only watched env values today, so add pattern-based masking plus a test that DEBUG output of wallet/DEX and exchange-key paths holds no secrets, and keep any log UI on the VPS bound to localhost. Label: `[AGENT]` · Priority: P2 · https://cryptowatchdesk.com/news/security-alert-proxima-post-mortem-debug-logs-held-private-keys-5324-sol-181-users-firewall-rule-removed (synced to BUILD_PLAN)
 - [ ] Confirm nothing calls Kraken Futures /withdrawal or /transfers and map makerProtectionOrderLimitExceeded to a backoff — Avoids a silent break on Nov 30 and stops the new error being read as an open-order-limit failure. Label: `[AGENT]` · Priority: P3 · https://docs.kraken.com/exchange/changelog
+
+## 2026-11-18
+
+Catch-up for Nov 17–18 (the daily brief did not run those mornings).
+
+**News and updates**
+
+- Unauthorized PyPI releases 1.26.1 and 1.26.2 of Microsoft's `agent-framework` (Nov 17, now removed) dropped a `.pth` hook that stole env secrets, credential files, and Azure/GitHub OIDC tokens on every Python start. Pin to 1.26.0 or don't install it; treat any hit as compromised. [source](https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi) · [uv 0.13.9](https://github.com/astral-sh/uv/releases/tag/0.13.9) rejects wheels advertised under a different package name.
+- Kraken moved the start of Futures-to-Spot `POST /transfer` (pass `spot` as fromAccount or toAccount) from Nov 17 to Nov 19; `POST /withdrawal` and `GET /transfers` are still removed on Nov 30. [source](https://docs.kraken.com/exchange/changelog)
+- FastAPI 0.164.0 adds configurable request body size limits (0.163.2 was a parameter-extraction refactor). [source](https://github.com/fastapi/fastapi/releases/tag/0.164.0)
+
+**Tasks for the planning agent**
+
+- [x] Confirm agent-framework 1.26.1/1.26.2 is not in uv.lock or on the VPS and rotate credentials if it is — A .pth hook on the trading VPS would steal exchange keys and CI tokens on every Python start. Label: `[AGENT]` · Priority: P2 · https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi (synced to BUILD_PLAN)
+- [x] Bump FastAPI to 0.164.0 and set request body size limits — The new limit keeps a large POST from exhausting the research API, and the pin is already at 0.163.1. Label: `[AGENT]` · Priority: P2 · https://github.com/fastapi/fastapi/releases/tag/0.164.0 (synced to BUILD_PLAN)

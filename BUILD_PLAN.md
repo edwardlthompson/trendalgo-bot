@@ -111,3 +111,5 @@ P1/P2 tasks auto-synced by News Bot from [`docs/NEWS_INBOX.md`](docs/NEWS_INBOX.
 > Security onboarding API-key hygiene (news P2) archived in COMPLETED_TASKS.md (2026-11-15).
 
 - 🔲 [AGENT][LOCAL] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — scope: src/trendalgo/exchanges/secrets.py (news P2, 2026-11-16) https://cryptowatchdesk.com/news/security-alert-proxima-post-mortem-debug-logs-held-private-keys-5324-sol-181-users-firewall-rule-removed
+- 🔲 [AGENT][LOCAL] Confirm agent-framework 1.26.1/1.26.2 is not in uv.lock or on the VPS and rotate credentials if it is — scope: pyproject.toml, uv.lock (news P2, 2026-11-18) https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi
+- 🔲 [AGENT][LOCAL] Bump FastAPI to 0.164.0 and set request body size limits — scope: pyproject.toml, src/trendalgo/ (news P2, 2026-11-18) https://github.com/fastapi/fastapi/releases/tag/0.164.0
