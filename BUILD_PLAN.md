@@ -103,13 +103,37 @@ Finished BUILD_PLAN rows live in [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 | UX-006 | Scanner chrome: action buttons; board filters + 2-col Settings; Status dialog | done |
 | UX-007 | Backtest chrome: same strip pattern; Color ranks/Perfect in Settings Results view | done |
 <!-- /ux-inventory -->
+### Local agent (This Computer)
 
-## News inbox (synced)
+Standing queue for This Computer. Rows: `🔲 [AGENT][LOCAL] … — scope: path`.
 
-P1/P2 tasks auto-synced by News Bot from [`docs/NEWS_INBOX.md`](docs/NEWS_INBOX.md).
-
-> Security onboarding API-key hygiene (news P2) archived in COMPLETED_TASKS.md (2026-11-15).
-
+<!-- local-agent-lane:begin -->
 - 🔲 [AGENT][LOCAL] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — scope: src/trendalgo/exchanges/secrets.py (news P2, 2026-11-16) https://cryptowatchdesk.com/news/security-alert-proxima-post-mortem-debug-logs-held-private-keys-5324-sol-181-users-firewall-rule-removed
 - 🔲 [AGENT][LOCAL] Confirm agent-framework 1.26.1/1.26.2 is not in uv.lock or on the VPS and rotate credentials if it is — scope: pyproject.toml, uv.lock (news P2, 2026-11-18) https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi
 - 🔲 [AGENT][LOCAL] Bump FastAPI to 0.164.0 and set request body size limits — scope: pyproject.toml, src/trendalgo/ (news P2, 2026-11-18) https://github.com/fastapi/fastapi/releases/tag/0.164.0
+<!-- local-agent-lane:end -->
+
+### Cloud agent (Cursor Cloud)
+
+Standing queue for Cursor Cloud. Rows: `🔲 [AGENT][CLOUD] … — scope: path`.
+
+<!-- cloud-agent-lane:begin -->
+_No cloud agent items._
+<!-- cloud-agent-lane:end -->
+
+### Open PRs (synced)
+
+> Auto-managed. Do not hand-edit inside the markers.
+
+<!-- open-prs-sync:begin -->
+_No open Dependabot or Release Please PRs._
+<!-- open-prs-sync:end -->
+
+### Template gaps (synced)
+
+> Auto-managed. Do not hand-edit inside the markers.
+
+<!-- template-gaps-sync:begin -->
+_No template gaps._
+<!-- template-gaps-sync:end -->
+
