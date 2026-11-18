@@ -100,8 +100,9 @@ def test_a_finished_scan_is_shown_as_scanned_on_this_pc(
     page._run.click()
     qtbot.waitUntil(lambda: page._pending is None, timeout=5000)
     qtbot.waitUntil(
-        lambda: page._status.text().startswith(S.SCAN_DONE)
-        or S.SCANNER_FROM_PC in page._caption.text(),
+        lambda: (
+            page._status.text().startswith(S.SCAN_DONE) or S.SCANNER_FROM_PC in page._caption.text()
+        ),
         timeout=5000,
     )
     assert page._status.text().startswith(S.SCAN_DONE) or S.SCANNER_FROM_PC in page._caption.text()
