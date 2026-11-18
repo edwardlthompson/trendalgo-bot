@@ -100,7 +100,15 @@ def create_app(state: AppState | None = None) -> FastAPI:
         _shutdown_scheduler(portfolio_sched)
         _shutdown_scheduler(fee_sched)
 
-    app = FastAPI(title="TrendAlgo API", version="0.1.0", lifespan=lifespan)
+    from trendalgo.exchanges.secrets import protect_known_secrets
+
+    protect_known_secrets()
+    app = FastAPI(
+        title="TrendAlgo API",
+        version="0.1.0",
+        lifespan=lifespan,
+        max_body_size=1 * 1024 * 1024,
+    )
     app.state.trendalgo = app_state
 
     origins = _cors_origins()

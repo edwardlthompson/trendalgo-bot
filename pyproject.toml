@@ -7,17 +7,17 @@ license = "Elastic-2.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "apscheduler>=3.11.3",
-    "ccxt>=4.5.92",
+    "ccxt>=4.5.93",
     "pandas>=2.2.0",
     "pydantic>=2.14.3",
-    "fastapi>=0.163.1",
+    "fastapi>=0.165.0",
     "uvicorn[standard]>=0.54.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     # HOUSE-04: not a typo — Starlette TestClient requires httpx2.
-    "httpx2>=2.16.0",
+    "httpx2>=2.16.2",
     "mypy>=1.13.0",
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",

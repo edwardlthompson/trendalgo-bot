@@ -14,6 +14,9 @@ def main(argv: list[str] | None = None) -> int:
     from trendalgo.device.env_bootstrap import ensure_device_env
 
     ensure_device_env()
+    from trendalgo.exchanges.secrets import protect_known_secrets
+
+    protect_known_secrets()
     parser = argparse.ArgumentParser(prog="trendalgo-device", description="TrendAlgo device app.")
     parser.add_argument(
         "--selftest",

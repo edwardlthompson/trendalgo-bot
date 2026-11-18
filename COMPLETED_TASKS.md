@@ -2,6 +2,12 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## News inbox P2 (2026-11-18)
+
+- ✅ [AGENT][LOCAL] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — scope: `src/trendalgo/exchanges/secrets.py` (news P2, 2026-11-16)
+- ✅ [AGENT][LOCAL] Confirm agent-framework 1.26.1/1.26.2 is not in uv.lock (never installed; rotation N/A) + lock hygiene test — scope: `pyproject.toml`, `uv.lock`, `tests/test_exchanges/test_lock_hygiene.py` (news P2, 2026-11-18)
+- ✅ [AGENT][LOCAL] Bump FastAPI ≥0.164.0 (locked 0.165.0) and `max_body_size=1MiB` — scope: `pyproject.toml`, `src/trendalgo/api/app.py` (news P2, 2026-11-18)
+
 ## Scan UX desk + AlgoSpecial Forex H1 (2026-11-15)
 
 Plans: `scan_ux_desk_fixes` · `algospecial_fx_feed`. Scoped smoke: 33 pytest (AlgoSpecial parse/budget, forex_bars facade, NonModal progress, Sauce, share, health edit, move-cut). Full `watch-agent-gates` aborted (multi-stack hang); hygiene OK.

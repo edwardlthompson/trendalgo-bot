@@ -85,3 +85,60 @@ def test_protect_logs_keeps_one_shared_redactor(monkeypatch: pytest.MonkeyPatch)
     second = protect_logs("TA_TEST_PROTECT")
     assert first is second
     assert "abcdefgh1234" in first.values()
+
+
+def test_watch_values_masks_vault_only_secrets() -> None:
+    vault_secret = "vault-only-secret-xyz"
+    redactor = SecretRedactor(MapStore({}))
+    redactor.watch_values(vault_secret)
+    handler = Collect()
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    handler.addFilter(redactor)
+    log = logging.getLogger("trendalgo.test.vault_redaction")
+    log.addHandler(handler)
+    log.setLevel(logging.DEBUG)
+    try:
+        log.debug("leaked %s", vault_secret)
+    finally:
+        log.removeHandler(handler)
+    assert handler.lines == ["leaked ***"]
+    assert vault_secret not in "\n".join(handler.lines)
+
+
+def test_dex_signer_key_is_masked_when_watched(monkeypatch: pytest.MonkeyPatch) -> None:
+    key = "dex-signer-super-secret"
+    monkeypatch.setenv("DEX_SIGNER_KEY", key)
+    redactor = SecretRedactor(EnvSecretStore())
+    redactor.watch("DEX_SIGNER_KEY")
+    handler = Collect()
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    handler.addFilter(redactor)
+    log = logging.getLogger("trendalgo.test.dex_redaction")
+    log.addHandler(handler)
+    log.setLevel(logging.DEBUG)
+    try:
+        log.debug("sign with %s", key)
+    finally:
+        log.removeHandler(handler)
+    assert key not in "\n".join(handler.lines)
+    assert "***" in handler.lines[0]
+
+
+def test_pattern_masks_pem_and_hex_without_env_watch() -> None:
+    pem = "-----BEGIN PRIVATE KEY-----\nABC\n-----END PRIVATE KEY-----"
+    hex_key = "0x" + ("ab" * 32)
+    redactor = SecretRedactor(MapStore({}))
+    handler = Collect()
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    handler.addFilter(redactor)
+    log = logging.getLogger("trendalgo.test.pattern_redaction")
+    log.addHandler(handler)
+    log.setLevel(logging.DEBUG)
+    try:
+        log.debug("pem=%s hex=%s", pem, hex_key)
+    finally:
+        log.removeHandler(handler)
+    joined = "\n".join(handler.lines)
+    assert "BEGIN PRIVATE KEY" not in joined
+    assert hex_key not in joined
+    assert "***" in joined

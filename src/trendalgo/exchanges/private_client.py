@@ -17,7 +17,12 @@ import ccxt
 
 from trendalgo.exchanges.private_budget import acquire_private_slot
 from trendalgo.exchanges.registry import ExchangeEntry
-from trendalgo.exchanges.secrets import EnvSecretStore, SecretStore, protect_logs
+from trendalgo.exchanges.secrets import (
+    EnvSecretStore,
+    SecretStore,
+    protect_known_secrets,
+    protect_logs,
+)
 
 _DEFAULT_STORE: SecretStore | None = None
 
@@ -26,6 +31,7 @@ def set_secret_store(store: SecretStore | None) -> None:
     """Inject vault/env store for this process (device vault or EnvSecretStore)."""
     global _DEFAULT_STORE
     _DEFAULT_STORE = store
+    protect_known_secrets(store=active_secret_store())
 
 
 def active_secret_store() -> SecretStore:
@@ -102,9 +108,10 @@ def ccxt_client(entry: ExchangeEntry, *, store: SecretStore | None = None) -> Se
     if exchange_class is None:
         raise ValueError(f"ccxt has no exchange class: {entry.ccxt_id}")
     store = store or active_secret_store()
-    protect_logs(entry.env_key, entry.env_secret)
+    redactor = protect_logs(entry.env_key, entry.env_secret, store=store)
     api_key = store.get(entry.env_key) or ""
     secret = store.get(entry.env_secret) or ""
+    redactor.watch_values(api_key, secret)
     digest = hashlib.sha256(f"{api_key}\0{secret}".encode()).hexdigest()
     cache_key = (entry.id, exchange_class, digest)
     with _CLIENTS_LOCK:

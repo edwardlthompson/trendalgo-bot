@@ -457,3 +457,14 @@ def test_fleet_start_and_complete(monkeypatch) -> None:
     saved = c.get(f"/api/v1/backtest/fleet/history/{job_id}").json()
     assert saved["job_id"] == job_id
     assert saved.get("final_top10") is not None or saved.get("summary", {}).get("final_top10")
+
+
+def test_oversized_request_body_is_rejected() -> None:
+    c = client()
+    huge = "x" * (1 * 1024 * 1024 + 64)
+    resp = c.post(
+        "/api/v1/strategies/multi-tf-example/params",
+        content=f'{{"params":{{"note":"{huge}"}}}}',
+        headers={"Content-Type": "application/json"},
+    )
+    assert resp.status_code == 413
