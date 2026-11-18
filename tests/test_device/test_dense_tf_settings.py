@@ -250,7 +250,8 @@ def test_scan_bt_settings_dialog_wires_dump_keys(tmp_path: Path, qtbot: QtBot) -
     dlg = ScanBacktestSettingsDialog(tmp_path, n_coins=3)
     qtbot.addWidget(dlg)
     assert dlg.windowTitle()
-    assert dlg._eta.text()
+    assert dlg._eta_header._crypto.text()
+    assert dlg._eta_header._total.text()
     assert S.SCAN_BT_ETA_TITLE
     assert dlg._tf_boxes["5m"].isEnabled() is True
     assert hasattr(dlg, "_ohlcvt_path")
@@ -297,7 +298,7 @@ def test_scan_bt_settings_ta_all_none(tmp_path: Path, qtbot: QtBot) -> None:
 
     dlg = ScanBacktestSettingsDialog(tmp_path, n_coins=2)
     qtbot.addWidget(dlg)
-    assert "for 2 coin" in dlg._eta.text()
+    assert dlg._eta_header._crypto.text()
     none_btn = dlg.findChild(QPushButton, "scanBtTaNone")
     all_btn = dlg.findChild(QPushButton, "scanBtTaAll")
     assert none_btn is not None and all_btn is not None
@@ -311,4 +312,4 @@ def test_scan_bt_settings_ta_all_none(tmp_path: Path, qtbot: QtBot) -> None:
         dlg._ta_list.item(i).checkState() == Qt.CheckState.Checked
         for i in range(dlg._ta_list.count())
     )
-    assert "TA" in dlg._eta.text()
+    assert dlg._eta_header._crypto.text()

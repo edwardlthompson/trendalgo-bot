@@ -36,7 +36,8 @@ def enrich_lane_coins_1h(
     pairs = [str(c.get("pair") or "").strip().upper() for c in coins if c.get("pair")]
     if progress is not None:
         progress.phase("Enrich · 1h charts + HV/DD/Vol Δ", total=len(pairs), unit="pairs")
-        progress.log(f"Alpaca 1h enrich for {len(pairs)} {eid} pairs")
+        label = "Alpaca" if eid == "tradfi" else "FX 1h"
+        progress.log(f"{label} enrich for {len(pairs)} {eid} pairs")
     bars_by_pair = fetch_lane_1h_bars(root, pairs, since, until, lane=eid, progress=progress)
     out: list[dict[str, Any]] = []
     for coin in coins:
@@ -113,6 +114,57 @@ def _stamp_coin(coin: dict[str, Any], bars: list[OhlcvPoint], *, exchange_id: st
                 coin["hv_7d_pct"] = rc["hv_7d_annualized_pct"]
             if rc.get("max_drawdown_30d_pct") is not None:
                 coin["max_drawdown_pct"] = rc["max_drawdown_30d_pct"]
-    apply_volume_acceleration(coin, bars)
-    coin["ohlcv_source"] = "alpaca"
+    if exchange_id == "forex":
+        _stamp_forex_volume(coin, bars)
+        coin["ohlcv_source"] = "algospecial" if bars else "none"
+    else:
+        apply_volume_acceleration(coin, bars)
+        if bars:
+            recent = bars[-24:] if len(bars) >= 24 else bars
+            tick_vol = float(sum(float(p.volume) for p in recent))
+            if tick_vol > 0 and float(coin.get("volume_24h") or 0) <= 0:
+                coin["volume_24h"] = tick_vol
+            coin["ohlcv_source"] = "alpaca"
+        else:
+            coin["ohlcv_source"] = "alpaca"
     coin["exchange_id"] = exchange_id or coin_exchange_id(coin)
+
+
+def _stamp_forex_volume(coin: dict[str, Any], bars: list[OhlcvPoint]) -> None:
+    """FX free feeds often ship 0 tick volume — fall back to true-range activity."""
+    if not bars:
+        apply_volume_acceleration(coin, bars)
+        return
+    vols = [float(p.volume) for p in bars]
+    if any(v > 0 for v in vols[-48:]):
+        apply_volume_acceleration(coin, bars)
+        recent = bars[-24:] if len(bars) >= 24 else bars
+        coin["volume_24h"] = float(sum(float(p.volume) for p in recent))
+        coin["volume_unit"] = "ticks"
+        return
+    # Relative activity proxy (scaled true range) so Vol / Vol Δ% are comparable across pairs.
+    activity = _true_range_activity(bars)
+    scaled = [a * 100_000.0 for a in activity]
+    from trendalgo.scanner.volume_acceleration import VOLUME_KEYS, volume_acceleration_stats
+
+    for key in VOLUME_KEYS:
+        coin.pop(key, None)
+    stats = volume_acceleration_stats(scaled)
+    if stats is not None:
+        coin.update(stats)
+    recent = scaled[-24:] if len(scaled) >= 24 else scaled
+    coin["volume_24h"] = float(sum(recent))
+    coin["volume_unit"] = "range"
+
+
+def _true_range_activity(bars: list[OhlcvPoint]) -> list[float]:
+    out: list[float] = []
+    prev_c: float | None = None
+    for p in bars:
+        high, low, close = float(p.high), float(p.low), float(p.close)
+        tr = max(0.0, high - low)
+        if prev_c is not None:
+            tr = max(tr, abs(high - prev_c), abs(low - prev_c))
+        out.append(tr)
+        prev_c = close
+    return out

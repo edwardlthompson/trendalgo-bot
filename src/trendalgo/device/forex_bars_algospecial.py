@@ -13,7 +13,12 @@ from trendalgo.market.algospecial_budget import (
     min_live_refresh_minutes,
     record_fetch,
 )
-from trendalgo.market.algospecial_forex import derive_daily_from_h1, fetch_algospecial_h1
+from trendalgo.market.algospecial_forex import (
+    AlgoSpecialUnsupportedError,
+    derive_daily_from_h1,
+    fetch_algospecial_h1,
+)
+from trendalgo.market.algospecial_fx_unsupported import mark_unsupported, partition_supported
 from trendalgo.market.ohlcv_disk_cache import load_cached_ohlcv, save_cached_ohlcv
 from trendalgo.market.types import OhlcvPoint
 
@@ -48,7 +53,16 @@ def fetch_algospecial_daily(
             progress.step(len(symbols), total=len(symbols), pair="—")
         return out
 
-    ok, reason = can_fetch(root, len(missing), n_pairs=len(symbols))
+    live, skipped_404 = partition_supported(root, missing)
+    if skipped_404 and progress is not None:
+        progress.log(f"AlgoSpecial skip {len(skipped_404)} unsupported (404)")
+
+    if not live:
+        if progress is not None:
+            progress.step(len(symbols), total=len(symbols), pair="—")
+        return out
+
+    ok, reason = can_fetch(root, len(live), n_pairs=len(symbols))
     if not ok:
         if progress is not None:
             progress.log(
@@ -60,19 +74,24 @@ def fetch_algospecial_daily(
 
     pace = PaceGate()
     fetched = 0
-    for i, pair in enumerate(missing, start=1):
+    for i, pair in enumerate(live, start=1):
         if progress is not None:
             progress.step(len(out) + i, total=len(symbols), pair=pair)
-        pace.wait()
         try:
-            h1 = fetch_algospecial_h1(pair, since, until)
+            h1 = fetch_algospecial_h1(pair, since, until, pace=pace)
+        except AlgoSpecialUnsupportedError:
+            mark_unsupported(root, pair)
+            continue
         except Exception as exc:  # noqa: BLE001
             if progress is not None:
                 progress.log(f"{pair}: AlgoSpecial failed ({exc})", level="warn")
             continue
-        fetched += 1
         if not h1:
+            if progress is not None:
+                progress.log(f"{pair}: AlgoSpecial returned 0 H1 bars", level="warn")
             continue
+        fetched += 1
+        # Cache under the scan window so load_cached_ohlcv hits on the next pass.
         save_cached_ohlcv(root, pair, "1h", since, until, h1)
         daily = derive_daily_from_h1(h1)
         if daily:
@@ -83,6 +102,11 @@ def fetch_algospecial_daily(
         if progress is not None:
             floor = min_live_refresh_minutes(len(symbols))
             progress.log(f"AlgoSpecial used {fetched} calls · next live ≥{floor}m")
+    elif progress is not None and live:
+        progress.log(
+            "AlgoSpecial returned no bars for this window (feed may lag wall-clock)",
+            level="warn",
+        )
     if progress is not None:
         progress.step(len(symbols), total=len(symbols), pair="—")
     return out
@@ -107,29 +131,37 @@ def fill_algospecial_hourly(
             missing.append(pair)
     if not missing:
         return
-    ok, reason = can_fetch(root, len(missing), n_pairs=max(len(pairs), 59))
+    live, skipped_404 = partition_supported(root, missing)
+    if skipped_404 and progress is not None:
+        progress.log(f"AlgoSpecial 1h skip {len(skipped_404)} unsupported (404)")
+    if not live:
+        return
+    ok, reason = can_fetch(root, len(live), n_pairs=max(len(pairs), 37))
     if not ok:
         if progress is not None:
             progress.log(f"AlgoSpecial 1h skip ({reason})", level="warn")
         return
     pace = PaceGate()
     fetched = 0
-    for i, pair in enumerate(missing, start=1):
+    for i, pair in enumerate(live, start=1):
         if progress is not None:
             progress.step(i, total=len(pairs), pair=pair)
-        pace.wait()
         try:
-            h1 = fetch_algospecial_h1(pair, since, until)
+            h1 = fetch_algospecial_h1(pair, since, until, pace=pace)
+        except AlgoSpecialUnsupportedError:
+            mark_unsupported(root, pair)
+            continue
         except Exception as exc:  # noqa: BLE001
             if progress is not None:
                 progress.log(f"{pair}: AlgoSpecial 1h failed ({exc})", level="warn")
             continue
+        if not h1:
+            continue
         fetched += 1
-        if h1:
-            save_cached_ohlcv(root, pair, "1h", since, until, h1)
-            out[pair] = h1
-            daily = derive_daily_from_h1(h1)
-            if daily:
-                save_cached_ohlcv(root, pair, "1d", since, until, daily)
+        save_cached_ohlcv(root, pair, "1h", since, until, h1)
+        out[pair] = h1
+        daily = derive_daily_from_h1(h1)
+        if daily:
+            save_cached_ohlcv(root, pair, "1d", since, until, daily)
     if fetched:
         record_fetch(root, fetched, mark_live=True)

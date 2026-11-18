@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from trendalgo.backtest.heartbeat_tf import ALL_SCAN_TIMEFRAMES, timeframe_hours, timeframe_minutes
-from trendalgo.backtest.load_days import SCAN_LOOKBACK_DAYS
+from trendalgo.backtest.load_days import SCAN_LOOKBACK_DAYS, trim_ohlcv_frame
 from trendalgo.backtest.ta_fleet import backtest_one, prepare_signals
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees, trade_hold_regions
 from trendalgo.device.sauce_names import is_sauce, is_sauce_ta
@@ -96,41 +96,48 @@ def resolve_ohlcv_frame(
     coin: dict[str, Any],
     *,
     timeframe: str,
-    candles_db: Path | None = None,  # noqa: ARG001 — kept for call-site compat
+    candles_db: Path | None = None,
     closes: list[float] | None = None,
     for_overlay: bool = False,
+    window: str | None = None,
 ) -> pd.DataFrame:
     """OHLCV for chart display or overlay replay.
 
-    Overlay / Results parity: load via BacktestDataLoader (same cache + 30d as All-TA).
-    TradFi/FX display: prefer enrich-stamped real OHLC wicks over synthetic closes.
-    Display-only: fall back to spark closes when the loader has no bars.
+    Overlay / Results parity: same loader as All-TA (Alpaca bands for TradFi/FX;
+    BacktestDataLoader for crypto). TradFi/FX display prefers enrich-stamped wicks,
+    trimmed to ``window`` (7d/30d) when set.
     """
     from trendalgo.device.lane_chart_enrich import frame_from_lane_ohlc
     from trendalgo.device.scan_identity import coin_exchange_id
 
     tf = _normalize_tf(timeframe)
     eid = coin_exchange_id(coin)
+    prefs = _prefs_root(candles_db)
     # Prefer real Alpaca 1h OHLC for TradFi/FX charts (true high/low wicks).
     if eid in {"tradfi", "forex"} and not for_overlay and tf in {"1h", "60m", "60"}:
         lane_frame = frame_from_lane_ohlc(coin)
         if not lane_frame.empty:
-            return lane_frame
+            return _trim_for_window(lane_frame, window)
     if for_overlay or closes is None:
-        frame = _load_scan_frame(coin, timeframe=tf)
+        frame = _load_scan_frame(coin, timeframe=tf, prefs_root=prefs)
         if not frame.empty:
-            return frame
+            return frame if for_overlay else _trim_for_window(frame, window)
+        # Overlay fallback: stamped 1h wicks (pass-1 used the same Alpaca series).
+        if for_overlay and eid in {"tradfi", "forex"} and tf in {"1h", "60m", "60"}:
+            lane_frame = frame_from_lane_ohlc(coin)
+            if not lane_frame.empty:
+                return lane_frame
     step_h = timeframe_hours(tf) or max(1, (timeframe_minutes(tf) or 60) // 60)
     if eid in {"tradfi", "forex"} and not for_overlay:
         lane_frame = frame_from_lane_ohlc(coin)
         if not lane_frame.empty:
-            return lane_frame
+            return _trim_for_window(lane_frame, window)
     if closes is not None:
         return frame_from_closes(closes, hours_step=step_h)
     spark = _coin_closes(coin)
     if spark:
         return frame_from_closes(spark, hours_step=step_h)
-    return _load_scan_frame(coin, timeframe=tf)
+    return _load_scan_frame(coin, timeframe=tf, prefs_root=prefs)
 
 
 def regions_for_strategy(
@@ -400,8 +407,59 @@ def overlay_summary(
     }
 
 
-def _load_scan_frame(coin: dict[str, Any], *, timeframe: str) -> pd.DataFrame:
-    """Same loader path as All-TA pass-1 / deepen."""
+def _prefs_root(candles_db: Path | None) -> Path:
+    if candles_db is not None:
+        return candles_db.parent
+    from trendalgo.device.profile import profile_dir, shared_data_dir
+
+    return shared_data_dir() or profile_dir()
+
+
+def _trim_for_window(frame: pd.DataFrame, window: str | None) -> pd.DataFrame:
+    if frame.empty or not window:
+        return frame
+    days = 7 if str(window).strip().lower() in {"7d", "7"} else SCAN_LOOKBACK_DAYS
+    return trim_ohlcv_frame(frame, days)
+
+
+def _load_scan_frame(
+    coin: dict[str, Any],
+    *,
+    timeframe: str,
+    prefs_root: Path | None = None,
+) -> pd.DataFrame:
+    """Same loader path as All-TA pass-1 / deepen (Alpaca bands for TradFi/FX)."""
+    from trendalgo.device.scan_identity import coin_exchange_id
+
+    symbol = str(coin.get("symbol") or "").strip().upper()
+    pair = str(coin.get("pair") or "")
+    load_symbol = pair.split("/", 1)[0].strip().upper() if "/" in pair else symbol
+    load_symbol = load_symbol or symbol
+    if not load_symbol:
+        return pd.DataFrame()
+    eid = coin_exchange_id(coin)
+    root = prefs_root or _prefs_root(None)
+
+    # TradFi/FX: match pass-1 Alpaca band load (not Kraken BacktestDataLoader).
+    if eid in {"tradfi", "forex"}:
+        try:
+            from trendalgo.device.scan_base_ohlcv import load_scan_frames
+
+            frames, _meta = load_scan_frames(
+                symbol=load_symbol,
+                pair=pair or f"{load_symbol}/USD",
+                timeframes=(timeframe,),
+                loader=None,
+                prefs_root=root,
+                exchange_id=eid,
+            )
+            frame = frames.get(timeframe)
+            if isinstance(frame, pd.DataFrame) and not frame.empty:
+                return frame
+        except Exception:
+            return pd.DataFrame()
+        return pd.DataFrame()
+
     try:
         from trendalgo.lts_vendor import install_import_shims
 
@@ -412,12 +470,6 @@ def _load_scan_frame(coin: dict[str, Any], *, timeframe: str) -> pd.DataFrame:
     except Exception:
         return pd.DataFrame()
 
-    symbol = str(coin.get("symbol") or "").strip().upper()
-    pair = str(coin.get("pair") or "")
-    load_symbol = pair.split("/", 1)[0].strip().upper() if "/" in pair else symbol
-    load_symbol = load_symbol or symbol
-    if not load_symbol:
-        return pd.DataFrame()
     gecko = coin.get("gecko_id")
     gecko_id = str(gecko) if gecko else None
     try:
@@ -459,7 +511,8 @@ def _stake_and_fee(
 
 
 def _coin_closes(coin: dict[str, Any]) -> list[float]:
-    for key in ("spark_closes_7d", "closes_1h", "chart_closes_1h", "spark_closes_30d"):
+    # Prefer hourly enrich closes before short daily sparks (overlay needs length).
+    for key in ("closes_1h", "chart_closes_1h", "spark_closes_30d", "spark_closes_7d"):
         raw = coin.get(key)
         if isinstance(raw, list) and len(raw) >= 2:
             return [float(x) for x in raw if isinstance(x, (int, float))]

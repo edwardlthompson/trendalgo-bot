@@ -20,8 +20,18 @@ def coin_symbol(coin: dict[str, Any]) -> str:
 
 
 def row_key(coin: dict[str, Any]) -> str:
-    """Stable key for BT merge, NEW badge, and watchlist."""
-    return f"{coin_exchange_id(coin)}:{coin_symbol(coin)}"
+    """Stable key for BT merge, NEW badge, and watchlist.
+
+    Forex uses the full pair (``forex:EUR/USD``) so EUR crosses do not collide.
+    """
+    eid = coin_exchange_id(coin)
+    if eid == "forex":
+        from trendalgo.brokers.forex_universe import normalize_fx_pair
+
+        raw = str(coin.get("pair") or coin_symbol(coin) or "").strip()
+        pair = normalize_fx_pair(raw) if raw else ""
+        return f"forex:{pair}" if pair else "forex:"
+    return f"{eid}:{coin_symbol(coin)}"
 
 
 def watch_key(exchange_id: str, symbol: str) -> str:

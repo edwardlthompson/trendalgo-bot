@@ -12,6 +12,11 @@ from trendalgo.backtest.heartbeat_tf import exclusive_scan_timeframes, is_subhou
 from trendalgo.backtest.load_days import days_for_timeframe, trim_ohlcv_frame
 from trendalgo.backtest.ohlcv_resample import frames_from_base
 from trendalgo.backtest.ta_fleet import MIN_BARS_FLOOR
+from trendalgo.device.scan_base_ohlcv_forex_fallback import (
+    fetch_forex_h1_algospecial,
+    load_covering_cached_ohlcv,
+    normalize_fx_cache_pair,
+)
 from trendalgo.market.ohlcv_disk_cache import load_cached_ohlcv, save_cached_ohlcv
 from trendalgo.market.types import OhlcvPoint
 
@@ -30,7 +35,7 @@ def load_alpaca_band_frames(
     exchange_id: str,
     prefs_root: Path | None,
 ) -> tuple[dict[str, pd.DataFrame], dict[str, Any]]:
-    """Hour TFs from Alpaca 1h; TradFi sub-hour from 1m; Forex skips sub-hour."""
+    """Hour TFs from Alpaca 1h (Forex: AlgoSpecial fallback); TradFi sub-hour from 1m."""
     eid = (exchange_id or "").strip().lower()
     ordered = exclusive_scan_timeframes(timeframes)
     hour_tfs = tuple(tf for tf in ordered if not is_subhour_tf(tf))
@@ -42,29 +47,29 @@ def load_alpaca_band_frames(
     lookback = days_for_timeframe()
     until = datetime.now(tz=UTC)
     since = until - timedelta(days=max(1, lookback))
-    cache_pair = _normalize_pair(symbol, pair)
+    cache_pair = (
+        normalize_fx_cache_pair(symbol, pair) if eid == "forex" else _normalize_pair(symbol, pair)
+    )
 
     if hour_tfs:
-        frame_1h = _load_alpaca_frame(eid, cache_pair, "1h", since, until, prefs_root=prefs_root)
+        frame_1h, src = _load_hour_frame(eid, cache_pair, since, until, prefs_root=prefs_root)
         if frame_1h is not None and not frame_1h.empty:
             frame_1h = trim_ohlcv_frame(frame_1h, lookback)
-            sources.append(f"1h:alpaca:{eid}")
+            sources.append(src)
             for tf, frame in frames_from_base(frame_1h, hour_tfs).items():
                 if len(frame) >= MIN_BARS_FLOOR:
                     frames[tf] = frame
                 else:
                     notes.append(f"{tf}: {len(frame)} bars (<{MIN_BARS_FLOOR})")
         else:
-            notes.append("1h Alpaca base unavailable — hour TFs skipped")
+            notes.append("1h base unavailable — hour TFs skipped")
 
     if sub_tfs:
         if eid == "forex":
-            notes.append("Forex: sub-hour TFs skipped (Alpaca FX has no 1m)")
+            notes.append("Forex: sub-hour TFs skipped (no 1m on FX feed)")
         else:
             base_tf = "1m" if not hour_tfs else base_tf
-            frame_1m = _load_alpaca_frame(
-                eid, cache_pair, "1m", since, until, prefs_root=prefs_root
-            )
+            frame_1m = _load_tradfi_frame(cache_pair, "1m", since, until, prefs_root=prefs_root)
             if frame_1m is None or frame_1m.empty:
                 notes.append("1m Alpaca base unavailable — sub-hour TFs skipped")
             else:
@@ -93,8 +98,48 @@ def _normalize_pair(symbol: str, pair: str) -> str:
     return text
 
 
-def _load_alpaca_frame(
+def _load_hour_frame(
     exchange_id: str,
+    pair: str,
+    since: datetime,
+    until: datetime,
+    *,
+    prefs_root: Path | None,
+) -> tuple[pd.DataFrame | None, str]:
+    """Return (frame, source_label). Forex falls back to covering cache + AlgoSpecial."""
+    if exchange_id == "forex":
+        return _load_forex_hour(pair, since, until, prefs_root=prefs_root)
+    frame = _load_tradfi_frame(pair, "1h", since, until, prefs_root=prefs_root)
+    if frame is None:
+        return None, ""
+    return frame, f"1h:alpaca:{exchange_id}"
+
+
+def _load_forex_hour(
+    pair: str,
+    since: datetime,
+    until: datetime,
+    *,
+    prefs_root: Path | None,
+) -> tuple[pd.DataFrame | None, str]:
+    points = _fetch_alpaca_forex(pair, "1h", since, until)
+    source = "1h:alpaca:forex"
+    if not points and prefs_root is not None:
+        points = load_covering_cached_ohlcv(prefs_root, pair, "1h", since, until)
+        if points:
+            source = "1h:cache:forex"
+    if not points:
+        points = fetch_forex_h1_algospecial(prefs_root, pair, since, until)
+        if points:
+            source = "1h:algospecial:forex"
+    if not points or _is_synthetic_volume(points):
+        return None, ""
+    if prefs_root is not None and source.startswith("1h:alpaca"):
+        save_cached_ohlcv(prefs_root, pair, "1h", since, until, points)
+    return _points_to_frame(points), source
+
+
+def _load_tradfi_frame(
     pair: str,
     timeframe: str,
     since: datetime,
@@ -108,7 +153,7 @@ def _load_alpaca_frame(
         if cached and not _is_synthetic_volume(cached):
             points = cached
     if not points:
-        points = _fetch_points(exchange_id, pair, timeframe, since, until)
+        points = _fetch_points("tradfi", pair, timeframe, since, until)
         if points and prefs_root is not None and not _is_synthetic_volume(points):
             save_cached_ohlcv(prefs_root, pair, timeframe, since, until, points)
     if not points or _is_synthetic_volume(points):
@@ -123,6 +168,21 @@ def _is_synthetic_volume(points: list[OhlcvPoint]) -> bool:
     return {round(float(p.volume), 4) for p in sample} == {1000.0}
 
 
+def _fetch_alpaca_forex(
+    pair: str, timeframe: str, since: datetime, until: datetime
+) -> list[OhlcvPoint] | None:
+    try:
+        from trendalgo.market.alpaca_forex import AlpacaForexRatesProvider
+
+        provider = AlpacaForexRatesProvider(allow_synthetic_fallback=False)
+        points = provider.fetch("alpaca", pair, timeframe, since, until)
+        if str(getattr(provider, "last_source", "")) != "alpaca":
+            return None
+        return points
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _fetch_points(
     exchange_id: str,
     pair: str,
@@ -130,15 +190,10 @@ def _fetch_points(
     since: datetime,
     until: datetime,
 ) -> list[OhlcvPoint] | None:
+    """TradFi live fetch (tests may monkeypatch this)."""
     try:
         if exchange_id == "forex":
-            from trendalgo.market.alpaca_forex import AlpacaForexRatesProvider
-
-            provider = AlpacaForexRatesProvider(allow_synthetic_fallback=False)
-            points = provider.fetch("alpaca", pair, timeframe, since, until)
-            if str(getattr(provider, "last_source", "")) != "alpaca":
-                return None
-            return points
+            return _fetch_alpaca_forex(pair, timeframe, since, until)
         from trendalgo.market.alpaca_ohlcv import AlpacaOhlcvProvider
 
         return AlpacaOhlcvProvider(allow_synthetic_fallback=False).fetch(

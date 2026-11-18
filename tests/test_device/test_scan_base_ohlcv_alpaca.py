@@ -9,10 +9,11 @@ from typing import Any
 import pandas as pd
 
 from trendalgo.device.scan_base_ohlcv import load_scan_frames
+from trendalgo.market.ohlcv_disk_cache import save_cached_ohlcv
 from trendalgo.market.types import OhlcvPoint
 
 
-def _hourly_points(n: int = 800) -> list[OhlcvPoint]:
+def _hourly_points(n: int = 800, *, volume: float = 1.0) -> list[OhlcvPoint]:
     end = datetime(2026, 11, 15, tzinfo=UTC)
     start = end - timedelta(hours=n)
     out: list[OhlcvPoint] = []
@@ -26,7 +27,7 @@ def _hourly_points(n: int = 800) -> list[OhlcvPoint]:
                 high=px + 1,
                 low=px - 1,
                 close=px + 0.1,
-                volume=1.0,
+                volume=volume,
             )
         )
         px += 0.01
@@ -36,23 +37,22 @@ def _hourly_points(n: int = 800) -> list[OhlcvPoint]:
 def test_load_scan_frames_forex_uses_alpaca(tmp_path: Path, monkeypatch: Any) -> None:
     points = _hourly_points()
 
-    def fake_fetch(
-        exchange_id: str,
+    def fake_alpaca(
         pair: str,
         timeframe: str,
         since: datetime,
         until: datetime,
     ) -> list[OhlcvPoint] | None:
-        assert exchange_id == "forex"
         assert timeframe == "1h"
+        assert "EUR" in pair
         return points
 
     monkeypatch.setattr(
-        "trendalgo.device.scan_base_ohlcv_alpaca._fetch_points",
-        fake_fetch,
+        "trendalgo.device.scan_base_ohlcv_alpaca._fetch_alpaca_forex",
+        fake_alpaca,
     )
     frames, meta = load_scan_frames(
-        symbol="EUR",
+        symbol="EURUSD",
         pair="EUR/USD",
         timeframes=("1h", "4h"),
         loader=object(),
@@ -64,9 +64,58 @@ def test_load_scan_frames_forex_uses_alpaca(tmp_path: Path, monkeypatch: Any) ->
     assert "alpaca:forex" in str(meta.get("data_source") or "")
 
 
+def test_load_scan_frames_forex_uses_covering_cache(tmp_path: Path, monkeypatch: Any) -> None:
+    monkeypatch.setattr(
+        "trendalgo.device.scan_base_ohlcv_alpaca._fetch_alpaca_forex",
+        lambda *_a, **_k: None,
+    )
+    monkeypatch.setattr(
+        "trendalgo.device.scan_base_ohlcv_alpaca.fetch_forex_h1_algospecial",
+        lambda *_a, **_k: None,
+    )
+    points = _hourly_points()
+    # Different day-bucket than All-TA lookback — covering loader must still hit.
+    wide_since = datetime(2026, 10, 1, tzinfo=UTC)
+    wide_until = datetime(2026, 11, 16, tzinfo=UTC)
+    save_cached_ohlcv(tmp_path, "EUR/USD", "1h", wide_since, wide_until, points)
+
+    frames, meta = load_scan_frames(
+        symbol="EURUSD",
+        pair="EUR/USD",
+        timeframes=("1h",),
+        loader=object(),
+        prefs_root=tmp_path,
+        exchange_id="forex",
+    )
+    assert "1h" in frames
+    assert "cache:forex" in str(meta.get("data_source") or "")
+
+
+def test_load_scan_frames_forex_algospecial_fallback(tmp_path: Path, monkeypatch: Any) -> None:
+    points = _hourly_points()
+    monkeypatch.setattr(
+        "trendalgo.device.scan_base_ohlcv_alpaca._fetch_alpaca_forex",
+        lambda *_a, **_k: None,
+    )
+    monkeypatch.setattr(
+        "trendalgo.device.scan_base_ohlcv_alpaca.fetch_forex_h1_algospecial",
+        lambda *_a, **_k: points,
+    )
+    frames, meta = load_scan_frames(
+        symbol="EURUSD",
+        pair="EUR/USD",
+        timeframes=("1h", "4h"),
+        loader=object(),
+        prefs_root=tmp_path,
+        exchange_id="forex",
+    )
+    assert "1h" in frames and "4h" in frames
+    assert "algospecial:forex" in str(meta.get("data_source") or "")
+
+
 def test_load_scan_frames_forex_skips_subhour(tmp_path: Path, monkeypatch: Any) -> None:
     monkeypatch.setattr(
-        "trendalgo.device.scan_base_ohlcv_alpaca._fetch_points",
+        "trendalgo.device.scan_base_ohlcv_alpaca._fetch_alpaca_forex",
         lambda *_a, **_k: None,
     )
     frames, meta = load_scan_frames(

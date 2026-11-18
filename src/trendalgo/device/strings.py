@@ -483,7 +483,7 @@ SCANNER_LTS_HEADER_TIPS = (
     "Thirty-day percent gain from snapshot",
     "Thirty-day hourly sparkline; % below window high. Orange line is last close.",
     "Highest backtest net percent and winning trailing stop (TSL) when not buy and hold",
-    "Edge of the best strategy over buy and hold net % (when strategy beats B&H)",
+    "Best BT net % minus All-TA buy-&-hold net % on the same timeframe (not the 30d price-gain column)",
     "Composite health score (gain, volume accel, risk)",
     "Annualized historical volatility from about 7d of hourly closes",
     "Peak-to-trough drawdown over about 30d of hourly closes",

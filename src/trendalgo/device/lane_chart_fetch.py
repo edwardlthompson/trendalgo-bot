@@ -21,11 +21,17 @@ def fetch_lane_1h_bars(
     lane: str,
     progress: Any | None = None,
 ) -> dict[str, list[OhlcvPoint]]:
-    """Load cached 1h bars; fetch missing via Alpaca (no synthetic FX)."""
+    """Load cached 1h bars; fetch missing via Alpaca / AlgoSpecial (no synthetic FX)."""
+    from trendalgo.device.scan_base_ohlcv_forex_fallback import load_covering_cached_ohlcv
+
     out: dict[str, list[OhlcvPoint]] = {}
     missing: list[str] = []
+    eid = (lane or "").strip().lower()
     for i, pair in enumerate(pairs, start=1):
         cached = load_cached_ohlcv(root, pair, "1h", since, until)
+        if (not cached or len(cached) < 24) and eid == "forex":
+            # Day-bucket keys from the opportunity scan often differ from enrich windows.
+            cached = load_covering_cached_ohlcv(root, pair, "1h", since, until, min_bars=24)
         if cached and len(cached) >= 24:
             out[pair] = cached
         else:
@@ -33,7 +39,7 @@ def fetch_lane_1h_bars(
         if progress is not None and i % 25 == 0:
             progress.step(i, total=len(pairs), pair=pair)
     if missing:
-        (_fetch_forex if lane == "forex" else _fetch_tradfi)(
+        (_fetch_forex if eid == "forex" else _fetch_tradfi)(
             root, missing, since, until, out=out, progress=progress
         )
     if progress is not None:

@@ -60,8 +60,73 @@ def test_enrich_stamps_hv_dd_vol_delta(tmp_path: Path) -> None:
     assert row.get("volume_acceleration_pct") is not None
     assert len(row.get("closes_1h") or []) >= 48
     assert len(row.get("chart_ohlc_1h") or []) >= 48
-    # Hourly windows for 30d spark (not ~22 daily).
-    assert len(row.get("spark_closes_30d") or []) > 22
+    # Board sparks stay daily (~7/22); hourly lives on closes_1h / chart_ohlc_1h.
+    assert 2 <= len(row.get("spark_closes_30d") or []) <= 40
+    assert len(row.get("closes_1h") or []) > len(row.get("spark_closes_30d") or [])
+
+
+def test_enrich_forex_stamps_tick_volume(tmp_path: Path) -> None:
+    bars = _bars(240)
+    coin: dict[str, Any] = {
+        "symbol": "EURUSD",
+        "pair": "EUR/USD",
+        "exchange_id": "forex",
+        "name": "EUR/USD",
+        "chart_closes_1d": [1.0, 1.1, 1.2],
+        "volume_24h": 0.0,
+    }
+
+    def fake_fetch(
+        root: Path,
+        pairs: list[str],
+        since: datetime,
+        until: datetime,
+        *,
+        lane: str,
+        progress: Any | None = None,
+    ) -> dict[str, list[OhlcvPoint]]:
+        assert lane == "forex"
+        return {"EUR/USD": bars}
+
+    with patch("trendalgo.device.lane_chart_enrich.fetch_lane_1h_bars", side_effect=fake_fetch):
+        out = enrich_lane_coins_1h(tmp_path, [coin], lane="forex")
+
+    row = out[0]
+    assert row["hv_7d_pct"] is not None
+    assert row["max_drawdown_pct"] is not None
+    assert row.get("volume_acceleration_pct") is not None
+    assert row.get("volume_unit") == "ticks"
+    assert float(row.get("volume_24h") or 0) > 0
+
+
+def test_enrich_forex_zero_ticks_uses_range_activity(tmp_path: Path) -> None:
+    bars = [
+        OhlcvPoint(
+            time=b.time,
+            open=b.open,
+            high=b.high,
+            low=b.low,
+            close=b.close,
+            volume=0.0,
+        )
+        for b in _bars(240)
+    ]
+    coin: dict[str, Any] = {
+        "symbol": "EURUSD",
+        "pair": "EUR/USD",
+        "exchange_id": "forex",
+        "chart_closes_1d": [1.0, 1.1],
+        "volume_24h": 0.0,
+    }
+    with patch(
+        "trendalgo.device.lane_chart_enrich.fetch_lane_1h_bars",
+        return_value={"EUR/USD": bars},
+    ):
+        out = enrich_lane_coins_1h(tmp_path, [coin], lane="forex")
+    row = out[0]
+    assert row.get("volume_unit") == "range"
+    assert float(row.get("volume_24h") or 0) > 0
+    assert row.get("volume_acceleration_pct") is not None
 
 
 def test_enrich_soft_fail_empty_bars(tmp_path: Path) -> None:

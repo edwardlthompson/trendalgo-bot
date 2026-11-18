@@ -19,9 +19,11 @@ from trendalgo.market.fx_sessions import is_fx_weekend, validate_fx_daily_bars
 def test_forex_universe_size() -> None:
     clear_forex_universe_cache()
     pairs = load_forex_universe()
-    assert 40 <= len(pairs) <= 80
+    # Trimmed to AlgoSpecial-served G10 + liquid USD crosses (not Alpaca exotics).
+    assert 30 <= len(pairs) <= 45
     assert is_forex_pair("eurusd")
     assert normalize_fx_pair("eurusd") == "EUR/USD"
+    assert not is_forex_pair("USD/ARS")
 
 
 def test_fx_weekend_gap_ok() -> None:

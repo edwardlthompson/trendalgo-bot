@@ -15,11 +15,25 @@ WRITE_EVERY_S = 0.5
 _EVENT_LIMIT = 300
 
 
+def progress_file_name(lane: str = "crypto") -> str:
+    """Per-lane progress file so Crypto/TradFi/Forex scans do not clobber each other."""
+    key = (lane or "crypto").strip().lower()
+    if key in {"", "crypto"}:
+        return PROGRESS_FILE
+    return f"scan_progress_{key}.json"
+
+
 class ProgressReporter:
     """Copies the worker's scan progress into the profile folder while a scan runs."""
 
-    def __init__(self, root: Path, interval_s: float = WRITE_EVERY_S) -> None:
-        self._path = root / PROGRESS_FILE
+    def __init__(
+        self,
+        root: Path,
+        interval_s: float = WRITE_EVERY_S,
+        *,
+        lane: str = "crypto",
+    ) -> None:
+        self._path = root / progress_file_name(lane)
         self._interval = interval_s
         self._halt = threading.Event()
         self._thread = threading.Thread(target=self._loop, name="scan-progress", daemon=True)
@@ -87,13 +101,13 @@ def consume_progress_events(
     return lines, cursor
 
 
-def read_progress(root: Path) -> dict[str, Any] | None:
+def read_progress(root: Path, *, lane: str = "crypto") -> dict[str, Any] | None:
     """The last copy the worker wrote. None when there is none yet or it cannot be read this time."""
     try:
-        return read_json(root / PROGRESS_FILE)
+        return read_json(root / progress_file_name(lane))
     except ProfileError:
         return None  # the worker may be mid-write; the next poll reads it again
 
 
-def clear_progress(root: Path) -> None:
-    (root / PROGRESS_FILE).unlink(missing_ok=True)
+def clear_progress(root: Path, *, lane: str = "crypto") -> None:
+    (root / progress_file_name(lane)).unlink(missing_ok=True)

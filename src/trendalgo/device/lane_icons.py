@@ -21,6 +21,7 @@ _LOGO_URLS = (
 )
 _HTTP_TIMEOUT_S = 8
 _FETCH_POOL = ThreadPoolExecutor(max_workers=4, thread_name_prefix="lane-icon")
+_FX_POOL_SEEDED = False
 
 
 def icon_cache_dir(root: Path) -> Path:
@@ -54,6 +55,12 @@ def icon_for_row(
                 return _scaled(pix, size)
         return _lettermark(sym or "?", size)
     if key == "forex":
+        global _FX_POOL_SEEDED
+        if not _FX_POOL_SEEDED:
+            from trendalgo.device.currency_icons import ensure_universe_currency_icons
+
+            ensure_universe_currency_icons(size=max(64, size))
+            _FX_POOL_SEEDED = True
         return _fx_mark(pair or symbol, size=size, root=root)
     cached = equity_cache_path(root, sym)
     if cached.is_file():
@@ -191,20 +198,53 @@ def _fx_mark(pair: str, *, size: int, root: Path) -> QPixmap:
     raw = (pair or "").upper().replace("-", "/")
     if "/" in raw:
         base, quote = raw.split("/", 1)
+    elif len(raw) >= 6 and raw.isalpha():
+        base, quote = raw[:3], raw[3:6]
     else:
-        base, quote = raw[:3], raw[3:6] or "USD"
+        base, quote = raw[:3], "USD"
+    base, quote = (base[:3] or "??"), (quote[:3] or "USD")
     cache = icon_cache_dir(root) / f"fx_{base}_{quote}_{size}.png"
-    if cache.is_file():
+    if cache.is_file() and cache.stat().st_size > 32:
         pix = QPixmap(str(cache))
         if not pix.isNull():
             return pix
-    left = _lettermark(base[:3] or "??", size)
-    right = _lettermark(quote[:3] or "??", size)
+    left = _currency_pix(base, size)
+    right = _currency_pix(quote, size)
     out = QPixmap(size, size)
     out.fill(Qt.GlobalColor.transparent)
     painter = QPainter(out)
-    painter.drawPixmap(0, 0, left.scaled(size // 2 + 2, size // 2 + 2))
-    painter.drawPixmap(size // 2 - 2, size // 2 - 2, right.scaled(size // 2 + 2, size // 2 + 2))
+    half = size // 2 + 2
+    painter.drawPixmap(
+        0,
+        0,
+        left.scaled(
+            half,
+            half,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        ),
+    )
+    painter.drawPixmap(
+        size // 2 - 2,
+        size // 2 - 2,
+        right.scaled(
+            half,
+            half,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        ),
+    )
     painter.end()
     out.save(str(cache), "PNG")
     return out
+
+
+def _currency_pix(code: str, size: int) -> QPixmap:
+    from trendalgo.device.currency_icons import currency_icon_path, ensure_currency_icon
+
+    path = currency_icon_path(code) or ensure_currency_icon(code, size=max(64, size))
+    if path is not None:
+        pix = QPixmap(str(path))
+        if not pix.isNull():
+            return pix
+    return _lettermark(code or "??", size)

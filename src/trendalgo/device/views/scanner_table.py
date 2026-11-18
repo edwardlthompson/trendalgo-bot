@@ -10,7 +10,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QHeaderView, QTableWidget, QTableWidgetItem
 
 from trendalgo.device import strings as S
-from trendalgo.device.lts_scan_model import cell_gain, dash
+from trendalgo.device.lts_scan_model import cell_gain, dash, volume_display
 from trendalgo.device.scan_identity import coin_in_watchlist, row_key
 from trendalgo.device.scanner_heat import HEAT_COL_KEYS, INVERT_KEYS, fg_for_bg, rank_hex_colors
 from trendalgo.device.scanner_sort import header_label
@@ -31,6 +31,7 @@ from trendalgo.device.views.scanner_table_cells import (
 )
 from trendalgo.device.views.sparkline import SPARK_W
 from trendalgo.device.views.widgets import tint_signed
+from trendalgo.scanner.backtest_edge import bot_vs_bh_cell_tip
 
 # Watch, Logo, Name, 7D%, 7D, 30D%, 30D, Best BT, Bot vs B&H,
 # Health, HV 7D, Max DD, Vol Δ%, Exchange, 24H Vol, Events, Results
@@ -108,6 +109,8 @@ def fill_lts_table(
         r = row + offset
         symbol = str(coin.get("symbol") or "")
         name = str(coin.get("name") or symbol)
+        if str(coin.get("exchange_id") or "").strip().lower() == "forex":
+            name = str(coin.get("pair") or name)
         gain7 = cell_gain(coin, "7d")
         gain30 = cell_gain(coin, "30d")
         values = [
@@ -119,13 +122,13 @@ def fill_lts_table(
             dash(gain30, pct=True),
             "",
             "",
-            dash(coin.get("bot_vs_bh_pct"), pct=True),
+            dash(coin.get("bot_vs_bh_pct"), pct=True, pct_digits=2),
             dash(coin.get("health_score")),
             dash(coin.get("hv_7d_pct"), pct=True),
             dash(coin.get("max_drawdown_pct"), pct=True),
             dash(coin.get("volume_acceleration_pct"), pct=True),
             "",
-            dash(coin.get("volume_24h"), money=True),
+            volume_display(coin),
             "",
             "",
         ]
@@ -160,6 +163,7 @@ def fill_lts_table(
                         tint_signed(item, float(coin.get("bot_vs_bh_pct") or 0))
                     except (TypeError, ValueError):
                         pass
+                    item.setToolTip(bot_vs_bh_cell_tip(coin))
         if not include_widgets:
             continue
         _paint_row_widgets(

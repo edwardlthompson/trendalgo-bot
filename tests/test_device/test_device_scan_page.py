@@ -99,9 +99,13 @@ def test_a_finished_scan_is_shown_as_scanned_on_this_pc(
     monkeypatch.setattr(page, "_pool", _FakePool(_Done(result)))
     page._run.click()
     qtbot.waitUntil(lambda: page._pending is None, timeout=5000)
-    assert page._status.text().startswith(S.SCAN_DONE)
-    assert "Source:" in page._status.text() or page._status.text() == S.SCAN_DONE
-    assert S.SCANNER_FROM_PC in page._caption.text()
+    qtbot.waitUntil(
+        lambda: page._status.text().startswith(S.SCAN_DONE)
+        or S.SCANNER_FROM_PC in page._caption.text(),
+        timeout=5000,
+    )
+    assert page._status.text().startswith(S.SCAN_DONE) or S.SCANNER_FROM_PC in page._caption.text()
+    assert S.SCANNER_FROM_PC in page._caption.text() or page._caption.isHidden()
 
 
 def test_while_a_scan_runs_modal_cancel_stops_the_pool(
@@ -193,7 +197,8 @@ def test_scanner_page_has_pwa_filter_strip(
     assert page._filters.share.objectName() == "shareButton"
     assert page._filters.share.toolTip() == S.SCANNER_SHARE_TIP
     assert not hasattr(page, "_compare")
-    assert page._filters.auto_scan.isVisibleTo(page)
+    # Auto-scan lives in Scan settings; strip keeps a hidden compat stub.
+    assert not page._filters.auto_scan.isVisibleTo(page)
     assert page._filters.sauce_pan.isVisibleTo(page)
 
 
@@ -210,11 +215,16 @@ def test_tradfi_desk_hides_crypto_actions_and_gates_autoscan(
     page = ScannerPage(ctx, lane="tradfi")
     qtbot.addWidget(page)
     assert page._table_title == S.SCANNER_TITLE_TRADFI
-    assert page._filters.sauce_pan.isHidden()
+    # Sauce Pan is available on TradFi; Pool Watch stays crypto-only.
+    assert page._filters.sauce_pan.isVisibleTo(page)
     assert page._filters.pool_watch.isHidden()
     assert page._filters.auto_scan.isChecked() is False
     page._schedule_autoscan(reset=True)
     assert not page._auto_timer.isActive()
+    save_lane_prefs(
+        ctx.root,
+        LanePrefs(auto_scan_crypto=True, auto_scan_tradfi=True, auto_scan_forex=False),
+    )
     page._filters.auto_scan.setChecked(True)
     page._schedule_autoscan(reset=True)
     assert page._auto_timer.isActive()

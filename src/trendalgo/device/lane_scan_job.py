@@ -80,7 +80,7 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
     progress = get_scan_progress()
     label = "TradFi scan" if lane == "tradfi" else "Forex scan"
     progress.begin_job(label)
-    reporter = ProgressReporter(root)
+    reporter = ProgressReporter(root, lane=lane)
     reporter.start()
     try:
         filters = load_lane_scan_filters(root, lane)

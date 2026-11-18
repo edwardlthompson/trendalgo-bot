@@ -12,8 +12,8 @@ from trendalgo.device.profile import read_json, write_json
 _FILE = "algospecial_budget.json"
 DAILY_LIMIT = 1000
 MAX_CALLS_PER_MIN = 50
-# 59 pairs → ⌊1000/59⌋ = 16 full refreshes/day → 90m floor.
-DEFAULT_PAIR_COUNT = 59
+# ~37 AlgoSpecial-served pairs → ⌊1000/37⌋ ≈ 27 refreshes/day → still ≥90m floor.
+DEFAULT_PAIR_COUNT = 37
 
 
 def min_live_refresh_minutes(n_pairs: int = DEFAULT_PAIR_COUNT) -> int:

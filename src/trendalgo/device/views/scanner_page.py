@@ -292,12 +292,14 @@ class ScannerPage(QWidget):
             show_problem(self._problem, str(exc))
             return
         clear_problem(self._problem)
-        self._coins = load_lts_rows(self._root, lane=self._lane)
+        self._coins = self._filter_lane_coins(load_lts_rows(self._root, lane=self._lane))
         if not self._coins and snapshot is not None:
             from trendalgo.device.lts_scan_model import build_lts_rows
 
             eid = "kraken" if self._lane == "crypto" else self._lane
-            self._coins = build_lts_rows(snapshot, enrich_charts=False, exchange_id=eid)
+            self._coins = self._filter_lane_coins(
+                build_lts_rows(snapshot, enrich_charts=False, exchange_id=eid)
+            )
         if snapshot is None and not self._coins:
             self._caption.clear()
             body = self._empty_body_default
@@ -431,6 +433,11 @@ class ScannerPage(QWidget):
 
         prefs = load_lane_prefs(self._root)
         return prefs.auto_scan(self._lane)  # type: ignore[arg-type]
+
+    def _filter_lane_coins(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        from trendalgo.device.lane_board_filter import filter_lane_coins
+
+        return filter_lane_coins(rows, self._lane)
 
     def _boot_after_restore(self) -> None:
         """Cold open: show last board and count down to the next aligned slot.
@@ -870,7 +877,7 @@ class ScannerPage(QWidget):
             self._status.setText(S.SAUCE_PAN_EMPTY)
             return
         clear_problem(self._problem)
-        clear_progress(self._root)
+        clear_progress(self._root, lane=self._lane)
         self._logs.clear()
         self._log_seq = 0
         self._job_kind = "sauce"
@@ -912,7 +919,7 @@ class ScannerPage(QWidget):
                 self._force_fresh_pending = False
                 return
             clear_problem(self._problem)
-            clear_progress(self._root)
+            clear_progress(self._root, lane=self._lane)
             self._logs.clear()
             self._log_seq = 0
             if not force_fresh:
@@ -978,7 +985,7 @@ class ScannerPage(QWidget):
             self._force_fresh_pending = False
             return
         clear_problem(self._problem)
-        clear_progress(self._root)
+        clear_progress(self._root, lane=self._lane)
         self._logs.clear()
         self._log_seq = 0
         if not force_fresh:
@@ -1033,7 +1040,7 @@ class ScannerPage(QWidget):
         if job is None:
             self._timer.stop()
             return
-        raw = read_progress(self._root)
+        raw = read_progress(self._root, lane=self._lane)
         new_lines, self._log_seq = consume_progress_events(raw, self._log_seq)
         for entry in new_lines:
             self._logs.appendPlainText(entry)

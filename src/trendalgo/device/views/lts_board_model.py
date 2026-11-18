@@ -10,6 +10,7 @@ from trendalgo.device import strings as S
 from trendalgo.device.lts_scan_model import cell_gain, dash
 from trendalgo.device.scanner_sort import COL_SORT_KEYS, field_value, sort_coins
 from trendalgo.device.views.scanner_table import COLUMNS
+from trendalgo.scanner.backtest_edge import bot_vs_bh_cell_tip
 
 __all__ = ["LtsBoardModel", "cap_board_rows"]
 
@@ -73,7 +74,14 @@ class LtsBoardModel(QAbstractTableModel):
         orientation: Qt.Orientation,
         role: int = int(Qt.ItemDataRole.DisplayRole),
     ) -> Any:
-        if orientation != Qt.Orientation.Horizontal or role != int(Qt.ItemDataRole.DisplayRole):
+        if orientation != Qt.Orientation.Horizontal:
+            return None
+        if role == int(Qt.ItemDataRole.ToolTipRole):
+            tips = S.SCANNER_LTS_HEADER_TIPS
+            if 0 <= section < len(tips):
+                return tips[section]
+            return None
+        if role != int(Qt.ItemDataRole.DisplayRole):
             return None
         headers = S.SCANNER_LTS_HEADERS
         if 0 <= section < len(headers):
@@ -81,25 +89,30 @@ class LtsBoardModel(QAbstractTableModel):
         return None
 
     def data(self, index: QModelIndex, role: int = int(Qt.ItemDataRole.DisplayRole)) -> Any:
-        if not index.isValid() or role not in {
-            int(Qt.ItemDataRole.DisplayRole),
-            int(Qt.ItemDataRole.UserRole),
-        }:
+        if not index.isValid():
             return None
         coin = self.coin_at(index.row())
         if coin is None:
             return None
         if role == int(Qt.ItemDataRole.UserRole):
             return coin
+        if role == int(Qt.ItemDataRole.ToolTipRole):
+            if index.column() == 8:
+                return bot_vs_bh_cell_tip(coin)
+            return None
+        if role != int(Qt.ItemDataRole.DisplayRole):
+            return None
         col = index.column()
         if col == 2:
+            if str(coin.get("exchange_id") or "").strip().lower() == "forex":
+                return str(coin.get("pair") or coin.get("name") or coin.get("symbol") or "")
             return str(coin.get("name") or coin.get("symbol") or "")
         if col == 3:
             return dash(cell_gain(coin, "7d"), pct=True)
         if col == 5:
             return dash(cell_gain(coin, "30d"), pct=True)
         if col == 8:
-            return dash(coin.get("bot_vs_bh_pct"), pct=True)
+            return dash(coin.get("bot_vs_bh_pct"), pct=True, pct_digits=2)
         if col == 9:
             return dash(coin.get("health_score"))
         if col == 10:
@@ -109,7 +122,9 @@ class LtsBoardModel(QAbstractTableModel):
         if col == 12:
             return dash(coin.get("volume_acceleration_pct"), pct=True)
         if col == 14:
-            return dash(coin.get("volume_24h"), money=True)
+            from trendalgo.device.lts_scan_model import volume_display
+
+            return volume_display(coin)
         key = COL_SORT_KEYS.get(col)
         if key:
             raw = field_value(coin, key)

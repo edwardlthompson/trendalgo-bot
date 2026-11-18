@@ -20,8 +20,7 @@ def test_daily_board_sparks_and_gains_differ() -> None:
     )
     from trendalgo.device.lts_scan_model import _basic_row
 
-    basic = _basic_row(row)
-    basic["exchange_id"] = "tradfi"
+    basic = _basic_row(row, exchange_id="tradfi")
     coin = normalize_coin(basic)
     assert coin["spark_closes_7d"] != coin["spark_closes_30d"]
     assert len(coin["spark_closes_7d"]) == 7

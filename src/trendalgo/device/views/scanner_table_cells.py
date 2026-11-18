@@ -55,7 +55,12 @@ def logo_cell(
     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     label.setScaledContents(False)
     # Keep ticker on the widget so async logo refresh can retarget this cell.
-    label.setProperty("logoSymbol", (symbol or "").strip().upper().split("/")[0])
+    logo_key = (
+        (pair or symbol or "").strip().upper()
+        if lane == "forex"
+        else (symbol or "").strip().upper().split("/")[0]
+    )
+    label.setProperty("logoSymbol", logo_key)
     painted = False
     if root is not None:
         from pathlib import Path
@@ -155,7 +160,15 @@ def name_cell(
     layout.setContentsMargins(4, 2, 4, 2)
     layout.setSpacing(0)
     url = coin_listing_url(coin)
-    display = name if name else symbol
+    eid = str(coin.get("exchange_id") or "").strip().lower()
+    pair = str(coin.get("pair") or "").strip()
+    # Forex: one label (EUR/USD) — skip compact EURUSD subtitle under the pair.
+    if eid == "forex" and pair:
+        display = pair
+        show_ticker = False
+    else:
+        display = name if name else symbol
+        show_ticker = bool(symbol and symbol != display)
     if url:
         link = QLabel(f'<a href="{url}">{display}</a>')
         link.setTextFormat(Qt.TextFormat.RichText)
@@ -165,7 +178,7 @@ def name_cell(
     else:
         link = QLabel(display)
     layout.addWidget(link)
-    if symbol and symbol != display:
+    if show_ticker:
         ticker = QLabel(symbol)
         ticker.setObjectName("hint")
         layout.addWidget(ticker)

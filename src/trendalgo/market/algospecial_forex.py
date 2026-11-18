@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import UTC, date, datetime, timedelta
-from typing import Any
+from typing import Any, Protocol
 
 from trendalgo.brokers.forex_universe import normalize_fx_pair
 from trendalgo.market.types import OhlcvPoint
@@ -15,6 +16,20 @@ from trendalgo.market.types import OhlcvPoint
 _BASE = "https://www.algospecial.com/api/ohlc.php"
 _HTTP_TIMEOUT_S = 30
 _MAX_RANGE_DAYS = 31
+# Free feed often lags wall-clock (empty for "today"); walk back in 30d steps.
+_EMPTY_WALK_STEPS = 24
+# Reject sparse holiday stubs (e.g. Christmas week) so the walk keeps going.
+_MIN_H1_BARS = 120
+_LAST_GOOD_UNTIL: datetime | None = None
+_429_BACKOFF_S = (5.0, 15.0, 30.0)
+
+
+class AlgoSpecialUnsupportedError(RuntimeError):
+    """HTTP 404 — symbol not listed on the free AlgoSpecial OHLC feed."""
+
+
+class _Pace(Protocol):
+    def wait(self) -> None: ...
 
 
 def to_algospecial_symbol(pair: str) -> str:
@@ -28,13 +43,73 @@ def fetch_algospecial_h1(
     until: datetime,
     *,
     opener: Any | None = None,
+    pace: _Pace | None = None,
 ) -> list[OhlcvPoint]:
-    """Fetch up to 31d of H1 bars for one FX pair. Raises on HTTP/parse failure."""
+    """Fetch up to 31d of H1 bars. Walks back when the free feed has no rows for wall-clock dates.
+
+    Raises ``AlgoSpecialUnsupportedError`` on HTTP 404 (no walk-back / retries).
+    """
+    global _LAST_GOOD_UNTIL
     if since.tzinfo is None:
         since = since.replace(tzinfo=UTC)
     if until.tzinfo is None:
         until = until.replace(tzinfo=UTC)
-    # Clamp to API max window (keep the most recent end).
+    span = min(_MAX_RANGE_DAYS, max(1, (until - since).days))
+    ends: list[datetime] = [until]
+    if _LAST_GOOD_UNTIL is not None and _LAST_GOOD_UNTIL < until:
+        ends.insert(0, _LAST_GOOD_UNTIL)
+    seen: set[str] = set()
+    best: list[OhlcvPoint] = []
+
+    def _consider(points: list[OhlcvPoint]) -> list[OhlcvPoint] | None:
+        nonlocal best
+        if not points:
+            return None
+        if len(points) > len(best):
+            best = points
+        if len(points) >= _MIN_H1_BARS:
+            _LAST_GOOD_UNTIL = datetime.fromtimestamp(points[-1].time, tz=UTC)
+            return points
+        return None
+
+    for end in ends:
+        key = end.astimezone(UTC).strftime("%Y-%m-%d")
+        if key in seen:
+            continue
+        seen.add(key)
+        hit = _consider(
+            _request_h1_window(pair, end - timedelta(days=span), end, opener=opener, pace=pace)
+        )
+        if hit is not None:
+            return hit
+    # Empty/sparse primary window — walk calendar back (provider lag / holidays).
+    cursor = until
+    for _ in range(_EMPTY_WALK_STEPS):
+        cursor = cursor - timedelta(days=30)
+        key = cursor.astimezone(UTC).strftime("%Y-%m-%d")
+        if key in seen:
+            continue
+        seen.add(key)
+        hit = _consider(
+            _request_h1_window(
+                pair, cursor - timedelta(days=span), cursor, opener=opener, pace=pace
+            )
+        )
+        if hit is not None:
+            return hit
+    if best:
+        _LAST_GOOD_UNTIL = datetime.fromtimestamp(best[-1].time, tz=UTC)
+    return best
+
+
+def _request_h1_window(
+    pair: str,
+    since: datetime,
+    until: datetime,
+    *,
+    opener: Any | None,
+    pace: _Pace | None = None,
+) -> list[OhlcvPoint]:
     if (until - since).days > _MAX_RANGE_DAYS:
         since = until - timedelta(days=_MAX_RANGE_DAYS)
     symbol = to_algospecial_symbol(pair)
@@ -50,8 +125,29 @@ def fetch_algospecial_h1(
     url = f"{_BASE}?{query}"
     req = urllib.request.Request(url, headers={"Accept": "application/json"}, method="GET")
     open_fn = opener or urllib.request.urlopen
-    with open_fn(req, timeout=_HTTP_TIMEOUT_S) as resp:
-        payload = json.loads(resp.read().decode("utf-8"))
+    last_exc: BaseException | None = None
+    for attempt, delay in enumerate((0.0, *_429_BACKOFF_S)):
+        if delay > 0:
+            time.sleep(delay)
+        if pace is not None:
+            pace.wait()
+        try:
+            with open_fn(req, timeout=_HTTP_TIMEOUT_S) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise AlgoSpecialUnsupportedError(
+                    f"{normalize_fx_pair(pair)} not on AlgoSpecial"
+                ) from exc
+            if exc.code == 429 and attempt < len(_429_BACKOFF_S):
+                last_exc = exc
+                continue
+            raise
+    else:
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("AlgoSpecial request failed")
     rows = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(rows, list):
         return []

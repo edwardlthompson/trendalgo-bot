@@ -218,5 +218,6 @@ def notification_rows_for_symbol(
     return {
         "top_strategies": strategy_rows_sorted[: max(0, top_n)],
         "buy_hold": buy_hold_best,
+        "buy_hold_rows": buy_hold_rows,
         "oracle_max": oracle_best,
     }

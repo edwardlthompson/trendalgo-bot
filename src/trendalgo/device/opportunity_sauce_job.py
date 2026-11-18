@@ -49,7 +49,7 @@ def run_manual_sauce_pan(
     """
     progress = get_scan_progress()
     progress.begin_job(SAUCE_PAN_LABEL)
-    reporter = ProgressReporter(root)
+    reporter = ProgressReporter(root, lane=lane or "crypto")
     reporter.start()
     try:
         return _run_manual_sauce_pan_body(

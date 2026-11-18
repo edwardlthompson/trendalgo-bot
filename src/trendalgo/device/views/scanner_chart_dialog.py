@@ -147,7 +147,7 @@ def show_scanner_chart_dialog(
 
     def _frame_for(row: dict[str, Any], *, for_overlay: bool) -> pd.DataFrame:
         tf = str(row.get("timeframe") or "1h")
-        key = f"{tf}:{'bt' if for_overlay else 'ui'}"
+        key = f"{tf}:{'bt' if for_overlay else 'ui'}:{window}"
         if key not in frame_cache:
             frame_cache[key] = resolve_ohlcv_frame(
                 coin,
@@ -155,6 +155,7 @@ def show_scanner_chart_dialog(
                 candles_db=candles_db,
                 closes=None if for_overlay else closes,
                 for_overlay=for_overlay,
+                window=None if for_overlay else window,
             )
         return frame_cache[key]
 
@@ -170,7 +171,12 @@ def show_scanner_chart_dialog(
                 return
             regions: list[dict[str, Any]] = []
             display = resolve_ohlcv_frame(
-                coin, timeframe="1h", candles_db=candles_db, closes=closes, for_overlay=False
+                coin,
+                timeframe="1h",
+                candles_db=candles_db,
+                closes=closes,
+                for_overlay=False,
+                window=window,
             )
             if show_trades.isChecked() and strategy_buttons:
                 radios_scroll.setEnabled(True)

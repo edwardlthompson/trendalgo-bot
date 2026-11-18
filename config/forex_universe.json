@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "selection": "G10 majors + liquid crosses for Alpaca forex rates research/BT (not trading).",
+  "version": 2,
+  "selection": "G10 majors + liquid crosses AlgoSpecial free OHLC can serve (Alpaca FX when granted).",
   "pairs": [
     "EUR/USD",
     "USD/JPY",
@@ -38,28 +38,6 @@
     "USD/MXN",
     "USD/ZAR",
     "USD/TRY",
-    "USD/PLN",
-    "EUR/SEK",
-    "EUR/NOK",
-    "EUR/PLN",
-    "EUR/TRY",
-    "EUR/HUF",
-    "EUR/CZK",
-    "GBP/SEK",
-    "GBP/NOK",
-    "AUD/SGD",
-    "NZD/SGD",
-    "USD/CNH",
-    "EUR/SGD",
-    "GBP/SGD",
-    "USD/INR",
-    "USD/THB",
-    "USD/KRW",
-    "USD/TWD",
-    "EUR/MXN",
-    "USD/BRL",
-    "USD/CLP",
-    "USD/COP",
-    "USD/ARS"
+    "USD/PLN"
   ]
 }

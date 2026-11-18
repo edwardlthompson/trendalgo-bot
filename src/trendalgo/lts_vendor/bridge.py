@@ -93,6 +93,7 @@ def merge_backtest_into_coins(
         details = notification_rows_for_symbol(backtest_summary, symbol, top_n=_ALL_STRATEGY_ROWS)
         strategies = details.get("top_strategies", [])
         buy_hold = details.get("buy_hold")
+        buy_hold_rows = details.get("buy_hold_rows") or []
         oracle_max = details.get("oracle_max")
         coin["backtest_top_strategies"] = strategies
         coin["backtest_buy_hold"] = buy_hold
@@ -105,9 +106,12 @@ def merge_backtest_into_coins(
                 coin["market_context"] = ctx
         for key in EDGE_KEYS:
             coin.pop(key, None)
-        edge = bot_vs_bh_edge(strategies, buy_hold)
+        edge = bot_vs_bh_edge(strategies, buy_hold, buy_hold_rows=buy_hold_rows)
         if edge is not None:
+            chosen_bh = edge.pop("_edge_buy_hold", None)
             coin.update(edge)
+            if isinstance(chosen_bh, dict):
+                coin["backtest_buy_hold"] = chosen_bh
     return coins
 
 

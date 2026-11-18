@@ -63,3 +63,37 @@ def test_missing_buy_and_hold_or_strategies_yield_no_edge() -> None:
     assert bot_vs_bh_edge([_row("RSI", 5.0)], None) is None
     assert bot_vs_bh_edge([], {"net_pct": 5.0}) is None
     assert bot_vs_bh_edge([{"indicator": "RSI", "net_pct": float("nan")}], {"net_pct": 1.0}) is None
+
+
+def test_bot_vs_bh_cell_tip_shows_best_minus_bh_not_30d() -> None:
+    from trendalgo.scanner.backtest_edge import bot_vs_bh_cell_tip
+
+    tip = bot_vs_bh_cell_tip(
+        {
+            "bot_best_net_pct": 3.73627,
+            "bot_best_label": "CDL3LINESTRIKE 3h",
+            "bot_vs_bh_pct": 0.02046,
+            "buy_hold_net_pct": 3.71581,
+            "backtest_buy_hold": {"indicator": "B&H", "net_pct": 3.71581, "timeframe": "10h"},
+        }
+    )
+    assert "CDL3LINESTRIKE 3h" in tip
+    assert "+3.74%" in tip
+    assert "B&H 10h" in tip
+    assert "+0.02 pp" in tip
+    assert "not 30d" in tip.lower()
+
+
+def test_prefers_buy_hold_on_same_timeframe_as_best_bot() -> None:
+    edge = bot_vs_bh_edge(
+        [_row("CDL3LINESTRIKE", 3.736, "3h"), _row("LRSI", 2.7, "8h")],
+        {"indicator": "B&H", "net_pct": 3.716, "timeframe": "10h"},
+        buy_hold_rows=[
+            {"indicator": "B&H", "net_pct": 3.716, "timeframe": "10h"},
+            {"indicator": "B&H", "net_pct": 2.05, "timeframe": "3h"},
+        ],
+    )
+    assert edge is not None
+    assert edge["bot_best_net_pct"] == 3.736
+    assert edge["buy_hold_net_pct"] == 2.05
+    assert edge["bot_vs_bh_pct"] == round(3.736 - 2.05, 6)

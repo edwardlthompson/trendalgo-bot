@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import urllib.error
 from datetime import UTC, datetime
 
+import pytest
+
 from trendalgo.market.algospecial_forex import (
+    AlgoSpecialUnsupportedError,
     derive_daily_from_h1,
     fetch_algospecial_h1,
     parse_algospecial_rows,
@@ -79,6 +83,9 @@ class _FakeResp:
 
 
 def test_fetch_algospecial_h1_uses_opener() -> None:
+    import trendalgo.market.algospecial_forex as mod
+
+    mod._LAST_GOOD_UNTIL = None
     payload = (
         b'{"data":[{"Timestamp":"2025.10.01 00:00:00","Open":1,"High":1.1,'
         b'"Low":0.9,"Close":1.05,"TickVolume":1}]}'
@@ -92,3 +99,116 @@ def test_fetch_algospecial_h1_uses_opener() -> None:
     points = fetch_algospecial_h1("EUR/USD", since, until, opener=opener)
     assert len(points) == 1
     assert points[0].close == 1.05
+
+
+def test_fetch_algospecial_h1_walks_back_on_empty() -> None:
+    """Wall-clock windows past the free feed return []; walk back until data appears."""
+    import trendalgo.market.algospecial_forex as mod
+
+    mod._LAST_GOOD_UNTIL = None
+    calls: list[str] = []
+
+    def opener(req: object, timeout: float = 0) -> _FakeResp:  # noqa: ARG001
+        url = str(req.full_url)  # type: ignore[attr-defined]
+        calls.append(url)
+        if "2025-10" in url:
+            body = (
+                b'{"data":[{"Timestamp":"2025.10.15 00:00:00","Open":1,"High":1.1,'
+                b'"Low":0.9,"Close":1.05,"TickVolume":1}]}'
+            )
+        else:
+            body = b'{"data":[],"rows":0}'
+        return _FakeResp(body)
+
+    since = datetime(2026, 10, 17, tzinfo=UTC)
+    until = datetime(2026, 11, 16, tzinfo=UTC)
+    points = fetch_algospecial_h1("EUR/USD", since, until, opener=opener)
+    assert len(points) == 1
+    assert points[0].close == 1.05
+    assert len(calls) >= 2
+
+
+def test_fetch_algospecial_h1_404_no_walkback() -> None:
+    import trendalgo.market.algospecial_forex as mod
+
+    mod._LAST_GOOD_UNTIL = None
+    calls = 0
+
+    def opener(req: object, timeout: float = 0) -> _FakeResp:  # noqa: ARG001
+        nonlocal calls
+        calls += 1
+        raise urllib.error.HTTPError("https://x", 404, "Not Found", None, None)  # type: ignore[arg-type]
+
+    since = datetime(2025, 10, 1, tzinfo=UTC)
+    until = datetime(2025, 10, 31, tzinfo=UTC)
+    with pytest.raises(AlgoSpecialUnsupportedError):
+        fetch_algospecial_h1("USD/ARS", since, until, opener=opener)
+    assert calls == 1
+
+
+def test_fetch_algospecial_h1_429_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+
+    import trendalgo.market.algospecial_forex as mod
+
+    mod._LAST_GOOD_UNTIL = None
+    monkeypatch.setattr(mod.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(mod, "_MIN_H1_BARS", 1)
+    calls = 0
+    rows = [
+        {
+            "Timestamp": "2025.10.01 00:00:00",
+            "Open": 1,
+            "High": 1.1,
+            "Low": 0.9,
+            "Close": 1.05,
+            "TickVolume": 1,
+        }
+    ]
+    payload = json.dumps({"data": rows}).encode()
+
+    def opener(req: object, timeout: float = 0) -> _FakeResp:  # noqa: ARG001
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise urllib.error.HTTPError("https://x", 429, "Too Many", None, None)  # type: ignore[arg-type]
+        return _FakeResp(payload)
+
+    since = datetime(2025, 10, 1, tzinfo=UTC)
+    until = datetime(2025, 10, 2, tzinfo=UTC)
+    points = fetch_algospecial_h1("EUR/USD", since, until, opener=opener)
+    assert len(points) == 1
+    assert calls == 2
+
+
+def test_fetch_algospecial_h1_paces_each_http() -> None:
+    import trendalgo.market.algospecial_forex as mod
+
+    mod._LAST_GOOD_UNTIL = None
+
+    class _Gate:
+        def __init__(self) -> None:
+            self.n = 0
+
+        def wait(self) -> None:
+            self.n += 1
+
+    gate = _Gate()
+    calls = 0
+
+    def opener(req: object, timeout: float = 0) -> _FakeResp:  # noqa: ARG001
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return _FakeResp(b'{"data":[],"rows":0}')
+        body = (
+            b'{"data":[{"Timestamp":"2025.10.15 00:00:00","Open":1,"High":1.1,'
+            b'"Low":0.9,"Close":1.05,"TickVolume":1}]}'
+        )
+        return _FakeResp(body)
+
+    since = datetime(2026, 10, 17, tzinfo=UTC)
+    until = datetime(2026, 11, 16, tzinfo=UTC)
+    points = fetch_algospecial_h1("EUR/USD", since, until, opener=opener, pace=gate)
+    assert len(points) == 1
+    assert gate.n == calls >= 2

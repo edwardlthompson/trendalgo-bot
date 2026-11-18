@@ -34,10 +34,14 @@ def lts_rows_path(root: Path, lane: str = "crypto") -> Path:
 
 def save_lts_rows(root: Path, rows: list[dict[str, Any]], *, lane: str = "crypto") -> None:
     prior = {row_key(r) for r in load_lts_rows(root, lane=lane)}
-    write_json(
-        lts_rows_path(root, lane),
-        {"rows": [normalize_coin(r, prior_keys=prior) for r in rows]},
-    )
+    # Last wins per row_key (Forex crosses must not share a base-only key).
+    deduped: dict[str, dict[str, Any]] = {}
+    for raw in rows:
+        coin = normalize_coin(raw, prior_keys=prior)
+        key = row_key(coin)
+        if key:
+            deduped[key] = coin
+    write_json(lts_rows_path(root, lane), {"rows": list(deduped.values())})
 
 
 def load_lts_rows(root: Path, *, lane: str = "crypto") -> list[dict[str, Any]]:
@@ -63,7 +67,7 @@ def build_lts_rows(
 
         raw = opportunities_to_final_results(snapshot)
     else:
-        raw = [_basic_row(row) for row in snapshot.opportunities]
+        raw = [_basic_row(row, exchange_id=eid) for row in snapshot.opportunities]
     return [normalize_coin(stamp_exchange(r, eid)) for r in raw]
 
 
@@ -73,22 +77,32 @@ _HOURLY_BARS_7D = 168
 _HOURLY_BARS_30D = 720
 
 
-def _basic_row(row: OpportunityRow) -> dict[str, Any]:
+def _basic_row(row: OpportunityRow, *, exchange_id: str = "kraken") -> dict[str, Any]:
+    from trendalgo.brokers.forex_universe import normalize_fx_pair
     from trendalgo.device.coin_health import compute_coin_health
 
-    symbol = row.pair.split("/")[0].strip().upper() or row.pair.upper()
+    eid = exchange_id.strip().lower() or "kraken"
+    pair = str(row.pair or "").strip()
+    if eid == "forex":
+        pair = normalize_fx_pair(pair)
+        symbol = pair.replace("/", "") if pair else "FX"
+        name = pair or symbol
+    else:
+        symbol = pair.split("/")[0].strip().upper() or pair.upper()
+        name = symbol
     spark = [float(x) for x in row.sparkline if isinstance(x, int | float)]
-    # Lane scans feed daily bars via sparkline — never as hourly.
+    # TradFi/FX opportunity rows feed daily closes in sparkline; crypto still uses hourly.
+    lane_daily = eid in {"tradfi", "forex"}
     out = {
         "symbol": symbol,
-        "name": symbol,
-        "pair": row.pair,
-        "exchange_id": "kraken",
+        "name": name,
+        "pair": pair,
+        "exchange_id": eid,
         "gains": {"7d": None, "30d": None},
         "volume_24h": float(row.volume_score),
-        "listed_on": ["kraken"],
-        "chart_closes_1h": [],
-        "chart_closes_1d": spark,
+        "listed_on": [eid],
+        "chart_closes_1h": [] if lane_daily else spark,
+        "chart_closes_1d": spark if lane_daily else [],
         "bot_vs_bh_pct": None,
         "bot_best_net_pct": None,
         "volume_acceleration_pct": None,
@@ -390,7 +404,7 @@ def has_backtest_results(coin: dict[str, Any]) -> bool:
     return isinstance(tops, list) and bool(tops)
 
 
-def dash(value: object, *, pct: bool = False, money: bool = False) -> str:
+def dash(value: object, *, pct: bool = False, money: bool = False, pct_digits: int = 1) -> str:
     if value is None:
         return "—"
     try:
@@ -405,7 +419,8 @@ def dash(value: object, *, pct: bool = False, money: bool = False) -> str:
     except (TypeError, ValueError):
         return "—"
     if pct:
-        return f"{number:+.1f}%"
+        digits = max(0, min(4, int(pct_digits)))
+        return f"{number:+.{digits}f}%"
     if money:
         if number >= 1_000_000:
             return f"${number / 1_000_000:.1f}M"
@@ -413,3 +428,23 @@ def dash(value: object, *, pct: bool = False, money: bool = False) -> str:
             return f"${number / 1_000:.0f}K"
         return f"${number:,.0f}"
     return f"{number:.2f}"
+
+
+def volume_display(coin: dict[str, Any]) -> str:
+    """USD notional for crypto/TradFi; Forex free feeds use 24h tick volume (no $)."""
+    raw = coin.get("volume_24h")
+    if raw is None:
+        return "—"
+    unit = str(coin.get("volume_unit") or "").strip().lower()
+    eid = str(coin.get("exchange_id") or "").strip().lower()
+    if unit in {"ticks", "range"} or eid == "forex":
+        try:
+            number = float(raw)
+        except (TypeError, ValueError):
+            return "—"
+        if number >= 1_000_000:
+            return f"{number / 1_000_000:.1f}M"
+        if number >= 1_000:
+            return f"{number / 1_000:.0f}K"
+        return f"{number:,.0f}"
+    return dash(raw, money=True)
