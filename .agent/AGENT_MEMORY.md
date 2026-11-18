@@ -40,11 +40,11 @@
 
 **Purpose:** Self-hosted Kraken spot algo bot with LTS scanner, CoinStats replacement portfolio, AI-recommended strategies, and transparent performance license.
 
-**Current sprint:** Board HUMAN after `/ship` v1.18.0. Tier A legal H-006/H-022/H-023 ✅ (ADR-0020). Open: H-006b Tier B + DEX-P4b CLOUD + ops/H-032/H-036.
+**Current sprint:** Board HUMAN after `/ship` v1.19.0. Tier A legal H-006/H-022/H-023 ✅ (ADR-0020). Open: H-006b Tier B + DEX-P4b CLOUD + ops/H-032/H-036.
 
-**Tests:** Required GitHub CI/CodeQL/Security green on `0264401` before RP #78 merge. CodeQL must stay `@v4`. Sync `uv.lock` after every Release Please version bump.
+**Tests:** Required GitHub CI/CodeQL/Security green on `33472cd` after uv.lock sync. CodeQL must stay `@v4`. Sync `uv.lock` after every Release Please version bump.
 
-**Recent:** v1.18.0 — TradFi/FX Opportunity desks (Alpaca + AlgoSpecial H1 fallback, 90m floor), Scan UX desk fixes, Tier A legal-desk artifacts. RP #78. Residual: OpenVEX still missing on GitHub Release.
+**Recent:** v1.19.0 — Forex desk expand + currency icons + Bot vs B&H clarity; news P2 SecretRedactor/FastAPI body limits; Windows `TrendAlgo-1.19.0-x64-setup.exe` + MSI on GitHub Release. RP #79. Residual: OpenVEX still missing on GitHub Release.
 
 **Canonical plan:** `docs/specs/audit-remediation.md` · `docs/CANONICAL_PLAN.md`.
 

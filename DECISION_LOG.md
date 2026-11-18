@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-18 — Ship v1.19.0 Forex desk + news P2 + Windows EXE
+- **Status:** Accepted
+- **Context:** `/ship` for a Windows release; Forex WIP + news P2 (SecretRedactor, FastAPI body limits) uncommitted; upd rewrote CodeQL to `vcodeql-bundle-*`.
+- **Decision:** Commit feat/fix, restore CodeQL `@v4`, merge RP #79 → **v1.19.0**; confirm `TrendAlgo-1.19.0-x64-setup.exe` + MSI uploaded by `release.yml` windows-device-installers; sync `uv.lock` after RP version bump.
+- **Alternatives considered:** Rebuild EXE only via workflow_dispatch without product ship (rejected — product changes needed a version); leave OpenVEX gap (accepted residual).
+- **Consequences:** Installers on https://github.com/edwardlthompson/trendalgo-bot/releases/tag/v1.19.0; Bot vs B&H is Best BT − B&H (not 30d).
+
 ### 2026-11-16 — Ship v1.18.0 TradFi/FX desks + Scan UX + AlgoSpecial
 - **Status:** Accepted
 - **Context:** Uncommitted multi-lane WIP (TradFi top-500, Forex research, Scan UX, AlgoSpecial H1) needed a release; first push CI failed on stale `test_live_fetch_retries` (idle-1h + 5m assumptions).
