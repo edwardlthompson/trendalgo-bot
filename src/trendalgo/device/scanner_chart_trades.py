@@ -13,12 +13,15 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from trendalgo.backtest.heartbeat_tf import ALL_SCAN_TIMEFRAMES, timeframe_hours, timeframe_minutes
 from trendalgo.backtest.load_days import SCAN_LOOKBACK_DAYS
 from trendalgo.backtest.ta_fleet import backtest_one, prepare_signals
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees, trade_hold_regions
 from trendalgo.device.sauce_names import is_sauce, is_sauce_ta
 from trendalgo.device.scan_stake import DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scanner_all_ta_prune import fee_for_bps
+
+_ALLOWED_TF = frozenset(ALL_SCAN_TIMEFRAMES)
 
 _BH = "B&H"
 _DEFAULT_FEE_BPS = 52.0
@@ -100,18 +103,33 @@ def resolve_ohlcv_frame(
     """OHLCV for chart display or overlay replay.
 
     Overlay / Results parity: load via BacktestDataLoader (same cache + 30d as All-TA).
+    TradFi/FX display: prefer enrich-stamped real OHLC wicks over synthetic closes.
     Display-only: fall back to spark closes when the loader has no bars.
     """
+    from trendalgo.device.lane_chart_enrich import frame_from_lane_ohlc
+    from trendalgo.device.scan_identity import coin_exchange_id
+
     tf = _normalize_tf(timeframe)
+    eid = coin_exchange_id(coin)
+    # Prefer real Alpaca 1h OHLC for TradFi/FX charts (true high/low wicks).
+    if eid in {"tradfi", "forex"} and not for_overlay and tf in {"1h", "60m", "60"}:
+        lane_frame = frame_from_lane_ohlc(coin)
+        if not lane_frame.empty:
+            return lane_frame
     if for_overlay or closes is None:
         frame = _load_scan_frame(coin, timeframe=tf)
         if not frame.empty:
             return frame
+    step_h = timeframe_hours(tf) or max(1, (timeframe_minutes(tf) or 60) // 60)
+    if eid in {"tradfi", "forex"} and not for_overlay:
+        lane_frame = frame_from_lane_ohlc(coin)
+        if not lane_frame.empty:
+            return lane_frame
     if closes is not None:
-        return frame_from_closes(closes, hours_step=1 if tf == "1h" else 4)
+        return frame_from_closes(closes, hours_step=step_h)
     spark = _coin_closes(coin)
     if spark:
-        return frame_from_closes(spark, hours_step=1 if tf == "1h" else 4)
+        return frame_from_closes(spark, hours_step=step_h)
     return _load_scan_frame(coin, timeframe=tf)
 
 
@@ -140,9 +158,11 @@ def regions_for_strategy(
             or bool(params.get("ss_coincidence"))
             or bool(row.get("ss_coincidence"))
         ):
-            return _regions_sauce_ta(frame, params, stake=stake, fee=fee, tsl=tsl)
+            regions = _regions_sauce_ta(frame, params, stake=stake, fee=fee, tsl=tsl)
+            return attach_path_envelopes(frame, regions)
         if is_sauce(sid) or sid.upper().startswith("GEN_SECRET"):
-            return _regions_sauce_lab(frame, row, params, stake=stake, fee=fee, tsl=tsl)
+            regions = _regions_sauce_lab(frame, row, params, stake=stake, fee=fee, tsl=tsl)
+            return attach_path_envelopes(frame, regions)
         trial, _reason = backtest_one(
             frame,
             sid,
@@ -162,7 +182,7 @@ def regions_for_strategy(
     trades = trial.get("trade_list")
     if not isinstance(trades, list):
         return []
-    return trade_hold_regions(trades)
+    return attach_path_envelopes(frame, trade_hold_regions(trades))
 
 
 def _regions_sauce_ta(
@@ -236,33 +256,106 @@ def regions_from_oracle_swings(
     frame: pd.DataFrame,
     swings: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Map stored oracle swing indexes onto the overlay frame timestamps."""
+    """Map stored oracle swings onto the overlay frame.
+
+    Prefer stored trough/peak ``entry_price`` / ``exit_price`` (oracle fills at bar
+    low→high). Never rewrite those to ``close[index]`` — that floats bands off the
+    swing extremes and breaks Results net parity when the chart frame has rolled.
+    Remap indexes from timestamps when the frame window shifted.
+    """
     if frame.empty or not swings:
         return []
+    highs = frame["high"].to_numpy(dtype=float) if "high" in frame.columns else None
+    lows = frame["low"].to_numpy(dtype=float) if "low" in frame.columns else None
     closes = frame["close"].to_numpy(dtype=float) if "close" in frame.columns else None
     enriched: list[dict[str, Any]] = []
     for trade in swings:
         item = dict(trade)
-        try:
-            entry_i = int(trade.get("entry_index") or -1)
-            exit_i = int(trade.get("exit_index") or -1)
-        except (TypeError, ValueError):
+        entry_i = _resolve_bar_index(frame, trade.get("entry_time"), trade.get("entry_index"))
+        exit_i = _resolve_bar_index(frame, trade.get("exit_time"), trade.get("exit_index"))
+        if entry_i is None or exit_i is None:
             continue
-        if entry_i < 0 or exit_i < 0 or entry_i >= len(frame) or exit_i >= len(frame):
+        # Always draw on the chart frame's bar stamps (after remap).
+        item["entry_time"] = _bar_time(frame, entry_i)
+        item["exit_time"] = _bar_time(frame, exit_i)
+        entry_px = _as_positive_float(item.get("entry_price"))
+        exit_px = _as_positive_float(item.get("exit_price"))
+        # Fall back to swing extremes on the (remapped) bars — never closes.
+        if entry_px is None:
+            if lows is not None:
+                entry_px = float(lows[entry_i])
+            elif closes is not None:
+                entry_px = float(closes[entry_i])
+        if exit_px is None:
+            if highs is not None:
+                exit_px = float(highs[exit_i])
+            elif closes is not None:
+                exit_px = float(closes[exit_i])
+        if entry_px is None or exit_px is None:
             continue
-        item["entry_time"] = item.get("entry_time") or _bar_time(frame, entry_i)
-        item["exit_time"] = item.get("exit_time") or _bar_time(frame, exit_i)
-        if closes is not None:
-            item["entry_price"] = float(closes[entry_i])
-            item["exit_price"] = float(closes[exit_i])
+        item["entry_price"] = entry_px
+        item["exit_price"] = exit_px
+        item["entry_index"] = entry_i
+        item["exit_index"] = exit_i
         item.setdefault("exit_reason", "oracle_swing")
-        if item.get("pnl_pct") is None:
-            ep = float(item.get("entry_price") or 0.0)
-            xp = float(item.get("exit_price") or 0.0)
-            if ep:
-                item["pnl_pct"] = round(((xp / ep) - 1.0) * 100.0, 4)
+        if item.get("pnl_pct") is None and entry_px:
+            item["pnl_pct"] = round(((exit_px / entry_px) - 1.0) * 100.0, 4)
         enriched.append(item)
-    return trade_hold_regions(enriched)
+    return attach_path_envelopes(frame, trade_hold_regions(enriched))
+
+
+def _as_positive_float(raw: object) -> float | None:
+    try:
+        value = float(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if value != value or value <= 0:  # noqa: PLR0124 — NaN check
+        return None
+    return value
+
+
+def _resolve_bar_index(
+    frame: pd.DataFrame,
+    stamp: object,
+    stored_index: object,
+) -> int | None:
+    """Prefer timestamp match on the chart frame; fall back to a valid stored index."""
+    parsed = _parse_frame_stamp(stamp)
+    if parsed is not None:
+        try:
+            loc = frame.index.get_indexer([parsed], method=None)[0]
+        except (TypeError, ValueError, KeyError):
+            loc = -1
+        if loc >= 0:
+            return int(loc)
+        # Tolerant match when tz/resolution differs.
+        try:
+            loc = frame.index.get_indexer([parsed], method="nearest")[0]
+        except (TypeError, ValueError, KeyError):
+            loc = -1
+        if 0 <= loc < len(frame):
+            return int(loc)
+    try:
+        idx = int(stored_index)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if 0 <= idx < len(frame):
+        return idx
+    return None
+
+
+def _parse_frame_stamp(stamp: object) -> pd.Timestamp | None:
+    if stamp is None or stamp == "":
+        return None
+    try:
+        ts = pd.Timestamp(stamp)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if ts is pd.NaT:
+        return None
+    if ts.tzinfo is None:
+        return ts.tz_localize("UTC")
+    return ts.tz_convert("UTC")
 
 
 def _bar_time(frame: pd.DataFrame, index: int) -> str:
@@ -374,9 +467,54 @@ def _coin_closes(coin: dict[str, Any]) -> list[float]:
 
 
 def _normalize_tf(raw: str) -> str:
+    """Pass through any All-TA scan TF (1m…30m, 1h…24h). Never collapse 8h→1h."""
     text = str(raw or "").strip()
-    aliases = {"60": "1h", "240": "4h", "1H": "1h", "4H": "4h"}
-    return aliases.get(text, text if text in {"1h", "4h"} else "1h")
+    aliases = {
+        "60": "1h",
+        "240": "4h",
+        "480": "8h",
+        "1H": "1h",
+        "4H": "4h",
+        "8H": "8h",
+    }
+    key = aliases.get(text, text.lower())
+    if key in _ALLOWED_TF:
+        return key
+    return "1h"
+
+
+def attach_path_envelopes(
+    frame: pd.DataFrame,
+    regions: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Attach bar high/low polylines so chart bands hug the hold path."""
+    if frame.empty or not regions:
+        return regions
+    has_hl = "high" in frame.columns and "low" in frame.columns
+    out: list[dict[str, Any]] = []
+    for region in regions:
+        item = dict(region)
+        entry_i = item.get("entry_index")
+        exit_i = item.get("exit_index")
+        try:
+            start = int(entry_i)  # type: ignore[arg-type]
+            end = int(exit_i)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            start = end = -1
+        if has_hl and 0 <= start <= end < len(frame):
+            path: list[dict[str, float | str]] = []
+            for i in range(start, end + 1):
+                path.append(
+                    {
+                        "time": _bar_time(frame, i),
+                        "high": float(frame["high"].iloc[i]),
+                        "low": float(frame["low"].iloc[i]),
+                    }
+                )
+            if len(path) >= 2:
+                item["path_envelope"] = path
+        out.append(item)
+    return out
 
 
 def _tsl_fraction(row: dict[str, Any]) -> float:
@@ -401,8 +539,33 @@ def _tsl_fraction(row: dict[str, Any]) -> float:
     return value / 100.0
 
 
-def overlay_net_pct(regions: list[dict[str, Any]]) -> float | None:
-    """Sum of per-trade pnl_pct (All-TA restakes full stake each trade)."""
+def overlay_net_pct(
+    regions: list[dict[str, Any]],
+    *,
+    stake_usd: float | None = None,
+) -> float | None:
+    """Sum fee-aware net when ``net_pnl`` present; else gross ``pnl_pct``.
+
+    Results Net % is ``(net_profit/stake)*100``. Prefer the same fee-aware path
+    so Oracle overlays stop lying with gross ``pnl_pct`` sums.
+    """
+    stake = float(stake_usd) if stake_usd is not None and float(stake_usd) > 0 else None
+    if stake is None:
+        stake = DEVICE_SCAN_STAKE_USD if DEVICE_SCAN_STAKE_USD > 0 else None
+    if stake is not None:
+        fee_total = 0.0
+        fee_found = False
+        for region in regions:
+            raw = region.get("net_pnl")
+            if raw is None:
+                continue
+            try:
+                fee_total += float(raw) / stake * 100.0
+                fee_found = True
+            except (TypeError, ValueError):
+                continue
+        if fee_found:
+            return fee_total
     total = 0.0
     found = False
     for region in regions:

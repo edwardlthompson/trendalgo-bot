@@ -19,7 +19,7 @@ class ScanUnavailableError(RuntimeError):
 
 
 def device_scan_settings(root: Path | None = None) -> ScannerSettings:
-    """Device scan gates: top-bar volume / interval / uniformity only.
+    """Device scan gates: volume / interval / continuous 1h only.
 
     Column filters (7d%/30d% mins, chart-dist, etc.) narrow the Qualified *table*
     after a scan — they must not starve the live pipeline of candidates.
@@ -31,21 +31,25 @@ def device_scan_settings(root: Path | None = None) -> ScannerSettings:
     # Volume-first device scans: column 7d/30d mins never gate the pipeline.
     payload["min_gain_pct"] = 0.0
     payload["min_gain_7d_pct"] = 0.0
+    payload["min_uniformity"] = 0.0
     saved = load_filters(root)
     if not saved:
         return ScannerSettings.model_validate(payload)
     if "min_volume_usd" in saved:
         payload["min_volume_usd"] = float(saved["min_volume_usd"])
-    if "min_uniformity" in saved:
-        payload["min_uniformity"] = float(saved["min_uniformity"])
+    if "require_continuous_1h" in saved:
+        payload["require_continuous_1h"] = bool(saved["require_continuous_1h"])
     if "interval_minutes" in saved:
         payload["interval_minutes"] = int(saved["interval_minutes"])
     return ScannerSettings.model_validate(payload)
 
 
-def scan_store_path(root: Path) -> Path:
-    """This PC's scanner database. It sits in the profile folder, never in the shared data folder."""
-    return root / SCANNER_DB
+def scan_store_path(root: Path, lane: str = "crypto") -> Path:
+    """This PC's scanner database (lane-suffixed for TradFi/Forex)."""
+    key = (lane or "crypto").strip().lower()
+    if key in {"", "crypto"}:
+        return root / SCANNER_DB
+    return root / f"scanner_{key}.db"
 
 
 def progress_line(progress: dict[str, Any] | None) -> str:

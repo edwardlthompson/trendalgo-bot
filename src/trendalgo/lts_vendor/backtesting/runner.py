@@ -10,7 +10,7 @@ from collections import Counter
 from collections.abc import Callable
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
 from contextvars import ContextVar
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -32,15 +32,15 @@ from database.cache import PriceCache
 
 from .backtest_counter import DONE, STEP, BacktestCounter
 from .data_loader import BacktestDataLoader
-from .params import BacktestLoaderParams, BacktestRunnerParams, runner_params_from_settings
 from .engine import compute_buy_and_hold
 from .models import BacktestConfig
 from .optimizer import optimize_indicator
+from .params import BacktestLoaderParams, BacktestRunnerParams, runner_params_from_settings
 from .signals import SIGNAL_REGISTRY, indicator_unavailable_reason, talib_available
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:

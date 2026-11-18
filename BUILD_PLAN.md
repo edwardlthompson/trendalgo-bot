@@ -1,10 +1,16 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 <!-- remaining-tally -->
-**Remaining:** AGENT 0 · LOCAL 0 · CLOUD 0 · AUTO 0 · HUMAN 2 · ADB 0 · **2 open**
+**Remaining:** AGENT 1 · LOCAL 0 · CLOUD 1 · AUTO 0 · HUMAN 0 · ADB 0 · **1 open**
 <!-- /remaining-tally -->
-> **Detail:** [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
-> **Archive:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md)
+<!-- tally note: DEX-P4b CLOUD after Scan UX + AlgoSpecial FX ✅ -->
+> **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
+> **Completed work:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md) · **Support:** [`docs/SUPPORT_MATRIX.md`](docs/SUPPORT_MATRIX.md)
+> **Sauce / Market Context / logos** archived in COMPLETED_TASKS.md @ `665d6f5` · v1.15.2.
+> **Multi-venue Sequential (CEX/DEX/TF)** archived in COMPLETED_TASKS.md (2026-11-15).
+> **TradFi top-500 + Forex research (TF-P5…P11 + FX-P1…P4)** archived in COMPLETED_TASKS.md @ `54b409c` (2026-11-15).
+> **Scan UX desk + AlgoSpecial Forex H1 (UX-S1…S7 + FX-AS1…AS5)** archived in COMPLETED_TASKS.md @ `54b409c` (2026-11-15).
+> **Honesty DoD (every multi-venue AGENT row):** bump [`support_matrix.json`](src/trendalgo/device/data/support_matrix.json) + [`docs/SUPPORT_MATRIX.md`](docs/SUPPORT_MATRIX.md) + README Exchange / today / coming-soon + `about_line` when capability changes; scoped `test_support_matrix.py` green.
 
 ### Product (do not drift)
 
@@ -26,62 +32,52 @@
 ## Now
 
 > Day-to-day device: `.\scripts\packaging\relaunch-device.ps1` (source-first; no PyInstaller).
-> Sauce Phase 2–4 backlog: [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md) — not scheduled.
-> Spec: [`docs/features/market-context.md`](docs/features/market-context.md)
+> Follow-ups: LIVE/NOTIF botd cron wiring; SIM snapshot regen; H-006b before non-owner billing (ADR-0020 Tier B).
 
 | Marker | State |
 |--------|-------|
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
-### Sprint Market-Context
+### Sequential (agent)
 
-1. ✅ [AGENT][LOCAL] Analytics core: classic pivots, consensus, regime labels, R:R, VWAP/VP/extension/corr/spread + `MarketContext` — scope: `src/trendalgo/analytics/`, `tests/test_analytics/`
-2. ✅ [AGENT][LOCAL] MarketContextPane (4 zones + collapse prefs) — scope: `src/trendalgo/device/views/market_context_pane.py`, `results_view_prefs.py`, `strings.py`
-3. ✅ [AGENT][LOCAL] Wire Backtest tab + persist context — scope: `pair_strategy_scan.py`, `pair_strategy_scan_job.py`, `backtest_page.py`, `last_pair_backtest.py`
-4. ✅ [AGENT][LOCAL] Wire Scanner Results + stamp `coin["market_context"]` — scope: `scanner_all_ta_coin.py`, `scanner_all_ta_bt.py`, `bridge.py`, `scanner_results.py`
-5. ✅ [AGENT][LOCAL] Show Chart overlays for pivots/VWAP/VP — scope: `scanner_chart_dialog.py`, `scanner_chart_trades.py`
-6. ✅ [AGENT][LOCAL] Secret Sauce Lab causal pivot/VWAP/VP keys (sparse; residual-gated; no consensus dump) — scope: `secret_sauce_pivots.py`, `secret_sauce_features.py`
-7. ✅ [AGENT][LOCAL] Gates + smoke-sprint — scope: `watch-agent-gates`, `smoke-sprint --require`
-8. ✅ [AGENT][LOCAL] Scanner Qualified Buy picks band (collapsible; Market Context Buy + TA%) — scope: `buy_picks.py`, `buy_picks_pane.py`, `scanner_page.py`
+> Local Sequential clear. Next AGENT work is `[CLOUD]` DEX-P4b under Open work (skipped on This Computer `/build`).
 
-### Open HUMAN
+### Human work (complete in this order)
 
-- 🔲 [HUMAN] Review Alerts ribbon preview wording (Entered / Left / Trades Windows + Telegram samples); note desired copy in chat or here — then AGENT applies in `strings.py` / `alert_preview.py` / `telegram_format.py` / `scan_alerts.py`
-- 🔲 [HUMAN] PF-H1 Optional: mint CoinMarketCal and/or Coindar API keys for live calendar (wizard walks signup; not required for empty-state CI) — see [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md)
+> Single pack for all founder actions. Soft/optional first only when it unblocks nothing critical — **legal → ops → secrets → live → expand**. Detail + approve CLI: [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md). Hard gates never AUTO.
+
+| # | ID | Task | Kind | Status |
+|---|----|------|------|--------|
+| 1 | H-006b | Tier B: counsel/clinic before non-owner billing | Hard · legal Tier B | 🔲 |
+| 2 | H-004 | Provision VPS (Oracle / Hetzner) | Soft · ops | 🔲 |
+| 3 | H-011 | Kraken read-only keys in VPS `.env` | Hard · secrets | 🔲 |
+| 4 | CEX-P3c | Optional: pay for per-venue historical packs | Soft · cost | 🔲 |
+| 5 | H-010 | Explicit live-trading approval (mode=live) | Hard · go-live | 🔲 |
+| 6 | H-028 | Per-exchange `go-live-gate.sh --approve` (every venue) | Hard · go-live | 🔲 |
+| 7 | H-032 / CEX-P4b | Worldwide trading ack + CEXes beyond nine (P1-first) | Hard · expand CEX | 🔲 |
+| 8 | H-035 / H-036 | DEX live program + live swap approve | Hard · expand DEX | 🔲 |
+| 9 | DEX-P4a | Enable `trading_enabled` Arbitrum / Ethereum after Base proven | Hard · expand DEX | 🔲 |
+| 10 | H-017 | CoinStats parity compare + cancel sub (**deferred**) | Soft · deferred | 🔲 |
+| 11 | H-026 | Monthly: portfolio integrity report | Recurring | 🔲 |
+| 12 | H-027 | Monthly: VPS cost ≤ $10 | Recurring | 🔲 |
+PF-H1 + H-008 + H-003 + Tier A + H-007 archived ✅. Skipped for now (still open): H-006b, H-004, H-011, CEX-P3c.
 
 ---
 
 ## Open work
 
-### R-Audit-8 — Post product-rec audit
+### Multi-venue parity (AGENT / Cloud — after Human #13–#15 where gated)
 
-| ID | Task | Owner | Status |
-|----|------|-------|--------|
-| R-Audit-8.9 | Attorney review of legal packet (F-010 / R-Audit-7.10) | HUMAN | 🔲 |
-AGENT 8.1–8.8 + 8.10 ✅ — [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
-
-### Carry-forward (HUMAN)
-
-| Track | Owner | Status |
-|-------|-------|--------|
-| Founder preflights S0–S12 | HUMAN | 🔲 |
-| Legal (H-006, H-023) | HUMAN | 🔲 blocks public beta |
-| VPS + secrets (H-004, H-008, H-011) | HUMAN | 🔲 |
-| Go-live per venue (H-010, H-028) | HUMAN | 🔲 |
-| Exchange live worldwide (H-032) | HUMAN | 🔲 |
-| DEX live (H-035, H-036) | HUMAN | 🔲 |
-Full checklist: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · Local preview: [`docs/LOCAL_DEV.md`](docs/LOCAL_DEV.md)
+- 🔲 [AGENT][CLOUD] DEX-P4b New swap plugins after P1–P2 — scope: `src/trendalgo/venues/`
 
 ### Maintenance cadence
 
 | Cadence | Owner | Item |
 |---------|-------|------|
 | Weekly | AUTO | `check_risk_mitigations.py` · CI/CodeQL on `main` · Dependabot triage |
-| Monthly | AUTO | portfolio integrity · production cost · backup dry-run (R-020) |
-| Pre-live | AUTO/HUMAN | `go-live-gate.sh --check-only` → `--approve` (H-010/H-028) |
-Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python scripts/founder_gate.py status`
-
+| Monthly | AUTO / Human #17–#18 | portfolio integrity · production cost · backup dry-run (R-020) |
+| Pre-live | AUTO + Human #11–#12 | `go-live-gate.sh --check-only` → `--approve` |
 ---
 
 ## Owner labels
@@ -91,30 +87,53 @@ Founder gate CLI: [`docs/FOUNDER_GATES.md`](docs/FOUNDER_GATES.md) · `python sc
 | `AGENT` | Code, docs, tests |
 | `HUMAN` | Credentials, legal, go-live |
 | `AUTO` | CI / gate scripts |
-**Hard gates (never AUTO):** H-006, H-008, H-010, H-011, H-023, H-028, H-031, H-032, H-036
+**Hard gates (never AUTO):** H-006, H-006b, H-008, H-010, H-011, H-023, H-028, H-031, H-032, H-036 · Tier A legal closes with `residual-risk owner-only+foss` note (ADR-0020); Tier B billing stays deferred
 
 ---
 
-## Archived sprints
+## Completed
 
-| Sprint | Complete | Archive |
-|--------|----------|---------|
-| Device-Notify-Launch | 2026-10-22 | COMPLETED_TASKS.md @ `49f3987` |
-| Oracle-SS | 2026-10-18 | COMPLETED_TASKS.md |
-| PF Modular Dashboard | 2026-10-16 | COMPLETED_TASKS.md |
-| GP-Template-1.9 | 2026-10-16 | COMPLETED_TASKS.md |
-Finished lists: [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · Post-delivery: [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md)
+Finished BUILD_PLAN rows live in [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md).
 
 <!-- ux-inventory -->
 | ID | Change | Status |
 |----|--------|--------|
-| UX-001 | Settings Exchange keys: tall Query/Trade + Exchange combo popups (no clipped rows) | done |
-| UX-002 | Settings Exchange keys: visible Public API key / Private API secret labels + help | done |
-| UX-003 | Settings IA: Connection → Appearance → Save → Keys (expanded) → Venue → rest; keys save copy | done |
 | UX-004 | Settings: danger-styled Remove key + confirm before delete | planned |
 | UX-005 | Settings: scroll-to / deep-link section from empty-state CTAs | planned |
-| UX-006 | Alerts ribbon: Entered/Left/Trades master notify + preview + Test Win/TG | done |
-| UX-007 | Telegram wizard: BotFather copy boxes + deleteWebhook Detect | done |
-| UX-008 | Launch: source-first pythonw default; `-Frozen` for packaging | done |
-| UX-009 | Market Context dedicated pane on Backtest + Scanner Results | done |
+| UX-006 | Scanner chrome: action buttons; board filters + 2-col Settings; Status dialog | done |
+| UX-007 | Backtest chrome: same strip pattern; Color ranks/Perfect in Settings Results view | done |
 <!-- /ux-inventory -->
+### Local agent (This Computer)
+
+Standing queue for This Computer. Rows: `🔲 [AGENT][LOCAL] … — scope: path`.
+
+<!-- local-agent-lane:begin -->
+- 🔲 [AGENT][LOCAL] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — scope: src/trendalgo/exchanges/secrets.py (news P2, 2026-11-16) https://cryptowatchdesk.com/news/security-alert-proxima-post-mortem-debug-logs-held-private-keys-5324-sol-181-users-firewall-rule-removed
+- 🔲 [AGENT][LOCAL] Confirm agent-framework 1.26.1/1.26.2 is not in uv.lock or on the VPS and rotate credentials if it is — scope: pyproject.toml, uv.lock (news P2, 2026-11-18) https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi
+- 🔲 [AGENT][LOCAL] Bump FastAPI to 0.164.0 and set request body size limits — scope: pyproject.toml, src/trendalgo/ (news P2, 2026-11-18) https://github.com/fastapi/fastapi/releases/tag/0.164.0
+<!-- local-agent-lane:end -->
+
+### Cloud agent (Cursor Cloud)
+
+Standing queue for Cursor Cloud. Rows: `🔲 [AGENT][CLOUD] … — scope: path`.
+
+<!-- cloud-agent-lane:begin -->
+_No cloud agent items._
+<!-- cloud-agent-lane:end -->
+
+### Open PRs (synced)
+
+> Auto-managed. Do not hand-edit inside the markers.
+
+<!-- open-prs-sync:begin -->
+_No open Dependabot or Release Please PRs._
+<!-- open-prs-sync:end -->
+
+### Template gaps (synced)
+
+> Auto-managed. Do not hand-edit inside the markers.
+
+<!-- template-gaps-sync:begin -->
+_No template gaps._
+<!-- template-gaps-sync:end -->
+

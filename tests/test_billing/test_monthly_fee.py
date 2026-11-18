@@ -60,8 +60,8 @@ def test_high_water_mark_recovers_the_deficit_before_any_fee() -> None:
     _, april = apply_monthly_rules(
         [_trade("a", 100.0)], 0.05, deficit_usd=march.deficit_out_usd, billable_from=BILLING_START
     )
-    # $50 of the $100 recovers the deficit; the fee is charged on the other $50 only.
-    assert (april.fee_usd, april.deficit_out_usd) == (2.5, 0.0)
+    # $50 of the $100 recovers the deficit; raw fee $2.50 lifts to the $5 floor.
+    assert (april.fee_usd, april.deficit_out_usd) == (5.0, 0.0)
 
 
 def test_monthly_fee_formula_edges() -> None:

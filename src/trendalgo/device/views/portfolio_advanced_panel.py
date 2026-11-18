@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from trendalgo.device import strings as S
 from trendalgo.device.portfolio_model import PortfolioOverview
+from trendalgo.device.support_matrix import venue_by_id
 from trendalgo.device.views.widgets import EmptyState, fill_table, read_only_table, section_title
 from trendalgo.portfolio.arbitrage import detect_arbitrage_opportunities
 from trendalgo.portfolio.db import PortfolioStore
@@ -48,7 +49,14 @@ class PortfolioAdvancedPanel(QWidget):
         accounts = list(overview.accounts)
         fill_table(
             self._accounts,
-            [(str(a.get("exchange") or ""), str(a.get("label") or "")) for a in accounts],
+            [
+                (
+                    str(a.get("exchange") or ""),
+                    _support_label(str(a.get("exchange") or "")),
+                    str(a.get("label") or ""),
+                )
+                for a in accounts
+            ],
         )
         self._accounts.setVisible(bool(accounts))
         self._accounts_empty.setVisible(not accounts)
@@ -86,6 +94,11 @@ class PortfolioAdvancedPanel(QWidget):
         )
         self._arb.setVisible(bool(arb_rows))
         self._arb_empty.setVisible(not arb_rows)
+
+
+def _support_label(exchange_id: str) -> str:
+    venue = venue_by_id(exchange_id)
+    return venue.status_label if venue is not None else "—"
 
 
 def _goal_text(overview: PortfolioOverview) -> str:

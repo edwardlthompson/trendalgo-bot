@@ -17,6 +17,62 @@
 
 ## Entries
 
+### 2026-11-16 — Ship v1.18.0 TradFi/FX desks + Scan UX + AlgoSpecial
+- **Status:** Accepted
+- **Context:** Uncommitted multi-lane WIP (TradFi top-500, Forex research, Scan UX, AlgoSpecial H1) needed a release; first push CI failed on stale `test_live_fetch_retries` (idle-1h + 5m assumptions).
+- **Decision:** Commit/push product + legal-desk; fix scanner retry test for staged 1h/1d; merge Release Please #78 → **v1.18.0**.
+- **Alternatives considered:** Split into multiple PRs (deferred — human asked ship now); keep desks unreleased (rejected).
+- **Consequences:** Forex free path uses AlgoSpecial with 90m auto-scan floor; Alpaca FX grant still preferred when available.
+
+### 2026-11-15 — Legal Research Desk (ADR-0020) replaces paid-attorney blocker
+- **Status:** Accepted
+- **Context:** Founder cannot afford counsel; H-006/H-022/H-023 blocked FOSS publish. An “Attorney Grok Bot” would be false security.
+- **Decision:** Ship Legal Research Desk (`/legal-desk`) + Founder Legal Posture; Tier A closes owner-only+foss with residual-risk notes; Tier B H-006b keeps non-owner billing deferred until counsel/clinic.
+- **Alternatives considered:** Fake attorney-approved stamps (rejected); keep all legal gates blocked forever (rejected — blocks FOSS).
+- **Consequences:** TERMS aligned to ELv2; packet embeds legal ADRs; `founder_gate` refuses “attorney approved” without `docs/legal-desk/counsel/`.
+
+### 2026-11-15 — Ship v1.17.0 multi-venue parity + quieter chrome
+- **Status:** Accepted
+- **Context:** `/ship` after CEX dedicated adapters / Tier B smoke, DEX candle+watch honesty, Alpaca paper dry-run, Scanner/Backtest chrome fold into Settings; upd again tried bad CodeQL bundle tags; Release Please #77 → 1.17.0 left `uv.lock` stale (`uv sync --locked` failed on merge CI).
+- **Decision:** Ship product WIP; revert CodeQL pin rewrites; sync `uv.lock` post-merge (`6f8c2a7`); accept OpenVEX gap (SBOM + MSI/setup published).
+- **Alternatives considered:** Apply upd CodeQL bundle tags (rejected); block ship on OpenVEX (deferred — same residual as v1.16.0).
+- **Consequences:** Operators get quieter scan/BT chrome + multi-venue honesty ladder; RP auto-opens 1.17.1 for the lockfix; keep post-RP lock sync in ship muscle memory.
+
+### 2026-11-15 — Multi-venue parity Lane 0 + first sprint (honesty locked)
+- **Status:** Accepted
+- **Context:** CEX portfolio/trading marked complete while device research stayed Kraken-first; README risked going stale as gaps closed.
+- **Decision:** Paste multi-venue ladder into BUILD_PLAN; ship MVP-0d README↔`support_matrix.json` gate; keyed chart enrich for matrix `keyed_scan` yes/partial; unified CCXT OHLCV provider; Solana SOL/SPL wallet track → Partial; portfolio account Support column; every later parity row inherits honesty DoD.
+- **Alternatives considered:** Dual capability flags in exchanges.registry (rejected — overlay from support_matrix); fake TradFi via CCXT (rejected — TF-H1 still open).
+- **Consequences:** Operators see honest ✓/✗ in README/UI; public scan remains Kraken-only until a later row flips `public_scan`.
+
+### 2026-11-15 — Ship v1.16.0 OHLCVT deep 1m + rolling tip journal
+- **Status:** Accepted
+- **Context:** `/ship` after Kraken OHLCVT archive path, tip journal with calendar 30d ready date, quarterly mix-unlock messaging, collapsible full-height Scan Settings; upd again rewrote `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`; Release Please bumped feat → v1.16.0 and left `uv.lock` stale.
+- **Decision:** Ship OHLCVT/journal UX; keep exclusive TF bands until archive covers today or rolling 30d ready; restore CodeQL `@v4`; sync `uv.lock` post-release. Merge Release Please #76 → v1.16.0.
+- **Alternatives considered:** Apply upd CodeQL bundle tags (rejected); wait for OpenVEX asset before ship close (deferred — SBOM present, OpenVEX still missing on release assets).
+- **Consequences:** Sub-hour scans can use archive 1m; Settings shows rolling-ready date (start+30d); mix unlocks earlier when quarterly coverage reaches today.
+
+### 2026-11-15 — Ship v1.15.2 Sauce / MC / leave / logos
+- **Status:** Accepted
+- **Context:** `/ship` after Sauce Pan prefs, Market Context settings toggle + ETA + PNG gfx exports, off-board leave reason for Grok/Telegram, curated coin logos; upd dry-run tried to rewrite `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`.
+- **Decision:** Ship product WIP; revert corrupted CodeQL/Scorecard pins; keep `@v4`. Merge Release Please #75 → v1.15.2. Zero Dependabot Critical/High (GraphQL open alerts empty).
+- **Alternatives considered:** Apply upd action pin rewrites (rejected — Actions cannot resolve bundle tags); defer logos to junction-only (rejected — curated overlay is commit-safe).
+- **Consequences:** Device Settings can skip MC to save ETA; leave alerts cite scan-board drops; `sync-icon-registry.py --extras` refreshes AKE/LIGHTER/AUDX.
+
+### 2026-11-14 — Ship filtered leave alerts + autoscan harden
+- **Status:** Accepted
+- **Context:** `/ship` after Qualified-tab filtered enter/leave notifies, TG enrich, Sauce top-10-only, autoscan rearm/watchdog, Share filter caption; local full pytest hung on `@pytest.mark.slow` All-TA Sauce smokes when OHLCV cache exists; bare `uv sync` stripped device/dev extras (httpx2/matplotlib).
+- **Decision:** Ship alert/autoscan/Sauce/share work; bump `opentelemetry-api`→1.45.2 and patch fastapi/ruff-pre-commit/codeql; run local gates with `-m "not slow"`; restore venv via `uv sync --extra dev --extra device --extra ta`. Keep `watchlist_leave` kind for prefs compatibility.
+- **Alternatives considered:** Delete slow smoke tests (rejected — still useful opt-in); force-include slow in feature-gate with timeout (deferred); leave Medium otel unfixed (rejected — lock bump available).
+- **Consequences:** Exit alerts fire for any filtered-set drop; overnight autoscan should stay alive; CI still ignores `tests/test_device` so slow hang is local-only until feature-gate gains `-m "not slow"`.
+
+### 2026-11-13 — Ship v1.14.0 LTS Telegram + Sauce-on-join
+- **Status:** Accepted
+- **Context:** `/ship` after LTS-parity Telegram enter/leave charts, Sauce first-join once then Oracle top-10, and update-deps; upd rewrote `codeql-action` to unresolvable `vcodeql-bundle-v2.27.4`; pandas-ta-classic 0.9 dropped EBSW/TSIGNALS/XSIGNALS; Dependabot #80 Pillow (patched in 13.0.0 already locked).
+- **Decision:** Ship Telegram/Sauce work; restore `codeql-action@v4`; pin `pandas-ta-classic>=0.8.32,<0.9`; require `pillow>=13.0.0` on desktop + constraints. Merge Release Please #54 → v1.14.0.
+- **Alternatives considered:** Keep pandas-ta 0.9 and delete those catalog IDs (rejected — catalog/glossary still list them); leave CodeQL on upd bundle tags (rejected — Actions cannot resolve).
+- **Consequences:** Required checks green on tip; `/regress` must confirm SBOM/Pages/upgrade sim.
+
 ### 2026-10-21 — Ship toward v0.8.0 Settings ribbon + CVE lock bumps
 - **Status:** Accepted
 - **Context:** `/ship` after Settings ribbon (Save/Setup/Telegram), saved-keys inventory, 48-col square Settings grid; `upd audit` reported Critical/High on certifi and pillow; `device-no-console.mdc` alwaysApply failed cursor-rule allowlist.
@@ -203,3 +259,9 @@ _Seed template ADR: `docs/adr/0000-template-baseline.md`. Child repos use `docs/
 - **Decision:** Ship all three with Golden Path stubs, MODULE.md guides, and path-gated CI jobs (`lightroom`, `rust`, `go`) that skip when child repos remove the directories
 - **Alternatives considered:** Lightroom-only (rejected: Rust/Go stubs are low-cost and popular); defer all optional modules (rejected: COMPLETED_TASKS M3 work already landed)
 - **Consequences:** Template CI runs more jobs on `main`; child repos can delete unused `examples/` folders to skip jobs via `hashFiles` guards
+## Autonomous /build approval (2026-11-15T16:13:47+00:00)
+
+- Autonomous approval for BUILD_PLAN row: MVP-H0 Approve multi-venue research parity scope + TradFi lane framing (H-040)
+## Autonomous /build approval (2026-11-15T16:13:48+00:00)
+
+- Autonomous approval for BUILD_PLAN row: TF-H1 Approve TradFi lane + first broker (recommend Alpaca paper)

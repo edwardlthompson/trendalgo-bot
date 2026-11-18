@@ -79,6 +79,13 @@ def test_test_telegram_sends_when_creds_ok(qtbot: QtBot, ctx: DeviceContext) -> 
     assert S.ALERTS_TEST_OK in ribbon._status.text()
 
 
+def test_test_grokbot_needs_config(qtbot: QtBot, ctx: DeviceContext) -> None:
+    ribbon = AlertsNotifyRibbon(ctx.root)
+    qtbot.addWidget(ribbon)
+    ribbon._test_grokbot()
+    assert S.ALERTS_TEST_GROKBOT_NEED in ribbon._problem.text()
+
+
 def test_alerts_page_has_ribbon(qtbot: QtBot, ctx: DeviceContext) -> None:
     page = AlertsPage(ctx.root, on_toast=lambda _t, _b: None)
     qtbot.addWidget(page)

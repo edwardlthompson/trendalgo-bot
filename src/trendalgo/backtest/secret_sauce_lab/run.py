@@ -10,14 +10,24 @@ from trendalgo.backtest.secret_sauce_dossier import HeartbeatDossier
 from trendalgo.backtest.secret_sauce_features import entries_for_secret_sauce
 from trendalgo.backtest.secret_sauce_lab.families import seeds_for_weights
 from trendalgo.backtest.secret_sauce_lab.narrative import build_narrative
-from trendalgo.backtest.secret_sauce_lab.regime_snapshot import RegimeSnapshot, detect_regime
+from trendalgo.backtest.secret_sauce_lab.regime_snapshot import (
+    RegimeSnapshot,
+    detect_regime,
+    regime_weights_series,
+)
 from trendalgo.backtest.secret_sauce_lab.residual_instrument import build_residual_fields
-from trendalgo.backtest.secret_sauce_lab.search import bh_net_profit, search_best_pair
+from trendalgo.backtest.secret_sauce_lab.search import (
+    bh_net_profit,
+    lab_time_budget_s,
+    search_best_pair,
+)
+from trendalgo.backtest.secret_sauce_lab.search_folds import bar_folds
 from trendalgo.backtest.ta_fleet import backtest_one
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 
 _SECRET_ID = "GEN_SECRET_1"
 _HOLDOUT_FRAC = 0.35
+_PURGE_BARS = 4
 
 
 def run_secret_sauce_lab(
@@ -28,13 +38,19 @@ def run_secret_sauce_lab(
     oracle_trades: list[dict[str, Any]],
     bh_net: float | None = None,
     strategy_id: str = _SECRET_ID,
-    time_budget_s: float = 4.0,
+    time_budget_s: float | None = None,
     oracle_net: float | None = None,
+    peer_net: float | None = None,
+    require_peer_clear: bool = False,
 ) -> tuple[HeartbeatDossier, RegimeSnapshot] | None:
     """Mine dossier via Lab; returns (dossier, regime) or None."""
     if df.empty or len(oracle_trades) < 2:
         return None
-    regime = detect_regime(df)
+    n_swings = len(oracle_trades)
+    if time_budget_s is None:
+        time_budget_s = lab_time_budget_s(n_swings)  # uncapped (+inf)
+
+    regime = detect_regime(df)  # tip snapshot: display-only current reading
     if bh_net is None:
         bh_net = bh_net_profit(df, fee=fee, stake=stake_usd)
     from trendalgo.backtest.secret_sauce_lab.pattern_mine import (
@@ -51,9 +67,14 @@ def run_secret_sauce_lab(
         family="oracle_pattern",
         fee=fee,
         stake_usd=stake_usd,
-        time_budget_s=min(2.0, time_budget_s * 0.4),
+        time_budget_s=time_budget_s,
     )
-    family_pairs = seeds_for_weights(strategy_id, regime.family_weights, volume_ok=regime.volume_ok)
+    train_idx, hold_idx = bar_folds(len(df), holdout_frac=_HOLDOUT_FRAC, purge_bars=_PURGE_BARS)
+    weight_series = regime_weights_series(df)
+    fit_weights = (
+        weight_series[train_idx[-1]] if train_idx and weight_series else regime.family_weights
+    )
+    family_pairs = seeds_for_weights(strategy_id, fit_weights, volume_ok=regime.volume_ok)
     pairs = pattern + family_pairs
     picked = search_best_pair(
         df,
@@ -62,11 +83,21 @@ def run_secret_sauce_lab(
         stake_usd=stake_usd,
         bh_net=bh_net,
         time_budget_s=time_budget_s,
+        peer_net=peer_net,
         direction=regime.direction,
+        train_indexes=train_idx,
+        holdout_indexes=hold_idx,
+        purge_bars=_PURGE_BARS,
+        oracle_swing_count=n_swings,
+        require_peer_clear=require_peer_clear,
     )
     if picked is None:
         return None
-    entry_rule, exit_rule, search_net, family = picked
+    entry_rule = picked.entry
+    exit_rule = picked.exit
+    search_net = picked.net
+    family = picked.family
+    best_tsl = picked.trailing_stop_pct
     entries = [
         int(t.get("entry_index") or -1)
         for t in oracle_trades
@@ -105,10 +136,12 @@ def run_secret_sauce_lab(
             residual_exits=residual0["residual_exit_indexes"],
             fee=fee,
             stake_usd=stake_usd,
-            time_budget_s=min(1.4, max(0.35, time_budget_s * 0.3)),
+            time_budget_s=time_budget_s,
         )
         if refined is not None:
-            entry_rule, exit_rule, search_net, family = refined
+            entry_rule, exit_rule, search_net, family = refined[:4]
+            if len(refined) >= 5:
+                best_tsl = float(refined[4])
             entry_mask = entries_for_secret_sauce(df, entry_rule)
             exit_mask = entries_for_secret_sauce(df, exit_rule)
             if not entry_mask.any():
@@ -143,6 +176,10 @@ def run_secret_sauce_lab(
         formula_en=formula,
         train_coverage=max(train_cov, 0.0),
         holdout_coverage=max(hold_cov, 0.0),
+        holdout_fit_coverage=max(hold_cov, 0.0),
+        holdout_gate_ok=picked.holdout_gate_ok,
+        train_net=picked.train_net,
+        holdout_net=picked.holdout_net,
         swing_hits=swing_hits,
         exit_hits=exit_hits,
         oracle_entry_indexes=tuple(entries),
@@ -152,6 +189,7 @@ def run_secret_sauce_lab(
         residual_exit_indexes=residual["residual_exit_indexes"],
         residual_feature_hits=residual["residual_feature_hits"],
         oracle_gap_net_pct=residual["oracle_gap_net_pct"],
+        trailing_stop_pct=float(best_tsl),
     )
     return dossier, regime
 

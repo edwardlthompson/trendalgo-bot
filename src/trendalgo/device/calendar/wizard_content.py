@@ -46,8 +46,10 @@ STEPS: tuple[Step, ...] = (
         "CoinMarketCal (recommended)",
         (
             "Open the CoinMarketCal developer site, create an account, and mint an API key.",
-            "Paste the key below, click Test, then Save. Free tiers limit how far ahead events "
-            "appear; paid tiers unlock impact scores used for High/Medium filters.",
+            "Paste the key below, click Test, then Save. Free plan: 3,000 requests per UTC month, "
+            "1 req/sec (burst 5), upcoming window next 7 days, top-100 coins, no historical "
+            "`from`. TrendAlgo caches events and skips refresh when remaining < 50 or cache "
+            "is fresher than 6 hours. Paid tiers unlock longer windows and impact scores.",
         ),
         (CMC_DOCS, CMC_KEYS),
     ),

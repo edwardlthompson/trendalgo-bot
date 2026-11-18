@@ -8,8 +8,26 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
+import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+_PATH_LOCKS: dict[str, threading.Lock] = {}
+_PATH_LOCKS_GUARD = threading.Lock()
+_REPLACE_TRIES = 8
+
+
+def _lock_for(path: Path) -> threading.Lock:
+    key = str(path.resolve()) if path.parent.exists() else str(path)
+    with _PATH_LOCKS_GUARD:
+        lock = _PATH_LOCKS.get(key)
+        if lock is None:
+            lock = threading.Lock()
+            _PATH_LOCKS[key] = lock
+        return lock
+
 
 PROFILE_ENV = "TRENDALGO_DEVICE_DIR"
 CANDLES_ENV = "TRENDALGO_CANDLES_DB"
@@ -70,15 +88,58 @@ def read_json(path: Path) -> dict[str, Any] | None:
 
 
 def write_json(path: Path, data: dict[str, Any]) -> None:
-    """Replace path with data in one rename. A failed write leaves the old file in place."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
+    """Replace path with data in one rename. A failed write leaves the old file in place.
+
+    Parallel All-TA coins hit the same prefs files; retry Windows Access Denied on replace.
+    Locks are per-path so ``scan_progress.json`` cannot stall catalog timing writes.
+    """
+    lock = _lock_for(path)
+    with lock:
+        _write_json_unlocked(path, data)
+
+
+def mutate_json(path: Path, mutator: Callable[[dict[str, Any]], None]) -> dict[str, Any]:
+    """Load → mutate → write under the path lock (avoids lost updates across threads)."""
+    lock = _lock_for(path)
+    with lock:
+        raw = _read_json_unlocked(path)
+        data: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
+        mutator(data)
+        _write_json_unlocked(path, data)
+        return data
+
+
+def _read_json_unlocked(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2, sort_keys=True)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp_name, path)
-    except BaseException:
-        Path(tmp_name).unlink(missing_ok=True)
-        raise
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ProfileError(f"{path.name} cannot be read. Move it aside, then try again.") from exc
+    if not isinstance(data, dict):
+        raise ProfileError(f"{path.name} must hold a JSON object.")
+    return data
+
+
+def _write_json_unlocked(path: Path, data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    last_err: OSError | None = None
+    payload = json.dumps(data, indent=2, sort_keys=True)
+    for attempt in range(_REPLACE_TRIES):
+        fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(payload)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(tmp_name, path)
+            return
+        except OSError as exc:
+            last_err = exc
+            Path(tmp_name).unlink(missing_ok=True)
+            time.sleep(0.02 * (attempt + 1))
+        except BaseException:
+            Path(tmp_name).unlink(missing_ok=True)
+            raise
+    if last_err is not None:
+        raise last_err

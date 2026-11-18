@@ -10,13 +10,11 @@ from trendalgo.device.portfolio_categories import is_stablecoin_base
 from trendalgo.exchanges.private_budget import acquire_private_slot
 from trendalgo.exchanges.private_client import ccxt_client
 from trendalgo.exchanges.registry import ExchangeEntry
-from trendalgo.lts.adapter import OhlcvBar
 from trendalgo.market.types import OhlcvPoint
 from trendalgo.scanner.config import ScannerSettings
 from trendalgo.scanner.listings import _SKIP_BASES, pick_canonical_pair
 from trendalgo.scanner.progress import get_scan_progress
 from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
-from trendalgo.scanner.uniformity import uniformity_score
 
 
 def _slot(entry: ExchangeEntry) -> None:
@@ -124,6 +122,7 @@ def run_venue_pipeline(
     entry: ExchangeEntry,
     *,
     client: Any | None = None,
+    funnel_out: dict[str, float | int] | None = None,
 ) -> QualifiedSnapshot:
     """Qualify pairs on one keyed venue; stamps progress with venue id."""
     progress = get_scan_progress()
@@ -133,6 +132,20 @@ def run_venue_pipeline(
     progress.log(f"Venue {entry.id}: {len(pairs)} spot bases")
     if not pairs:
         now = datetime.now(UTC)
+        if funnel_out is not None:
+            funnel_out.clear()
+            funnel_out.update(
+                {
+                    "listed_n": 0,
+                    "after_volume_n": 0,
+                    "after_activity_n": 0,
+                    "qualified_n": 0,
+                    "min_volume_usd": float(settings.min_volume_usd),
+                    "require_continuous_1h": (
+                        1 if bool(getattr(settings, "require_continuous_1h", True)) else 0
+                    ),
+                }
+            )
         return QualifiedSnapshot(generated_at=now, as_of=now, scan_id=0, opportunities=[])
 
     volumes = fetch_venue_volumes(entry, ex, pairs)
@@ -143,43 +156,36 @@ def run_venue_pipeline(
     )
     until = datetime.now(UTC)
     day_since = until - timedelta(days=40)
-    five_since = until - timedelta(hours=3)
+    hour_since = until - timedelta(days=2)
     candidates: list[OpportunityRow] = []
+    after_volume_n = len(kept)
+    after_activity_n = 0
+    require_cont = bool(getattr(settings, "require_continuous_1h", True))
     for pair in kept:
         try:
+            if require_cont:
+                from trendalgo.scanner.live_market import has_idle_completed_1h
+
+                hourly = _fetch_ohlcv_points(entry, ex, pair, "1h", hour_since, until)
+                if has_idle_completed_1h(hourly, until=until, hours=24):
+                    continue
+            after_activity_n += 1
             daily = _fetch_ohlcv_points(entry, ex, pair, "1d", day_since, until)
             if len(daily) < 2:
                 continue
             gain = (daily[-1].close / daily[0].close) - 1.0 if daily[0].close else 0.0
             if settings.min_gain_pct > 0 and gain < settings.min_gain_pct:
                 continue
-            five = _fetch_ohlcv_points(entry, ex, pair, "5m", five_since, until)
-            if len(five) < 5:
-                continue
-            bars = [
-                OhlcvBar(
-                    timestamp_ms=b.time * 1000,
-                    open=b.open,
-                    high=b.high,
-                    low=b.low,
-                    close=b.close,
-                    volume=b.volume,
-                )
-                for b in five
-            ]
-            uni = uniformity_score(bars)
-            if uni < settings.min_uniformity:
-                continue
             vol = float(volumes.get(pair, 0.0))
             candidates.append(
                 OpportunityRow(
                     rank=0,
                     pair=pair,
-                    uniformity=uni,
+                    uniformity=0.0,
                     gain_pct=gain,
                     volume_score=vol,
                     entry_signal=True,
-                    sparkline=[round(b.close, 2) for b in five[-12:]],
+                    sparkline=[],
                 )
             )
         except Exception as exc:
@@ -188,12 +194,26 @@ def run_venue_pipeline(
         # Soft pause so we do not slam the venue.
         time.sleep(0.05)
 
-    candidates.sort(key=lambda o: (o.uniformity, o.gain_pct), reverse=True)
+    if not require_cont:
+        after_activity_n = after_volume_n
+    candidates.sort(key=lambda o: (o.gain_pct, o.volume_score), reverse=True)
     ranked = [
         OpportunityRow(rank=i + 1, **{k: v for k, v in o.model_dump().items() if k != "rank"})
         for i, o in enumerate(candidates)
     ]
     progress.log(f"Venue {entry.id}: qualified {len(ranked)} pairs")
+    if funnel_out is not None:
+        funnel_out.clear()
+        funnel_out.update(
+            {
+                "listed_n": len(pairs),
+                "after_volume_n": after_volume_n,
+                "after_activity_n": after_activity_n,
+                "qualified_n": len(ranked),
+                "min_volume_usd": float(settings.min_volume_usd),
+                "require_continuous_1h": 1 if require_cont else 0,
+            }
+        )
     now = datetime.now(UTC)
     return QualifiedSnapshot(
         generated_at=now,

@@ -24,25 +24,13 @@ def clamp_interval_minutes(raw: int) -> int:
     return ALLOWED_INTERVAL_MINUTES[-1]
 
 
-# Live Kraken alts typically score ~0.15–0.35 on LTS uniformity; 0.5+ is rare
-# outside synthetic straight-line trends (legacy defaults were too high).
+# Retained for LTS mixin / legacy prefs readers; board scan never gates on uniformity.
 ALLOWED_UNIFORMITY: tuple[float, ...] = (0.15, 0.2, 0.25, 0.3, 0.35)
 
 
-def clamp_min_uniformity(raw: float) -> float:
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
-        return 0.2
-    if value in ALLOWED_UNIFORMITY:
-        return value
-    # Legacy 0.45–0.65 gates matched synthetic data and zero out live scans.
-    if value >= 0.45:
-        return 0.2
-    for allowed in ALLOWED_UNIFORMITY:
-        if allowed >= value:
-            return allowed
-    return ALLOWED_UNIFORMITY[-1]
+def clamp_min_uniformity(_raw: float) -> float:
+    """Board scans ignore uniformity; always return 0 (gate off)."""
+    return 0.0
 
 
 class ScannerSettings(BaseModel):
@@ -51,7 +39,10 @@ class ScannerSettings(BaseModel):
     min_gain_pct: float = Field(0.02, ge=0)
     # Optional early 7d floor from extended 1h bars (fraction). 0 = disabled.
     min_gain_7d_pct: float = Field(0.0, ge=0)
-    min_uniformity: float = Field(0.2, ge=0, le=1)
+    # Unused on the board path (schema / DB compat); always coerced to 0.
+    min_uniformity: float = Field(0.0, ge=0, le=1)
+    # Drop pairs with any zero-volume/missing completed 1h bar in the last 24h.
+    require_continuous_1h: bool = True
     universe_filter: str = "kraken-spot"
     trendspotter_boost: bool = True
 
@@ -64,8 +55,8 @@ class ScannerSettings(BaseModel):
 
     @field_validator("min_uniformity", mode="before")
     @classmethod
-    def _snap_uniformity(cls, value: Any) -> float:
-        return clamp_min_uniformity(float(value) if value is not None else 0.2)
+    def _force_uniformity_off(cls, _value: Any) -> float:
+        return 0.0
 
 
 def default_scanner_settings() -> ScannerSettings:

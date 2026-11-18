@@ -2,7 +2,7 @@
 
 > Technical catalog for agents and maintainers. **Humans:** start with [docs/help/BATCH_COMMANDS.md](help/BATCH_COMMANDS.md).
 
-47 slash commands: **42 atomic** workflows + **5 super** orchestrators. Bare-word triggers: `.cursor/rules/batch-commands.mdc`. Other IDEs: paste the matching file under `docs/help/` (start with `docs/help/TOUR.md`, `docs/help/IDEAS.md`, or `docs/help/ALLIDEAS.md`). Novice print sheet: [`docs/help/batch-commands-print.html`](help/batch-commands-print.html).
+48 slash commands: **43 atomic** workflows + **5 super** orchestrators. Bare-word triggers: `.cursor/rules/batch-commands.mdc`. Other IDEs: paste the matching file under `docs/help/` (start with `docs/help/TOUR.md`, `docs/help/IDEAS.md`, or `docs/help/ALLIDEAS.md`). Novice print sheet: [`docs/help/batch-commands-print.html`](help/batch-commands-print.html).
 
 ## Super commands
 
@@ -41,6 +41,7 @@
 | `/plan` | Feature/ADR plan + resolved Critique (Issue→Resolution) | build | 19 |
 | `/shape` | Rough idea → short `docs/specs/` + one BUILD_PLAN row (no app code) | build | — |
 | `/adr` | Write the next numbered `docs/adr/` record | — | — |
+| `/legal-desk` | Legal Research Desk memos + Tier A/B posture (not legal advice) | — | — |
 | `/restore` | Restore from `.cursor-session-state.json` | — | 13 |
 | `/compact` | Save session state before clearing chat | — | 13 |
 | `/resume` | After Cloud Agent: fetch + sync open Dependabot/release PRs + list `cursor/*` PRs + next AGENT row | — | — |

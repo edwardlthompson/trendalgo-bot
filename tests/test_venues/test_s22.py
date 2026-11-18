@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tests.support.api_client import make_api_client
 from trendalgo.billing.venue_attribution import attribution_by_venue
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.portfolio.dex_positions import list_dex_positions_from_store, preview_dex_positions
@@ -81,11 +82,8 @@ def test_preview_dex_all_evm_chains() -> None:
 
 def test_s22_api_routes(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("TRENDALGO_VENUE_SYNC_STAGGER_SEC", "0")
-    from fastapi.testclient import TestClient
 
-    from trendalgo.api.app import create_app
-
-    client = TestClient(create_app())
+    client = make_api_client()
     quote = client.get(
         "/api/v1/platform/dex/quote",
         params={"chain": "arbitrum", "sell_token": "ETH", "buy_token": "USDC", "sell_amount": 0.5},

@@ -15,12 +15,11 @@ HEAT_COL_KEYS: dict[int, str] = {
     5: "g30pct",
     7: "btbest",
     8: "btvbh",
-    9: "uniformity",
-    10: "health",
-    11: "hv7",
-    12: "mdd",
-    13: "volaccel",
-    15: "vol24h",
+    9: "health",
+    10: "hv7",
+    11: "mdd",
+    12: "volaccel",
+    14: "vol24h",
 }
 
 # RGB stops (no raw hex literals — device UI token rule).

@@ -14,6 +14,7 @@ from trendalgo.strategies.runtime.contract import (
     StrategyContext,
 )
 from trendalgo.trading.control import ExchangeControlStore
+from trendalgo.trading.fill_model import paper_fill_price
 from trendalgo.trading.runner.adapters.registry import get_trading_adapter
 
 
@@ -30,7 +31,10 @@ class DryRunOrder:
 
 @dataclass
 class DryRunRunner:
-    """Simulate one bot on a single exchange — create/cancel orders only (CM-7)."""
+    """Simulate one bot on a single exchange — create/cancel orders only (CM-7).
+
+    SIM-10: ``fill_offset`` / ``slippage_bps`` match paper via ``paper_fill_price``.
+    """
 
     strategy: NativeStrategy
     journal: TradeJournal
@@ -39,8 +43,14 @@ class DryRunRunner:
     wallet_usd: float = 1000.0
     bot_id: int | None = None
     control: ExchangeControlStore | None = None
+    fill_offset: int = 1
+    slippage_bps: float = 0.0
+    notify: bool = False
     _position: Position | None = field(default=None, init=False)
     _last_orders: list[DryRunOrder] = field(default_factory=list, init=False)
+    _pending_entry: Signal | None = field(default=None, init=False)
+    _pending_exit: bool = field(default=False, init=False)
+    _pending_exit_rule: str | None = field(default=None, init=False)
 
     def tick(
         self,
@@ -93,17 +103,63 @@ class DryRunRunner:
         self.strategy.on_candle(candle, ctx)
         events: list[str] = []
 
-        if self._position is not None and self.strategy.exit(ctx, self._position):
-            pnl = self._close_position(candle.close)
+        if self._pending_entry is not None and self._position is None:
+            # Next-bar fill (fill_offset>=1): slip against this bar's close.
+            fill = paper_fill_price(
+                candle.close,
+                side="buy",
+                slippage_bps=self.slippage_bps,
+                fill_offset=0,
+            )
+            self._open_position(self._pending_entry, fill)
+            self._pending_entry = None
+            events.append("entry")
+
+        if self._pending_exit and self._position is not None:
+            fill = paper_fill_price(
+                candle.close,
+                side="sell",
+                slippage_bps=self.slippage_bps,
+                fill_offset=0,
+            )
+            pnl = self._close_position(fill, exit_rule=self._pending_exit_rule)
+            self._pending_exit = False
+            self._pending_exit_rule = None
             events.append("exit")
             if pnl is not None:
                 events.append(f"pnl={pnl:.2f}")
 
-        if self._position is None:
+        if (
+            self._position is not None
+            and not self._pending_exit
+            and self.strategy.exit(ctx, self._position)
+        ):
+            from trendalgo.trading.exit_explain import describe_exit
+
+            exit_rule = describe_exit(self.strategy, ctx, self._position)
+            if int(self.fill_offset) <= 0:
+                fill = paper_fill_price(
+                    candle.close, side="sell", slippage_bps=self.slippage_bps, fill_offset=0
+                )
+                pnl = self._close_position(fill, exit_rule=exit_rule)
+                events.append("exit")
+                if pnl is not None:
+                    events.append(f"pnl={pnl:.2f}")
+            else:
+                self._pending_exit = True
+                self._pending_exit_rule = exit_rule
+
+        if self._position is None and self._pending_entry is None:
             sig = self.strategy.signal(ctx)
             if sig is not None:
-                self._open_position(sig, candle.close)
-                events.append("entry")
+                if int(self.fill_offset) <= 0:
+                    fill = paper_fill_price(
+                        candle.close, side="buy", slippage_bps=self.slippage_bps, fill_offset=0
+                    )
+                    self._open_position(sig, fill)
+                    events.append("entry")
+                else:
+                    self._pending_entry = sig
 
         return {
             "engine": "native",
@@ -146,8 +202,16 @@ class DryRunRunner:
                 bot_id=self.bot_id,
             )
         )
+        self._notify_fill(
+            side=sig.side,
+            amount=sig.stake_usd,
+            price=price,
+            pnl=0.0,
+            rationale=sig.rationale,
+            exit_rule=None,
+        )
 
-    def _close_position(self, price: float) -> float | None:
+    def _close_position(self, price: float, *, exit_rule: str | None = None) -> float | None:
         if self._position is None:
             return None
         pos = self._position
@@ -155,6 +219,7 @@ class DryRunRunner:
         pnl = pos.stake_usd * ratio
         adapter = get_trading_adapter(self.exchange_id)
         routed = adapter.simulate_order(self.pair, "sell", pos.stake_usd, price)
+        rule = exit_rule or "native exit"
         self.journal.append_trade(
             TradeRecord(
                 pair=self.pair,
@@ -162,11 +227,19 @@ class DryRunRunner:
                 stake_usd=pos.stake_usd,
                 pnl_usd=pnl,
                 signal_source=self.strategy.strategy_id,
-                rationale="native exit",
+                rationale=rule,
                 exchange_trade_id=str(routed.get("order_id", "")),
                 exchange=self.exchange_id,
                 bot_id=self.bot_id,
             )
+        )
+        self._notify_fill(
+            side="sell",
+            amount=pos.stake_usd,
+            price=price,
+            pnl=pnl,
+            rationale=rule,
+            exit_rule=rule,
         )
         self._position = None
         self._last_orders = [
@@ -180,3 +253,31 @@ class DryRunRunner:
             )
         ]
         return pnl
+
+    def _notify_fill(
+        self,
+        *,
+        side: str,
+        amount: float,
+        price: float,
+        pnl: float,
+        rationale: str | None,
+        exit_rule: str | None,
+    ) -> None:
+        if not self.notify:
+            return
+        from trendalgo.botd.trade_notify import notify_fill
+
+        notify_fill(
+            self.journal.db_path.parent,
+            pair=self.pair,
+            side=side,
+            amount=amount,
+            price=price,
+            realized_pnl_usd=pnl,
+            live=True,
+            strategy_id=self.strategy.strategy_id,
+            rationale=rationale,
+            exit_rule=exit_rule,
+            exchange=self.exchange_id,
+        )

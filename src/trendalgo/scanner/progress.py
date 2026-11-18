@@ -33,6 +33,9 @@ def _idle_state() -> dict[str, Any]:
         "step_done": 0,
         "step_total": 0,
         "step_unit": "",
+        "current_pair": "—",
+        "pairs_done": 0,
+        "pairs_total": 0,
         "started_at": None,
         "finished_at": None,
         "updated_at": None,
@@ -42,6 +45,15 @@ def _idle_state() -> dict[str, Any]:
         "counts": {},
         "errors": 0,
     }
+
+
+def _pair_label(raw: object) -> str:
+    text = str(raw or "").strip()
+    if not text or text in {"?", "—", "-"}:
+        return "—"
+    if "/" in text:
+        return text.upper()
+    return f"{text.upper()}/USD"
 
 
 def _skip_reason_suffix(reasons: object) -> str:
@@ -137,12 +149,16 @@ class ScanProgress:
             self._touch()
         self._append("info", name, f"Phase: {name}" + (f" ({total} {unit})" if total else ""))
 
-    def step(self, done: int, *, total: int | None = None) -> None:
+    def step(self, done: int, *, total: int | None = None, pair: object = None) -> None:
         """Update the current phase counter (no event line)."""
         with self._lock:
             self._state["step_done"] = int(done)
+            self._state["pairs_done"] = int(done)
             if total is not None:
                 self._state["step_total"] = int(total)
+                self._state["pairs_total"] = int(total)
+            if pair is not None:
+                self._state["current_pair"] = _pair_label(pair)
             self._touch()
 
     def set_counts(self, **counts: Any) -> None:
@@ -158,6 +174,8 @@ class ScanProgress:
                 for label, secs in items[:_MAX_RUNNING_ITEMS]
             ]
             self._state["counts"]["in_flight"] = int(pending)
+            if items:
+                self._state["current_pair"] = _pair_label(items[0][0])
             self._touch()
 
     def log(self, message: str, *, level: Level = "info", phase: str | None = None) -> None:
@@ -201,6 +219,11 @@ class ScanProgress:
             runs_total = coins * len(timeframes) * (indicators + 1)
             self._bt_decile = 0
             self.phase("Backtest · all strategies + B&H", total=runs_total, unit="backtests")
+            with self._lock:
+                self._state["pairs_total"] = coins
+                self._state["pairs_done"] = 0
+                self._state["current_pair"] = "—"
+                self._touch()
             self.log(
                 f"Backtesting {coins} coins × {indicators} indicators × {len(timeframes)} timeframes "
                 f"({', '.join(timeframes) or 'n/a'}) + B&H = {runs_total} backtests"
@@ -214,6 +237,11 @@ class ScanProgress:
             completed = int(event.get("completed", 0))
             total = int(event.get("total", 0))
             symbol = str(event.get("symbol", "?"))
+            with self._lock:
+                self._state["pairs_done"] = completed
+                self._state["pairs_total"] = total
+                self._state["current_pair"] = _pair_label(symbol)
+                self._touch()
             if kind == "bt_coin_done":
                 skip_note = _skip_reason_suffix(event.get("skip_reasons"))
                 self.log(
@@ -228,6 +256,13 @@ class ScanProgress:
             self.set_running(running, pending=int(event.get("pending_count", 0)))
         elif kind == "bt_run_complete":
             failed = int(event.get("failed", 0))
+            with self._lock:
+                processed = int(event.get("processed", 0) or self._state.get("pairs_done") or 0)
+                total = int(self._state.get("pairs_total") or processed)
+                self._state["pairs_done"] = processed
+                if total:
+                    self._state["pairs_total"] = total
+                self._touch()
             self.log(
                 f"Backtest sweep complete: {event.get('processed', 0)} coins, "
                 f"{event.get('rows', 0)} rows, {failed} failed",

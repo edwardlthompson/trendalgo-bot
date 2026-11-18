@@ -99,11 +99,12 @@ def test_a_finished_scan_is_shown_as_scanned_on_this_pc(
     monkeypatch.setattr(page, "_pool", _FakePool(_Done(result)))
     page._run.click()
     qtbot.waitUntil(lambda: page._pending is None, timeout=5000)
-    assert page._status.text() == S.SCAN_DONE
+    assert page._status.text().startswith(S.SCAN_DONE)
+    assert "Source:" in page._status.text() or page._status.text() == S.SCAN_DONE
     assert S.SCANNER_FROM_PC in page._caption.text()
 
 
-def test_while_a_scan_runs_only_cancel_is_enabled_and_cancel_stops_the_pool(
+def test_while_a_scan_runs_modal_cancel_stops_the_pool(
     qtbot: QtBot,
     ctx: DeviceContext,
     monkeypatch: pytest.MonkeyPatch,
@@ -114,12 +115,13 @@ def test_while_a_scan_runs_only_cancel_is_enabled_and_cancel_stops_the_pool(
     monkeypatch.setattr(page, "_pool", pool)
     page._run.click()
     assert not page._run.isEnabled()
-    assert page._cancel.isEnabled()
-    page._cancel.click()
+    assert page._scan_dialog is not None
+    assert not page._cancel.isVisible()
+    page._scan_dialog._cancel.click()
     assert pool.cancelled
     assert page._pending is None
     assert page._run.isEnabled()
-    assert not page._cancel.isEnabled()
+    assert page._scan_dialog is None
     assert page._status.text() == S.SCAN_CANCELLED
 
 
@@ -169,12 +171,12 @@ def test_the_newer_of_the_bot_scan_and_this_pc_scan_is_shown_and_named(
     assert S.SCANNER_FROM_BOT in page._caption.text()
 
 
-def test_scanner_page_has_progress_bar(qtbot: QtBot, ctx: DeviceContext) -> None:
+def test_scanner_page_has_no_inline_progress_bar(qtbot: QtBot, ctx: DeviceContext) -> None:
     page = ScannerPage(ctx)
     qtbot.addWidget(page)
-    assert page._bar.minimum() == 0
-    assert page._bar.maximum() == 100
-    assert page._bar.value() == 0
+    assert not hasattr(page, "_bar")
+    assert S.SCAN_PROGRESS_CURRENT_PAIR
+    assert S.SCAN_PROGRESS_PAIRS_REMAINING
 
 
 def test_scanner_page_has_pwa_filter_strip(
@@ -191,6 +193,69 @@ def test_scanner_page_has_pwa_filter_strip(
     assert page._filters.share.objectName() == "shareButton"
     assert page._filters.share.toolTip() == S.SCANNER_SHARE_TIP
     assert not hasattr(page, "_compare")
+    assert page._filters.auto_scan.isVisibleTo(page)
+    assert page._filters.sauce_pan.isVisibleTo(page)
+
+
+def test_tradfi_desk_hides_crypto_actions_and_gates_autoscan(
+    qtbot: QtBot,
+    ctx: DeviceContext,
+) -> None:
+    from trendalgo.device.lane_prefs import LanePrefs, save_lane_prefs
+
+    save_lane_prefs(
+        ctx.root,
+        LanePrefs(auto_scan_crypto=True, auto_scan_tradfi=False, auto_scan_forex=False),
+    )
+    page = ScannerPage(ctx, lane="tradfi")
+    qtbot.addWidget(page)
+    assert page._table_title == S.SCANNER_TITLE_TRADFI
+    assert page._filters.sauce_pan.isHidden()
+    assert page._filters.pool_watch.isHidden()
+    assert page._filters.auto_scan.isChecked() is False
+    page._schedule_autoscan(reset=True)
+    assert not page._auto_timer.isActive()
+    page._filters.auto_scan.setChecked(True)
+    page._schedule_autoscan(reset=True)
+    assert page._auto_timer.isActive()
+    page.stop_autoscan()
+
+
+def test_forex_desk_title_and_auto_scan_default_off(
+    qtbot: QtBot,
+    ctx: DeviceContext,
+) -> None:
+    page = ScannerPage(ctx, lane="forex")
+    qtbot.addWidget(page)
+    assert page._table_title == S.SCANNER_TITLE_FOREX
+    assert page._filters.auto_scan.isChecked() is False
+    page.stop_autoscan()
+
+
+def test_scanner_settings_button_opens_dialog(
+    qtbot: QtBot,
+    ctx: DeviceContext,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QPushButton
+
+    calls: list[tuple[object, ...]] = []
+
+    def _fake_open(root: Path, *, n_coins: int = 1, parent: object = None, **_kw: object) -> bool:
+        calls.append((root, n_coins, parent))
+        return False
+
+    monkeypatch.setattr(
+        "trendalgo.device.views.scan_bt_settings_dialog.open_scan_bt_settings",
+        _fake_open,
+    )
+    page = ScannerPage(ctx)
+    qtbot.addWidget(page)
+    assert isinstance(page._filters.settings, QPushButton)
+    qtbot.mouseClick(page._filters.settings, Qt.MouseButton.LeftButton)
+    assert len(calls) == 1
+    assert calls[0][0] == ctx.root
 
 
 def test_filter_bar_keeps_zero_gains_as_integers(qtbot: QtBot) -> None:

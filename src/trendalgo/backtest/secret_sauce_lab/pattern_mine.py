@@ -14,7 +14,7 @@ from trendalgo.backtest.secret_sauce_lab.label_rules import pick_rules_at_labels
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees
 
 _MAX_PAIRS = 16
-_TIME_BUDGET_S = 1.2
+_TIME_BUDGET_S = float("inf")  # Sauce uncapped — seed k bounds work
 _MAX_ENTRY_FRAC = 0.55
 _MAX_EXIT_FRAC = 0.80
 _MAX_TRADES = 200
@@ -27,11 +27,16 @@ def pattern_seed_pairs(
     exit_indexes: list[int],
     strategy_id: str = "GEN_SECRET_1",
     family: str = "oracle_pattern",
-    time_budget_s: float = _TIME_BUDGET_S,
+    time_budget_s: float | None = _TIME_BUDGET_S,
     fee: Any | None = None,
     stake_usd: float | None = None,
 ) -> list[tuple[CompositeRule, CompositeRule, str]]:
     """Fit causal entry/exit rules at labeled bars; fee-rank when fee+stake given."""
+    import math
+
+    budget = float("inf") if time_budget_s is None else float(time_budget_s)
+    if not math.isfinite(budget):
+        budget = float("inf")
     # Expand ±1 bar so fit is robust to single-bar pivot jitter.
     entries = _expand(entry_indexes, len(df))
     exits = _expand(exit_indexes, len(df))
@@ -46,7 +51,7 @@ def pattern_seed_pairs(
     entry_rules = pick_rules_at_labels(
         feats, entries, keys, strategy_id=strategy_id, side="entry", k=8
     )
-    if time.perf_counter() - t0 > time_budget_s:
+    if time.perf_counter() - t0 > budget:
         entry_rules = entry_rules[:4]
     exit_rules = pick_rules_at_labels(feats, exits, keys, strategy_id=strategy_id, side="exit", k=8)
     if not entry_rules or not exit_rules:
@@ -57,7 +62,7 @@ def pattern_seed_pairs(
     n = len(df)
     for er in entry_rules:
         for xr in exit_rules:
-            if time.perf_counter() - t0 > time_budget_s:
+            if time.perf_counter() - t0 > budget:
                 break
             if use_fee:
                 assert fee is not None and stake_usd is not None
@@ -81,7 +86,7 @@ def pattern_seed_pairs(
                     continue
                 sc = sc_e + sc_x
             scored.append((sc, er, xr))
-        if time.perf_counter() - t0 > time_budget_s:
+        if time.perf_counter() - t0 > budget:
             break
     scored.sort(key=lambda t: t[0], reverse=True)
     out: list[tuple[CompositeRule, CompositeRule, str]] = []

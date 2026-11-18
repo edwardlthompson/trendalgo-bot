@@ -319,3 +319,21 @@ def test_signed_telegram_sync_stores_secrets(tmp_path: Path, store: HostStore) -
     assert response.json() == {"saved": True}
     assert load_creds(tmp_path) == ("tok-abc", "42")
     assert load_trade_alerts(tmp_path) is True
+
+
+def test_signed_grokbot_test_is_disabled_by_default(tmp_path: Path, store: HostStore) -> None:
+    app = create_botd_app(
+        store=store,
+        host_owner_id=OWNER,
+        nonce_db=tmp_path / "nonces.db",
+        secret_provider=lambda: SECRET,
+        clock=lambda: NOW,
+        limiter=FixedWindowLimiter(limit=1000),
+        secrets_root=tmp_path,
+    )
+    client = TestClient(app)
+    path = "/api/v1/notifications/grokbot/test"
+    body = b"{}"
+    response = client.post(path, content=body, headers=_signed("POST", path, body))
+    assert response.status_code == 200
+    assert response.json()["sent"] is False

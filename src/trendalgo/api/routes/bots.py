@@ -22,6 +22,8 @@ from trendalgo.constants.timeframes import (
     normalize_tv_interval,
 )
 from trendalgo.market.warmup import cache_status_for_bots, get_warmup_runner
+from trendalgo.risk.config import RiskLimits, default_risk_limits
+from trendalgo.risk.manager import RiskManager, StakeRejected
 from trendalgo.ta.cache import get_ta_signal_cache
 from trendalgo.ta.catalog import all_ta_names
 from trendalgo.ta.param_specs import ta_param_specs
@@ -79,13 +81,17 @@ def _data_dir() -> Path:
     return Path(os.environ.get("TRENDALGO_DATA_DIR", "data"))
 
 
-def _default_force_amount(pair: str, equity_usd: float) -> float:
-    base = pair.split("/")[0].upper()
-    if base == "BTC":
-        return 0.001
-    if base == "ETH":
-        return 0.01
-    return max(0.001, round(equity_usd / 10_000, 6))
+def force_stake_usd(
+    equity_usd: float,
+    proposed: float | None,
+    *,
+    limits: RiskLimits | None = None,
+) -> float:
+    """RISK-08: force-trade size goes through compute_stake (USD notional)."""
+    caps = limits or default_risk_limits()
+    mgr = RiskManager(caps, wallet_usd=float(equity_usd))
+    ask = float(proposed) if proposed is not None else caps.max_stake_usd
+    return mgr.compute_stake(ask)
 
 
 def _enrich_bots(state: Any, bots: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -422,7 +428,10 @@ def force_bot_trade(bot_id: int, body: ForceTradeBody, request: Request) -> dict
     bot = state.bot_orchestrator.get_bot(bot_id)
     if bot is None:
         raise HTTPException(status_code=404, detail="bot not found")
-    amount = body.amount or _default_force_amount(str(bot["pair"]), float(bot["equity_usd"]))
+    try:
+        amount = force_stake_usd(float(bot["equity_usd"]), body.amount)
+    except StakeRejected as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     try:
         result = route_order(
             str(bot["exchange"]),

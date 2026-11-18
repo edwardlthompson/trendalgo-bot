@@ -58,12 +58,12 @@ def test_ticker_at_the_limit_passes() -> None:
 
 
 def test_ticker_older_than_limit_is_rejected() -> None:
-    with pytest.raises(OrderSizingError, match="from the local clock"):
+    with pytest.raises(OrderSizingError, match="stale|local clock"):
         check_ticker_fresh(1_000_000 - 31_000, 1_000_000)
 
 
 def test_ticker_from_the_future_beyond_limit_is_rejected() -> None:
-    with pytest.raises(OrderSizingError, match="from the local clock"):
+    with pytest.raises(OrderSizingError, match="skew|local clock"):
         check_ticker_fresh(1_000_000 + 31_000, 1_000_000)
 
 

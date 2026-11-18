@@ -1,1 +1,1 @@
-"""Database adapters beyond SQLite MVP."""
+"""SQLite helpers (Postgres dual-write removed in HOUSE-08)."""

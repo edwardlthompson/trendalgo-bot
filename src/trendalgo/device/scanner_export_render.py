@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from trendalgo.device.market_context_export_gfx import build_buy_picks_gfx_band
 from trendalgo.device.theme import active_mode
 from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.scanner_table import COL_RESULTS, COL_WATCH, fill_lts_table
@@ -30,6 +32,9 @@ def build_scanner_export_panel(
     heatmap: bool,
     sort_key: str,
     sort_dir: int,
+    include_market_context: bool = True,
+    icon_root: Path | None = None,
+    lane: str = "crypto",
 ) -> QWidget:
     theme = colors_for(active_mode())
     panel = QWidget()
@@ -50,6 +55,20 @@ def build_scanner_export_panel(
     filt.setObjectName("hint")
     filt.setWordWrap(True)
     layout.addWidget(filt)
+    if include_market_context:
+        picks_band = build_buy_picks_gfx_band(coins)
+        if picks_band is not None:
+            layout.addWidget(picks_band)
+    if icon_root is not None and (lane or "").strip().lower() == "tradfi":
+        from trendalgo.device.lane_icons import prefetch_equity_logo
+
+        for coin in coins:
+            sym = str(coin.get("symbol") or "").strip()
+            if sym:
+                try:
+                    prefetch_equity_logo(icon_root, sym)
+                except Exception:  # noqa: BLE001 — export must not fail on one logo
+                    continue
     table = QTableWidget()
     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
     table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -64,23 +83,28 @@ def build_scanner_export_panel(
         sort_dir=sort_dir,
         heatmap=heatmap,
         filter_row=False,
+        icon_root=icon_root,
+        lane=lane,
     )
     for col in _HIDE:
         table.setColumnHidden(col, True)
     table.resizeRowsToContents()
     table.resizeColumnsToContents()
-    # Keep logo readable after resize-to-contents.
     table.setColumnWidth(COL_LOGO, max(table.columnWidth(COL_LOGO), 52))
+    _fit_table(table)
+    layout.addWidget(table)
+    app = QApplication.instance()
+    if app is not None:
+        app.processEvents()
+    panel.setFixedWidth(max(table.width() + 24, panel.sizeHint().width()))
+    panel.adjustSize()
+    return panel
+
+
+def _fit_table(table: QTableWidget) -> None:
     visible = [c for c in range(table.columnCount()) if not table.isColumnHidden(c)]
     width = sum(table.columnWidth(c) for c in visible) + 4
     height = table.horizontalHeader().height() + sum(
         table.rowHeight(r) for r in range(table.rowCount())
     )
     table.setFixedSize(width, height)
-    layout.addWidget(table)
-    app = QApplication.instance()
-    if app is not None:
-        app.processEvents()
-    panel.setFixedWidth(max(width + 24, panel.sizeHint().width()))
-    panel.adjustSize()
-    return panel

@@ -15,7 +15,7 @@ dev = [
     "pip-licenses>=4.5.0",
     "pytest>=8.3.0",
     "pytest-cov>=6.0.0",
-    "ruff>=0.17.1",
+    "ruff>=0.17.5",
     "pyright>=1.1.414",
 ]
 
@@ -56,5 +56,5 @@ typeCheckingMode = "basic"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.17.1",
+    "ruff>=0.17.5",
 ]

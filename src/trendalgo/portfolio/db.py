@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from trendalgo.db.rowid import require_row_id
+from trendalgo.portfolio.migrations import apply_migrations
 from trendalgo.portfolio.schema import PORTFOLIO_SCHEMA
 
 
@@ -56,23 +57,18 @@ class PortfolioStore:
             raise FileNotFoundError(str(self.db_path))
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        # HOUSE-02: WAL + busy_timeout so retune/scheduler writers do not lock forever.
+        conn = sqlite3.connect(self.db_path, timeout=5.0)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA synchronous=NORMAL")
         return conn
 
     def _init_schema(self) -> None:
         with self._connect() as conn:
             conn.executescript(PORTFOLIO_SCHEMA)
-            try:
-                conn.execute(
-                    "ALTER TABLE portfolio_holdings ADD COLUMN cost_basis_usd REAL NOT NULL DEFAULT 0"
-                )
-            except sqlite3.OperationalError:
-                pass
-            try:
-                conn.execute("ALTER TABLE notification_inbox ADD COLUMN delivery_error TEXT")
-            except sqlite3.OperationalError:
-                pass
+            apply_migrations(conn, self.db_path)
             row = conn.execute("SELECT 1 FROM notification_preferences WHERE id = 1").fetchone()
             if row is None:
                 conn.execute(
@@ -95,15 +91,6 @@ class PortfolioStore:
                     """,
                     (_utc_now(),),
                 )
-            for ddl in (
-                "ALTER TABLE performance_goals ADD COLUMN goal_type TEXT NOT NULL DEFAULT 'portfolio_growth'",
-                "ALTER TABLE performance_goals ADD COLUMN horizon_months INTEGER NOT NULL DEFAULT 12",
-                "ALTER TABLE performance_goals ADD COLUMN target_return_pct REAL NOT NULL DEFAULT 0",
-            ):
-                try:
-                    conn.execute(ddl)
-                except sqlite3.OperationalError:
-                    pass
 
     def get_or_create_account(self, exchange: str, label: str) -> int:
         with self._connect() as conn:

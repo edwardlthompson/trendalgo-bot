@@ -13,6 +13,7 @@ Device **Dashboard** (nav label; internal id `portfolio`) is a multi-page snap-t
 - Customize dialog: category sections; checkmarks for modules on any page
 - Calendar: official APIs only (CoinMarketCal `x-api-key`, Coindar `access_token`); keys in Credential Manager; no CryptoCraft scrape
 - Wizard: `CalendarWizardDialog` — W-CAL-0…4 with Test before Save
+- CoinMarketCal **Free** quota (device budget): 3,000 req/UTC month; 1 req/sec; burst 5; upcoming ≤7 days; no historical API. Board paint and timeline dialog are **cache-only**. Refresh = at most `GET /v2/usage` + one batched `GET /v2/events`; skip when `remaining < 50` or cache age &lt; 6h. Qualified/Results **Events** buttons appear only when the cache has coin dates in window.
 
 ## Tests
 
@@ -24,4 +25,5 @@ Device **Dashboard** (nav label; internal id `portfolio`) is a multi-page snap-t
 ```bash
 python -m pytest tests/test_device/test_portfolio_layout_prefs.py tests/test_device/test_calendar_model.py -q
 python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto
+
 ```

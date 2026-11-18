@@ -1,5 +1,6 @@
 """Native walk-forward tests (S17 CM-3)."""
 
+from tests.support.api_client import make_api_client
 from trendalgo.trading.backtest.walk_forward import fixture_candles, run_native_walk_forward
 
 
@@ -13,11 +14,8 @@ def test_native_walk_forward_complete() -> None:
 
 
 def test_native_walk_forward_api() -> None:
-    from fastapi.testclient import TestClient
 
-    from trendalgo.api.app import create_app
-
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.post(
         "/api/v1/research/walk-forward",
         json={"strategy": "grid-trading", "pair": "BTC/USD", "use_native": True},

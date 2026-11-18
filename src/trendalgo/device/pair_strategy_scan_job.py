@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.backtest.heartbeat_tf import needs_1m_base
-from trendalgo.backtest.sim_accel import accel_backend
 from trendalgo.device.pair_scan_partial import clear_partial_rows, write_partial_rows
 from trendalgo.device.pair_scan_progress import clear_progress, write_progress
 from trendalgo.device.pair_strategy_scan import scan_pair_strategies
@@ -19,12 +18,13 @@ from trendalgo.device.scan_bt_prefs import (
 from trendalgo.device.scan_stake import DEFAULT_SCAN_EXCHANGE, DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scan_time_history import TimingSample, record_sample
 from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
+from trendalgo.device.sim_accel_label import catalog_accel_label
 
 
 def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
     """Worker entry: All-TA settings + progress file under the profile.
 
-    Returns ``{"rows": [...], "market_context": dict|None}``.
+    Returns ``{"rows", "market_context", "elapsed_s", "data_source", "cache_age_s"}``.
     """
     clear_progress(root)
     clear_partial_rows(root)
@@ -61,19 +61,27 @@ def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
     )
     total = max(1, len(timeframes) * max(1, len(strat_list)))
     subhour = needs_1m_base(timeframes)
-    write_progress(
-        root,
+
+    def _stamp_progress(payload: dict[str, Any]) -> None:
+        body = dict(payload)
+        body["current_pair"] = text
+        body["pairs_total"] = 1
+        phase = str(body.get("phase") or "")
+        body["pairs_done"] = 1 if phase == "done" else 0
+        write_progress(root, body)
+
+    _stamp_progress(
         {
             "message": (
                 f"Starting All-TA scan for {text} ({len(timeframes)} TFs) · "
                 f"stake=${stake:.0f} · fees={fee.exchange_id} "
-                f"taker={fee.taker_pct * 100:.2f}% · accel={accel_backend()}"
+                f"taker={fee.taker_pct * 100:.2f}% · {catalog_accel_label()}"
                 + (" · 1m base" if subhour else "")
             ),
             "phase": "start",
             "done": 0,
             "total": total,
-        },
+        }
     )
     t0 = time.perf_counter()
     rows, market_context = scan_pair_strategies(
@@ -84,14 +92,16 @@ def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
         stake=stake,
         fee=fee,
         loader=loader,
-        on_progress=lambda payload: write_progress(root, payload),
+        prefs_root=root,
+        on_progress=_stamp_progress,
         on_rows=lambda r: write_partial_rows(root, r),
     )
+    elapsed_s = round(time.perf_counter() - t0, 3)
     try:
         record_sample(
             root,
             TimingSample(
-                elapsed_s=time.perf_counter() - t0,
+                elapsed_s=elapsed_s,
                 n_strategies=len(strat_list),
                 n_timeframes=len(timeframes),
                 had_subhour=subhour,
@@ -100,4 +110,13 @@ def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
         )
     except OSError:
         pass
-    return {"rows": rows, "market_context": market_context}
+    ctx = market_context if isinstance(market_context, dict) else {}
+    data_source = str(ctx.get("data_source") or "kraken_public")
+    cache_age_s = ctx.get("cache_age_s")
+    return {
+        "rows": rows,
+        "market_context": market_context,
+        "elapsed_s": elapsed_s,
+        "data_source": data_source,
+        "cache_age_s": cache_age_s,
+    }

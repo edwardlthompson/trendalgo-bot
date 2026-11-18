@@ -253,7 +253,11 @@ def test_backtest_scan_fills_table_from_mocked_job(
     monkeypatch.setattr(page._pool, "submit", lambda *_a, **_k: _Ready())
     page._pair.setText("BTC/USD")
     page._run.click()
-    qtbot.waitUntil(lambda: page._status.text() == S.BACKTEST_DONE, timeout=5_000)
+    assert page._scan_dialog is not None
+    qtbot.waitUntil(
+        lambda: page._scan_dialog is None and page._status.text().startswith(S.BACKTEST_DONE),
+        timeout=5_000,
+    )
     # Row 0 = column filters; strategies start at 1.
     assert page._table.rowCount() == 4
     assert "RSI" in (page._table.item(1, 0).text() if page._table.item(1, 0) else "")
@@ -271,12 +275,12 @@ def test_cancel_stops_a_pair_scan(
     qtbot.addWidget(page)
     page._pair.setText("BTC/USD")
     page._run.click()
-    assert page._cancel.isEnabled()
     assert not page._run.isEnabled()
-    page._cancel.click()
+    assert page._scan_dialog is not None
+    page._scan_dialog._cancel.click()
     assert page._status.text() == S.BACKTEST_CANCELLED
     assert page._run.isEnabled()
-    assert not page._cancel.isEnabled()
+    assert page._scan_dialog is None
     assert multiprocessing.active_children() == []
 
 

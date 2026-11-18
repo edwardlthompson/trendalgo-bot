@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tests.support.api_client import make_api_client
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.portfolio.onchain import preview_onchain_wallet, sync_onchain_wallet
 from trendalgo.venues.registry import get_venue, list_wallet_venues, load_venue_registry
@@ -54,11 +55,8 @@ def test_unsupported_chain_rejected() -> None:
 
 
 def test_venues_registry_api() -> None:
-    from fastapi.testclient import TestClient
 
-    from trendalgo.api.app import create_app
-
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/platform/venues/registry")
     body = resp.json()
     assert resp.status_code == 200

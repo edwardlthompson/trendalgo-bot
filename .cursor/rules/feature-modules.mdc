@@ -1,5 +1,5 @@
 ---
-description: Vertical-slice features; one row; scoped gates after AGENT steps
+description: Vertical-slice features; one row; scoped checks after AGENT steps
 alwaysApply: true
 ---
 
@@ -9,13 +9,22 @@ alwaysApply: true
 - Thin wiring ≤10 lines in composition roots
 - Sequential before Parallel; venue `[LOCAL]`/`[CLOUD]` + `— scope:`
 
-After every AGENT step:
+After every AGENT step (scoped only — **do not** run full `watch-agent-gates` / full-suite pytest):
+
+```bash
+# Lint/format/type on touched paths, then pytest for the feature tests only, e.g.:
+uv run ruff check <touched> && uv run ruff format --check <touched>
+uv run mypy <touched-logic>   # when types changed
+uv run pytest <feature-tests> -q --tb=short --no-cov
+```
+
+Exit 1 on scoped failures → autofix in scope (3-strike). Do not hang on full multi-stack feature-gate mid-slice.
+
+Full local gates only when the human asks (`/gates`, `/fix`) or at ship/prerelease:
 
 ```bash
 python3 scripts/agent-run.py watch-agent-gates --once --autofix --scope auto
 ```
-
-Do not re-run full `validate-bootstrap` mid-slice if watch-agent-gates already passed. Exit 1 → autofix in scope (3-strike). Exit 2 → halt.
 
 After last `[AGENT]`/`[AUTO]` in the sprint is ✅:
 

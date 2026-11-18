@@ -9,7 +9,9 @@ import pytest
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees, trade_hold_regions
 from trendalgo.device.scanner_all_ta_prune import DEEPEN_TSL_PCTS
 from trendalgo.device.scanner_chart_trades import (
+    _normalize_tf,
     _tsl_fraction,
+    attach_path_envelopes,
     frame_from_closes,
     overlay_net_pct,
     regions_for_strategy,
@@ -49,6 +51,7 @@ def test_collect_trades_and_regions() -> None:
         stake_usd=1000.0,
         fee=fee,
         collect_trades=True,
+        fill_offset=0,  # region helper parity — not next-bar fill semantics
     )
     assert stats["trades"] == 1
     trades = stats["trade_list"]
@@ -137,6 +140,7 @@ def test_signal_only_tsl_does_not_clip_like_one_percent() -> None:
         fee=fee,
         trailing_stop_pct=signal_tsl,
         collect_trades=True,
+        fill_offset=0,
     )
     clipped = simulate_long_with_fees(
         df,
@@ -146,6 +150,7 @@ def test_signal_only_tsl_does_not_clip_like_one_percent() -> None:
         fee=fee,
         trailing_stop_pct=0.01,
         collect_trades=True,
+        fill_offset=0,
     )
     assert signal["trades"] == 1
     assert clipped["trades"] == 1
@@ -160,6 +165,15 @@ def test_signal_only_tsl_does_not_clip_like_one_percent() -> None:
 def test_overlay_net_pct_sums_trades() -> None:
     assert overlay_net_pct([{"pnl_pct": 10.0}, {"pnl_pct": -2.5}]) == 7.5
     assert overlay_net_pct([]) is None
+
+
+def test_overlay_net_pct_prefers_fee_aware_net_pnl() -> None:
+    # Gross pnl_pct would sum to 10; fee-aware net_pnl/stake is 4.8.
+    regions = [
+        {"pnl_pct": 6.0, "net_pnl": 30.0},
+        {"pnl_pct": 4.0, "net_pnl": 18.0},
+    ]
+    assert overlay_net_pct(regions, stake_usd=1000.0) == 4.8
 
 
 def _ohlcv(n: int = 40) -> pd.DataFrame:
@@ -195,6 +209,82 @@ def test_regions_from_oracle_swings_labels_and_times() -> None:
     assert regions[0]["exit_time"]
     assert regions[0]["label"].startswith("+")
     assert regions[0]["profitable"] is True
+
+
+def test_oracle_swings_keep_trough_peak_prices_not_closes() -> None:
+    """Oracle enters at bar low / exits at bar high — overlays must not rewrite to close."""
+    idx = pd.date_range("2026-10-01", periods=40, freq="h", tz="UTC")
+    close = pd.Series(np.linspace(80_000.0, 82_000.0, 40), index=idx)
+    df = pd.DataFrame(
+        {
+            "open": close,
+            "high": close + 800.0,
+            "low": close - 800.0,
+            "close": close,
+            "volume": 1.0,
+        },
+        index=idx,
+    )
+    entry_i, exit_i = 8, 25
+    swings = [
+        {
+            "entry_index": entry_i,
+            "exit_index": exit_i,
+            "entry_time": str(idx[entry_i]),
+            "exit_time": str(idx[exit_i]),
+            "entry_price": float(df["low"].iloc[entry_i]),
+            "exit_price": float(df["high"].iloc[exit_i]),
+            "pnl_pct": 3.5,
+            "net_pnl": 35.0,
+        }
+    ]
+    regions = regions_from_oracle_swings(df, swings)
+    assert len(regions) == 1
+    assert regions[0]["entry_price"] == pytest.approx(float(df["low"].iloc[entry_i]))
+    assert regions[0]["exit_price"] == pytest.approx(float(df["high"].iloc[exit_i]))
+    # Must not silently substitute closes (that floats bands off the swing extremes).
+    assert regions[0]["entry_price"] != pytest.approx(float(df["close"].iloc[entry_i]))
+
+
+def test_oracle_swings_remap_indexes_by_timestamp_on_shifted_frame() -> None:
+    """When the chart frame rolls forward, keep swing prices — do not use stale indexes."""
+    idx = pd.date_range("2026-10-01", periods=50, freq="h", tz="UTC")
+    close = pd.Series(np.linspace(80_000.0, 85_000.0, 50), index=idx)
+    scan = pd.DataFrame(
+        {
+            "open": close,
+            "high": close + 500.0,
+            "low": close - 500.0,
+            "close": close,
+            "volume": 1.0,
+        },
+        index=idx,
+    )
+    entry_i, exit_i = 10, 30
+    entry_px = float(scan["low"].iloc[entry_i])
+    exit_px = float(scan["high"].iloc[exit_i])
+    swings = [
+        {
+            "entry_index": entry_i,
+            "exit_index": exit_i,
+            "entry_time": idx[entry_i].isoformat(),
+            "exit_time": idx[exit_i].isoformat(),
+            "entry_price": entry_px,
+            "exit_price": exit_px,
+            "pnl_pct": 4.0,
+            "net_pnl": 40.0,
+        }
+    ]
+    # Chart reloads with 5 bars dropped from the left (indexes shift by 5).
+    chart = scan.iloc[5:].copy()
+    assert chart.index[entry_i] != idx[entry_i]
+    regions = regions_from_oracle_swings(chart, swings)
+    assert len(regions) == 1
+    assert regions[0]["entry_price"] == pytest.approx(entry_px)
+    assert regions[0]["exit_price"] == pytest.approx(exit_px)
+    # Stale index into the shifted frame would pull the wrong close (~shifted series).
+    wrong_close = float(chart["close"].iloc[entry_i])
+    assert regions[0]["entry_price"] != pytest.approx(wrong_close)
 
 
 def test_regions_for_sauce_ta_uses_coincidence(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -291,3 +381,49 @@ def test_top_strategy_rows_includes_both_sauces() -> None:
     assert names[0] == "Secret Sauce Lab"
     assert "Secret Sauce TA" in names
     assert names[-1] == "Oracle max"
+
+
+def test_normalize_tf_keeps_8h() -> None:
+    assert _normalize_tf("8h") == "8h"
+    assert _normalize_tf("8H") == "8h"
+    assert _normalize_tf("480") == "8h"
+    assert _normalize_tf("1h") == "1h"
+    assert _normalize_tf("15m") == "15m"
+    assert _normalize_tf("nope") == "1h"
+
+
+def test_oracle_path_envelope_spans_hold_bars() -> None:
+    df = _ohlcv(30)
+    swings = [
+        {
+            "entry_index": 5,
+            "exit_index": 12,
+            "entry_price": 104.0,
+            "exit_price": 113.0,
+            "pnl_pct": 8.0,
+            "net_pnl": 80.0,
+        }
+    ]
+    regions = regions_from_oracle_swings(df, swings)
+    assert len(regions) == 1
+    env = regions[0].get("path_envelope")
+    assert isinstance(env, list)
+    assert len(env) == 8  # bars 5..12 inclusive
+    assert regions[0]["entry_time"] == str(df.index[5]) or "2024" in str(regions[0]["entry_time"])
+
+
+def test_attach_path_envelopes_requires_indexes() -> None:
+    df = _ohlcv(20)
+    bare = [{"entry_time": "x", "exit_time": "y", "entry_price": 1.0, "exit_price": 2.0}]
+    out = attach_path_envelopes(df, bare)
+    assert "path_envelope" not in out[0]
+    with_idx = [
+        {
+            "entry_index": 2,
+            "exit_index": 6,
+            "entry_price": 1.0,
+            "exit_price": 2.0,
+        }
+    ]
+    filled = attach_path_envelopes(df, with_idx)
+    assert len(filled[0]["path_envelope"]) == 5

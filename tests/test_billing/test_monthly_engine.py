@@ -34,10 +34,10 @@ def test_closed_month_is_finalized_once_and_a_rerun_changes_nothing(tmp_path) ->
     _add(journal, "f2", -40.0, "2025-02-11T12:00:00+00:00")
     first = process_journal_trades(billing, journal, risk, period="2025-02")
     assert [f["period"] for f in first["finalized"]] == ["2025-02"]
-    assert first["rollup"]["license_fee_usd"] == 3.0  # net $60 at 5%
+    assert first["rollup"]["license_fee_usd"] == 5.0  # net $60 at 5% → $3 raw, $5 floor
     again = process_journal_trades(billing, journal, risk, period="2025-02")
     assert again["finalized"] == []
-    assert again["rollup"]["license_fee_usd"] == 3.0
+    assert again["rollup"]["license_fee_usd"] == 5.0
     assert billing.get_carry_forward_credit() == 0.0
     assert billing.list_closed_periods() == {"2025-02": 0.0}
 
@@ -50,7 +50,7 @@ def test_a_loss_is_recovered_before_the_next_closed_month_pays(tmp_path) -> None
     result = process_journal_trades(billing, journal, risk, period="2025-03")
     assert result["rollup"]["license_fee_usd"] == 0.0
     assert billing.get_statement("2025-03")["carry_forward_credit_usd"] == 50.0
-    assert billing.get_statement("2025-04")["license_fee_usd"] == 2.5
+    assert billing.get_statement("2025-04")["license_fee_usd"] == 5.0  # $2.50 raw → $5 floor
     assert billing.list_closed_periods() == {
         "2025-02": 200.0,
         "2025-03": 50.0,

@@ -52,7 +52,7 @@ Status markers: 🔲 open · ✅ done · ❌ blocked (see `BUILD_PLAN.md` legend
 - 🔲 `[AGENT]` Feature container scaffolded (no unrelated edits)
 - 🔲 `[AGENT]` Unit tests for pure logic (or written fallback command in the feature spec)
 - 🔲 `[AGENT]` View wired to [`ux-ui-guidelines.md`](ux-ui-guidelines.md) (empty/error/loading, one primary CTA, i18n, a11y); composition root (`appBootstrap.ts` / `GoldenPathApp.kt`) diff ≤10 lines
-- 🔲 `[AUTO]` `bash scripts/watch-agent-gates.sh --once --autofix --scope auto`
+- 🔲 `[AUTO]` Scoped lint/type/pytest on the feature paths (not full `watch-agent-gates` mid-slice)
 - 🔲 `[AUTO]` After the last row is ✅: `python3 scripts/agent-run.py smoke-sprint --require` (every ✅ item; startup + load order; no crashes)
 - 🔲 `[HUMAN]` Optional product smoke; agents do not wait on this to start the next feature if sprint smoke passed
 
@@ -61,11 +61,11 @@ Status markers: 🔲 open · ✅ done · ❌ blocked (see `BUILD_PLAN.md` legend
 Agents may **auto-fix** lint, format, type, and test failures within feature scope without human approval until **3-strike** on the same step. `git push` still requires human approval.
 
 ```bash
-# After each AGENT BUILD_PLAN step (`/build` / `/feature` / `/fix` use --scope auto)
-bash scripts/watch-agent-gates.sh --once --autofix --scope auto
+# After each AGENT BUILD_PLAN step — scoped only (touched paths + feature tests)
+uv run ruff check <touched> && uv run pytest <feature-tests> -q --tb=short --no-cov
 
-# Extended session loop
-bash scripts/watch-agent-gates.sh --interval 60 --max-attempts 10 --autofix --scope auto
+# Full local multi-stack gates — only /gates, /fix, ship/prerelease, or human ask
+bash scripts/watch-agent-gates.sh --once --autofix --scope auto
 
 # Read progress
 bash scripts/agent-progress.sh status --json

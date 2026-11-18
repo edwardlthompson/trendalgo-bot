@@ -8,7 +8,8 @@ from trendalgo.risk.manager import RiskManager
 def metrics_summary(
     manager: RiskManager, open_exposure_usd: float = 0.0
 ) -> dict[str, float | bool | str]:
-    equity = manager.wallet_usd + manager.state.daily_pnl_usd
+    # RISK-02: equity is wallet only (already balance+open).
+    equity = manager.wallet_usd
     peak = manager.state.peak_equity_usd or equity
     drawdown_pct = round((peak - equity) / peak, 4) if peak > 0 else 0.0
     can_trade, reason = manager.can_open_trade()

@@ -6,14 +6,11 @@ from typing import Any
 
 
 def compute_coin_health(coin: dict[str, Any]) -> float:
-    """Blend uniformity, 7d gain, volume acceleration, and risk into a 0–100 score."""
-    uni = _clamp(_as_float(coin.get("uniformity_score")), 0.0, 100.0)
-    if uni is None:
-        uni = 50.0
+    """Blend 7d gain, volume acceleration, and risk into a 0–100 score."""
     gain7 = _pct_to_score(_gain7(coin))
     vol = _pct_to_score(_as_float(coin.get("volume_acceleration_pct")))
     risk = _risk_score(coin)
-    score = 0.45 * uni + 0.25 * gain7 + 0.15 * vol + 0.15 * risk
+    score = 0.45 * gain7 + 0.30 * vol + 0.25 * risk
     clamped = _clamp(score, 0.0, 100.0)
     return round(0.0 if clamped is None else clamped, 2)
 

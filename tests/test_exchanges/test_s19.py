@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tests.support.api_client import make_api_client
 from trendalgo.exchanges.registry import (
     get_entry,
     list_trading_exchanges,
@@ -46,11 +47,8 @@ def test_multi_venue_arbitrage_registry_driven() -> None:
 
 
 def test_trading_arbitrage_signals_api() -> None:
-    from fastapi.testclient import TestClient
 
-    from trendalgo.api.app import create_app
-
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/trading/arbitrage/signals")
     body = resp.json()
     assert resp.status_code == 200
@@ -61,11 +59,8 @@ def test_trading_arbitrage_signals_api() -> None:
 
 
 def test_runner_status_phase2_api() -> None:
-    from fastapi.testclient import TestClient
 
-    from trendalgo.api.app import create_app
-
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/trading/runner/status")
     body = resp.json()
     assert body["worldwide_trading_phase"] == 2

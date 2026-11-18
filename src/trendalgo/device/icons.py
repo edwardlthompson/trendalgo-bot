@@ -26,6 +26,10 @@ NAV_GLYPHS: dict[str, str] = {
         '<circle cx="9.5" cy="13.5" r="1"/><circle cx="14.5" cy="13.5" r="1"/>'
     ),
     "scanner": '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+    "tradfi": ('<path d="M4 18V8l4 3 4-6 4 4 4-2v11z"/><path d="M4 18h16"/>'),
+    "forex": (
+        '<circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8c2 1.5 2 6 0 8M12 8c-2 1.5-2 6 0 8"/>'
+    ),
     "backtest": '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/>',
     "plan": (
         '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/>'

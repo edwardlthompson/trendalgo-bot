@@ -44,13 +44,13 @@ def test_failures_halt_at_the_limit(tmp_path: Path) -> None:
     assert not journal.is_halted("gemini")
 
 
-def test_success_resets_the_count(tmp_path: Path) -> None:
+def test_success_does_not_clear_the_failure_window(tmp_path: Path) -> None:
     journal = OrderJournal(tmp_path / "journal.db")
     journal.record_failure("kraken", "error")
     journal.record_failure("kraken", "error")
     journal.record_success("kraken")
     journal.record_failure("kraken", "error")
-    assert not journal.is_halted("kraken")
+    assert journal.is_halted("kraken")
 
 
 def test_reset_clears_the_halt(tmp_path: Path) -> None:

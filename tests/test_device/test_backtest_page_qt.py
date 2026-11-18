@@ -27,6 +27,10 @@ def test_backtest_columns_heatmap_and_asterisk(
     assert headers == list(S.BACKTEST_RESULT_HEADERS)
     assert page._heatmap.text() == S.SCANNER_COLOR_RANKS
     assert not page._heatmap.isChecked()
+    assert not page._heatmap.isVisible()
+    assert not page._perfect.isVisible()
+    assert page._status_btn.text() == S.SCANNER_STATUS
+    assert page._derive.text() == S.BACKTEST_DERIVE_RULE
     page._rows = [
         {
             "indicator": "RSI",

@@ -43,11 +43,24 @@ class TelegramCommands:
             return "Commands: status, pause. Resume and breaker reset are host-only."
         return "Unknown command — try: status, pause"
 
-    def send_message(self, text: str) -> bool:
+    def send_message(
+        self,
+        text: str,
+        *,
+        parse_mode: str | None = None,
+        reply_markup: str | dict[str, object] | None = None,
+    ) -> bool:
         if not self.enabled or not self.token or not self.chat_id:
             return False
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
-        data = parse.urlencode({"chat_id": self.chat_id, "text": text}).encode()
+        fields: dict[str, str] = {"chat_id": self.chat_id, "text": text}
+        if parse_mode:
+            fields["parse_mode"] = parse_mode
+        if reply_markup is not None:
+            fields["reply_markup"] = (
+                reply_markup if isinstance(reply_markup, str) else json.dumps(reply_markup)
+            )
+        data = parse.urlencode(fields).encode()
         try:
             req = request.Request(url, data=data, method="POST")
             with request.urlopen(req, timeout=15) as resp:
@@ -55,16 +68,37 @@ class TelegramCommands:
         except (error.URLError, TimeoutError, OSError):
             return False
 
-    def send_photo(self, png: bytes, caption: str = "") -> bool:
+    def send_photo(
+        self,
+        png: bytes,
+        caption: str = "",
+        *,
+        parse_mode: str | None = None,
+        reply_markup: str | dict[str, object] | None = None,
+    ) -> bool:
         """Multipart sendPhoto. Falls back to send_message when png is empty."""
         if not self.enabled or not self.token or not self.chat_id:
             return False
         if not png:
-            return self.send_message(caption or "(chart unavailable)")
+            return self.send_message(
+                caption or "(chart unavailable)",
+                parse_mode=parse_mode,
+                reply_markup=reply_markup,
+            )
         boundary = "----TrendAlgoBoundary7MA4YWxkTrZu0gW"
         url = f"https://api.telegram.org/bot{self.token}/sendPhoto"
+        fields: list[tuple[str, str]] = [("chat_id", self.chat_id), ("caption", caption[:1024])]
+        if parse_mode:
+            fields.append(("parse_mode", parse_mode))
+        if reply_markup is not None:
+            fields.append(
+                (
+                    "reply_markup",
+                    reply_markup if isinstance(reply_markup, str) else json.dumps(reply_markup),
+                )
+            )
         parts: list[bytes] = []
-        for name, value in (("chat_id", self.chat_id), ("caption", caption[:1024])):
+        for name, value in fields:
             parts.append(
                 (
                     f"--{boundary}\r\n"
@@ -92,7 +126,11 @@ class TelegramCommands:
             with request.urlopen(req, timeout=30) as resp:
                 return int(resp.status) == 200
         except (error.URLError, TimeoutError, OSError):
-            return self.send_message(caption) if caption else False
+            return (
+                self.send_message(caption, parse_mode=parse_mode, reply_markup=reply_markup)
+                if caption
+                else False
+            )
 
     def api_url(self, method: str) -> str | None:
         if not self.token:

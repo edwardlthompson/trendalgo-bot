@@ -55,3 +55,7 @@ class MacdKraken1hStrategy(BaseNativeStrategy):
         row = df.iloc[-1]
         prev = df.iloc[-2]
         return bool(prev["macd"] >= prev["macd_signal"] and row["macd"] < row["macd_signal"])
+
+    def explain_exit(self, ctx: StrategyContext, position: Position) -> str:
+        del ctx, position
+        return "MACD cross down"

@@ -1,6 +1,6 @@
 # Design Guide
 
-> Cross-stack visual contract for Golden Path UI (tokens, Settings-only chrome, i18n paths). Read after your active `modules/{stack}/MODULE.md`. **Quality bar for any screen you add:** [`ux-ui-guidelines.md`](ux-ui-guidelines.md) (construction law; `/ux-review` uses the same checklist). For website folder roles and GitHub Pages hosting, see [`docs/WEB_PROJECT_LAYOUT.md`](WEB_PROJECT_LAYOUT.md).
+> Cross-stack visual contract for Golden Path UI (tokens, Settings-only chrome, i18n paths). Read after your active `modules/{stack}/MODULE.md`. **Quality bar for any screen you add:** [`ux-ui-guidelines.md`](ux-ui-guidelines.md) (construction law; `/ux-review` uses the same checklist). Primary product UI is the PySide6 device app under `src/trendalgo/device/`.
 
 ## Principles
 

@@ -19,7 +19,7 @@ def test_daily_loss_cap() -> None:
 def test_circuit_breaker() -> None:
     mgr = RiskManager(RiskLimits(circuit_breaker_drawdown_pct=0.10), wallet_usd=1000)
     mgr.state.peak_equity_usd = 1000
-    mgr.record_pnl(-150)
+    mgr.set_equity(850.0)
     assert mgr.state.circuit_breaker_active is True
     assert mgr.can_open_trade()[0] is False
 

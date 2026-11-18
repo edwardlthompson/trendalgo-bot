@@ -63,6 +63,21 @@ def coin_in_watchlist(coin: dict[str, Any], watch: set[str]) -> bool:
     return False
 
 
+def drop_watch_aliases(watch: list[str], key: str) -> list[str]:
+    """Remove ``key`` and legacy aliases (bare symbol / PAIR) for the same coin."""
+    target = parse_watch_key(key)
+    target_sym = target[1] if target else ""
+    out: list[str] = []
+    for item in watch:
+        if item == key:
+            continue
+        parsed = parse_watch_key(item)
+        if target_sym and parsed is not None and parsed[1] == target_sym:
+            continue
+        out.append(item)
+    return out
+
+
 def stamp_exchange(coin: dict[str, Any], exchange_id: str) -> dict[str, Any]:
     eid = exchange_id.strip().lower() or "kraken"
     out = dict(coin)

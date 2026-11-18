@@ -29,7 +29,6 @@ REQUIRED=(
   .cursor/rules/cursor-modes.mdc
   .cursor/rules/local-compute.mdc
   docs/DESIGN_GUIDE.md
-  docs/WEB_PROJECT_LAYOUT.md
   docs/SECURITY_TRIAGE.md
   docs/THREAT_MODEL.md
   docs/PRIVACY.md

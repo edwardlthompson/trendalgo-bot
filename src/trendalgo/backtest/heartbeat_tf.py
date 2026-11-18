@@ -10,6 +10,10 @@ SUBHOUR_TIMEFRAMES: tuple[str, ...] = ("1m", "5m", "15m", "30m")
 ALL_SCAN_TIMEFRAMES: tuple[str, ...] = SUBHOUR_TIMEFRAMES + HEARTBEAT_TIMEFRAMES
 _ALLOWED = frozenset(ALL_SCAN_TIMEFRAMES)
 
+# Sub-hour vs 1h–24h are mutually exclusive bands (different lookbacks).
+# Live Kraken OHLC: ≤720 bars → 1m ≈12h. 30d of 1m needs the OHLCVT archive
+# (not the REST API; keys do not deepen OHLC).
+
 _MINUTE_TF = re.compile(r"^(\d+)m$")
 _HOUR_TF = re.compile(r"^(\d+)h$")
 
@@ -66,3 +70,30 @@ def sort_timeframes(timeframes: tuple[str, ...] | list[str]) -> tuple[str, ...]:
         return (mins if mins is not None else 10_000, tf)
 
     return tuple(sorted(timeframes, key=key))
+
+
+def is_subhour_tf(label: str) -> bool:
+    mins = timeframe_minutes(label)
+    return mins is not None and mins < 60
+
+
+def exclusive_scan_timeframes(timeframes: tuple[str, ...] | list[str]) -> tuple[str, ...]:
+    """One band only: sub-hour (~12h) xor 1h–24h (30d). Mixed prefs keep hours."""
+    ordered = sort_timeframes(normalize_timeframes(list(timeframes)))
+    sub = tuple(tf for tf in ordered if is_subhour_tf(tf))
+    hours = tuple(tf for tf in ordered if not is_subhour_tf(tf))
+    if sub and hours:
+        return hours
+    return ordered
+
+
+def comparable_scan_timeframes(
+    timeframes: tuple[str, ...] | list[str],
+    *,
+    deep_1m: bool = False,
+) -> tuple[str, ...]:
+    """Exclusive bands unless ``deep_1m`` (rolling 30d or quarterly catch-up)."""
+    ordered = sort_timeframes(normalize_timeframes(list(timeframes)))
+    if deep_1m:
+        return ordered
+    return exclusive_scan_timeframes(ordered)

@@ -19,6 +19,7 @@ SECTION_IDS: tuple[str, ...] = (
     "appearance",
     "keys",
     "venue",
+    "lanes",
     "dashboard",
     "privacy",
     "data",
@@ -31,6 +32,7 @@ SECTION_TITLES: dict[str, str] = {
     "appearance": "Appearance",
     "keys": "Exchange API keys",
     "venue": "Venue",
+    "lanes": "Market lanes",
     "dashboard": "Dashboard modules",
     "privacy": "Privacy",
     "data": "Data",
@@ -44,6 +46,7 @@ SECTION_MINS: dict[str, tuple[int, int]] = {
     "appearance": (12, 8),
     "keys": (12, 12),
     "venue": (12, 8),
+    "lanes": (12, 6),
     "dashboard": (12, 8),
     "privacy": (12, 4),
     "data": (8, 4),
@@ -70,7 +73,7 @@ def prefs_path(root: Path) -> Path:
 
 def factory_defaults() -> SettingsLayoutPrefs:
     # Two columns of 24 grid units; stack by section order (heights refined by fit).
-    left = ("connection", "appearance", "keys", "venue")
+    left = ("connection", "appearance", "keys", "venue", "lanes")
     right = ("dashboard", "privacy", "data", "notify", "about")
     placements: list[Placement] = []
     row = 0

@@ -10,7 +10,7 @@ For template-only usage, see upstream [agent-project-bootstrap](https://github.c
 
 ## Which repo mode are you in?
 
-- **Child / product (this repo):** TrendAlgo Bot — Python + Web PWA. Read `docs/CURSOR_MODES.md`, then `AGENTS.md` + `BUILD_PLAN.md` Sequential. Template alignment: [`BOOTSTRAP_ALIGNMENT.md`](BOOTSTRAP_ALIGNMENT.md).
+- **Child / product (this repo):** TrendAlgo Bot — Python + PySide6 device. Read `docs/CURSOR_MODES.md`, then `AGENTS.md` + `BUILD_PLAN.md` Sequential. Template alignment: [`BOOTSTRAP_ALIGNMENT.md`](BOOTSTRAP_ALIGNMENT.md).
 - **Bootstrap:** New project from **Use this template** → read `docs/CURSOR_MODES.md`, then `docs/INITIALIZATION_PROMPT.md`
 - **Reference:** Existing project using this repo as rules reference → read `docs/CURSOR_MODES.md`, then `docs/FOR_AGENTS.md`
 
@@ -18,7 +18,7 @@ For template-only usage, see upstream [agent-project-bootstrap](https://github.c
 
 1. Read this file → pick Cursor mode (`docs/CURSOR_MODES.md`) → open `BUILD_PLAN.md` **Sequential** first
 2. Prefer local compute (`.cursor/rules/local-compute.mdc`) over Cloud Agents
-3. After each `[AGENT]` feature step: `bash scripts/watch-agent-gates.sh --once --autofix`
+3. After each `[AGENT]` feature step: scoped lint/type/pytest on touched paths only (not full `watch-agent-gates`; use `/gates` or `/fix` when you want the full local suite)
 4. Human/legal/go-live gates live in [`HUMAN_BACKLOG.md`](HUMAN_BACKLOG.md) / root pointer — never fake-approve hard gates
 5. Conventional Commits; no push without `[HUMAN]` / `/push` / `/ship`
 
@@ -40,10 +40,9 @@ Type **`/`** in Cursor Agent chat for shortcut workflows. Start with **[docs/hel
 6. `BUILD_PLAN.md` Sequential lane
 7. Active `modules/{stack}/MODULE.md` only
 8. Active `examples/{stack}/` only
-9. `docs/WEB_PROJECT_LAYOUT.md` when stack includes web (folder roles, GitHub Pages)
-10. `docs/DESIGN_GUIDE.md` when stack includes web or Android UI (tokens, themes, i18n)
-11. `branding/BRANDING.md` for logos, official colors, and pitch README generation
-12. `docs/FEATURE_MODULES.md` when implementing Sprint 2+ incremental features (vertical slices)
+9. `docs/DESIGN_GUIDE.md` when stack includes UI (tokens, themes, i18n)
+10. `branding/BRANDING.md` for logos, official colors, and pitch README generation
+11. `docs/FEATURE_MODULES.md` when implementing Sprint 2+ incremental features (vertical slices)
 
 ## Reference Read Order
 

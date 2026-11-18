@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt
@@ -19,6 +20,7 @@ from PySide6.QtWidgets import (
 from trendalgo.device import strings as S
 from trendalgo.device.backtest_results_ui import (
     CREATE_BOT_COL,
+    EVENTS_COL,
     SHOW_CHART_COL,
     heat_for_rows,
     row_cells,
@@ -48,6 +50,7 @@ def populate_results_table(
     filter_row: BacktestColumnFilterRow | None,
     on_create_bot: CreateBotCb | None,
     indicator_label: Callable[..., str],
+    calendar_root: Path | None = None,
 ) -> None:
     """Rewrite data rows; keep filter controls in row 0 when filter_row is set."""
     offset = 1 if filter_row is not None else 0
@@ -112,12 +115,15 @@ def populate_results_table(
                 item.setBackground(QColor(ss_bg))
                 item.setForeground(QColor(ss_fg))
             table.setItem(row_i, c, item)
+        _events_cell(table, row_i, coin=coin, parent=parent, calendar_root=calendar_root)
         _show_chart_cell(table, row_i, row, coin=coin, parent=parent)
+        # Oracle max is SS ceiling only — no Create Bot (same as B&H).
+        hide_create = (is_bh or is_baseline) and not is_sauce
         _create_bot_cell(
             table,
             row_i,
             row,
-            is_bh=is_bh and not is_sauce,
+            is_bh=hide_create,
             pair=pair,
             status=status,
             on_create_bot=on_create_bot,
@@ -129,6 +135,38 @@ def populate_results_table(
 
 def data_row_index(table_row: int, *, has_filter_row: bool) -> int:
     return table_row - (FILTER_ROW + 1) if has_filter_row else table_row
+
+
+def _events_cell(
+    table: QTableWidget,
+    row: int,
+    *,
+    coin: dict[str, Any],
+    parent: QWidget,
+    calendar_root: Path | None,
+) -> None:
+    host = QWidget()
+    layout = QHBoxLayout(host)
+    layout.setContentsMargins(2, 2, 2, 2)
+    from trendalgo.device.calendar.coin_window import has_coin_events
+
+    if calendar_root is None or not has_coin_events(calendar_root, coin):
+        layout.addWidget(QLabel("—"))
+        table.setCellWidget(row, EVENTS_COL, host)
+        return
+    btn = QPushButton(S.COIN_EVENTS_CALENDAR)
+    btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+    btn.setToolTip(S.COIN_EVENTS_CALENDAR_TIP)
+    btn.setAccessibleName(S.COIN_EVENTS_CALENDAR)
+
+    def _open(_checked: bool = False) -> None:
+        from trendalgo.device.views.coin_event_timeline_dialog import open_coin_event_timeline
+
+        open_coin_event_timeline(calendar_root, coin, parent=parent)
+
+    btn.clicked.connect(_open)
+    layout.addWidget(btn)
+    table.setCellWidget(row, EVENTS_COL, host)
 
 
 def _show_chart_cell(

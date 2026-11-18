@@ -160,7 +160,7 @@ def test_filters_ignore_min_gain_30d_for_pipeline(tmp_path: Path) -> None:
     assert settings.min_volume_usd == 1_000_000
 
 
-def test_coins_for_backtest_uses_volume_only_not_column_gains() -> None:
+def test_coins_for_backtest_keeps_full_scan_set() -> None:
     from trendalgo.device.lts_scan_model import coins_for_backtest
 
     coins = [
@@ -188,5 +188,5 @@ def test_coins_for_backtest_uses_volume_only_not_column_gains() -> None:
             "min_volume_usd": 1_000_000,
         },
     )
-    # Column gain floors must not starve pass-1 BT; volume floor still applies.
-    assert [c["symbol"] for c in kept] == ["HOT", "COLD"]
+    # Full scan board is analyzed; Qualified UI filters hide rows later.
+    assert [c["symbol"] for c in kept] == ["HOT", "COLD", "THIN"]

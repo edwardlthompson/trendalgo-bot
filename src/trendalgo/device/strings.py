@@ -5,7 +5,10 @@ NAV_LABEL = "Main navigation"
 NAV_PORTFOLIO = "Dashboard"
 NAV_ALERTS = "Alerts"
 NAV_STATUS = "Bots"
-NAV_SCANNER = "Scanner"
+NAV_SCANNER = "Crypto"
+NAV_CRYPTO = "Crypto"
+NAV_TRADFI = "TradFi"
+NAV_FOREX = "Forex"
 NAV_BACKTESTS = "Backtest"
 NAV_PLAN = "Plan"
 NAV_MORE = "More"
@@ -93,6 +96,18 @@ BILLING_OWNER_BODY = (
     "TrendAlgo stays free for the owner. Statements and on-chain settlement are seams only in v1. "
     "Non-owner billing waits for counsel review (H-006)."
 )
+BILLING_ALPHA_FORMULA = "fee = rate * max(0, net - max(bh_net, 0))"
+BILLING_ALPHA_BODY = (
+    "Alpha Share (default): fee = rate * max(0, net - max(bh_net, 0)). "
+    "Standard Share is opt-in and bills raw equity net with an equity high-water mark. "
+    "Switch class any time; the new class applies next period with no penalty."
+)
+BILLING_PRICING_EXAMPLES = (
+    "bull-beat: net $200, B&H $80 → excess $120 → 5% fee $6.00. "
+    "bull-trail: net $50, B&H $120 → excess $0 → fee $0. "
+    "bear: net $100, B&H -$40 → excess $100 → 5% fee $5.00."
+)
+BILLING_PRICING_SECTION = "Two-class pricing"
 BILLING_SETTLEMENT = "Settle on chain"
 BILLING_SETTLEMENT_HELP = "Disabled until H-006 and non-owner billing rules ship."
 BILLING_GROWTH = "Growth"
@@ -196,11 +211,13 @@ STATUS_LIGHTS_FMT = "Vault: {vault} · Sync: {sync} · Live: {live}"
 SETTINGS_KEYS = "Exchange API keys"
 SETTINGS_KEYS_HELP = (
     "Keys stay in Windows Credential Manager on this PC. They are not part of Save settings. "
-    "Start with query-only. Live trading still needs a separate go-live approval."
+    "Start with query-only. Never enable withdraw/transfer; prefer exchange IP allowlists; "
+    "do not reuse the same key on third-party apps. Live trading needs a separate go-live approval."
 )
 SETTINGS_KEYS_SAVED = "Saved keys"
 SETTINGS_KEYS_EMPTY = "No exchange keys saved yet. Add one below."
 SETTINGS_KEYS_COL_EXCHANGE = "Exchange"
+SETTINGS_KEYS_COL_SUPPORT = "Support"
 SETTINGS_KEYS_COL_SCOPE = "Use"
 SETTINGS_KEYS_COL_STATE = "Status"
 SETTINGS_KEYS_UPDATE = "Update"
@@ -220,6 +237,17 @@ SETTINGS_KEYS_PRIVATE_HELP = "The private secret. Never share it or paste it int
 SETTINGS_KEYS_PRIVATE_PLACEHOLDER = "Paste private API secret"
 SETTINGS_KEYS_TEST = "Test connection"
 SETTINGS_KEYS_SAVE = "Save key"
+SETTINGS_KEYS_SAVE_OK_TITLE = "Keys saved"
+SETTINGS_KEYS_SAVE_OK = (
+    "{brand} API keys are saved in Windows Credential Manager on this PC "
+    "(not in settings.json). Use Test connection to verify them with the exchange."
+)
+SETTINGS_KEYS_SAVE_FAILED = (
+    "Could not save keys for {brand}. {detail} Re-enter both keys and try again."
+)
+SETTINGS_KEYS_SAVE_CONFIRM_FAILED = (
+    "Could not confirm the saved keys for {brand}. Re-enter both keys and try again."
+)
 SETTINGS_KEYS_DELETE = "Remove key"
 SETTINGS_KEYS_DELETE_CONFIRM = "Remove the saved API key for {brand} from this PC?"
 SETTINGS_KEYS_OK_TITLE = "Keys work"
@@ -258,7 +286,7 @@ PORTFOLIO_CHART_TOP10 = "Top 10 index"
 PORTFOLIO_CHART_BUY_HOLD = "BTC buy & hold"
 PORTFOLIO_SYNC_APPLIED = "Host portfolio saved on this PC."
 PORTFOLIO_ACCOUNTS = "Exchange accounts"
-PORTFOLIO_ACCOUNT_HEADERS = ("Exchange", "Label")
+PORTFOLIO_ACCOUNT_HEADERS = ("Exchange", "Support", "Label")
 PORTFOLIO_ACCOUNTS_EMPTY = "No accounts"
 PORTFOLIO_ACCOUNTS_EMPTY_BODY = "Accounts appear after a host sync or local snapshot."
 PORTFOLIO_REBALANCE = "Rebalance suggestions"
@@ -291,21 +319,32 @@ SAVE_FAILED = "Could not save: {reason}. The file on disk was not changed."
 
 SCANNER_TITLE = "Opportunity scanner"
 SCANNER_SUBTITLE = (
-    "Scan the exchanges you select (API keys required). Each venue gets its own rows; "
-    "volume is that venue’s notional, not CoinMarketCap."
+    "Default: Live Kraken (public) — no API keys needed. "
+    "Optional keys unlock multi-venue scan; volume is that venue’s notional, not CoinMarketCap."
 )
 SCANNER_EMPTY_TITLE = "No scan results on this PC yet"
 SCANNER_EMPTY_BODY = (
-    "Add exchange API keys in Settings, check venues in the Exchange list, then press Run scan."
+    "Press Run scan for a free public Kraken opportunity board "
+    "(research desk: public scan is Kraken today). "
+    "API keys unlock keyed multi-venue scan, portfolio sync, and dry-run trading — "
+    "other CEX research depth is still thinner than Kraken."
 )
-SCANNER_EXCHANGES_NEED_KEYS = "Add API keys…"
-SCANNER_EXCHANGES_NONE = "No exchanges"
+SCANNER_EXCHANGES_NEED_KEYS = "Add keys (optional)…"
+SCANNER_EXCHANGES_NONE = "Public Kraken"
 SCANNER_EXCHANGES_ALL = "All keyed"
 SCANNER_EXCHANGES_N = "{n} exchanges"
-SCANNER_NO_EXCHANGES = (
-    "No exchanges selected (or no API keys saved). Open Settings → Exchange API keys, "
-    "then check venues here."
+SCANNER_RESEARCH_HINT = (
+    "Public research desk is Kraken today. Other keyed venues: track + trade; "
+    "deep scan parity coming soon."
 )
+SCANNER_NO_EXCHANGES = (
+    "No keyed venues selected. Run scan still works on public Kraken "
+    "(only venue with full public research desk today). "
+    "Add API keys in Settings for multi-venue keyed scan."
+)
+SCANNER_SOURCE_PUBLIC = "Source: Kraken public"
+SCANNER_SOURCE_KEYED = "Source: Keyed · {venues}"
+SCANNER_SOURCE_BADGE = "Source: {source}"
 SETTINGS_KEYS_RATE = "API calls this minute: {used} / {max}"
 SETTINGS_KEYS_RATE_EMPTY = "API calls this minute: —"
 SETTINGS_LAYOUT_EDIT = "Arrange modules"
@@ -314,15 +353,94 @@ SCAN_BT_SETTINGS = "Settings"
 SCAN_BT_SETTINGS_TIP = "Timeframes, strategies, and scan-time estimate"
 SCAN_BT_SETTINGS_TITLE = "Scan & backtest settings"
 SCAN_BT_SETTINGS_SAVED = "Scan settings saved."
+SCAN_BT_ETA_TITLE = "Estimated scan time"
+SCAN_BT_ETA_HINT = (
+    "Updates as you change timeframes, strategies, or Sauce Pan — "
+    "scaled from recent scan timing for the current pair count."
+)
 SCAN_BT_TF_TITLE = "Timeframes"
 SCAN_BT_TF_SUBHOUR = "Sub-hour"
-SCAN_BT_TF_HOURS = "Hours (1h–24h)"
+SCAN_BT_TF_SUBHOUR_NOTE = (
+    "Cannot mix with 1h–24h until the rolling tip journal reaches 30 days "
+    "(see ready date) or a quarterly OHLCVT covers through today."
+)
+SCAN_BT_TF_HOURS = "Hours (1h–24h) · live 30-day window"
+SCAN_BT_OHLCVT_TITLE = "Kraken OHLCVT (30d 1m)"
+SCAN_BT_OHLCVT_PATH = "Kraken OHLCVT ZIP (e.g. Price Data\\Kraken_OHLCVT_Full.zip)"
+SCAN_BT_OHLCVT_BROWSE = "Browse ZIP…"
+
+SCAN_BT_OHLCVT_DOWNLOAD = "Download full pack (~10GB)"
+SCAN_BT_OHLCVT_TIP = "Record live 1m tip (~12h) into rolling journal"
+SCAN_BT_OHLCVT_READY = (
+    "OHLCVT ready for sub-hour depth. See status for archive end and 30d rolling-ready date."
+)
+SCAN_BT_OHLCVT_MISSING = "No archive configured — sub-hour stays ~12h live (exclusive with 1h–24h)."
+SCAN_BT_OHLCVT_DOWNLOADING = "Downloading OHLCVT full pack…"
+SCAN_BT_OHLCVT_DOWNLOAD_DONE = "Download complete — archive path updated; caches cleared."
+SCAN_BT_OHLCVT_DOWNLOAD_ACK_TITLE = "OHLCVT download complete"
+SCAN_BT_OHLCVT_DOWNLOAD_ACK_BODY = (
+    "Kraken OHLCVT full pack is ready.\n\nSaved to:\n{path}\n\n"
+    "Caches were cleared. If coverage reaches today, sub-hour and 1h–24h may mix; "
+    "otherwise see the rolling 30d ready date in Settings."
+)
+SCAN_BT_ETA_SECTION = "Estimated scan time"
+SCAN_BT_ETA_CRYPTO = "Crypto"
+SCAN_BT_ETA_TRADFI = "TradFi"
+SCAN_BT_ETA_FOREX = "Forex"
+SCAN_BT_ETA_TOTAL = "Grand total (auto-scan on)"
+SCAN_BT_ETA_LANE_NOTE = "TF/FX ≈ bars + All-TA on every pair that passes desk filters."
+SCAN_BT_AUTO_SECTION = "Auto-scan desks"
+SCAN_BT_OHLCVT_SECTION = "Kraken OHLCVT"
+SCAN_BT_TF_SECTION = "Timeframes"
+SCAN_BT_TA_SECTION = "Strategies"
+SCAN_BT_EXTRAS_SECTION = "Market Context & Sauce Pan"
+SCAN_BT_CHROME_SECTION = "Scan schedule & board"
+SCAN_BT_PRIMARY_SECTION = "Primary scan filters"
+SCAN_BT_RESULTS_SECTION = "Results view"
+SCANNER_MORE = "More"
+SCANNER_MORE_TIP = "Secret Sauce, pool watch, refresh prices, and share"
+SCANNER_STATUS = "Scan status"
+SCANNER_STATUS_TIP = "Last scan, ETA, and next auto-scan"
+SCANNER_STATUS_EMPTY = "No scan status yet. Run a scan to fill this."
+SCANNER_STATUS_EVERY = "every {minutes} min"
+SCANNER_STATUS_LAST_TOOK = "Last scan took {elapsed}"
+SCANNER_FILTER_VOL_HINT = "Soft 24h floor. Lower freely when continuous 1h trades is on."
+SCANNER_FILTER_CONTINUOUS_1H = "Require continuous 1h trades"
+SCANNER_FILTER_CONTINUOUS_1H_TIP = (
+    "Drop pairs with any zero-volume hour in the last 24h so thin names cannot starve fills."
+)
+SCANNER_LEAVE_IDLE_1H = "Dropped: zero-volume 1h bar(s) in last 24h (thin / no trades)"
+SCAN_BT_OHLCVT_DOWNLOAD_FAIL_TITLE = "OHLCVT download failed"
+SCAN_BT_OHLCVT_DOWNLOAD_FAIL = "Download failed: {error}"
+
 SCAN_BT_TA_TITLE = "Strategies (All TA)"
 SCAN_BT_TA_SEARCH = "Search strategies…"
 SCAN_BT_SELECT_ALL = "All"
 SCAN_BT_SELECT_NONE = "None"
 SCAN_BT_NO_TFS = "Select at least one timeframe in Settings."
 SCAN_BT_NO_STRATEGIES = "Enable at least one strategy in Settings."
+MARKET_CTX_WITH_SCAN = "Include Market Context with scan"
+MARKET_CTX_WITH_SCAN_TIP = (
+    "Pair-level Signal / Levels / Risk / Structure after candles load "
+    "(~1s per coin). Turn off to skip when you only need strategy tables."
+)
+SAUCE_PAN_TITLE = "Sauce Pan"
+SAUCE_PAN_WITH_SCAN = "Include Secret Sauce with scan"
+SAUCE_PAN_WITH_SCAN_TIP = (
+    "When off, Opportunity still runs catalog + deepen for every BT candidate; "
+    "only the Sauce Lab pass is skipped."
+)
+SAUCE_PAN_TOP_N = "Sauce pairs (top N)"
+SAUCE_PAN_TOP_N_TIP = "Oracle-ranked pairs to cook in Sauce Pan (auto with scan or manual)."
+SAUCE_PAN_RUN = "Run Secret Sauce"
+SAUCE_PAN_RUN_TIP = (
+    "Sauce Pan: cook Secret Sauce on filtered Qualified coins that already have "
+    "backtests (top N only). Does not re-run TA catalog or deepen."
+)
+SAUCE_PAN_BUSY = "Sauce Pan is busy — wait for the current job to finish."
+SAUCE_PAN_EMPTY = "Sauce Pan: no filtered Qualified coins with backtests to cook."
+SAUCE_PAN_DONE = "Sauce Pan finished — Qualified list and Results updated."
+SAUCE_PAN_FAILED = "Sauce Pan failed: {error}"
 SCANNER_NONE_TITLE = "The last scan qualified no pairs"
 SCANNER_NONE_BODY = "Nothing passed the filters in that scan. Press Run scan to check again."
 SCANNER_FILTER_NONE_TITLE = "No coins match these column filters"
@@ -346,13 +464,13 @@ SCANNER_LTS_HEADERS = (
     "30D",
     "Best BT %",
     "Bot vs B&H",
-    "Uniformity",
     "Health",
     "HV 7D",
     "Max DD",
     "Vol Δ%",
     "Exchange",
     "24H Vol",
+    "Events",
     "Backtest",
 )
 # Match retired LTS dashboard column titles (hover help for new users).
@@ -366,15 +484,27 @@ SCANNER_LTS_HEADER_TIPS = (
     "Thirty-day hourly sparkline; % below window high. Orange line is last close.",
     "Highest backtest net percent and winning trailing stop (TSL) when not buy and hold",
     "Edge of the best strategy over buy and hold net % (when strategy beats B&H)",
-    "OHLCV uniformity score",
-    "Composite health score",
+    "Composite health score (gain, volume accel, risk)",
     "Annualized historical volatility from about 7d of hourly closes",
     "Peak-to-trough drawdown over about 30d of hourly closes",
     "Volume acceleration vs baseline window",
     "Listing venue for this row",
     "Approximate 24h USD volume on Kraken spot for this base (all quotes; not CoinMarketCap global)",
+    "Open coin event timeline when the local calendar cache has dates in window",
     "Open optimizer results when a pass-1 backtest is saved for this pair",
 )
+COIN_EVENTS_CALENDAR = "Events"
+COIN_EVENTS_CALENDAR_TIP = (
+    "30-day price with numbered calendar events (cache only; Free CoinMarketCal = next 7 days)."
+)
+COIN_EVENTS_TITLE = "Events — {symbol}"
+COIN_EVENTS_HINT = (
+    "Price is the last 30 days. Markers are from your local calendar cache "
+    "(CoinMarketCal Free: upcoming ≤7 days, no historical API)."
+)
+COIN_EVENTS_ESTIMATED = "estimated date"
+COIN_EVENTS_NONE = "No events in the calendar window for this coin."
+COIN_EVENTS_QUOTA = "Calendar refresh skipped (CoinMarketCal Free quota reserve)."
 SCANNER_COLOR_RANKS = "Color ranks"
 BACKTEST_PERFECT_ONLY = "Perfect Strategies"
 BACKTEST_PERFECT_HELP = (
@@ -402,6 +532,15 @@ SECRET_SAUCE_STUDY_META = (
 SECRET_SAUCE_STUDY_NETS = (
     "Replay Net % — {name} {sauce:.2f}% · B&H {bh:.2f}% · Oracle ceiling {oracle:.2f}%"
 )
+SECRET_SAUCE_STUDY_ORACLE_PROXY = (
+    "Oracle honesty — HL ceiling {ceiling:.2f}% · tradable next-bar close {tradable:.2f}% "
+    "· Sauce {sauce}"
+)
+SECRET_SAUCE_UNAVAILABLE = "Secret Sauce Lab: no fee-honest rule beat catalog peers on this window."
+SECRET_SAUCE_STUDY_REFIT_NET = "Re-fit Net % (study only): {refit:.2f}%"
+SECRET_SAUCE_STUDY_LIVE_NET = "Live realized Net %: {live}"
+SECRET_SAUCE_STUDY_NET_DISCLAIMER = "Re-fit Net % is not a track record."
+SECRET_SAUCE_STUDY_PARAM_DIFF = "{diff}"
 SECRET_SAUCE_REGIME = (
     "Regime — {structural} · vol {volatility} · dir {direction}"
     "{squeeze} · confidence {confidence:.0%}"
@@ -410,12 +549,14 @@ SECRET_SAUCE_REGIME_VOTES = "Votes — ADX {adx} · ER {er} · CHOP {chop} · ri
 SECRET_SAUCE_PENDING = "Secret Sauce Lab is still cooking…"
 SCAN_PHASE_CATALOG = "Catalog TA (parallel)…"
 SCAN_PHASE_SAUCE_COINCIDENCE = "Secret Sauce TA — Oracle×catalog coincidence…"
-SCAN_PHASE_SAUCE_REFINE = "Secret Sauce Lab refine (~12s)…"
+SCAN_PHASE_SAUCE_REFINE = "Secret Sauce Lab refine (uncapped)…"
+SCAN_PHASE_SAUCE_HELPERS = "Secret Sauce helpers + Final Boss…"
+SECRET_SAUCE_FINAL_VOTERS = "Final Boss voters: {voters}"
 SCAN_PHASE_SAUCE_MERGE = "Secret Sauce Lab merge…"
 SECRET_SAUCE_FORMULA = "Formula (Enter + Exit — same rhyme every trade)"
 SECRET_SAUCE_ENTER = "Enter"
 SECRET_SAUCE_EXIT = "Exit"
-SECRET_SAUCE_COVERAGE = "Oracle swing coverage under this formula"
+SECRET_SAUCE_COVERAGE = "Oracle swing coverage (exact bar match — not ±2)"
 SECRET_SAUCE_RESIDUAL = (
     "Residuals — missed entries {n_entry} · missed exits {n_exit}{gap}{features}"
 )
@@ -440,14 +581,16 @@ ALERTS_PREVIEW_WINDOWS = "Windows toast"
 ALERTS_PREVIEW_TELEGRAM = "Telegram message"
 ALERTS_TEST_WINDOWS = "Test Windows"
 ALERTS_TEST_TELEGRAM = "Test Telegram"
+ALERTS_TEST_GROKBOT = "Test Grok Bot"
 ALERTS_TEST_OK = "Test sent."
 ALERTS_TEST_TG_NEED = "Set up Telegram in Settings first (token + chat id)."
 ALERTS_TEST_TG_FAIL = "Telegram test failed. Check token, chat id, and network."
+ALERTS_TEST_GROKBOT_NEED = (
+    "Set GROKBOT_WEBHOOK_URL (https) in .env on this PC or the host, then retry."
+)
+ALERTS_TEST_GROKBOT_FAIL = "Grok Bot test failed. Check the webhook URL, key, and network."
 ALERTS_NOTIFY_ON = "On"
 ALERTS_NOTIFY_OFF = "Off"
-SCANNER_FILTER_SIGNALS = "Signals"
-SCANNER_SIGNALS_3COMMAS = "3Commas"
-SCANNER_SIGNALS_ALL_TA = "All TA"
 SCANNER_TAB_QUALIFIED = "Qualified"
 SCANNER_TAB_WATCH = "Watchlist"
 SCANNER_TAB_LOGS = "Logs"
@@ -457,12 +600,10 @@ SCANNER_FILTER_VOL = "Min vol"
 SCANNER_FILTER_GAIN = "Min gain %"
 SCANNER_FILTER_GAIN_7D = "Min gain 7D"
 SCANNER_FILTER_GAIN_30D = "Min gain 30D"
-SCANNER_FILTER_UNIT = "Uniformity"
 SCANNER_FILTER_EVERY = "Scan every"
 SCANNER_FILTER_CHART_7D = "7d chart"
 SCANNER_FILTER_CHART_30D = "30d chart"
 SCANNER_FILTER_HEALTH = "Health"
-SCANNER_FILTER_UNIT_MIN = "Unit ≥"
 SCANNER_FILTER_VOL_ACCEL = "Vol Δ"
 SCANNER_FILTER_VOL24 = "24h vol"
 SCANNER_CHIP_QUALIFIED = "Qualified coins"
@@ -496,6 +637,16 @@ SCANNER_NEW_BADGE = "NEW"
 SCANNER_ALERTS_TITLE = "No alerts on this PC"
 SCANNER_ALERTS_BODY = "Alerts from a scan show here when the scanner records them."
 SCAN_RUN = "Run scan"
+# TEMP / DEBUG — remove with trendalgo.device.debug_scan when done testing.
+SCAN_FORCE_FRESH_DEBUG = "Force fresh scan (DEBUG)"
+SCAN_FORCE_FRESH_TIP = (
+    "Clears Qualified rows + price cache, then re-pulls public (or keyed) market data. "
+    "Set TRENDALGO_DEBUG_SCAN=1 to show this control."
+)
+SCAN_FORCE_FRESH_NEED_KEYS = (
+    "Force fresh prefers keyed venues when selected; otherwise it re-pulls public Kraken."
+)
+SCAN_FORCE_FRESH_STARTING = "Force fresh scan: caches cleared. Starting live scan…"
 SCAN_STARTING = "Starting. The first scan loads the pair list, which can take a minute."
 SCAN_DONE = "Done. The new scan is saved on this PC."
 SCAN_CANCELLED = "Cancelled. The last saved scan is still shown."
@@ -503,12 +654,28 @@ SCAN_UNAVAILABLE = (
     "Kraken data was not available, so no scan was saved. The last saved scan is still shown."
 )
 SCAN_FAILED = "The scan did not finish. Check the connection, then run it again."
+SCAN_BUSY = "An Opportunity scan is already running. Wait for it to finish, or cancel it first."
+SCAN_REFRESH_PRICES = "Refresh prices"
+SCAN_REFRESH_PRICES_TIP = (
+    "Expire the local OHLCV cache and re-pull public Kraken candles. No API keys required."
+)
 
 BACKTEST_TITLE = "Backtests"
 BACKTEST_SUBTITLE = (
-    "Pick a pair and press Scan. TrendAlgo runs the same All-TA sweep as the Opportunity "
-    "scanner across each timeframe, then lists every strategy (and buy & hold) by Net %. "
-    "This page places no orders."
+    "Pick a pair and press Scan. Uses cache-first public Kraken candles (no keys). "
+    "TrendAlgo runs the same All-TA sweep as the Opportunity scanner across each timeframe, "
+    "then lists every strategy (and buy & hold) by Net %. This page places no orders."
+)
+BACKTEST_SOURCE_BADGE = "Source: {source}"
+BACKTEST_SOURCE_PUBLIC = "Kraken public"
+BACKTEST_SOURCE_CACHED = "Kraken public · cached {age}"
+BACKTEST_SOURCE_SYNTHETIC = "synthetic"
+BACKTEST_ELAPSED = "Elapsed {elapsed}"
+BACKTEST_DONE_TITLE = "Backtest complete"
+BACKTEST_DONE_BODY = "Finished in {elapsed}."
+BACKTEST_REFRESH_PRICES = "Refresh prices"
+BACKTEST_REFRESH_PRICES_TIP = (
+    "Clear cached OHLCV for free research, then re-run when you press Scan. No API keys required."
 )
 BACKTEST_TAB_SINGLE = "One indicator"
 BACKTEST_TAB_FLEET = "Fleet sweep"
@@ -524,14 +691,53 @@ BACKTEST_RUNNING = "Scanning All-TA strategies…"
 BACKTEST_CANCELLED = "Cancelled. No result was kept."
 BACKTEST_DONE = "Done. Results are sorted by Net % (highest first)."
 BACKTEST_FAILED = "The scan did not finish. Check the pair and connection, then try again."
+SCAN_PROGRESS_STEPS = "Progress: {done} / {total}{unit}"
+SCAN_PROGRESS_CURRENT_PAIR = "Current pair: {pair}"
+SCAN_PROGRESS_PAIRS_REMAINING = "{remaining} remaining ({done} / {total})"
+SCAN_PROGRESS_PAIRS_UNKNOWN = "Pairs remaining: —"
+SCAN_PROGRESS_ELAPSED = "Elapsed {elapsed}"
+SCAN_PROGRESS_ETA = "Remaining {remaining}"
+SCAN_PROGRESS_PACE = "Pace {pace}"
+SCAN_PROGRESS_PHASE = "Phase"
+SCAN_PROGRESS_LOG = "Activity"
+SCAN_PROGRESS_STARTING = "Starting…"
+SCAN_PROGRESS_CANCEL = "Cancel scan"
+SCAN_PROGRESS_HINT = "Finish or cancel before using charts / filters."
+SCAN_PROGRESS_BLOCKED = "Scan in progress — finish or cancel first."
+SCANNER_SCAN_TITLE = "Opportunity scan — {mode}"
+SCANNER_SCAN_SEED = (
+    "{mode} · {n_tf} timeframes · {n_strat} strategies · ~{n_coins} coins in estimate"
+)
+BACKTEST_SCAN_TITLE = "{pair} — Scanning All-TA"
+BACKTEST_SCAN_STRATEGIES = "Strategies (steps): {done} / {total}"
+BACKTEST_SCAN_STRATEGIES_FMT = "Strategies (steps): {done} / {total}{unit}"
+BACKTEST_SCAN_ELAPSED = "Elapsed {elapsed}"
+BACKTEST_SCAN_REMAINING = "Remaining {remaining}"
+BACKTEST_SCAN_PACE = "Pace {pace}"
+BACKTEST_SCAN_PHASE = "Phase"
+BACKTEST_SCAN_LOG = "Activity"
+BACKTEST_SCAN_STARTING = "Starting…"
+BACKTEST_SCAN_SEED = (
+    "Pair {pair} · {n_tf} timeframes · {n_strat} strategies"
+    "{subhour} · finish or cancel before using charts."
+)
+BACKTEST_SCAN_SUBHOUR = " · 1m base"
+BACKTEST_SCAN_CANCEL = "Cancel scan"
+BACKTEST_SCAN_HINT = "Finish or cancel before using charts / filters."
+BACKTEST_SCAN_BLOCKED = "Scan in progress — finish or cancel first."
 BACKTEST_EMPTY_TITLE = "No pair scan yet"
 BACKTEST_EMPTY_BODY = (
-    "Choose a pair, then press Scan to test every TA strategy over each timeframe."
+    "Choose a pair, then press Scan. Uses cache-first public Kraken candles — no API keys. "
+    "Refresh prices re-pulls OHLCV when you want fresher data."
 )
 BACKTEST_NO_CANDLES_TITLE = "No price data for this pair"
 BACKTEST_NO_CANDLES_BODY = (
-    "The All-TA loader found no candles for this pair. Try another pair or wait for cache data."
+    "The All-TA loader found no candles for this pair. Press Refresh prices, "
+    "try another pair, or check your connection (public Kraken — no keys needed)."
 )
+SECRET_SAUCE_RULES = "Rules"
+SECRET_SAUCE_ANTI_SUMMARY = "Anti-cheat: fee-honest replay; not a live track record."
+SECRET_SAUCE_ANTI_MORE = "More honesty…"
 BACKTEST_NO_TRADES_TITLE = "No trades in this run"
 BACKTEST_NO_TRADES_BODY = "This indicator made no trades on these candles. Try another timeframe."
 BACKTEST_CHART_TITLE = "Price chart"
@@ -563,6 +769,7 @@ BACKTEST_RESULT_HEADERS = (
     "TSL Hits",
     "TSL Hit %",
     "Strength",
+    "Events",
     "Show Chart",
     "Create Bot",
 )
@@ -594,7 +801,10 @@ BUY_PICKS_SUBTITLE = (
     "Highest consensus scores on the filtered board — plus top TA gain when All-TA ran"
 )
 BUY_PICKS_SUBTITLE_FALLBACK = BUY_PICKS_SUBTITLE
-BUY_PICKS_EMPTY = "No Market Context yet — run a Kraken scan (public OHLCV works without keys)."
+BUY_PICKS_EMPTY = (
+    "No Market Context yet — run a full Opportunity scan (All-TA). "
+    "Public Kraken OHLCV works without keys; Top 10 fills after the backtest pass."
+)
 BUY_PICKS_TA_NONE = "—"
 BUY_PICKS_COL_PAIR = "Pair"
 BUY_PICKS_COL_BIAS = "Bias"
@@ -790,6 +1000,23 @@ ACCENT_DEFAULT = "TrendAlgo (default)"
 ACCENT_NAMES: tuple[str, ...] = ("Blue", "Green", "Amber", "Red", "Violet")
 ABOUT_TITLE = "About"
 ABOUT_VERSION = "Version {version}"
+ABOUT_SUPPORT = (
+    "Research desk: Kraken today · thin pool watch: Ethereum/Base · "
+    "Portfolio: 9 CEX + DEX wallets · TradFi: Alpaca equity BT · Forex: rates research."
+)
+DEX_WATCH_RUN = "Pool watch (Base/Ethereum)"
+DEX_WATCH_HINT = (
+    "Thin Uniswap V3 pool watch — not Opportunity, All-TA, or Sauce. "
+    "Uses dry-run metrics unless you wire a live RPC later."
+)
+DEX_WATCH_EMPTY = "No pool-watch rows yet. Run Pool watch to load curated Base/Ethereum pools."
+DEX_WATCH_STATUS = "{n} pool-watch row(s) on this PC."
+DEX_WATCH_RUNNING = "Running pool watch…"
+DEX_WATCH_ERROR = "Pool watch failed."
+DEX_BT_DISCLAIMER = (
+    "Not on-chain fills — DEX research candles are a labeled CEX spot proxy or synthetic. "
+    "Do not treat backtests as Uniswap execution prices."
+)
 ABOUT_BODY = (
     "TrendAlgo Bot is free and open source (MIT). Scans and backtests run on this PC. "
     "A headless host you control can run an approved plan. This app never stores exchange keys."
@@ -830,7 +1057,9 @@ AUTOSCAN_OFF = "Auto-scan waits until a scan finishes."
 NOTIFY_SECTION = "Alerts and notifications"
 NOTIFY_SECTION_HELP = (
     "Per event kind: enable Windows toast and/or Telegram. Logs default off to avoid spam. "
-    "Alerts history still records events on the Alerts tabs."
+    "Alerts history still records events on the Alerts tabs. "
+    "Rich Telegram photos (candles + trade holds) need the device app launched from source "
+    "(relaunch-device.ps1) or installer v1.14.0+ with the matplotlib device extra."
 )
 NOTIFY_COL_WINDOWS = "Windows"
 NOTIFY_COL_TELEGRAM = "Telegram"
@@ -842,6 +1071,18 @@ NOTIFY_WATCHLIST = "Watchlist leave alerts"
 NOTIFY_QUALIFIED = "Qualified enter alerts"
 NOTIFY_TRADES = "Trade fill alerts"
 NOTIFY_TELEGRAM = "Enable Telegram for checked kinds"
+NOTIFY_GROKBOT = "Grok Bot webhook"
+NOTIFY_GROKBOT_HELP = (
+    "Optional HTTPS webhook for an AI brief. Off by default; Telegram stays primary. "
+    "Set GROKBOT_WEBHOOK_URL and GROKBOT_WEBHOOK_KEY in the host .env (never in git). "
+    "The key is sent as Authorization: Bearer <key> unless GROKBOT_WEBHOOK_HEADER is set. "
+    "GROKBOT_WEBHOOK_EVENTS=all|trades|scanner-a (or a comma list) saves quota."
+)
+NOTIFY_GROKBOT_ON = "Grok Bot webhook is on in this process."
+NOTIFY_GROKBOT_OFF = "Grok Bot webhook is off. Add GROKBOT_WEBHOOK_URL (https) to the host .env."
+NOTIFY_GROKBOT_TEST = "Test Grok Bot"
+NOTIFY_GROKBOT_NEED = "Set GROKBOT_WEBHOOK_URL (https) in .env on this PC or the host, then retry."
+NOTIFY_GROKBOT_FAIL = "Grok Bot test failed. Check the webhook URL, key, and network."
 NOTIFY_TG_WATCHLIST = "Telegram: watchlist"
 NOTIFY_TG_QUALIFIED = "Telegram: qualified"
 NOTIFY_TG_TRADES = "Telegram: trades"
@@ -918,7 +1159,116 @@ CAL_WIZARD_SAVED = "Saved to Credential Manager."
 CAL_WIZARD_NEED_TEST = "Test the key successfully before saving."
 CAL_EVENTS_EMPTY = "No upcoming events match your filters."
 CAL_EVENTS_NO_KEYS = "Connect CoinMarketCal or Coindar to load crypto event dates."
+CAL_EVENTS_NO_TRADFI = "TradFi earnings use the free NASDAQ calendar (throttled)."
+CAL_EVENTS_NO_FOREX = "Forex events use a keyless macro calendar on the Forex desk."
 CAL_EVENTS_REFRESH = "Refresh events"
+LANE_AUTO_SCAN = "Auto-scan"
+LANE_AUTO_SCAN_TIP = "When on, this desk runs on the Scan every N min schedule. Manual Run scan still works when off."
+LANE_AUTO_SCAN_CRYPTO = "Crypto auto-scan"
+LANE_AUTO_SCAN_TRADFI = "TradFi auto-scan"
+LANE_AUTO_SCAN_FOREX = "Forex auto-scan"
+LANES_SECTION = "Market lanes"
+LANES_SETTINGS_HINT = (
+    "Turn Auto-scan on or off per desk (Crypto, TradFi, Forex). "
+    "Cadence is Scan every N min in that desk’s Settings. Tabs stay available either way. "
+    "TradFi and Forex scans require Alpaca paper API keys."
+)
+LANES_ALPACA_HINT = "TradFi/Forex opportunity scans need Alpaca paper keys (IEX / rates research)."
+SCANNER_TITLE_CRYPTO = "Crypto opportunity"
+SCANNER_TITLE_TRADFI = "TradFi opportunity"
+SCANNER_TITLE_FOREX = "Forex opportunity"
+SCANNER_EMPTY_TRADFI_BODY = (
+    "TradFi desk uses the Alpaca equity universe (~30d daily bars). "
+    "Set up Alpaca paper keys, then Run scan. Research/BT only — no live TradFi trading."
+)
+SCANNER_EMPTY_FOREX_BODY = (
+    "Forex desk uses Alpaca Forex rates when granted, otherwise free AlgoSpecial H1 "
+    "(D1 derived). Auto-scan floor is 90 minutes on the AlgoSpecial path. "
+    "Synthetic bars are disabled. No FX live trading."
+)
+SCAN_FOREX_DATA_DENIED = (
+    "No Forex bars from Alpaca or AlgoSpecial (and no usable cache). "
+    "Check network / AlgoSpecial cool-down, or enable Alpaca Forex data, then Run scan again. "
+    "Synthetic data is not used."
+)
+FOREX_ALGOSPECIAL_INTERVAL_TIP = (
+    "Forex auto-scan is at least 90 minutes so free AlgoSpecial stays under "
+    "1000 calls/day (59 pairs). Alpaca Forex grant can refresh faster when available."
+)
+SCAN_ALPACA_REQUIRED = (
+    "Alpaca paper API keys are required for TradFi and Forex scans. "
+    "Open Set up Alpaca… in Settings (or below), then Test and Save."
+)
+SCANNER_SOURCE_ALPACA = "Alpaca paper (keyed)"
+NOTIFY_ALPACA_WIZARD = "Set up Alpaca…"
+LANE_FILTER_SECTION = "TradFi scan filters"
+LANE_FILTER_UNIVERSE_NOTE = (
+    "Universe: all tradable US equities from Alpaca (free plan paced). "
+    "Filters below cut flats before All-TA."
+)
+LANE_FILTER_ABS_GAIN = "Min |30d move| %"
+LANE_FILTER_ABS_GAIN_TIP = (
+    "Drop names whose absolute close-to-close change over ~22 sessions "
+    "is below this. Flat charts waste All-TA. 0 = off."
+)
+LANE_FILTER_RANGE = "Min range %"
+LANE_FILTER_RANGE_TIP = (
+    "(Highest high − lowest low) / mid over that same window. "
+    "Cuts slow grinders that barely left a tight band. 0 = off."
+)
+LANE_FILTER_TOP_N = "Top-N by |move|"
+LANE_FILTER_TOP_N_TIP = (
+    "After the filters above, keep only the N largest movers for All-TA. "
+    "0 = keep every name that passed."
+)
+LANE_FILTER_TOP_N_OFF = "All"
+LANE_FILTER_ADV = "Min ADV $"
+LANE_FILTER_ADV_TIP = (
+    "Optional average daily dollar volume (close × shares) over ~20 sessions. "
+    "Default $0 (off) — TradFi bots are rarely volume-constrained. "
+    "Raise only if you want an extra liquidity floor."
+)
+LANE_FILTER_PRICE = "Min price $"
+LANE_FILTER_PRICE_TIP = "Drop names below this last close. Default $0 (off)."
+LANE_FILTER_PRESET = "Filter level"
+LANE_FILTER_PRESET_TIP = (
+    "Wide → Strict sets Min |30d move|, Min range, and Top-N together. "
+    "ADV stays off; Min price is unchanged. Save Settings to persist."
+)
+LANE_FILTER_PRESET_WIDE = "Wide"
+LANE_FILTER_PRESET_BALANCED = "Balanced"
+LANE_FILTER_PRESET_TIGHT = "Tight"
+LANE_FILTER_PRESET_STRICT = "Strict"
+BOARD_LOAD_STATUS = "Loading board {done}/{total}…"
+BOARD_LOAD_TAB = "{label} · {pct}%"
+SCAN_LANE_EMPTY_RESULT = (
+    "Scan finished with 0 pairs after filters (skipped {skipped}). "
+    "Lower Min |30d move|, Min range, or raise Top-N, then run again."
+)
+ALPACA_WIZARD_TITLE = "Alpaca paper keys"
+ALPACA_WIZARD_INTRO = (
+    "TradFi and Forex desks pull ~30 days of daily bars from Alpaca. "
+    "Use free paper trading keys (IEX). Secrets stay in Windows Credential Manager — "
+    "never in a profile file. These desks do not place live TradFi or FX orders."
+)
+ALPACA_WIZARD_STEP1 = "1. Get paper API keys"
+ALPACA_WIZARD_STEP1_HELP = (
+    "Create or sign in at app.alpaca.markets → switch to Paper Trading → "
+    "API Keys → Generate New Keys. Copy Key ID and Secret (secret shown once)."
+)
+ALPACA_WIZARD_OPEN = "Open Alpaca dashboard"
+ALPACA_WIZARD_STEP2 = "2. Paste keys"
+ALPACA_WIZARD_KEY = "API Key ID"
+ALPACA_WIZARD_SECRET = "API Secret"
+ALPACA_WIZARD_STEP3 = "3. Test and save"
+ALPACA_WIZARD_TEST = "Test connection"
+ALPACA_WIZARD_SAVE = "Save keys"
+ALPACA_WIZARD_REMOVE = "Remove keys"
+ALPACA_WIZARD_OK = "Alpaca keys work."
+ALPACA_WIZARD_FAIL = "Alpaca could not authenticate. Check Key ID, Secret, and network."
+ALPACA_WIZARD_NEED = "Enter both Key ID and Secret."
+ALPACA_WIZARD_SAVED = "Saved to Credential Manager."
+ALPACA_WIZARD_REMOVED = "Alpaca keys removed from this PC."
 CAL_FILTER_HOLDINGS = "My holdings"
 CAL_FILTER_30D = "30D"
 CAL_FILTER_IMPACT = "Medium+"

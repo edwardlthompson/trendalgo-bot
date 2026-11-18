@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
 
-from trendalgo.api.app import create_app
 from trendalgo.api.state import default_state
 from trendalgo.billing.onchain_receipts import issue_fee_receipt, verify_fee_receipt
 from trendalgo.data.onchain_sentiment import onchain_sentiment_stub
-from trendalgo.db.postgres_adapter import PostgresDualWrite
 from trendalgo.portfolio.db import PortfolioStore
 from trendalgo.portfolio.onchain import preview_onchain_wallet, sync_onchain_wallet
 from trendalgo.scanner.forager import forage_pairs
 from trendalgo.trading.funding import fetch_funding_rates, funding_profit_estimate
 from trendalgo.trading.multi_exchange import list_supported_exchanges, route_order
+from tests.support.api_client import make_api_client
 
 
 def test_onchain_sync_and_forager(tmp_path) -> None:
@@ -47,12 +45,7 @@ def test_trading_funding_and_receipts() -> None:
     assert verified["on_chain_stub"]
 
 
-def test_postgres_adapter_and_sentiment() -> None:
-    adapter = PostgresDualWrite()
-    status = adapter.status()
-    assert status["sqlite_mvp"] and status["schema_exists"]
-    migrate = adapter.dry_run_migrate()
-    assert migrate["ok"] and migrate["statement_count"] >= 3
+def test_sentiment_stub() -> None:
     stub = onchain_sentiment_stub("BTC")
     assert stub["asset"] == "BTC" and stub["prototype"]
 
@@ -60,10 +53,9 @@ def test_postgres_adapter_and_sentiment() -> None:
 def test_platform_api_routes(tmp_path, monkeypatch) -> None:
     # Isolate app data so a paused exchange in the local control DB cannot change the result.
     monkeypatch.setenv("TRENDALGO_DATA_DIR", str(tmp_path))
-    client = TestClient(create_app(default_state()))
+    client = make_api_client(default_state())
     assert client.get("/api/v1/platform/forager").status_code == 200
     assert client.get("/api/v1/platform/funding").status_code == 200
-    assert client.get("/api/v1/platform/postgres/status").status_code == 200
     sync = client.post(
         "/api/v1/platform/onchain/sync",
         json={"address": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0"},

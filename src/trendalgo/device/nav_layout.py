@@ -6,15 +6,17 @@ from dataclasses import dataclass
 
 from trendalgo.device import strings as S
 
-# Primary workflow: Dashboard → Alerts → Scanner → Backtest → Bots
-PORTFOLIO, ALERTS, SCANNER, BACKTESTS, STATUS = range(5)
-GLOSSARY, EXPORT, BILLING, SETTINGS, DEBUG = range(5, 10)
+# Primary: Dashboard → Alerts → Crypto → TradFi → Forex → Backtest → Bots
+PORTFOLIO, ALERTS, SCANNER, TRADFI, FOREX, BACKTESTS, STATUS = range(7)
+GLOSSARY, EXPORT, BILLING, SETTINGS, DEBUG = range(7, 12)
 # Legacy aliases: Plan/Research/AI removed from chrome; Plan redirects to Bots.
 PLAN = STATUS
 RESEARCH = EXPORT
 AI = BILLING
-PRIMARY_COUNT = 5
-PRIMARY_GLYPHS = ("portfolio", "alerts", "scanner", "backtest", "bot")
+# Crypto desk keeps SCANNER index/glyph for deep-links; label is Crypto.
+CRYPTO = SCANNER
+PRIMARY_COUNT = 7
+PRIMARY_GLYPHS = ("portfolio", "alerts", "scanner", "tradfi", "forex", "backtest", "bot")
 MORE_ITEMS: tuple[tuple[int, str, str], ...] = (
     (GLOSSARY, S.NAV_GLOSSARY, "glossary"),
     (EXPORT, S.NAV_EXPORT, "export"),
@@ -34,7 +36,9 @@ class NavItem:
 NAV_CATALOG: tuple[NavItem, ...] = (
     NavItem(PORTFOLIO, S.NAV_PORTFOLIO, "portfolio"),
     NavItem(ALERTS, S.NAV_ALERTS, "alerts"),
-    NavItem(SCANNER, S.NAV_SCANNER, "scanner"),
+    NavItem(SCANNER, S.NAV_CRYPTO, "scanner"),
+    NavItem(TRADFI, S.NAV_TRADFI, "tradfi"),
+    NavItem(FOREX, S.NAV_FOREX, "forex"),
     NavItem(BACKTESTS, S.NAV_BACKTESTS, "backtest"),
     NavItem(STATUS, S.NAV_STATUS, "bot"),
     NavItem(GLOSSARY, S.NAV_GLOSSARY, "glossary"),

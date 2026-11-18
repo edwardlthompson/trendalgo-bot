@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "default_broker": "alpaca",
+  "brokers": [
+    {
+      "id": "alpaca",
+      "brand": "Alpaca",
+      "lane": "tradfi",
+      "asset_classes": ["us_equity", "crypto", "forex"],
+      "paper_enabled": true,
+      "live_enabled": false,
+      "portfolio_enabled": true,
+      "scan_enabled": true,
+      "backtest_enabled": true,
+      "trading_enabled": false,
+      "sdk": "alpaca-py",
+      "env_key": "ALPACA_API_KEY",
+      "env_secret": "ALPACA_API_SECRET",
+      "env_base_url": "ALPACA_BASE_URL",
+      "paper_base_url_default": "https://paper-api.alpaca.markets",
+      "notes": "TF-H1 Alpaca paper. Equity scan/BT research on; live trading off. Forex rates research is separate (no FX trade)."
+    }
+  ]
+}

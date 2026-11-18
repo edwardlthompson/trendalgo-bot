@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import strings as S
 from trendalgo.device.secrets_vault import VaultEntry, VaultSecretStore
+from trendalgo.device.support_matrix import venue_by_id
 from trendalgo.exchanges.registry import load_registry
 
 
@@ -40,11 +41,12 @@ class ExchangeKeysInventory(QWidget):
         self._empty = QLabel(S.SETTINGS_KEYS_EMPTY)
         self._empty.setObjectName("hint")
         self._empty.setWordWrap(True)
-        self._table = QTableWidget(0, 4)
+        self._table = QTableWidget(0, 5)
         self._table.setObjectName("settingsKeysInventory")
         self._table.setHorizontalHeaderLabels(
             (
                 S.SETTINGS_KEYS_COL_EXCHANGE,
+                S.SETTINGS_KEYS_COL_SUPPORT,
                 S.SETTINGS_KEYS_COL_SCOPE,
                 S.SETTINGS_KEYS_COL_STATE,
                 "",
@@ -78,12 +80,15 @@ class ExchangeKeysInventory(QWidget):
         row = self._table.rowCount()
         self._table.insertRow(row)
         self._table.setItem(row, 0, QTableWidgetItem(brand))
+        venue = venue_by_id(entry.exchange_id)
+        support = venue.status_label if venue is not None else S.SETTINGS_KEYS_COL_SUPPORT
+        self._table.setItem(row, 1, QTableWidgetItem(support))
         scope = (
             S.SETTINGS_KEYS_SCOPE_TRADE if entry.scope == "trade" else S.SETTINGS_KEYS_SCOPE_QUERY
         )
-        self._table.setItem(row, 1, QTableWidgetItem(scope))
+        self._table.setItem(row, 2, QTableWidgetItem(scope))
         state = S.SETTINGS_KEYS_VERIFIED if entry.verified_at else S.SETTINGS_KEYS_UNVERIFIED
-        self._table.setItem(row, 2, QTableWidgetItem(state))
+        self._table.setItem(row, 3, QTableWidgetItem(state))
         actions = QWidget()
         row_lay = QHBoxLayout(actions)
         row_lay.setContentsMargins(0, 0, 0, 0)
@@ -99,4 +104,4 @@ class ExchangeKeysInventory(QWidget):
         row_lay.addWidget(tst)
         row_lay.addWidget(rem)
         row_lay.addStretch(1)
-        self._table.setCellWidget(row, 3, actions)
+        self._table.setCellWidget(row, 4, actions)

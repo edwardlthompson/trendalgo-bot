@@ -147,3 +147,14 @@ def _gap_bps(expected: float, observed: float) -> float:
     if expected == 0:
         return math.inf
     return difference / abs(expected) * 10_000.0
+
+
+def shadow_window_pnl_ok(
+    *,
+    pnl: float,
+    bars: int,
+    required_bars: int,
+    min_pnl: float = 0.0,
+) -> bool:
+    """LIVE-02 helper: shadow window needs N bars and non-losing PnL before promote."""
+    return int(bars) >= int(required_bars) and float(pnl) >= float(min_pnl)

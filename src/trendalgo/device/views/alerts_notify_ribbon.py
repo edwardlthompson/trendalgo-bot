@@ -24,11 +24,14 @@ from trendalgo.device.alert_preview import (
     telegram_preview,
     windows_preview,
 )
+from trendalgo.device.grokbot_notify import send_device_test
 from trendalgo.device.notify_prefs import load_prefs, save_prefs
+from trendalgo.device.profile import SETTINGS_FILE
 from trendalgo.device.telegram_vault import load_telegram_creds
 from trendalgo.device.views.widgets import clear_problem, problem_label, show_problem
 from trendalgo.notifications.telegram import TelegramCommands
-from trendalgo.notifications.telegram_chart import chart_png_bytes, closes_from_coin
+from trendalgo.notifications.telegram_chart import enter_alert_png
+from trendalgo.notifications.telegram_keyboard import reply_markup_json
 
 _KIND_LABEL = {
     "entered": S.ALERTS_TAB_ENTERED,
@@ -80,10 +83,13 @@ class AlertsNotifyRibbon(QWidget):
         test_win.clicked.connect(lambda _c=False: self._test_windows())
         test_tg = QPushButton(S.ALERTS_TEST_TELEGRAM)
         test_tg.clicked.connect(lambda _c=False: self._test_telegram())
+        test_gb = QPushButton(S.ALERTS_TEST_GROKBOT)
+        test_gb.clicked.connect(lambda _c=False: self._test_grokbot())
         tests = QHBoxLayout()
         tests.setContentsMargins(0, 0, 0, 0)
         tests.addWidget(test_win)
         tests.addWidget(test_tg)
+        tests.addWidget(test_gb)
         tests.addStretch(1)
         win_head = QLabel(S.ALERTS_PREVIEW_WINDOWS)
         win_head.setObjectName("subtitle")
@@ -161,12 +167,31 @@ class AlertsNotifyRibbon(QWidget):
         event = sample_event(self._kind)
         text = telegram_preview(event)
         ok = False
+        coin = event.coin if isinstance(event.coin, dict) else {"symbol": event.symbol}
+        markup = reply_markup_json(coin)
         if event.kind == "qualified_enter" and event.coin is not None:
-            png = chart_png_bytes(closes_from_coin(event.coin), title=event.symbol)
-            ok = tg.send_photo(png, text) if png else tg.send_message(text)
+            png = enter_alert_png(event.coin)
+            ok = (
+                tg.send_photo(png, text, parse_mode="HTML", reply_markup=markup)
+                if png
+                else tg.send_message(text, parse_mode="HTML", reply_markup=markup)
+            )
         else:
-            ok = tg.send_message(text)
+            ok = tg.send_message(text, parse_mode="HTML", reply_markup=markup)
         if ok:
             self._status.setText(S.ALERTS_TEST_OK)
         else:
             show_problem(self._problem, S.ALERTS_TEST_TG_FAIL)
+
+    def _test_grokbot(self) -> None:
+        clear_problem(self._problem)
+        ok, detail = send_device_test(self._root / SETTINGS_FILE)
+        if ok:
+            self._status.setText(S.ALERTS_TEST_OK)
+            return
+        show_problem(
+            self._problem,
+            S.ALERTS_TEST_GROKBOT_NEED
+            if detail == "not_configured"
+            else S.ALERTS_TEST_GROKBOT_FAIL,
+        )

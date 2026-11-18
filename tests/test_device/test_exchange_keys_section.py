@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from PySide6.QtWidgets import QLabel, QLineEdit
+from PySide6.QtWidgets import QLabel, QLineEdit, QMessageBox
 
 from trendalgo.device import strings as S
-from trendalgo.device.views.exchange_keys_section import exchange_keys_section_for_tests
+from trendalgo.device.views.exchange_keys_section import (
+    ExchangeKeysSection,
+    exchange_keys_section_for_tests,
+)
 from trendalgo.device.views.widgets import configure_combo_popup
+from trendalgo.device.wizard.credentials import CredentialError, MemoryCredentialStore
 
 
 def test_exchange_keys_section_labels_public_and_private(qtbot) -> None:
@@ -44,3 +48,49 @@ def test_configure_combo_popup_sets_visible_rows(qtbot) -> None:
     configure_combo_popup(box, visible=3)
     assert box.maxVisibleItems() == 3
     assert box.view().minimumHeight() >= 28 * 3
+
+
+def test_save_shows_success_clears_fields_and_lists_inventory(qtbot, monkeypatch) -> None:  # noqa: ANN001
+    dialogs: list[tuple[str, str]] = []
+
+    def _info(parent, title, text, *args, **kwargs):  # noqa: ANN001
+        del parent, args, kwargs
+        dialogs.append((str(title), str(text)))
+        return QMessageBox.StandardButton.Ok
+
+    monkeypatch.setattr(QMessageBox, "information", _info)
+    section = exchange_keys_section_for_tests()
+    qtbot.addWidget(section)
+    eid = str(section._exchange.itemData(0))
+    brand = section._brand_for(eid)
+    section._key.setText("pub-key-fixture")
+    section._secret.setText("priv-secret-fixture")
+    section._save()
+    assert section._key.text() == ""
+    assert section._secret.text() == ""
+    assert section._vault.read_entry(eid) is not None
+    assert S.SETTINGS_KEYS_UNVERIFIED in section._status.text()
+    assert len(dialogs) == 1
+    assert dialogs[0][0] == S.SETTINGS_KEYS_SAVE_OK_TITLE
+    assert brand in dialogs[0][1]
+    assert "Credential Manager" in dialogs[0][1]
+    assert section._inventory._table.rowCount() == 1
+    assert section._save_btn.isEnabled() is True
+
+
+def test_save_failure_keeps_fields_and_shows_error(qtbot) -> None:  # noqa: ANN001
+    class _BoomStore(MemoryCredentialStore):
+        def write(self, target: str, secret: str) -> None:
+            raise CredentialError("Credential Manager could not save it (Windows error 5).")
+
+    section = ExchangeKeysSection(store=_BoomStore())
+    qtbot.addWidget(section)
+    section._key.setText("keep-public")
+    section._secret.setText("keep-secret")
+    section._save()
+    assert section._key.text() == "keep-public"
+    assert section._secret.text() == "keep-secret"
+    assert "Could not save keys" in section._status.text()
+    assert "Windows error 5" in section._status.text()
+    assert section._vault.read_entry(section._exchange_id()) is None
+    assert section._save_btn.isEnabled() is True

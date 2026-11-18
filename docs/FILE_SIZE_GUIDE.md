@@ -35,7 +35,7 @@ Line count does not guarantee fast loads or smooth UI. Prefer these patterns:
 
 - **Route-level code splitting** — lazy-import feature panels; keep initial bundle small.
 - **Locale namespaces** — split `locales/en.json` by feature prefix when approaching ~200 keys or 300 lines (`settings.*`, `about.*`, etc.).
-- **CI perf gates** — Lighthouse budgets and bundle-size checks in `modules/web/MODULE.md` and `.github/workflows/ci.yml` enforce real user-facing metrics.
+- **CI perf gates** — file-limit and repo-hygiene checks in `.github/workflows/ci.yml` enforce real user-facing budgets.
 
 ### Android (Compose)
 

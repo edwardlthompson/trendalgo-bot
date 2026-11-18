@@ -24,7 +24,7 @@ AI-recommended strategies; anonymous referral; **no community marketplace**.
 
 ## Phase 6 — Platform (S12)
 
-SQLite MVP default; **Postgres dual-write is experimental / not production-default**; on-chain read-only; Risk Register Zero.
+SQLite MVP default; on-chain read-only; Risk Register Zero. (Postgres dual-write stub removed — HOUSE-08.)
 
 ## Phase 7 — Exchange program (S13–S20)
 

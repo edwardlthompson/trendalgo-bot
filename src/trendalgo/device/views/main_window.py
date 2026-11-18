@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import nav_layout as _nav
 from trendalgo.device import strings as S
-from trendalgo.device.autostart import is_enabled as autostart_is_enabled
 from trendalgo.device.autostart import set_enabled as set_autostart
 from trendalgo.device.context import DeviceContext
 from trendalgo.device.flow_layout import FlowLayout
@@ -53,6 +52,7 @@ BACKTESTS = _nav.BACKTESTS
 BILLING = _nav.BILLING
 DEBUG = _nav.DEBUG
 EXPORT = _nav.EXPORT
+FOREX = _nav.FOREX
 GLOSSARY = _nav.GLOSSARY
 MORE_ITEMS = _nav.MORE_ITEMS
 PLAN = _nav.PLAN  # alias of STATUS (Bots hub)
@@ -62,6 +62,7 @@ PRIMARY_GLYPHS = _nav.PRIMARY_GLYPHS
 RESEARCH = _nav.RESEARCH
 SETTINGS = _nav.SETTINGS
 STATUS = _nav.STATUS
+TRADFI = _nav.TRADFI
 ICON_PX = 20
 
 
@@ -89,9 +90,12 @@ class MainWindow(QMainWindow):
         self._ctx = ctx
         self._tray: TrayController | None = None
         self._scanner_page: ScannerPage | None = None
+        self._tradfi_page: ScannerPage | None = None
+        self._forex_page: ScannerPage | None = None
         self._alerts_page: AlertsPage | None = None
         self._page_index = PORTFOLIO
         self._visible_items: list[NavItem] = list(NAV_CATALOG)
+        self._desk_load_labels: dict[int, str] = {}
         self._badge = QLabel(S.BADGE_NO_HOST)
         self._badge.setObjectName("badge")
         self._badge.setAccessibleName(S.BADGE_NO_HOST)
@@ -122,20 +126,26 @@ class MainWindow(QMainWindow):
 
         alerts = AlertsPage(ctx.root, on_toast=self._toast)
         self._alerts_page = alerts
-        scanner = ScannerPage(
-            ctx,
-            on_create_bot=create_bot_from_scanner,
-            on_toast=self._toast,
-            on_alerts_changed=alerts.reload,
-        )
+        scan_kwargs = {
+            "on_create_bot": create_bot_from_scanner,
+            "on_toast": self._toast,
+            "on_alerts_changed": alerts.reload,
+        }
+        scanner = ScannerPage(ctx, lane="crypto", **scan_kwargs)
+        tradfi = ScannerPage(ctx, lane="tradfi", **scan_kwargs)
+        forex = ScannerPage(ctx, lane="forex", **scan_kwargs)
         self._scanner_page = scanner
-        # Stack index == nav_layout page index: Portfolio, Alerts, Scanner, Backtest, Bots, …
+        self._tradfi_page = tradfi
+        self._forex_page = forex
+        # Stack == nav indices: Portfolio, Alerts, Crypto, TradFi, Forex, Backtest, Bots, …
         self._portfolio = PortfolioPage(ctx)
         for page in (
             self._portfolio,
             alerts,
             scanner,
-            BacktestPage(ctx, pool, on_open_plan=open_bots_from_fleet),
+            tradfi,
+            forex,
+            BacktestPage(ctx, pool, on_open_plan=open_bots_from_fleet, on_toast=self._toast),
             _scrolled(bots_page),
             GlossaryPage(),
             ExportPage(ctx),
@@ -213,11 +223,13 @@ class MainWindow(QMainWindow):
             self._nav.removeTab(0)
         color = colors_for(active_mode())["onSurfaceVariant"]
         for item in visible:
-            self._nav.addTab(nav_icon(item.glyph, color, ICON_PX), item.label)
+            label = self._desk_load_labels.get(item.index, item.label)
+            self._nav.addTab(nav_icon(item.glyph, color, ICON_PX), label)
         self._menu.clear()
         self._more_actions = {}
         for item in overflow:
-            action = self._menu.addAction(item.label)
+            label = self._desk_load_labels.get(item.index, item.label)
+            action = self._menu.addAction(label)
             action.setData(item.index)
             action.setIcon(nav_icon(item.glyph, color, ICON_PX))
             action.triggered.connect(lambda _c=False, i=item.index: self.show_page(i))
@@ -233,6 +245,26 @@ class MainWindow(QMainWindow):
                 self._nav.setCurrentIndex(tab_i)
                 return
         self._nav.setCurrentIndex(-1)
+
+    def set_desk_load_progress(self, lane: str, label: str | None) -> None:
+        """Show non-modal board-load % on TradFi/Forex/Crypto nav tabs (None clears)."""
+        key = (lane or "").strip().lower()
+        index = {"crypto": SCANNER, "tradfi": TRADFI, "forex": FOREX}.get(key)
+        if index is None:
+            return
+        if label:
+            self._desk_load_labels[index] = label
+        else:
+            self._desk_load_labels.pop(index, None)
+        for tab_i, item in enumerate(self._visible_items):
+            if item.index != index:
+                continue
+            self._nav.setTabText(tab_i, label or item.label)
+            return
+        action = self._more_actions.get(index)
+        if action is not None:
+            catalog = next((n for n in NAV_CATALOG if n.index == index), None)
+            action.setText(label or (catalog.label if catalog else ""))
 
     def _install_tray(self) -> None:
         app = QApplication.instance()
@@ -250,7 +282,8 @@ class MainWindow(QMainWindow):
 
     def _ensure_default_autostart(self) -> None:
         prefs = load_prefs(self._ctx.root)
-        if prefs.start_with_windows and not autostart_is_enabled():
+        if prefs.start_with_windows:
+            # Always rewrite Run command so a stale frozen path cannot stick.
             set_autostart(True)
 
     def _show_from_tray(self) -> None:
@@ -288,8 +321,9 @@ class MainWindow(QMainWindow):
             self._tray.show_message(title, body)
 
     def _quit_app(self) -> None:
-        if self._scanner_page is not None:
-            self._scanner_page.stop_autoscan()
+        for page in (self._scanner_page, self._tradfi_page, self._forex_page):
+            if page is not None:
+                page.stop_autoscan()
         app = QApplication.instance()
         if isinstance(app, QApplication):
             app.quit()

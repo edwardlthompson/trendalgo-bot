@@ -52,7 +52,7 @@ flowchart TB
 | Trading | `src/trendalgo/trading/` | Native runner, multi-exchange router, funding display |
 | Strategies | `src/trendalgo/strategies/runtime/` | Strategy runtime contract (CM-2, S15) |
 | Data | `src/trendalgo/data/` | On-chain / sentiment stubs (no paid indexers) |
-| DB adapters | `src/trendalgo/db/` | Postgres dual-write path |
+| DB helpers | `src/trendalgo/db/` | SQLite row helpers (Postgres dual-write removed) |
 
 ## Platform extensions (Sprint 12)
 
@@ -62,21 +62,19 @@ flowchart TB
 - **Funding rates** (`trading/funding.py`) — perpetual funding display and profit estimate hooks (informational).
 - **Unified trading** (`trading/multi_exchange.py`) — routes orders to exchange adapters; dry-run unless `GO_LIVE_APPROVED=1`.
 - **Fee receipts** (`billing/onchain_receipts.py`) — optional manual on-chain settlement receipts.
-- **Postgres path** (`db/postgres_adapter.py`, `docker/postgres/`) — dual-write when `TRENDALGO_POSTGRES_DUAL_WRITE=1`.
-
 API prefix: `/api/v1/platform/*`
 
 ## Horizontal scaling
 
 TrendAlgo targets **self-hosted** deployments. Scale-out pattern:
 
-1. **Single writer** — one Postgres primary holds portfolio, billing, and scanner state.
+1. **Single writer** — one SQLite (or future dedicated store) holds portfolio, billing, and scanner state.
 2. **Multiple bot workers** — each native runner instance uses unique bot labels; unified trading router coordinates exchange keys per worker.
-3. **API tier** — stateless FastAPI replicas behind reverse proxy; shared `AppState` stores on Postgres/SQLite via connection pool.
-4. **Read replicas** — optional for dashboard and portfolio overview queries.
+3. **API tier** — stateless FastAPI replicas behind reverse proxy; shared `AppState` stores on SQLite via connection pool.
+4. **Read replicas** — optional for dashboard and portfolio overview queries (requires a multi-writer store; not shipped).
 5. **Job isolation** — scanner scheduler and billing settlement run on one designated worker to avoid duplicate fee jobs (see R-014 mitigation).
 
-SQLite remains valid for single-user VPS; migrate per `docker/postgres/README.md` before adding second bot host.
+SQLite remains the supported single-user VPS path (HOUSE-08 removed the unused Postgres dual-write stub).
 
 ## Security boundaries
 
@@ -91,4 +89,3 @@ SQLite remains valid for single-user VPS; migrate per `docker/postgres/README.md
 - `docs/EXCHANGE_ROADMAP.md` — multi-exchange program
 - `docs/DEPLOYMENT.md` — VPS layout
 - `docs/RISK_REGISTER.md` — active vs closed risks
-- `docker/postgres/README.md` — migration cutover

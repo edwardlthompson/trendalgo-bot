@@ -23,8 +23,9 @@ from PySide6.QtWidgets import (
 )
 
 from trendalgo.device import strings as S
-from trendalgo.device.backtest_results_ui import filter_perfect_rows
+from trendalgo.device.backtest_results_ui import filter_perfect_rows, rows_for_strategy_export
 from trendalgo.device.backtest_row_filter import filter_rows
+from trendalgo.device.export_prefs import remember_export_dir
 from trendalgo.device.icons import nav_icon
 from trendalgo.device.results_view_prefs import load_results_prefs, save_results_prefs
 from trendalgo.device.scanner_share import default_scanner_export_path, export_strategy_sheet_png
@@ -45,16 +46,16 @@ CreateBotCb = Callable[[dict[str, str], str], str]
 def strategy_sheet_rows(
     coin: dict[str, Any], *, top_n: int = 5, perfect_only: bool = False
 ) -> list[dict[str, Any]]:
-    """Strategy rows for Results.
+    """Strategy rows for Results — full sheet (Backtest parity) plus B&H / Oracle.
 
-    All TA: full sheet (same keep rules as Backtest) plus B&H, sorted by net desc.
-    3Commas / other: top_n by net plus B&H.
+    ``top_n`` is retained for call compatibility but ignored; device scans always
+    use the All-TA engine (strategy checkboxes filter the catalog).
     """
+    del top_n  # legacy kw; full sheet always
     raw = coin.get("backtest_top_strategies")
     strategies = [r for r in raw if isinstance(r, dict)] if isinstance(raw, list) else []
     bh = coin.get("backtest_buy_hold")
     oracle = coin.get("backtest_oracle_max")
-    all_ta = str(coin.get("bt_signal_set") or "") == BT_SET_ALL_TA
     ranked: list[tuple[float, dict[str, Any]]] = []
     for row in strategies:
         name = str(row.get("indicator") or "").strip()
@@ -65,10 +66,7 @@ def strategy_sheet_rows(
             continue
         ranked.append((net, row))
     ranked.sort(key=lambda item: item[0], reverse=True)
-    if all_ta:
-        out = [dict(row) for _, row in ranked]
-    else:
-        out = [dict(row) for _, row in ranked[:top_n]]
+    out = [dict(row) for _, row in ranked]
     if isinstance(bh, dict):
         has_bh = any(str(r.get("indicator") or "").strip() == _BH for r in out)
         if not has_bh:
@@ -99,12 +97,14 @@ def indicator_display_label(
         return f"{_BH}  ← buy & hold" if text == _BH else text
     if text == "Oracle max":
         return S.BACKTEST_ORACLE_LABEL
-    from trendalgo.device.sauce_names import is_sauce_lab, is_sauce_ta
+    from trendalgo.device.sauce_names import is_sauce, is_sauce_lab, is_sauce_ta
 
     if is_sauce_ta(text):
         return S.SECRET_SAUCE_TA_LABEL
     if is_sauce_lab(text):
         return S.SECRET_SAUCE_LABEL
+    if is_sauce(text):
+        return text  # Peer / Armed / Exit / Final keep product names
     if bt_signal_set == BT_SET_ALL_TA and is_three_commas_indicator(text):
         return f"{text} *"
     return text
@@ -136,8 +136,17 @@ def show_results_dialog(
     status.setObjectName("hint")
     status.setWordWrap(True)
     prefs_for_ctx = load_results_prefs(export_root) if export_root is not None else None
+
+    def _on_mc_collapse(collapsed: bool) -> None:
+        if prefs_root is None:
+            return
+        prefs = load_results_prefs(prefs_root)
+        prefs.market_context_collapsed = bool(collapsed)
+        save_results_prefs(prefs_root, prefs)
+
     market_pane = MarketContextPane(
         expanded=not (prefs_for_ctx.market_context_collapsed if prefs_for_ctx else False),
+        on_collapse=_on_mc_collapse,
     )
     raw_ctx = coin.get("market_context")
     if isinstance(raw_ctx, dict):
@@ -182,6 +191,7 @@ def show_results_dialog(
             filter_row=filters,
             on_create_bot=on_create_bot,
             indicator_label=indicator_display_label,
+            calendar_root=export_root,
         )
         filter_timer = QTimer(dialog)
         filter_timer.setSingleShot(True)
@@ -202,6 +212,7 @@ def show_results_dialog(
                 filter_row=filters,
                 on_create_bot=on_create_bot,
                 indicator_label=indicator_display_label,
+                calendar_root=export_root,
             )
 
         def _on_filter_changed(_text: str = "") -> None:
@@ -241,7 +252,7 @@ def show_results_dialog(
     share.setEnabled(bool(all_rows) and export_root is not None)
 
     def _share(_checked: bool = False) -> None:
-        export_rows = visible if visible else all_rows
+        export_rows = rows_for_strategy_export(visible if visible else all_rows)
         if export_root is None or not export_rows:
             return
         suggested = str(default_scanner_export_path(export_root, label=symbol or "pair"))
@@ -252,10 +263,20 @@ def show_results_dialog(
             return
         out = Path(chosen) if chosen.lower().endswith(".png") else Path(f"{chosen}.png")
         try:
-            export_strategy_sheet_png(out, pair=pair or symbol, rows=export_rows, heatmap=heatmap)
+            active = filters.dump() if filters is not None else {}
+            raw_mc = coin.get("market_context")
+            export_strategy_sheet_png(
+                out,
+                pair=pair or symbol,
+                rows=export_rows,
+                heatmap=heatmap,
+                filters=active,
+                market_context=raw_mc if isinstance(raw_mc, dict) else None,
+            )
         except (OSError, ValueError) as exc:
             QMessageBox.warning(dialog, S.SCANNER_SHARE, str(exc))
             return
+        remember_export_dir(export_root, out)
         QMessageBox.information(
             dialog,
             S.SCANNER_SHARE,
@@ -277,6 +298,10 @@ def show_results_dialog(
             prefs.results_dialog_width = max(520, dialog.width())
             prefs.results_dialog_height = max(360, dialog.height())
         save_results_prefs(prefs_root, prefs)
+        if filters is not None:
+            from trendalgo.device.results_pair_prefs import save_pair_filters
+
+            save_pair_filters(prefs_root, pair, filters.dump())
 
     dialog.finished.connect(_persist_geometry)
     if prefs_root is not None:

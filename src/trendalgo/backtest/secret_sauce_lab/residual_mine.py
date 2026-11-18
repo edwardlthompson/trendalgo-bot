@@ -30,7 +30,7 @@ def try_residual_refine(
     residual_exits: tuple[int, ...],
     fee: ExchangeFeeSchedule,
     stake_usd: float,
-    time_budget_s: float = 0.8,
+    time_budget_s: float = float("inf"),
 ) -> tuple[CompositeRule, CompositeRule, float, str] | None:
     """AND one causal conjunct onto entry and/or exit to cover residual Oracle bars.
 

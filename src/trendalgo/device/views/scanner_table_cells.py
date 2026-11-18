@@ -30,40 +30,72 @@ from trendalgo.device.views.sparkline import Sparkline, series_gain_pct
 
 LOGO_PX = 36
 COL_WATCH, COL_LOGO, COL_NAME = 0, 1, 2
-COL_BEST, COL_EXCHANGE, COL_RESULTS = 7, 14, 16
+COL_BEST, COL_EXCHANGE, COL_EVENTS, COL_RESULTS = 7, 13, 15, 16
 
 
-def logo_cell(table: QTableWidget, row: int, symbol: str, is_new: bool) -> None:
+def logo_cell(
+    table: QTableWidget,
+    row: int,
+    symbol: str,
+    is_new: bool,
+    *,
+    root: object | None = None,
+    lane: str = "crypto",
+    pair: str = "",
+) -> None:
     host = QWidget()
     layout = QVBoxLayout(host)
     layout.setContentsMargins(2, 2, 2, 2)
     layout.setSpacing(0)
     layout.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
     label = QLabel()
+    label.setObjectName("logoBadge")
     label.setFixedSize(LOGO_PX, LOGO_PX)
+    label.setMinimumSize(LOGO_PX, LOGO_PX)
     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    path = coin_icon_path(symbol)
+    label.setScaledContents(False)
+    # Keep ticker on the widget so async logo refresh can retarget this cell.
+    label.setProperty("logoSymbol", (symbol or "").strip().upper().split("/")[0])
     painted = False
-    if path is not None:
-        pixmap = QPixmap(str(path))
-        if not pixmap.isNull():
-            label.setPixmap(
-                pixmap.scaled(
-                    LOGO_PX,
-                    LOGO_PX,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-            )
+    if root is not None:
+        from pathlib import Path
+
+        from trendalgo.device.lane_icons import icon_for_row
+
+        pix = icon_for_row(
+            Path(str(root)),
+            symbol,
+            lane=lane,
+            pair=pair or symbol,
+            size=LOGO_PX,
+            fetch_remote=False,
+        )
+        if not pix.isNull():
+            label.setPixmap(pix)
             painted = True
     if not painted:
-        label.setText(symbol[:3] or "?")
+        path = coin_icon_path(symbol)
+        if path is not None:
+            pixmap = QPixmap(str(path))
+            if not pixmap.isNull():
+                label.setPixmap(
+                    pixmap.scaled(
+                        LOGO_PX,
+                        LOGO_PX,
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
+                )
+                painted = True
+    if not painted:
+        label.setText(symbol[:4] or "?")
     layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignHCenter)
     if is_new:
         badge = QLabel(S.SCANNER_NEW_BADGE)
         badge.setObjectName("badgeNew")
         badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(badge, alignment=Qt.AlignmentFlag.AlignHCenter)
+    host.setMinimumSize(LOGO_PX + 4, LOGO_PX + 4)
     table.setCellWidget(row, COL_LOGO, host)
 
 
@@ -231,6 +263,26 @@ def exchange_chip(table: QTableWidget, row: int, coin: dict[str, Any]) -> None:
     chip.setObjectName("exchangeChip")
     chip.setAlignment(Qt.AlignmentFlag.AlignCenter)
     table.setCellWidget(row, COL_EXCHANGE, chip)
+
+
+def events_btn(
+    table: QTableWidget,
+    row: int,
+    coin: dict[str, Any],
+    *,
+    has_events: bool,
+    on_events: Callable[[dict[str, Any]], None] | None,
+) -> None:
+    if not has_events or on_events is None:
+        blank = QTableWidgetItem("")
+        blank.setFlags(Qt.ItemFlag.NoItemFlags)
+        table.setItem(row, COL_EVENTS, blank)
+        return
+    btn = QPushButton(S.COIN_EVENTS_CALENDAR)
+    btn.setToolTip(S.COIN_EVENTS_CALENDAR_TIP)
+    btn.setAccessibleName(S.COIN_EVENTS_CALENDAR)
+    btn.clicked.connect(lambda _c=False, c=coin: on_events(c))
+    table.setCellWidget(row, COL_EVENTS, btn)
 
 
 def results_btn(

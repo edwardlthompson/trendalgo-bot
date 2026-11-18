@@ -11,11 +11,12 @@ from trendalgo.device.scanner_signal_sets import is_three_commas_indicator
 from trendalgo.device.trade_counts import open_trades, win_pct, wins_losses
 
 _BH = "B&H"
-# Column indices matching BACKTEST_RESULT_HEADERS (Show Chart + Create Bot are widgets).
+# Column indices matching BACKTEST_RESULT_HEADERS (Events / Show Chart / Create Bot are widgets).
 NET_COL = 3
 STRENGTH_COL = 12
-SHOW_CHART_COL = 13
-CREATE_BOT_COL = 14
+EVENTS_COL = 13
+SHOW_CHART_COL = 14
+CREATE_BOT_COL = 15
 # invert=True → lower is greener (fewer fees / open / losses / hits / hit%).
 HEAT_COLS: dict[int, tuple[str, bool]] = {
     3: ("net_pct", False),
@@ -62,6 +63,15 @@ def net_tooltip(row: dict[str, Any], *, is_bh: bool) -> str:
     if is_bh:
         return ""
     parts: list[str] = []
+    if str(row.get("indicator") or "") == "Oracle max":
+        tradable = _as_float(row.get("tradable_net_pct"))
+        final = _as_float(row.get("net_pct"))
+        if tradable is not None and final is not None:
+            parts.append(
+                f"HL ceiling {final:.2f}% vs tradable next-bar-close proxy {tradable:.2f}% "
+                "(fee-on; same swing labels — not a live strategy)."
+            )
+            return " ".join(parts)
     if bool(row.get("protective_tsl")) or bool(row.get("tsl_breath")):
         parts.append(
             "Protective TSL: lowest safe trail from the 1–20% grid (+1% breath when tied)."
@@ -89,6 +99,8 @@ def format_export_params(row: dict[str, Any], *, is_bh: bool = False) -> str:
     if is_secret_sauce_indicator(indicator):
         if bool(row.get("ss_lab_pending")):
             return str(S.SECRET_SAUCE_PENDING)
+        if bool(row.get("ss_unavailable")):
+            return str(row.get("spectrum_note") or S.SECRET_SAUCE_UNAVAILABLE)
         return str(S.SECRET_SAUCE_PARAMS_STUB)
     parts: list[str] = []
     params = row.get("params")
@@ -144,6 +156,11 @@ def filter_perfect_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         r for r in rows if is_perfect_strategy(r) or str(r.get("indicator") or "").strip() in keep
     ]
+
+
+def rows_for_strategy_export(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop Oracle max from share PNG (keep on-screen Results / chart)."""
+    return [r for r in rows if str(r.get("indicator") or "").strip() != "Oracle max"]
 
 
 def row_cells(row: dict[str, Any], *, is_bh: bool) -> list[str]:

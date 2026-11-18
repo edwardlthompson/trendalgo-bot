@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from trendalgo.api.app import create_app
+from tests.support.api_client import make_api_client
 from trendalgo.api.state import default_state
 
 
@@ -26,7 +26,7 @@ def api_client() -> TestClient:
     reset_fee_store()
     fees.clear_fee_cache()
     ensure_fee_db_ready(get_fee_store())
-    return TestClient(create_app(default_state()))
+    return make_api_client(default_state())
 
 
 def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -101,8 +101,6 @@ def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyP
         json={"receipt_id": "r1", "tx_hash": "0xabc", "verification_hash": "deadbeef"},
     )
     c.get("/api/v1/platform/data/sentiment/BTC")
-    c.get("/api/v1/platform/postgres/status")
-    c.post("/api/v1/platform/postgres/migrate-dry-run")
     c.post("/api/v1/platform/funding/estimate", json={"notional_usd": 1000, "rate": 0.01})
 
     c.post("/api/v1/portfolio/snapshot")
@@ -113,6 +111,10 @@ def test_openapi_route_sweep(api_client: TestClient, monkeypatch: pytest.MonkeyP
     c.get("/api/v1/portfolio/history/2026-06-01")
     c.post("/api/v1/portfolio/rebalance/apply", json={"dry_run": True})
     c.post("/api/v1/notifications/email/test", json={"subject": "t", "body": "b"})
+    c.get("/api/v1/notifications/grokbot")
+    c.post("/api/v1/notifications/grokbot/test")
+    c.get("/api/v1/notifications/golive-readiness")
+    c.post("/api/v1/notifications/golive-readiness")
 
     c.get("/api/v1/research/ta-catalog")
     c.get("/api/v1/research/ta-library")

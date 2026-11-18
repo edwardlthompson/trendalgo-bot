@@ -46,7 +46,7 @@ def fat_beat_peer(
         fee=fee,
         stake_usd=stake,
         bh_net=bh_usd,
-        time_budget_s=3.0,
+        time_budget_s=None,
         peer_net=peer_usd,
         direction=regime.direction,
     )
@@ -55,5 +55,5 @@ def fat_beat_peer(
         and picked[2] > peer_usd
         and not is_exact_peer_clone(picked[0], picked[1], hints)
     ):
-        er, xr, net, fam = picked
+        er, xr, net, fam = picked[:4]
         out.append((er, xr, net, fam, search_tf, frame, regime))

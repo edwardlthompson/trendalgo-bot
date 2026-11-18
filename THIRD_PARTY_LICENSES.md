@@ -4,16 +4,13 @@
 
 ## Project License
 
-This project is licensed under the MIT License. See [`LICENSE`](LICENSE).
+This project is licensed under the Elastic License 2.0 (source-available). See [`LICENSE`](LICENSE) and [`docs/LICENSE_MODEL.md`](docs/LICENSE_MODEL.md).
 
 ## Dependencies
 
 Run license audits for active stacks:
 
 ```bash
-# Web (npm)
-cd examples/web && npx license-checker --production --summary
-
 # Python (pip)
 cd examples/python && uv run pip-licenses --format=markdown
 
@@ -26,7 +23,7 @@ head -1 examples/go/go.mod
 
 ## Attribution
 
-When bundling dependencies in releases (APK, desktop binary, etc.), include
+When bundling dependencies in releases (desktop binary, MSI, etc.), include
 this file or a generated `NOTICE` file in the distribution artifact.
 
 ## Incompatible Licenses

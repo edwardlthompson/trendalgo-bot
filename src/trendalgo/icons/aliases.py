@@ -60,6 +60,8 @@ SYMBOL_ALIASES: dict[str, str] = {
     "SYN": "SYN",
     "TRU": "TRU",
     "XCN": "XCN",
+    # Kraken lists Lighter as LIGHTER; CoinGecko ticker is LIT.
+    "LIGHTER": "LIT",
 }
 
 

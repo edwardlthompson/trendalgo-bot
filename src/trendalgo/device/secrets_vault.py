@@ -105,12 +105,21 @@ class VaultSecretStore:
         if vault is None:
             raise CredentialError("No credential vault available on this platform.")
         key_t, secret_t, meta_t = _targets(entry.exchange_id)
-        vault.write(key_t, entry.api_key)
-        vault.write(secret_t, entry.api_secret)
-        vault.write(
-            meta_t,
-            json.dumps({"scope": entry.scope, "verified_at": entry.verified_at}),
-        )
+        try:
+            vault.write(key_t, entry.api_key)
+            vault.write(secret_t, entry.api_secret)
+            vault.write(
+                meta_t,
+                json.dumps({"scope": entry.scope, "verified_at": entry.verified_at}),
+            )
+        except CredentialError:
+            # Never leave a half-saved pair (key without secret/meta).
+            for target in (key_t, secret_t, meta_t):
+                try:
+                    vault.delete(target)
+                except CredentialError:
+                    pass
+            raise
 
     def delete_entry(self, exchange_id: str) -> None:
         vault = self._cred_store()

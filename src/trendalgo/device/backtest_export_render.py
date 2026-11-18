@@ -36,6 +36,7 @@ def build_export_panel(
     heatmap: bool,
     sort_key: str,
     sort_dir: int,
+    market_context: dict[str, Any] | None = None,
 ) -> QWidget:
     theme = colors_for(active_mode())
     panel = QWidget()
@@ -56,6 +57,14 @@ def build_export_panel(
     filt.setObjectName("hint")
     filt.setWordWrap(True)
     layout.addWidget(filt)
+    from trendalgo.device.market_context_export_gfx import build_context_gfx_band
+
+    mc_band = build_context_gfx_band(market_context) if market_context else None
+    if mc_band is not None:
+        layout.addWidget(mc_band)
+        strat = QLabel(S.MARKET_CTX_STRATEGY_CAPTION)
+        strat.setObjectName("sectionTitle")
+        layout.addWidget(strat)
     table = _filled_table(rows, heatmap=heatmap, sort_key=sort_key, sort_dir=sort_dir, theme=theme)
     layout.addWidget(table)
     app = QApplication.instance()

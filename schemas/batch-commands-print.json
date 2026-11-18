@@ -80,6 +80,11 @@
       "group": "build",
       "caption": "Write the next numbered architecture decision record."
     },
+    "legal-desk": {
+      "kind": "step",
+      "group": "build",
+      "caption": "Legal Research Desk — research memos and founder legal posture (not legal advice)."
+    },
     "feature": {
       "kind": "step",
       "group": "build",

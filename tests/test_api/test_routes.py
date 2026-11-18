@@ -13,6 +13,8 @@ def client() -> TestClient:
     data_dir = Path(tempfile.mkdtemp(prefix="trendalgo-api-test-"))
     os.environ["TRENDALGO_DATA_DIR"] = str(data_dir)
     os.environ["TRENDALGO_FEE_SYNC_ON_START"] = "0"
+    os.environ.setdefault("TRENDALGO_OWNER_SECRET", "test-owner-secret")
+    os.environ.setdefault("TRENDALGO_OWNER_ID", "test-owner")
     from trendalgo.exchanges import fees
     from trendalgo.exchanges.fee_store import get_fee_store, reset_fee_store
     from trendalgo.exchanges.fee_sync import ensure_fee_db_ready
@@ -20,7 +22,12 @@ def client() -> TestClient:
     reset_fee_store()
     fees.clear_fee_cache()
     ensure_fee_db_ready(get_fee_store())
-    return TestClient(create_app(default_state()))
+    state = default_state()
+    app = create_app(state)
+    issued = state.bearer_store.mint()
+    c = TestClient(app)
+    c.headers.update({"Authorization": f"Bearer {issued.token}"})
+    return c
 
 
 def test_health() -> None:

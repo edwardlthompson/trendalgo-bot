@@ -19,8 +19,8 @@ def check_reuse(root: Path, *, which=shutil.which) -> int:
     if not (root / "REUSE.toml").is_file():
         print("FAIL: REUSE.toml missing")
         return 1
-    if not (root / "LICENSES" / "MIT.txt").is_file():
-        print("FAIL: LICENSES/MIT.txt missing")
+    if not (root / "LICENSES" / "Elastic-2.0.txt").is_file():
+        print("FAIL: LICENSES/Elastic-2.0.txt missing")
         return 1
     exe = which("reuse")
     if not exe:

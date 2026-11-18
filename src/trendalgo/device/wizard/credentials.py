@@ -12,6 +12,7 @@ import sys
 from typing import Any, Protocol
 
 OWNER_SECRET_TARGET = "TrendAlgo/owner-secret"
+OWNER_BEARER_TARGET = "TrendAlgo/owner-bearer"
 PRACTICE_SECRET_TARGET = "TrendAlgo/practice-secret"
 SECRET_BYTES = 32
 _CRED_TYPE_GENERIC = 1

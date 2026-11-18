@@ -105,17 +105,6 @@ def _canvas_source(rows: list[tuple[str, str]]) -> str:
     )
 
 
-def _with_sw_budget(root: Path, rows: list[tuple[str, str]]) -> list[tuple[str, str]]:
-    try:
-        from sw_cache_budget import summary_row
-    except ImportError:
-        return rows
-    sw_row = summary_row(root)
-    if sw_row is None or any(name == "sw-cache-budget" for name, _ in rows):
-        return rows
-    return [*rows, sw_row]
-
-
 def load_gate_rows(root: Path) -> list[tuple[str, str]]:
     path = root / ".cursor" / "last-feature-gate.json"
     if not path.is_file():
@@ -132,11 +121,11 @@ def load_gate_rows(root: Path) -> list[tuple[str, str]]:
                 rows.append((str(stage), "Fail"))
             if not rows:
                 rows = [("feature-gate", "Pass" if data.get("ok") else "Fail")]
-    return _with_sw_budget(root, rows)
+    return rows
 
 
 def write_status(root: Path, extra_rows: list[tuple[str, str]] | None = None) -> Path:
-    rows = load_gate_rows(root) if extra_rows is None else _with_sw_budget(root, list(extra_rows))
+    rows = load_gate_rows(root) if extra_rows is None else list(extra_rows)
     dest = root / ".cursor" / "gates-status.md"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(markdown_report(root, rows), encoding="utf-8", newline="\n")

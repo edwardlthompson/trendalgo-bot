@@ -18,11 +18,13 @@ class CollapsibleSection(QWidget):
         *,
         expanded: bool = True,
         nested: bool = False,
+        expanding: bool = False,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._expanded = expanded
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        v_pol = QSizePolicy.Policy.Expanding if expanding else QSizePolicy.Policy.Preferred
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, v_pol)
         self._chevron = QLabel(_CHEVRON_EXPANDED if expanded else _CHEVRON_COLLAPSED)
         self._chevron.setObjectName("collapseChevron")
         self._chevron.setFixedWidth(22)
@@ -30,7 +32,7 @@ class CollapsibleSection(QWidget):
         self._title = QLabel(title)
         self._title.setObjectName("sectionTitle" if not nested else "hint")
         self._body = QWidget()
-        self._body.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        self._body.setSizePolicy(QSizePolicy.Policy.Preferred, v_pol)
         self._body_layout = QVBoxLayout(self._body)
         self._body_layout.setContentsMargins(12 if nested else 4, 6, 0, 6)
         self._body_layout.setSpacing(8)
@@ -49,7 +51,7 @@ class CollapsibleSection(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
         layout.addWidget(self._header)
-        layout.addWidget(self._body)
+        layout.addWidget(self._body, 1 if expanding else 0)
         self._header.installEventFilter(self)
 
     def eventFilter(self, watched: object, event: QEvent) -> bool:  # noqa: N802
@@ -61,8 +63,8 @@ class CollapsibleSection(QWidget):
     def body_layout(self) -> QVBoxLayout:
         return self._body_layout
 
-    def add_widget(self, widget: QWidget) -> None:
-        self._body_layout.addWidget(widget)
+    def add_widget(self, widget: QWidget, *, stretch: int = 0) -> None:
+        self._body_layout.addWidget(widget, stretch)
 
     def set_expanded(self, expanded: bool) -> None:
         changed = bool(expanded) != self._expanded

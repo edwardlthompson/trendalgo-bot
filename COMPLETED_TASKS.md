@@ -2,6 +2,238 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Scan UX desk + AlgoSpecial Forex H1 (2026-11-15)
+
+Plans: `scan_ux_desk_fixes` · `algospecial_fx_feed`. Scoped smoke: 33 pytest (AlgoSpecial parse/budget, forex_bars facade, NonModal progress, Sauce, share, health edit, move-cut). Full `watch-agent-gates` aborted (multi-stack hang); hygiene OK.
+
+- ✅ [AGENT][LOCAL] UX-S1 Chunk `on_progress` in Alpaca multi + wire TradFi daily/1h; audit long paths — scope: `src/trendalgo/market/alpaca_ohlcv.py` · `lane_scan_job.py` · `lane_chart_fetch.py`
+- ✅ [AGENT][LOCAL] UX-S2 ScanProgressDialog NonModal; remove main-window blur on scan/sauce start — scope: `src/trendalgo/device/views/scan_progress_dialog.py` · `scanner_page.py` · `backtest_page.py`
+- ✅ [AGENT][LOCAL] UX-S3 TradFi/FX sparks from daily 7/22 bars even after 1h enrich — scope: `src/trendalgo/device/lts_scan_model.py`
+- ✅ [AGENT][LOCAL] UX-S4 Show Run Secret Sauce on TradFi/Forex; lane-aware handler — scope: `src/trendalgo/device/views/scanner_page.py` · `opportunity_sauce_job.py`
+- ✅ [AGENT][LOCAL] UX-S5 TradFi PNG export logos: pass `icon_root`+`lane`; sync FMP before grab — scope: `src/trendalgo/device/scanner_export_render.py` · `scanner_share.py` · `lane_icons.py`
+- ✅ [AGENT][LOCAL] UX-S6 Health filter: replace QComboBox with validated line edit — scope: `src/trendalgo/device/views/scanner_column_filter_row.py` · `scanner_page.py`
+- ✅ [AGENT][LOCAL] UX-S7 Scoped tests + relaunch for Scan UX desk fixes — scope: `tests/test_device/`
+- ✅ [AGENT][LOCAL] FX-AS1 AlgoSpecial H1 provider + parse to OhlcvPoint; derive D1 from H1 — scope: `src/trendalgo/market/algospecial_forex.py`
+- ✅ [AGENT][LOCAL] FX-AS2 Day budget (1000/day) + ≤50/min pace + hard 90m live-refresh floor — scope: `src/trendalgo/market/algospecial_budget.py`
+- ✅ [AGENT][LOCAL] FX-AS3 Wire Forex scan/enrich: Alpaca → AlgoSpecial H1 → cache; empty only if all fail — scope: `src/trendalgo/device/lane_scan_job.py` · `lane_chart_fetch.py` · `alpaca_forex.py`
+- ✅ [AGENT][LOCAL] FX-AS4 Forex interval/auto-scan min clamp 90m + tip when on AlgoSpecial — scope: `src/trendalgo/device/views/` · `strings.py`
+- ✅ [AGENT][LOCAL] FX-AS5 Tests parser/budget/TTL/job + scoped pytest — scope: `tests/test_market/` · `tests/test_device/`
+
+## TradFi top-500 + Forex research (2026-11-15)
+
+Specs: `docs/specs/tradfi-market-data.md` · `docs/specs/forex-lane.md`. Scoped smoke: 37 pytest (OHLCV/sessions/lanes/NASDAQ/universe/forex/matrix).
+
+- ✅ [AGENT][LOCAL] TF-P5 Alpaca equity OHLCV provider + keyed research BT — scope: `src/trendalgo/brokers/` `src/trendalgo/market/`
+- ✅ [AGENT][LOCAL] TF-P6 US RTH/holiday session + gap validation — scope: `src/trendalgo/market/`
+- ✅ [AGENT][LOCAL] TF-P7 Registry + support_matrix honesty (equity scan/BT) — scope: `config/` `src/trendalgo/device/data/` `docs/`
+- ✅ [AGENT][LOCAL] TF-P8 Device Backtest searchable TradFi path — scope: `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] TF-P9 Show crypto / TradFi / Forex toggles — scope: `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] TF-P10 NASDAQ earnings throttle + Events UI for TradFi — scope: `src/trendalgo/device/calendar/`
+- ✅ [AGENT][LOCAL] TF-P11 Top-500 universe manifest + disk OHLCV cache + BT any of 500 — scope: `config/` `src/trendalgo/`
+- ✅ [AGENT][LOCAL] FX-P1 Forex asset_class + forex_universe.json + matrix — scope: `config/` `src/trendalgo/brokers/` `docs/`
+- ✅ [AGENT][LOCAL] FX-P2 Alpaca forex rates provider + FX session rules — scope: `src/trendalgo/market/` `src/trendalgo/brokers/`
+- ✅ [AGENT][LOCAL] FX-P3 Device Backtest/picker for FX + toggle wiring — scope: `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] FX-P4 Keyless macro calendar + Events when Show Forex — scope: `src/trendalgo/device/calendar/`
+
+## Legal Tier A — residual-risk owner-only+foss (2026-11-15)
+
+ADR-0020 Legal Research Desk. Notes: `residual-risk owner-only+foss`. **H-006b** remains open (Tier B non-owner billing).
+
+- ✅ [HUMAN] H-006 Tier A ADR-0008 + founder residual-risk posture
+- ✅ [HUMAN] H-022 Tier A license ADRs via Legal Research Desk
+- ✅ [HUMAN] H-023 / R-Audit-8.9 Tier A TERMS + packet + FOUNDER_LEGAL_POSTURE
+- ✅ [HUMAN] H-007 S1 scope — ADR-0010 native CCXT (Freqtrade superseded)
+- ✅ [HUMAN] H-003 Branch protection verified on `main`
+- ✅ [HUMAN] H-008 Telegram token in local `.env` (already connected)
+- ✅ [HUMAN] PF-H1 CoinMarketCal key in CredMgr (live API verified)
+
+## Registry fix (2026-11-15)
+
+- ✅ [AGENT][LOCAL] Register `/legal-desk` in batch + Cursor skills registry (unblocks validate-bootstrap)
+
+## Multi-venue Sequential (CEX/DEX/TF) (2026-11-15)
+
+Honesty DoD on every capability bump. Feature smoke: 41+ pytest (P1b–TF-P2…P4 + matrix).
+
+- ✅ [AGENT][LOCAL] CEX-P1a Smoke + harden generic portfolio sync (8 non-Kraken) — scope: `src/trendalgo/exchanges/` `src/trendalgo/portfolio/`
+- ✅ [AGENT][LOCAL] CEX-P1b Dedicated adapters where generic fails (Coinbase Adv, Gemini) — scope: `src/trendalgo/exchanges/adapters/`
+- ✅ [AGENT][LOCAL] CEX-P2a Public/semi-public scan path per US Tier A/B — scope: `src/trendalgo/scanner/` `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] CEX-P3b All-TA stake/fees use coin `exchange_id` — scope: `src/trendalgo/device/` `src/trendalgo/backtest/`
+- ✅ [AGENT][LOCAL] CEX-P4a Trading smoke matrix Tier B — scope: `src/trendalgo/trading/` `tests/`
+- ✅ [AGENT][LOCAL] DEX-P2a On-chain watch scanner (Uniswap/Base pools) — scope: `src/trendalgo/venues/` `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] DEX-P2b Candle source for major DEX pairs — scope: `src/trendalgo/market/`
+- ✅ [AGENT][LOCAL] DEX-P3a Backtest disclaimer + optional CEX-proxy — scope: `src/trendalgo/device/` `src/trendalgo/backtest/`
+- ✅ [AGENT][LOCAL] TF-0 brokers.registry.json (Alpaca paper) — scope: `config/` `src/trendalgo/`
+- ✅ [AGENT][LOCAL] TF-P1 Alpaca read-only positions + equity sync — scope: `src/trendalgo/`
+- ✅ [AGENT][LOCAL] TF-P2…P4 Alpaca scan → BT → paper (after TF-P1) — scope: `src/trendalgo/`
+- ✅ [AGENT][LOCAL] Add API-key hygiene guidance to security docs — scope: docs/features/security-onboarding.md (news P2, 2026-11-13)
+
+## Multi-venue parity — Lane 0 + first sprint (2026-11-15)
+
+Honesty DoD locked; YOLO soft-approve MVP-H0 + TF-H1.
+
+- ✅ [AGENT][LOCAL] MVP-0d Honesty gate README ↔ support_matrix.json
+- ✅ [AGENT][LOCAL] MVP-0a Registry overlay via support_matrix (every CEX id covered)
+- ✅ [AGENT][LOCAL] MVP-0b Scanner empty states cite Kraken research desk
+- ✅ [AGENT][LOCAL] MVP-0c EXCHANGE_ROADMAP research parity chapter
+- ✅ [AGENT][LOCAL] CEX-P2b Keyed scan chart enrich beyond Kraken
+- ✅ [AGENT][LOCAL] CEX-P3a Unified OHLCV provider (Binance.US / Coinbase / Gemini)
+- ✅ [AGENT][LOCAL] DEX-P1a Solana SOL + SPL wallet balances
+- ✅ [AGENT][LOCAL] DEX-P1b Portfolio Support column + DEX wallet sync hook
+- ✅ [HUMAN] MVP-H0 Approve multi-venue research parity + H-040 framing (auto via `/build`)
+- ✅ [HUMAN] TF-H1 Approve TradFi lane + Alpaca paper first broker (auto via `/build`)
+
+## Sauce / Market Context / logos (2026-11-15)
+
+Ship tip `665d6f5` · v1.15.2 (RP #75).
+
+- ✅ [AGENT][LOCAL] SAUCE-CTRL-1 Sauce Pan: with-scan toggle + top-N prefs; gate Pass 2 only; manual Sauce-only on filtered Qualified — scope: `scan_bt_prefs.py`, `scanner_all_ta_bt.py`, `opportunity_sauce_job.py`, scanner UI, tests
+- ✅ [AGENT][LOCAL] Market Context settings toggle + ETA (MC + Sauce) + gfx on Qualified/per-coin export — scope: `scan_bt_prefs`, `scan_time_history`, `market_context_export(_gfx)`, scanner/backtest share
+- ✅ [AGENT][LOCAL] Off-board leave reason for Telegram/Grok (`no longer on scan board`) — scope: `scanner_alert_diff.py`, tests
+- ✅ [AGENT][LOCAL] Curated coin logos AKE/LIGHTER/AUDX + extras sync — scope: `config/coin-icon-extras.json`, `coin_icons.py`, `icons/sync.py`
+
+## Filtered alerts + autoscan (2026-11-14)
+
+Ship tip `1049964` · v1.14.1.
+
+- ✅ [AGENT][LOCAL] TG-ENRICH Live enter Telegram: enrich coin with Results OHLC + `alert_trades` before PNG — scope: `telegram_alert_enrich.py`, `scan_alerts.py`, tests
+- ✅ [AGENT][LOCAL] NEWS-1 API-key hygiene in security docs (no-withdraw, IP allowlist, no reuse) citing Coinigy breach — scope: `docs/API_ACCESS_LIMITS.md`, `THREAT_MODEL.md`, `SECURITY_TRIAGE.md`, `SETTINGS_KEYS_HELP`
+- ✅ [AGENT][LOCAL] AUTOSCAN-1 Autoscan never-dies: re-arm after no-op `_start`, stale/active watchdog, refresh HKCU Run command — scope: `scanner_page.py`, `scanner_schedule.py`, `autostart`/`main_window`, tests
+- ✅ [AGENT][LOCAL] ALERT-FILTER-1 Telegram enters only for new pairs in full Qualified-tab filtered set; cold-seed empty previous — scope: `scan_alerts.py`, `scanner_page.py`, `scanner_alert_diff.py`, tests
+- ✅ [AGENT][LOCAL] ALERT-LEAVE-1 Exit notify when pair leaves filtered Qualified set; leave reason from board metrics vs floors — scope: `scanner_alert_diff.py`, `scan_alerts.py`, tests
+
+## TG-SS-1 — Sauce-on-join + chart/volume (2026-11-13)
+
+- ✅ [AGENT][LOCAL] TG-SS-1 Drop Settings col on enter chart; Sauce first-join once then top-10; skip empty exchange volume lines; BTC enter resend with SS + volume — scope: `src/trendalgo/notifications/` `src/trendalgo/device/opportunity_sauce.py` `src/trendalgo/device/scanner_all_ta_bt.py` tests
+
+## TG-LTS-Alerts — LTS-parity Telegram + chart markers (2026-11-13)
+
+Plan: `.cursor/plans/lts-rich_telegram_alerts_9ad73007.plan.md` · Palette B. Local tip `c77b651`.
+
+- ✅ [AGENT][LOCAL] TG-1 Port LTS HTML enter/exit captions + exact URL keyboard; `parse_mode`/`reply_markup` on send; live field aliases — scope: `src/trendalgo/notifications/telegram_format.py` `telegram_keyboard.py` `telegram.py` `tests/test_device/`
+- ✅ [AGENT][LOCAL] TG-2 Candlestick composite enter PNG (top-strategy ^/v + holds + top-5/B&H table) + leave snapshot; wire `scan_alerts` — scope: `src/trendalgo/notifications/telegram_chart.py` (+split modules ≤150) `scan_alerts.py` `tests/test_device/`
+- ✅ [AGENT][LOCAL] TG-3 Shared Palette B tokens; Scanner + Backtest green up-triangle / red down-triangle entry/exit markers — scope: `src/trendalgo/device/chart_contrast.py` `views/candle_chart.py` `views/scanner_chart_dialog.py` `tests/test_device/`
+- ✅ [AGENT][LOCAL] TG-4 Leave reason/lifecycle enrichment; LTS-shaped `alert_preview`; ribbon Test TG; watch-agent-gates — scope: `scanner_alert_diff.py` `alert_preview.py` `alerts_notify_ribbon.py` `tests/test_device/`
+- ✅ [HUMAN] Review Alerts ribbon preview wording — absorbed by TG-LTS-Alerts (LTS HTML captions + preview samples)
+
+## SS-Final-Boss — Secret Sauce helpers → Final Boss (2026-11-13)
+
+Spec: [`docs/specs/secret-sauce-oracle-gap.md`](docs/specs/secret-sauce-oracle-gap.md) · Feature: [`docs/features/secret-sauce.md`](docs/features/secret-sauce.md). Excluded: **M** (BTC/corr veto), **R** (cross-coin transfer).
+
+- ✅ [AGENT][LOCAL] S1 Spec + BUILD_PLAN + sauce names + uncapped Sauce plumbing + progress phases — scope: `docs/specs/secret-sauce-oracle-gap.md` `docs/features/secret-sauce.md` `src/trendalgo/device/sauce_names.py` `src/trendalgo/backtest/secret_sauce_lab/search.py` `src/trendalgo/device/pair_strategy_scan.py`
+- ✅ [AGENT][LOCAL] S2 Peer-entry helper (A) + Sauce-TA handoff Exit helper (C) + tests — scope: `src/trendalgo/backtest/secret_sauce_lab/helper_peer_entry.py` `helper_exit.py` `sauce_cook.py` `tests/test_backtest/`
+- ✅ [AGENT][LOCAL] S3 Armed helper (B) + Lab/helper TSL deepen (L) + Oracle-TF bias + walk-forward light (K) — scope: `helper_armed.py` `search.py` `multi_tf_lab.py` `meta_tsl.py`
+- ✅ [AGENT][LOCAL] S4 Final Boss (E/O) vote/holdout + Study + Results/chart; create-bot prefers Final — scope: `final_boss.py` `sauce_cook.py` `secret_sauce_study.py` `backtest_page.py`
+- ✅ [AGENT][LOCAL] S5 Dual-horizon (G), regime peers (I), residual CCI/WILLR/MFI (J), session mask (N), scale-out sim (H) — scope: `dual_horizon.py` `regime_peers.py` `secret_sauce_features.py` `session_mask.py` `scale_out.py`
+- ✅ [AGENT][LOCAL] S6 Teacher distill (P), genetic trees (Q), MFE exit (S), vol targeting (T), veto helper (U), meta-TSL (V) — scope: `teacher_distill.py` `genetic_search.py` `mfe_exit.py` `vol_targeting.py` `veto_helper.py` `meta_tsl.py`
+
+## Audit remediation Phases 1–9 (2026-11-11)
+
+Spec: [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md). ELv2 approved 2026-11-11. Argus 1.13.0 preserved. Local tip `db11ba0`. Follow-ups: LIVE/NOTIF botd cron wiring; SIM snapshot regen; attorney H-023.
+
+### Sprint Audit-P1 — Security surface
+
+- ✅ [AGENT][LOCAL] AUTH-01 Authenticate mutating endpoints via `require_owner` at router include — scope: `src/trendalgo/api/deps.py`, `api/app.py`, `tests/test_api/`
+- ✅ [AGENT][LOCAL] AUTH-02 Bind prod API to loopback; document SSH/Tailscale — scope: `docker/docker-compose.prod.yml`, `README.md`
+- ✅ [AGENT][LOCAL] AUTH-03 Kill CORS wildcard default — scope: `src/trendalgo/api/app.py`, tests
+- ✅ [AGENT][LOCAL] AUTH-04 Harden TradingView webhook (body-once, HMAC, rate limit tests) — scope: `api/routes/webhooks.py`, `signals/tradingview.py`
+- ✅ [AGENT][LOCAL] AUTH-05 Owner session bearer tokens (keyring, rotate, revoke) — scope: `botd/pairing.py`, device session/keyring
+
+### Sprint Audit-P2 — Remove PWA scaffolding
+
+- ✅ [AGENT][LOCAL] PWA-01 Delete dead web surface (modules/web, web check scripts/libs) — scope: `modules/web/`, `scripts/check-*web*`, `scripts/lib/*web*`
+- ✅ [AGENT][LOCAL] PWA-02 Delete web-only golden-path schemas after grep clear — scope: `schemas/golden-path/`
+- ✅ [AGENT][LOCAL] PWA-03 Sweep refs; delete `api/routes/ws.py`; preserve Argus README/TEMPLATE — scope: workflows, README, `TEMPLATE_INDEX.json`, `AGENTS.md`
+- ✅ [AGENT][LOCAL] PWA-04 Amend ADR-0016: desktop stays for Study UI — scope: `docs/adr/0016-headless-bot-local-device.md`
+
+### Sprint Audit-P3 — License (ELv2)
+
+- ✅ [AGENT][LOCAL] LIC-01 Swap to Elastic License 2.0 — scope: `LICENSE`, `pyproject.toml`, REUSE, CITATION license fields, README badge, `docs/LICENSE_MODEL.md`
+- ✅ [AGENT][LOCAL] LIC-02 Supersede ADR-0005 license clause; single license answer — scope: `docs/adr/`, `CONTRIBUTING.md`
+
+### Sprint Audit-P4 — Risk engine
+
+- ✅ [AGENT][LOCAL] RISK-01 Slippage on notional — scope: `backtest/slippage.py`
+- ✅ [AGENT][LOCAL] RISK-02 Stop double-counting equity — scope: `risk/manager.py`
+- ✅ [AGENT][LOCAL] RISK-03 Daily loss cap inline rollover — scope: `risk/manager.py`
+- ✅ [AGENT][LOCAL] RISK-04 Circuit breaker re-arm; peak persists — scope: `risk/manager.py`
+- ✅ [AGENT][LOCAL] RISK-05 `compute_stake` never returns 0.0 — scope: `risk/manager.py`, `trading/sizing.py`
+- ✅ [AGENT][LOCAL] RISK-06 Windowed failure rate trips — scope: `trading/order_guard.py`
+- ✅ [AGENT][LOCAL] RISK-07 Directional ticker freshness — scope: `trading/sizing.py`
+- ✅ [AGENT][LOCAL] RISK-08 Force-trade via `compute_stake` — scope: `api/routes/bots.py`
+- ✅ [AGENT][LOCAL] RISK-09 Exchange-side reduce-only stops + adopt on restart — scope: trading/risk + ADR-0016 amend
+- ✅ [AGENT][LOCAL] RISK-10 Panic verify cancel then flatten — scope: `trading/panic.py`
+
+### Sprint Audit-P5 — Simulator + Secret Sauce honesty
+
+- ✅ [AGENT][LOCAL] SIM-01 Next-bar-open fills — scope: `backtest/ta_simulator.py`, `sim_accel.py`
+- ✅ [AGENT][LOCAL] SIM-02 Slippage bps + intrabar stops/gaps — scope: `backtest/ta_simulator.py`
+- ✅ [AGENT][LOCAL] SIM-03 Validate with `eval_params()` — scope: `backtest/secret_sauce_validate.py`
+- ✅ [AGENT][LOCAL] SIM-04 Relax spectrum gate; honest oracle losers — scope: `secret_sauce_validate.py`
+- ✅ [AGENT][LOCAL] SIM-05 Holdout as selection constraint — scope: `secret_sauce_lab/search.py`, `run.py`
+- ✅ [AGENT][LOCAL] SIM-06 Per-bar causal regime — scope: `secret_sauce_lab/regime_snapshot.py`, `run.py`
+- ✅ [AGENT][LOCAL] SIM-07 Fee drag, exposure, excess vs hold — scope: `search.py`, result rows
+- ✅ [AGENT][LOCAL] SIM-08 Permutation null + stability — scope: `search.py`
+- ✅ [AGENT][LOCAL] SIM-09 Exact coverage metric — scope: `secret_sauce_lab/label_rules.py`
+- ✅ [AGENT][LOCAL] SIM-10 Dry-run parity with paper fills — scope: `trading/runner/dry_run.py`
+- ✅ [AGENT][LOCAL] SIM-11 Decay monitor — scope: bot health / may share FEAT-06
+
+### Sprint Audit-P6 — Billing
+
+- ✅ [AGENT][LOCAL] BILL-01 Alpha Share excess default — scope: `billing/rules.py`, profit/statements/scheduler/store/schema
+- ✅ [AGENT][LOCAL] BILL-02 Persist benchmark refs — scope: statements + `venue_attribution.py`
+- ✅ [AGENT][LOCAL] BILL-03 Caps and floors — scope: `billing/rules.py`
+- ✅ [AGENT][LOCAL] BILL-04 Statement integrity (hash-chain, recompute, sign) — scope: billing + API (needs AUTH-01)
+- ✅ [AGENT][LOCAL] BILL-05 Monotonic day counter — scope: `billing/license_gate.py`
+- ✅ [AGENT][LOCAL] BILL-06 Identity binding + seats — scope: billing enrollment
+- ✅ [AGENT][LOCAL] BILL-07 Two-class pricing page — scope: device/docs monetization UI
+- ✅ [AGENT][LOCAL] BILL-08 Evasion coverage table — scope: `docs/MONETIZATION.md`
+
+### Sprint Audit-P7 — Living bot + notifications
+
+- ✅ [AGENT][LOCAL] LIVE-01 Retune scheduler — scope: `botd/` retune
+- ✅ [AGENT][LOCAL] LIVE-02 Promotion gate — scope: `botd/shadow_gate.py`, `shadow_divergence.py`
+- ✅ [AGENT][LOCAL] LIVE-03 Anti-thrash — scope: retune dwell/hysteresis
+- ✅ [AGENT][LOCAL] LIVE-04 Regime flips before retunes — scope: regime actions
+- ✅ [AGENT][LOCAL] LIVE-05 Honesty in Study UI — scope: device Study
+- ✅ [AGENT][LOCAL] NOTIF-01 Re-fit notification pipeline — scope: notifications sinks
+- ✅ [AGENT][LOCAL] NOTIF-02 Event taxonomy + severity — scope: notifications
+- ✅ [AGENT][LOCAL] NOTIF-03 Re-fit events are billing journal events — scope: billing journal
+
+### Sprint Audit-P8 — Features
+
+- ✅ [AGENT][LOCAL] FEAT-01 Deterministic journal replay — scope: journal/store
+- ✅ [AGENT][LOCAL] FEAT-02 Shadow-to-live promotion gate (generic) — scope: `botd/shadow_gate.py`
+- ✅ [AGENT][LOCAL] FEAT-03 Fee-aware routing — scope: routing/fees
+- ✅ [AGENT][LOCAL] FEAT-04 Beta-weighted exposure cap — scope: risk
+- ✅ [AGENT][LOCAL] FEAT-05 Adaptive bot budgeting — scope: bots scheduler
+- ✅ [AGENT][LOCAL] FEAT-06 Strategy decay monitor — scope: bot health (w/ SIM-11)
+
+### Sprint Audit-P9 — Housekeeping
+
+- ✅ [AGENT][LOCAL] HOUSE-01 SQLite migrations via user_version — scope: PortfolioStore
+- ✅ [AGENT][LOCAL] HOUSE-02 WAL + busy_timeout — scope: PortfolioStore connect
+- ✅ [AGENT][LOCAL] HOUSE-03 Risk-core coverage gates — scope: pytest cov config
+- ✅ [AGENT][LOCAL] HOUSE-04 Fix `httpx2` typo — scope: dependency manifest
+- ✅ [AGENT][LOCAL] HOUSE-05 Align Python version truth — scope: pyproject + README
+- ✅ [AGENT][LOCAL] HOUSE-06 Wire or delete `balance_check.py` — scope: pre-trade
+- ✅ [AGENT][LOCAL] HOUSE-07 Re-enable gates on vendored runner (per-file ignores) — scope: lts_vendor
+- ✅ [AGENT][LOCAL] HOUSE-08 Kill dead Postgres dual-write — scope: store dual-write
+- ✅ [AGENT][LOCAL] HOUSE-09 Doc sprawl Argus-safe (archive specs; keep `.agent/`/argus) — scope: `docs/archive/`
+
+## Sprint Market-Context (2026-11-11)
+
+Smoke-sprint PASS. Archived with Audit remediation cleanup @ `db11ba0`.
+
+- ✅ [AGENT][LOCAL] Analytics core: classic pivots, consensus, regime labels, R:R, VWAP/VP/extension/corr/spread + `MarketContext` — scope: `src/trendalgo/analytics/`, `tests/test_analytics/`
+- ✅ [AGENT][LOCAL] MarketContextPane (4 zones + collapse prefs) — scope: `src/trendalgo/device/views/market_context_pane.py`, `results_view_prefs.py`, `strings.py`
+- ✅ [AGENT][LOCAL] Wire Backtest tab + persist context — scope: `pair_strategy_scan.py`, `pair_strategy_scan_job.py`, `backtest_page.py`, `last_pair_backtest.py`
+- ✅ [AGENT][LOCAL] Wire Scanner Results + stamp `coin["market_context"]` — scope: `scanner_all_ta_coin.py`, `scanner_all_ta_bt.py`, `bridge.py`, `scanner_results.py`
+- ✅ [AGENT][LOCAL] Show Chart overlays for pivots/VWAP/VP — scope: `scanner_chart_dialog.py`, `scanner_chart_trades.py`
+- ✅ [AGENT][LOCAL] Secret Sauce Lab causal pivot/VWAP/VP keys (sparse; residual-gated; no consensus dump) — scope: `secret_sauce_pivots.py`, `secret_sauce_features.py`
+- ✅ [AGENT][LOCAL] Gates + smoke-sprint — scope: `watch-agent-gates`, `smoke-sprint --require`
+- ✅ [AGENT][LOCAL] Scanner Qualified Buy picks band (collapsible; Market Context Buy + TA%) — scope: `buy_picks.py`, `buy_picks_pane.py`, `scanner_page.py`
+
 ## Sprint Device-Notify-Launch (2026-10-22)
 
 MSI registries + null-safe scanner filters; Telegram BotFather copy wizard + Detect deleteWebhook→getUpdates; Alerts notify ribbon (Entered/Left/Trades + preview + Test Win/TG); source-first `launch-device.ps1` / `relaunch-device.ps1` + docs/rule. watch-agent-gates OK; commits through `49f3987`. HUMAN alert-copy review + PF-H1 remain on BUILD_PLAN.

@@ -26,7 +26,7 @@ TrendAlgo Bot needs a proven trading engine without maintaining a full exchange 
 ## Alternatives Considered
 
 | Option | Rejected because |
-|--------|------------------|
+| -------- | ------------------ |
 | Fork Freqtrade | Maintenance burden; lose upstream fixes |
 | Custom CCXT bot only | Reinvent order lifecycle, backtest, strategy interface |
 | Multi-exchange MVP | Scope; Kraken first per BUILD_PLAN |

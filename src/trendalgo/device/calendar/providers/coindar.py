@@ -25,8 +25,9 @@ def fetch_events(
     page_size: int = 50,
     timeout: float = 20.0,
 ) -> list[CalendarEvent]:
-    start = datetime.now(tz=UTC).date().isoformat()
-    end = (datetime.now(tz=UTC).date() + timedelta(days=90)).isoformat()
+    today = datetime.now(tz=UTC).date()
+    start = (today - timedelta(days=30)).isoformat()
+    end = (today + timedelta(days=90)).isoformat()
     query = urllib.parse.urlencode(
         {
             "access_token": token,

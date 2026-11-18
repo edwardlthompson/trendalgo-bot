@@ -84,12 +84,13 @@ class CandleChart(QWidget):
             self.clear()
             return
         colors = colors_for(active_mode())
-        self._entries.setColor(QColor(colors["secondary"]))
-        self._exits.setColor(QColor(colors["error"]))
-        self._entries.setMarkerSize(10.0)
-        self._exits.setMarkerSize(10.0)
-        self._entries.setMarkerShape(QScatterSeries.MarkerShape.MarkerShapeTriangle)
-        self._exits.setMarkerShape(QScatterSeries.MarkerShape.MarkerShapeRotatedRectangle)
+        from trendalgo.device import chart_contrast as contrast
+        from trendalgo.device.chart_markers import style_entry_series, style_exit_series
+
+        self._candles.setIncreasingColor(QColor(contrast.CANDLE_UP))
+        self._candles.setDecreasingColor(QColor(contrast.CANDLE_DOWN))
+        style_entry_series(self._entries, size=11.0)
+        style_exit_series(self._exits, size=11.0)
         for bar in bars:
             stick = QCandlestickSet(bar.open, bar.high, bar.low, bar.close, bar.ms)
             self._candles.append(stick)

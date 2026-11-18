@@ -72,25 +72,43 @@ def test_live_fetch_retries_with_request_deadline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     attempts: list[int] = []
+    base = 1_700_000_000
 
-    def flaky_fetch(*_args: object, timeout_ms: int, **_kwargs: object) -> list[OhlcvPoint]:
+    def flaky_fetch(
+        _pair: object,
+        timeframe: str,
+        *_args: object,
+        timeout_ms: int,
+        **_kwargs: object,
+    ) -> list[OhlcvPoint]:
         attempts.append(timeout_ms)
         if len(attempts) < 2:
             raise TimeoutError("temporary timeout")
+        n = 40 if timeframe == "1d" else 200
+        step = 86_400 if timeframe == "1d" else 3600
         return [
             OhlcvPoint(
-                time=1_700_000_000 + i * 300, open=100, high=102, low=99, close=101, volume=10
+                time=base + i * step,
+                open=100,
+                high=102,
+                low=99,
+                close=101 + i * 0.01,
+                volume=10_000,
             )
-            for i in range(25)
+            for i in range(n)
         ]
 
     monkeypatch.setattr("trendalgo.scanner.live_market.fetch_ohlcv", flaky_fetch)
     monkeypatch.setattr("trendalgo.scanner.live_market.time.sleep", lambda _delay: None)
+    monkeypatch.setattr(
+        "trendalgo.scanner.live_market.fetch_quote_volumes",
+        lambda pairs, **_k: {},
+    )
 
-    rows = fetch_live_market(["BTC/USD"])
+    rows = fetch_live_market(["BTC/USD"], require_continuous_1h=False)
 
     assert len(rows) == 1
-    # Fail once, then 1h + 1d + 5m succeed.
+    # Fail once on first 1h call, then 1h + 1d succeed (no 5m stage).
     assert attempts[0] == 12_000
     assert len(attempts) >= 3
     assert rows[0].volume_usd > 0

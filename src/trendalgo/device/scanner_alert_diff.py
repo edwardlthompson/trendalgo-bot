@@ -17,21 +17,15 @@ class AlertEvent:
 
 def coin_keys(coins: list[dict[str, Any]]) -> set[str]:
     """Normalized symbol keys for qualified coins."""
-    out: set[str] = set()
-    for coin in coins:
-        key = _key(coin)
-        if key:
-            out.add(key)
-    return out
+    return {k for c in coins if (k := _key(c))}
 
 
 def watchlist_keys(pairs: list[str]) -> set[str]:
     out: set[str] = set()
     for raw in pairs:
         text = str(raw or "").strip().upper()
-        if not text:
-            continue
-        out.add(text.split("/", 1)[0] if "/" in text else text)
+        if text:
+            out.add(text.split("/", 1)[0] if "/" in text else text)
     return out
 
 
@@ -43,14 +37,18 @@ def diff_alerts(
     *,
     previous: set[str],
     current_coins: list[dict[str, Any]],
-    watchlist: set[str],
+    watchlist: set[str] | None = None,  # noqa: ARG001 — call-site compat
     previous_coins: dict[str, dict[str, Any]] | None = None,
+    board_coins: list[dict[str, Any]] | None = None,
     floors: dict[str, float] | None = None,
 ) -> list[AlertEvent]:
-    """New qualified enters + watchlisted coins that left qualified."""
+    """Filtered enters + leaves. Kind stays ``watchlist_leave`` for prefs compat."""
+    del watchlist
     by_key = coins_by_key(current_coins)
     current = set(by_key)
     prev_coins = previous_coins or {}
+    board_by_key = coins_by_key(board_coins) if board_coins else {}
+    board_provided = board_coins is not None
     events: list[AlertEvent] = []
     for key in sorted(current - previous):
         coin = by_key[key]
@@ -63,14 +61,15 @@ def diff_alerts(
                 coin=coin,
             )
         )
-    for key in sorted((previous & watchlist) - current):
-        snap = prev_coins.get(key)
+    for key in sorted(previous - current):
+        on_board = key in board_by_key if board_provided else None
+        snap = board_by_key.get(key) or prev_coins.get(key)
         events.append(
             AlertEvent(
                 kind="watchlist_leave",
                 symbol=key,
                 pair=str((snap or {}).get("pair") or f"{key}/USD"),
-                reason=leave_reason(key, snap, floors=floors),
+                reason=leave_reason(key, snap, floors=floors, on_board=on_board),
                 coin=snap,
             )
         )
@@ -82,35 +81,142 @@ def leave_reason(
     snap: dict[str, Any] | None,
     *,
     floors: dict[str, float] | None = None,
+    on_board: bool | None = None,
 ) -> str:
-    """Field-level leave reason from last snapshot vs scan floors."""
+    """Floor misses + off-board gate/last-seen for Telegram / Grok Bot ``reason``."""
+    floor_map = floors or {}
+    if on_board is False:
+        return _off_board_reason(symbol, snap, floor_map)
     if snap is None:
         return f"{symbol} left the qualified list (not in qualified set)"
-    floors = floors or {}
-    parts: list[str] = []
-    vol = _num(snap.get("volume_24h") or snap.get("volume_usd"))
-    min_vol = floors.get("min_volume_usd")
-    if min_vol is not None and vol is not None and vol < min_vol:
-        parts.append(f"Volume ${vol:,.0f} below min ${min_vol:,.0f}")
-    uni = _num(snap.get("uniformity_score") or snap.get("uniformity"))
-    min_uni = floors.get("min_uniformity")
-    if min_uni is not None and uni is not None and uni < min_uni:
-        parts.append(f"Uniformity {uni:.2f} < {min_uni:.2f}")
-    gain30 = _num(snap.get("gain_30d") or snap.get("gain_pct"))
-    min_gain = floors.get("min_gain_30d") or floors.get("min_gain_pct")
-    if min_gain is not None and gain30 is not None:
-        # floors may be fraction (0.2) or percent (20)
-        floor_pct = min_gain * 100.0 if min_gain <= 1.0 else min_gain
-        gain_pct = gain30 * 100.0 if abs(gain30) <= 1.5 else gain30
-        if gain_pct < floor_pct:
-            parts.append(f"30D gain {gain_pct:.1f}% below min {floor_pct:.1f}%")
-    health = _num(snap.get("health"))
-    min_health = floors.get("min_health")
-    if min_health is not None and health is not None and health < min_health:
-        parts.append(f"Health {health:.2f} < {min_health:.2f}")
+    parts = _floor_misses(snap, floor_map)
     if parts:
         return f"{symbol} left qualified: " + "; ".join(parts)
     return f"{symbol} left the qualified list (dropped from qualified set)"
+
+
+def _off_board_reason(symbol: str, snap: dict[str, Any] | None, floors: dict[str, float]) -> str:
+    """Coin vanished from the full scan board — cite evidence, not a blanket volume blame."""
+    from trendalgo.device import strings as S
+
+    parts: list[str] = []
+    if snap is None:
+        parts.append(_scan_board_gate_unknown())
+        parts.append("no last metrics saved")
+        return f"{symbol} left qualified: " + "; ".join(parts)
+    evidence = _floor_misses(snap, floors)
+    idle = bool(snap.get("idle_1h") or snap.get("failed_continuous_1h"))
+    cont_on = float(floors.get("require_continuous_1h") or 0) > 0
+    vol_ok = _volume_miss(snap, floors) is None
+    if idle or (cont_on and vol_ok and not evidence):
+        parts.append(S.SCANNER_LEAVE_IDLE_1H)
+    elif evidence:
+        parts.append("removed from scan board")
+        parts.extend(evidence)
+    else:
+        parts.append(_scan_board_gate_unknown())
+    seen = _last_seen_bits(snap)
+    if seen:
+        parts.append("last seen: " + " · ".join(seen))
+    return f"{symbol} left qualified: " + "; ".join(parts)
+
+
+def _scan_board_gate_unknown() -> str:
+    return "removed from scan board (delisted, fetch miss, or failed live listing/volume gate)"
+
+
+def _volume_miss(snap: dict[str, Any], floors: dict[str, float]) -> str | None:
+    vol = _num(snap.get("volume_24h") or snap.get("volume_usd"))
+    min_vol = _floor(floors, "vol24_min", "min_volume_usd")
+    if min_vol is not None and min_vol > 0 and vol is not None and vol < min_vol:
+        return f"Volume ${vol:,.0f} below min ${min_vol:,.0f}"
+    return None
+
+
+def _last_seen_bits(snap: dict[str, Any]) -> list[str]:
+    bits: list[str] = []
+    vol = _num(snap.get("volume_24h") or snap.get("volume_usd"))
+    if vol is not None:
+        bits.append(f"Vol ${_fmt_vol(vol)}")
+    best = _num(snap.get("bot_best_net_pct"))
+    if best is not None:
+        bits.append(f"Best BT {best:.1f}%")
+    gains = snap.get("gains") if isinstance(snap.get("gains"), dict) else {}
+    gain7 = _num(snap.get("gain_7d") or gains.get("7d"))
+    if gain7 is not None:
+        bits.append(f"7D {_gain_display(gain7):+.1f}%")
+    gain30 = _num(snap.get("gain_30d") or gains.get("30d") or snap.get("gain_pct"))
+    if gain30 is not None:
+        bits.append(f"30D {_gain_display(gain30):+.1f}%")
+    health = _num(snap.get("health_score") or snap.get("health"))
+    if health is not None:
+        bits.append(f"Health {health:.2f}")
+    return bits
+
+
+def _fmt_vol(vol: float) -> str:
+    if vol >= 1_000_000:
+        return f"{vol / 1_000_000:.1f}M"
+    if vol >= 1_000:
+        return f"{vol / 1_000:.1f}K"
+    return f"{vol:,.0f}"
+
+
+def _floor_misses(snap: dict[str, Any], floors: dict[str, float]) -> list[str]:
+    parts: list[str] = []
+    vol_miss = _volume_miss(snap, floors)
+    if vol_miss:
+        parts.append(vol_miss)
+    gains = snap.get("gains") if isinstance(snap.get("gains"), dict) else {}
+    gain7 = _num(snap.get("gain_7d") or gains.get("7d"))
+    min_g7 = _floor(floors, "min_gain_7d")
+    if min_g7 is not None and gain7 is not None:
+        g7_pct, floor7 = _pct_pair(gain7, min_g7)
+        if g7_pct < floor7:
+            parts.append(f"7D gain {g7_pct:.1f}% below min {floor7:.1f}%")
+    gain30 = _num(snap.get("gain_30d") or gains.get("30d") or snap.get("gain_pct"))
+    min_g30 = _floor(floors, "min_gain_30d", "min_gain_pct")
+    if min_g30 is not None and gain30 is not None:
+        g30_pct, floor30 = _pct_pair(gain30, min_g30)
+        if g30_pct < floor30:
+            parts.append(f"30D gain {g30_pct:.1f}% below min {floor30:.1f}%")
+    best = _num(snap.get("bot_best_net_pct"))
+    min_bt = _floor(floors, "min_best_bt")
+    if min_bt is not None and best is not None and best < min_bt:
+        parts.append(f"Best BT {best:.1f}% below min {min_bt:.1f}%")
+    health = _num(snap.get("health_score") or snap.get("health"))
+    min_health = _floor(floors, "health_min", "min_health")
+    if min_health is not None and health is not None and health < min_health:
+        parts.append(f"Health {health:.2f} < {min_health:.2f}")
+    for key, label in (
+        ("chart_dist_max_7d", "7d chart dist"),
+        ("chart_dist_max_30d", "30d chart dist"),
+    ):
+        cap = _floor(floors, key)
+        field = "chart_dist_7d_pct" if "7d" in key else "chart_dist_30d_pct"
+        dist = _num(snap.get(field))
+        if cap is not None and dist is not None and dist > cap:
+            parts.append(f"{label} {dist:.1f}% above max {cap:.1f}%")
+    return parts
+
+
+def _floor(floors: dict[str, float], *keys: str) -> float | None:
+    for key in keys:
+        if key in floors and floors[key] is not None:
+            try:
+                return float(floors[key])
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def _pct_pair(value: float, floor: float) -> tuple[float, float]:
+    floor_pct = floor * 100.0 if floor <= 1.0 else floor
+    return _gain_display(value), floor_pct
+
+
+def _gain_display(value: float) -> float:
+    return value * 100.0 if abs(value) <= 1.5 else value
 
 
 def _num(raw: Any) -> float | None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tests.support.api_client import make_api_client
 from trendalgo.exchanges.load_test import (
     run_n_exchange_ops_validation,
     run_trading_status_check,
@@ -26,12 +27,9 @@ def test_n_exchange_ops_validation() -> None:
 
 
 def test_runner_status_api_matches_trading_check() -> None:
-    from fastapi.testclient import TestClient
-
-    from trendalgo.api.app import create_app
 
     expected = run_trading_status_check()
-    client = TestClient(create_app())
+    client = make_api_client()
     body = client.get("/api/v1/trading/runner/status").json()
     assert body["engine"] == "native"
     assert body["worldwide_trading_phase"] == expected["worldwide_trading_phase"]

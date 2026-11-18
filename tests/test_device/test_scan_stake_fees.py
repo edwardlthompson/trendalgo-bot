@@ -37,3 +37,9 @@ def test_fee_for_exchange_fallback() -> None:
     fee = fee_for_exchange("no-such-venue", 52.0)
     assert fee.exchange_id == "no-such-venue"
     assert abs(fee.taker_pct - 0.0026) < 1e-9
+
+
+def test_fee_for_exchange_uses_coin_venue_not_always_kraken() -> None:
+    fee = fee_for_exchange("binanceus", None)
+    assert fee.exchange_id == "binanceus"
+    assert fee.source != "bps" or fee.exchange_id == "binanceus"

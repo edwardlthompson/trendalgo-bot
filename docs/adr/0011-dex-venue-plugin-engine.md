@@ -26,7 +26,7 @@ S12 shipped a monolithic `portfolio/onchain.py` stub for EVM wallet read. The DE
 ## Alternatives considered
 
 | Option | Rejected because |
-|--------|------------------|
+| -------- | ------------------ |
 | Hardcode chains in `onchain.py` | CM-8; does not scale to S22–S24 venues |
 | Paid indexers (Alchemy tier) | Cost + FOSS policy; public RPC env-only |
 | web3.py dependency | Heavy deps; urllib JSON-RPC sufficient for native balance read |

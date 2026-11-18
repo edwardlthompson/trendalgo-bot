@@ -1,6 +1,6 @@
 # Legal Overview — TrendAlgo Bot
 
-> Not legal advice. Attorney review required before public beta (H-006, H-023).
+> **Not legal advice.** Tier A (owner-only + FOSS): founder residual-risk posture (H-006 / H-022 / H-023, ADR-0020). Tier B: counsel/clinic before non-owner billing (H-006b).
 
 ## Operator role
 
@@ -28,7 +28,9 @@ TrendAlgo Bot is **software** — a self-hosted tool that calculates signals, tr
 | [`DATA_MINIMIZATION.md`](DATA_MINIMIZATION.md) | GDPR/CCPA-aligned collection |
 | [`adr/0007-legal-framework.md`](adr/0007-legal-framework.md) | ADR |
 | [`adr/0008-legal-safe-monetization.md`](adr/0008-legal-safe-monetization.md) | ADR |
+| [`adr/0020-legal-research-desk.md`](adr/0020-legal-research-desk.md) | Legal Research Desk + tiers |
+| [`legal-desk/`](legal-desk/) | Desk corpus + `/legal-desk` |
+| [`FOUNDER_LEGAL_POSTURE.md`](FOUNDER_LEGAL_POSTURE.md) | Tier A residual-risk checklist |
+## Legal review packet
 
-## Attorney packet
-
-Generate: `bash scripts/generate-legal-review-packet.sh` (H-006).
+Generate: `bash scripts/generate-legal-review-packet.sh` (Tier A / optional Tier B counsel).

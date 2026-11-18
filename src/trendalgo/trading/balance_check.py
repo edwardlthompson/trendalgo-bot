@@ -1,5 +1,9 @@
 """Exchange balances must match the journal's expected positions (E3).
 
+Wired into pre-trade validation via ``trading.reconcile.reconcile_exchange`` /
+``ensure_clear_for_buy`` (HOUSE-06). Callers should go through reconcile so unsettled
+orders are settled before balances are compared.
+
 The expected total of an asset is its checkpoint, plus the signed quantity our orders have
 filled since that checkpoint. The first check of an asset takes a checkpoint, so holdings that
 existed before the bot traded are not unexplained. Any other difference is a mismatch, and the

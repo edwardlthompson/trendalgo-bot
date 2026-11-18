@@ -24,11 +24,12 @@ from trendalgo.device.scanner_signal_sets import (  # noqa: E402
 from trendalgo.device.views.scanner_results import indicator_display_label  # noqa: E402
 
 
-def test_normalize_bt_signal_set_defaults_to_3commas() -> None:
-    assert normalize_bt_signal_set(None) == BT_SET_3COMMAS
-    assert normalize_bt_signal_set("") == BT_SET_3COMMAS
+def test_normalize_bt_signal_set_defaults_to_all_ta() -> None:
+    assert normalize_bt_signal_set(None) == BT_SET_ALL_TA
+    assert normalize_bt_signal_set("") == BT_SET_ALL_TA
     assert normalize_bt_signal_set("all_ta") == BT_SET_ALL_TA
     assert normalize_bt_signal_set("All TA") == BT_SET_ALL_TA
+    assert normalize_bt_signal_set("3commas") == BT_SET_3COMMAS
 
 
 def test_is_three_commas_catalog_and_lts_names() -> None:
@@ -203,7 +204,7 @@ def test_merge_routes_all_ta(tmp_path: Path) -> None:
     assert merged[0].get("bot_best_net_pct") == pytest.approx(12.0)
 
 
-def test_merge_routes_3commas_default(tmp_path: Path) -> None:
+def test_merge_always_all_ta_even_without_prefs(tmp_path: Path) -> None:
     from trendalgo.device.lts_scan_model import save_filters
     from trendalgo.device.scan_job import _merge_pass1_backtests
 
@@ -221,7 +222,7 @@ def test_merge_routes_3commas_default(tmp_path: Path) -> None:
         ) as lts,
     ):
         merged, meta = _merge_pass1_backtests(rows, tmp_path)
-    lts.assert_called_once()
-    all_ta.assert_not_called()
-    assert meta["signal_set"] == BT_SET_3COMMAS
-    assert merged[0]["bt_signal_set"] == BT_SET_3COMMAS
+    all_ta.assert_called_once()
+    lts.assert_not_called()
+    assert meta["signal_set"] == BT_SET_ALL_TA
+    assert merged[0]["bt_signal_set"] == BT_SET_ALL_TA

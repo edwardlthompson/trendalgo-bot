@@ -1,5 +1,5 @@
 {
-  "template_version": "0.8.0",
+  "template_version": "1.18.0",
   "entry_points": {
     "bootstrap": "docs/START_HERE.md",
     "reference": "docs/FOR_AGENTS.md",
@@ -141,7 +141,7 @@
       "owner": "agent+human"
     },
     {
-      "path": "AGENT_MEMORY.md",
+      "path": ".agent/AGENT_MEMORY.md",
       "purpose": "Tech stack, threat model, retrospectives index",
       "read_when": "session_start",
       "update_when": "milestone_boundary",
@@ -477,13 +477,6 @@
       "owner": "maintainer"
     },
     {
-      "path": "scripts/check-bundle-size.sh",
-      "purpose": "Vite dist JS gzip bundle budget gate",
-      "read_when": "release",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
       "path": "scripts/init-stack-sync.py",
       "purpose": "Sync AGENT_MEMORY modules and stack-selection.json on init",
       "read_when": "bootstrap_session_start",
@@ -642,13 +635,6 @@
       "purpose": "Cross-stack design system, theme toggle, i18n rules",
       "read_when": "ui_work",
       "update_when": "design_change",
-      "owner": "agent+human"
-    },
-    {
-      "path": "docs/WEB_PROJECT_LAYOUT.md",
-      "purpose": "Website folder roles, GitHub Pages deploy path, i18n vs styles layout",
-      "read_when": "web_hosting",
-      "update_when": "layout_change",
       "owner": "agent+human"
     },
     {
@@ -1219,8 +1205,8 @@
       "owner": "human+agent"
     },
     {
-      "path": "scripts/postgres-migrate-dry-run.sh",
-      "purpose": "TrendAlgo ops: postgres migrate dry run",
+      "path": "scripts/check-risk-core-coverage.sh",
+      "purpose": "HOUSE-03 risk-core coverage gate (high floor)",
       "read_when": "contributing",
       "update_when": "milestone_boundary",
       "owner": "human+agent"
@@ -1821,13 +1807,6 @@
       "owner": "maintainer"
     },
     {
-      "path": "scripts/check-lighthouse-floors.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
       "path": "scripts/check-lightroom-lua.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
@@ -1899,27 +1878,6 @@
     },
     {
       "path": "scripts/check-package-attestation-docs.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-pages-analytics.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-pages-demo-link.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-playwright-cache.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
       "update_when": "milestone_boundary",
@@ -2010,13 +1968,6 @@
       "owner": "maintainer"
     },
     {
-      "path": "scripts/check-sw-cache-budget.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
       "path": "scripts/check-template-gaps.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
@@ -2046,13 +1997,6 @@
     },
     {
       "path": "scripts/check-ux-inventory.sh",
-      "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
-      "read_when": "validation",
-      "update_when": "milestone_boundary",
-      "owner": "maintainer"
-    },
-    {
-      "path": "scripts/check-web-import-hygiene.sh",
       "purpose": "Template/tooling path (synced for v1.9.0 catch-up)",
       "read_when": "validation",
       "update_when": "milestone_boundary",
@@ -2379,13 +2323,34 @@
       "read_when": "validation",
       "update_when": "milestone_boundary",
       "owner": "maintainer"
+    },
+    {
+      "path": ".github/workflows/argus-remote-stub.yml",
+      "purpose": "CI remote status no-op when disabled",
+      "status": "not_started"
+    },
+    {
+      "path": ".github/workflows/argus-rules-manifest.yml",
+      "purpose": "Publish rules.manifest.json on main",
+      "status": "not_started"
+    },
+    {
+      "path": "argus.contract.json",
+      "purpose": "Argus contract markers",
+      "status": "not_started"
+    },
+    {
+      "path": "argus.remote.json",
+      "purpose": "Argus remote off switch",
+      "status": "not_started"
+    },
+    {
+      "path": "rules.manifest.json",
+      "purpose": "Rules manifest",
+      "status": "not_started"
     }
   ],
   "modules": {
-    "web": {
-      "guide": "modules/web/MODULE.md",
-      "activate_when": "stack includes PWA, web, or static site"
-    },
     "python": {
       "guide": "modules/python/MODULE.md",
       "example": "examples/python",

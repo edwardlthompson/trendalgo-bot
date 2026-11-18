@@ -20,20 +20,28 @@ FILTERS_FILE = "scanner_filters.json"
 EXCHANGES = ("All", "Kraken", "Coinbase")
 
 
-def lts_rows_path(root: Path) -> Path:
-    return root / LTS_ROWS_FILE
+def lane_data_file(base: str, lane: str = "crypto") -> str:
+    key = (lane or "crypto").strip().lower()
+    if key in {"", "crypto"}:
+        return base
+    stem, _, ext = base.partition(".")
+    return f"{stem}_{key}.{ext}" if ext else f"{stem}_{key}"
 
 
-def save_lts_rows(root: Path, rows: list[dict[str, Any]]) -> None:
-    prior = {row_key(r) for r in load_lts_rows(root)}
+def lts_rows_path(root: Path, lane: str = "crypto") -> Path:
+    return root / lane_data_file(LTS_ROWS_FILE, lane)
+
+
+def save_lts_rows(root: Path, rows: list[dict[str, Any]], *, lane: str = "crypto") -> None:
+    prior = {row_key(r) for r in load_lts_rows(root, lane=lane)}
     write_json(
-        lts_rows_path(root),
+        lts_rows_path(root, lane),
         {"rows": [normalize_coin(r, prior_keys=prior) for r in rows]},
     )
 
 
-def load_lts_rows(root: Path) -> list[dict[str, Any]]:
-    data = read_json(lts_rows_path(root))
+def load_lts_rows(root: Path, *, lane: str = "crypto") -> list[dict[str, Any]]:
+    data = read_json(lts_rows_path(root, lane))
     if data is None:
         return []
     rows = data.get("rows")
@@ -59,22 +67,28 @@ def build_lts_rows(
     return [normalize_coin(stamp_exchange(r, eid)) for r in raw]
 
 
+_DAILY_BARS_7D = 7
+_DAILY_BARS_30D = 22
+_HOURLY_BARS_7D = 168
+_HOURLY_BARS_30D = 720
+
+
 def _basic_row(row: OpportunityRow) -> dict[str, Any]:
     from trendalgo.device.coin_health import compute_coin_health
 
     symbol = row.pair.split("/")[0].strip().upper() or row.pair.upper()
-    gain = float(row.gain_pct) * 100.0
+    spark = [float(x) for x in row.sparkline if isinstance(x, int | float)]
+    # Lane scans feed daily bars via sparkline — never as hourly.
     out = {
         "symbol": symbol,
         "name": symbol,
         "pair": row.pair,
         "exchange_id": "kraken",
-        "gains": {"7d": gain, "30d": gain},
-        "uniformity_score": float(row.uniformity) * 100.0,
+        "gains": {"7d": None, "30d": None},
         "volume_24h": float(row.volume_score),
         "listed_on": ["kraken"],
-        "chart_closes_1h": list(row.sparkline),
-        "chart_closes_1d": [],
+        "chart_closes_1h": [],
+        "chart_closes_1d": spark,
         "bot_vs_bh_pct": None,
         "bot_best_net_pct": None,
         "volume_acceleration_pct": None,
@@ -96,6 +110,20 @@ def closes_pct_from_high(closes: list[float]) -> float | None:
     return ((high - last) / high) * 100.0
 
 
+def gain_pct_over(closes: list[float], bars: int) -> float | None:
+    """Percent change over the last ``bars`` closes (inclusive window)."""
+    if len(closes) < 2:
+        return None
+    window = closes[-bars:] if len(closes) >= bars else closes
+    if len(window) < 2:
+        return None
+    first = float(window[0])
+    last = float(window[-1])
+    if first <= 0:
+        return None
+    return ((last / first) - 1.0) * 100.0
+
+
 def normalize_coin(
     coin: dict[str, Any],
     *,
@@ -108,6 +136,7 @@ def normalize_coin(
     out["exchange_id"] = eid
     out["listed_on"] = [eid]
     closes_1h = cell_closes(out, "closes_1h")
+    closes_1d = cell_closes(out, "closes_1d")
     risk = out.get("risk_context")
     if not isinstance(risk, dict) and len(closes_1h) >= 8:
         from trendalgo.lts_vendor.utils.scan_artifacts import risk_context_from_hourly_closes
@@ -120,9 +149,22 @@ def normalize_coin(
             out["hv_7d_pct"] = risk.get("hv_7d_annualized_pct")
         if out.get("max_drawdown_pct") is None and risk.get("max_drawdown_30d_pct") is not None:
             out["max_drawdown_pct"] = risk.get("max_drawdown_30d_pct")
-    # Both windows from hourly closes (local enrich); matches spark series in the table.
-    window_7d = closes_1h[-168:] if closes_1h else []
-    window_30d = closes_1h[-720:] if closes_1h else []
+    # TradFi/FX: always spark from daily sessions (7 vs ~22) even after 1h enrich.
+    # Crypto: hourly 7d/30d when enough 1h bars exist.
+    lane_daily = eid in {"tradfi", "forex"} and len(closes_1d) >= 2
+    use_daily = lane_daily or (len(closes_1d) >= 2 and len(closes_1h) < 8)
+    if use_daily:
+        window_7d = closes_1d[-_DAILY_BARS_7D:]
+        window_30d = closes_1d[-_DAILY_BARS_30D:]
+        prior_gains = out.get("gains") if isinstance(out.get("gains"), dict) else {}
+        out["gains"] = {
+            **prior_gains,
+            "7d": gain_pct_over(closes_1d, _DAILY_BARS_7D),
+            "30d": gain_pct_over(closes_1d, _DAILY_BARS_30D),
+        }
+    else:
+        window_7d = closes_1h[-_HOURLY_BARS_7D:] if closes_1h else []
+        window_30d = closes_1h[-_HOURLY_BARS_30D:] if closes_1h else []
     out["spark_closes_7d"] = list(window_7d)
     out["spark_closes_30d"] = list(window_30d)
     out["chart_dist_7d_pct"] = closes_pct_from_high(window_7d)
@@ -140,64 +182,38 @@ def normalize_coin(
     return out
 
 
-def load_watchlist(root: Path) -> list[str]:
-    data = read_json(root / WATCHLIST_FILE)
+def load_watchlist(root: Path, *, lane: str = "crypto") -> list[str]:
+    data = read_json(root / lane_data_file(WATCHLIST_FILE, lane))
     if data is None:
         return []
     pairs = data.get("pairs")
     return [str(p) for p in pairs] if isinstance(pairs, list) else []
 
 
-def save_watchlist(root: Path, pairs: list[str]) -> None:
-    write_json(root / WATCHLIST_FILE, {"pairs": pairs})
+def save_watchlist(root: Path, pairs: list[str], *, lane: str = "crypto") -> None:
+    write_json(root / lane_data_file(WATCHLIST_FILE, lane), {"pairs": pairs})
 
 
-def load_filters(root: Path) -> dict[str, Any]:
-    data = read_json(root / FILTERS_FILE)
+def load_filters(root: Path, *, lane: str = "crypto") -> dict[str, Any]:
+    data = read_json(root / lane_data_file(FILTERS_FILE, lane))
     return dict(data) if isinstance(data, dict) else {}
 
 
-def save_filters(root: Path, filters: dict[str, Any]) -> None:
-    write_json(root / FILTERS_FILE, filters)
+def save_filters(root: Path, filters: dict[str, Any], *, lane: str = "crypto") -> None:
+    write_json(root / lane_data_file(FILTERS_FILE, lane), filters)
 
 
 def coins_for_backtest(
     coins: list[dict[str, Any]], filters: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    """Pass-1 BT queue: every Qualified coin that still clears the scan volume floor.
+    """Pass-1 BT + Market Context queue: every coin that made the scan board.
 
-    Column 7d/30d / chart-dist / health filters only narrow the *table* view
-    (`scanner_page`). Re-applying them here left Qualified rows with empty
-    Results after a volume-first scan.
+    Column 7d/30d / chart-dist / health / volume filters only narrow the *table*
+    view (`scanner_page`). Analyzing the full scan set keeps Results / MC stamped
+    on every pair; UI filters still hide rows on Qualified.
     """
-    return filter_coins(
-        coins,
-        vol24_min=_positive_floor(
-            filters.get("vol24_min")
-            if filters.get("vol24_min") not in (None, "")
-            else filters.get("min_volume_usd")
-        ),
-    )
-
-
-def _positive_floor(raw: object) -> float | None:
-    value = _opt_filter_float(raw)
-    return value if value is not None and value > 0 else None
-
-
-def _opt_filter_float(raw: object) -> float | None:
-    if raw is None or raw == "":
-        return None
-    if isinstance(raw, bool):
-        return None
-    if isinstance(raw, (int, float)):
-        return float(raw)
-    if isinstance(raw, str):
-        try:
-            return float(raw)
-        except ValueError:
-            return None
-    return None
+    _ = filters  # retained for call-site compatibility
+    return list(coins)
 
 
 def filter_coins(
@@ -212,7 +228,6 @@ def filter_coins(
     chart_dist_max_7d: float | None = None,
     chart_dist_max_30d: float | None = None,
     health_min: float | None = None,
-    uniformity_min: float | None = None,
     vol_accel_filter: str | None = None,
     vol24_min: float | None = None,
 ) -> list[dict[str, Any]]:
@@ -245,10 +260,6 @@ def filter_coins(
         if health_min is not None:
             score = _as_float(coin.get("health_score"))
             if score is None or score < health_min:
-                continue
-        if uniformity_min is not None:
-            score = _as_float(coin.get("uniformity_score"))
-            if score is None or score < uniformity_min:
                 continue
         if not _pass_vol_accel(coin.get("volume_acceleration_pct"), vol_accel_filter):
             continue

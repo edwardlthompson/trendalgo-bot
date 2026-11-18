@@ -13,7 +13,7 @@
 
 ## Architecture Constraints
 
-- Pure FOSS under MIT license; no proprietary closed-source SDKs in production path
+- Source-available under Elastic License 2.0 (ELv2); no proprietary closed-source SDKs in production path
 - Max 250 lines per view file (web UI adapters: 300 per `check-file-limits.sh`), 150 lines per logic file
 - Strict type safety and runtime validation at all data boundaries
 - Core business logic decoupled from layout framework (MVVM / Clean / Hexagonal)
@@ -33,7 +33,7 @@
 - On milestone end: update `AGENT_MEMORY.md`, append to `DECISION_LOG.md` or `docs/adr/`
 - On 3-strike failure: halt and escalate to human
 - On context bloat: write `.cursor-session-state`, ask human to clear chat
-- Sprint 2+ features: after each AGENT step run `scripts/watch-agent-gates.sh --once --autofix` (see `docs/FEATURE_MODULES.md`)
+- Sprint 2+ features: after each AGENT step run **scoped** lint/type/tests on touched paths only — not full `watch-agent-gates` / full-suite pytest (see `docs/FEATURE_MODULES.md`). Full gates only on `/gates`, `/fix`, ship/prerelease, or explicit human ask
 - Destructive operations require `[HUMAN]` approval (see `.cursor/rules/destructive-ops.mdc`)
 - Repo hygiene: track source only; run `scripts/check-repo-hygiene.sh` before push (see `docs/REPO_HYGIENE.md`)
 - Log significant agent actions in `DECISION_LOG.md` at milestone boundaries
@@ -43,9 +43,8 @@
 Activate only the modules matching this product stack:
 
 - ✅ Python — `modules/python/MODULE.md` · `src/trendalgo/`
-- ✅ Web / PWA — `modules/web/MODULE.md` · `examples/web/`
 
-Do not re-add pruned Android/Node/Rust/Go/Lightroom modules unless the human explicitly expands scope.
+Do not re-add pruned Web/PWA, Android, Node, Rust, Go, or Lightroom modules unless the human explicitly expands scope.
 
 ## Cursor FOSS integrations
 
@@ -65,5 +64,5 @@ Commercial Cursor integrations are out of scope for this FOSS product (`distribu
 
 ## Ecosystem-Specific Rules
 
-- **Web/PWA:** Offline-first service workers; Lighthouse budget gates
 - **Python:** Strict typing (mypy), ruff lint/format, locked dependencies (uv)
+- **Device UI:** PySide6 local control surface (`src/trendalgo/device/`); VPS bot host stays headless

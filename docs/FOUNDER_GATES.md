@@ -12,15 +12,13 @@ Machine-readable gates for H-001–H-034. **Human actions:** [`docs/HUMAN_BACKLO
 | `bash scripts/founder-gate.sh approve H-007` | One-command approve (after preflight PASS) |
 | `python scripts/founder_gate.py approve-all-soft` | Batch approve soft gates (after preflights PASS) |
 | `bash scripts/founder-gate.sh approve-bundle pre-sprint-1` | H-001, H-005, H-007 batch |
-
 ## Gate types
 
 | Type | H-IDs | Rule |
 |------|-------|------|
-| **Hard** | H-006, H-023, H-010, H-028, H-008, H-011, H-031, H-032 | Never AUTO-approve |
+| **Hard** | H-006, H-006b, H-023, H-010, H-028, H-008, H-011, H-031, H-032 | Never AUTO-approve · Tier A legal uses residual-risk note (ADR-0020) |
 | **Soft** | H-007–H-025, H-030, H-034 sprint gates | AUTO preflight + `approve` |
 | **Non-blocking** | H-002 | Optional |
-
 ## Permanent controls (not open risks)
 
 | Control | Script | Cadence |
@@ -30,5 +28,4 @@ Machine-readable gates for H-001–H-034. **Human actions:** [`docs/HUMAN_BACKLO
 | Sprint scope | `sprint-preflight.sh` | Start of each sprint |
 | Risk strict | `check-risk-mitigations.sh --strict --sprint N` | Sprint sign-off |
 | Production cost | `check-production-cost.sh` | Monthly (H-027) |
-
 State file: `.cursor/founder-gates.json` (gitignored).

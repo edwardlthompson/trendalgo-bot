@@ -54,7 +54,14 @@ class AlertDelivery:
 
         if prefs.push_enabled and self.telegram.enabled:
             try:
-                if not self.telegram.send_message(f"{title}\n{body}"):
+                from trendalgo.notifications.grokbot import telegram_ai_note
+                from trendalgo.notifications.grokbot_explain import why_markup
+                from trendalgo.notifications.grokbot_payload import envelope
+
+                body_text = telegram_ai_note(f"{title}\n{body}")
+                markup = why_markup(envelope(event_type="scanner_alert", reason=body_text))
+                sent = self.telegram.send_message(body_text, reply_markup=markup)  # type: ignore[call-arg]
+                if not sent:
                     errors.append("telegram: delivery failed")
             except Exception as exc:
                 errors.append(f"telegram: {exc}")

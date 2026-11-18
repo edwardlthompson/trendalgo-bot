@@ -6,14 +6,22 @@ from datetime import UTC, datetime, timedelta
 
 MIN_INTERVAL = 60
 MAX_INTERVAL = 1440
+# AlgoSpecial free tier: 59 pairs × 16 refreshes/day → ≥90m live floor.
+FOREX_MIN_INTERVAL = 90
 
 
-def clamp_interval_minutes(raw: int | float | None, default: int = MIN_INTERVAL) -> int:
+def clamp_interval_minutes(
+    raw: int | float | None,
+    default: int = MIN_INTERVAL,
+    *,
+    floor: int | None = None,
+) -> int:
     try:
         value = int(raw) if raw is not None else default
     except (TypeError, ValueError):
         value = default
-    return max(MIN_INTERVAL, min(MAX_INTERVAL, value))
+    lo = max(1, int(floor)) if floor is not None else MIN_INTERVAL
+    return max(lo, min(MAX_INTERVAL, value))
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -89,3 +97,20 @@ def minutes_until(target: datetime, *, now: datetime | None = None) -> int:
     end = _as_utc(target)
     seconds = max(0, int((end - base).total_seconds()))
     return max(0, (seconds + 59) // 60)
+
+
+def needs_autoscan_rearm(
+    *,
+    interval_minutes: int,
+    last_generated: datetime | None,
+    next_auto: datetime | None,
+    timer_active: bool,
+    now: datetime | None = None,
+) -> bool:
+    """True when the one-shot auto timer should be re-armed (no immediate scan)."""
+    clock = _as_utc(now or datetime.now(tz=UTC))
+    if next_auto is not None and _as_utc(next_auto) <= clock:
+        return True
+    if not timer_active and is_stale(last_generated, interval_minutes, now=clock):
+        return True
+    return False

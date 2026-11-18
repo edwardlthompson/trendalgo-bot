@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "pools": [
+    {
+      "venue_id": "ethereum",
+      "pool_address": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+      "pair": "ETH/USDC",
+      "fee_tier": 500
+    },
+    {
+      "venue_id": "ethereum",
+      "pool_address": "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8",
+      "pair": "ETH/USDC",
+      "fee_tier": 3000
+    },
+    {
+      "venue_id": "base",
+      "pool_address": "0xd0b53d9277642d899dd5c93b962bc9b3f7f4d4e8",
+      "pair": "ETH/USDC",
+      "fee_tier": 500
+    },
+    {
+      "venue_id": "base",
+      "pool_address": "0x4c36388be6f86f2a1e6a4e0c7a1f3e0b2c9f0a11",
+      "pair": "ETH/USDC",
+      "fee_tier": 3000
+    }
+  ]
+}

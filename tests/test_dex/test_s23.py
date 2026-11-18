@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.support.api_client import make_api_client
 from trendalgo.dex.control import DexVenueControlStore
 from trendalgo.dex.nonce import NonceStore
 from trendalgo.dex.router import (
@@ -83,11 +84,8 @@ def test_dex_dry_run_runner_history() -> None:
 
 
 def test_s23_api_routes() -> None:
-    from fastapi.testclient import TestClient
 
-    from trendalgo.api.app import create_app
-
-    client = TestClient(create_app())
+    client = make_api_client()
     chains = client.get("/api/v1/platform/dex/swap-chains")
     assert chains.status_code == 200
     assert "ethereum" in chains.json()["chains"]

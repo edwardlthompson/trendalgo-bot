@@ -12,7 +12,8 @@ from trendalgo.backtest.hill_climb_axes import int_params, seed_params
 from trendalgo.backtest.hill_climb_brute import brute_pm_axes
 from trendalgo.backtest.hill_climb_tsl import DEEPEN_TSL_PCTS, climb_tsl_grid
 from trendalgo.backtest.sim_accel import accel_backend
-from trendalgo.backtest.ta_fleet import backtest_one, default_params
+from trendalgo.backtest.ta_fleet import default_params, prepare_signals, row_from_stats
+from trendalgo.backtest.ta_simulator import simulate_long_with_fees
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 
 ProgressFn = Callable[[str], None]
@@ -44,15 +45,29 @@ def climb_seed(
     active_tf = str(seed.get("timeframe") or timeframe)
     active = frame
 
-    best = _trial(active, sid, defaults, SIGNAL_TSL, fee=fee, stake=stake_usd, tf=active_tf)
-    if best is None:
+    # Skip re-sim of catalog defaults when the seed already carries that net.
+    seed_net = seed.get("net_profit")
+    best: dict[str, Any]
+    if seed_net is not None:
         best = {
             **seed,
-            "params": defaults,
+            "params": params,
             "trailing_stop_pct": SIGNAL_TSL,
             "timeframe": active_tf,
         }
-    best_net = float(best.get("net_profit") or float("-inf"))
+        best_net = float(seed_net)
+    else:
+        trial = _trial(active, sid, defaults, SIGNAL_TSL, fee=fee, stake=stake_usd, tf=active_tf)
+        if trial is None:
+            best = {
+                **seed,
+                "params": defaults,
+                "trailing_stop_pct": SIGNAL_TSL,
+                "timeframe": active_tf,
+            }
+        else:
+            best = trial
+        best_net = float(best.get("net_profit") or float("-inf"))
 
     center = dict(defaults)
     if isinstance(best.get("params"), dict) and best.get("params"):
@@ -110,15 +125,27 @@ def _trial(
     stake: float,
     tf: str,
 ) -> dict[str, Any] | None:
-    trial, _reason = backtest_one(
+    """One prepare_signals + one sim (brute / TSL fallback); TSL grid reuses masks separately."""
+    prepared = prepare_signals(frame, sid, params)
+    entries, exits, used = prepared
+    if entries is None or exits is None or not isinstance(used, dict):
+        return None
+    stats = simulate_long_with_fees(
         frame,
-        sid,
-        fee,
-        stake,
+        entries,
+        exits,
+        stake_usd=stake,
+        fee=fee,
+        trailing_stop_pct=max(0.0, float(tsl)),
+    )
+    if int(stats.get("trades") or 0) == 0:
+        return None
+    return row_from_stats(
+        stats,
+        strategy_id=sid,
         timeframe=tf,
         lookback_seconds=0,
-        params=params,
-        trailing_stop_pct=max(0.0, float(tsl)),
+        params=used,
         phase="optimize",
+        bar_count=len(frame),
     )
-    return trial

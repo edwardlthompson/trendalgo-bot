@@ -21,8 +21,24 @@ DEFAULTS_PATH = ROOT / "config" / "founder.defaults.json"
 DEFAULTS_EXAMPLE = ROOT / "config" / "founder.defaults.json.example"
 
 HARD_GATES = frozenset(
-    {"H-006", "H-008", "H-010", "H-011", "H-023", "H-028", "H-031", "H-032", "H-036"}
+    {
+        "H-006",
+        "H-006b",
+        "H-008",
+        "H-010",
+        "H-011",
+        "H-023",
+        "H-028",
+        "H-031",
+        "H-032",
+        "H-036",
+    }
 )
+
+# Tier A legal gates (ADR-0020) — closable with residual-risk owner-only+foss note.
+LEGAL_TIER_A_GATES = frozenset({"H-006", "H-022", "H-023"})
+POSTURE_SCOPE = "Accepted-scope: owner-only+foss"
+POSTURE_DATE_PREFIX = "Accepted-date:"
 
 SPRINT_GATES: dict[int, list[str]] = {
     0: ["H-001", "H-003", "H-004", "H-005", "H-006"],
@@ -284,13 +300,79 @@ def preflight_sprint_scope(sprint: int) -> tuple[int, str]:
     return code, out or f"sprint-preflight S{sprint}"
 
 
+def _posture_ok(text: str) -> bool:
+    has_scope = POSTURE_SCOPE in text
+    has_date = any(
+        line.strip().startswith(POSTURE_DATE_PREFIX)
+        and len(line.strip()) > len(POSTURE_DATE_PREFIX) + 1
+        for line in text.splitlines()
+    )
+    return has_scope and has_date
+
+
 def preflight_legal_packet() -> tuple[int, str]:
+    """Tier A artifacts (ADR-0020). Exit 2 = human residual-risk approve still required."""
     packet = ROOT / "docs" / "legal-review-packet.md"
     terms = ROOT / "TERMS.md"
-    missing = [p.name for p in (packet, terms) if not p.exists()]
+    posture = ROOT / "docs" / "FOUNDER_LEGAL_POSTURE.md"
+    missing = [p.name for p in (packet, terms, posture) if not p.exists()]
     if missing:
         return 1, f"missing: {', '.join(missing)}"
-    return 2, "HUMAN — attorney review required (artifacts present)"
+    posture_text = posture.read_text(encoding="utf-8", errors="replace")
+    if not _posture_ok(posture_text):
+        return (
+            1,
+            "FOUNDER_LEGAL_POSTURE.md needs Accepted-scope: owner-only+foss and Accepted-date:",
+        )
+    return (
+        2,
+        "HUMAN — Tier A residual-risk approve (owner-only+foss); Tier B H-006b still open for non-owner billing",
+    )
+
+
+def preflight_h006b() -> tuple[int, str]:
+    """Tier B — counsel/clinic before non-owner billing (never AUTO)."""
+    when = ROOT / "docs" / "legal-desk" / "when-to-get-counsel.md"
+    if not when.exists():
+        return 1, "missing: docs/legal-desk/when-to-get-counsel.md"
+    counsel_dir = ROOT / "docs" / "legal-desk" / "counsel"
+    notes = (
+        [p for p in counsel_dir.iterdir() if p.is_file() and p.name != ".gitkeep"]
+        if counsel_dir.is_dir()
+        else []
+    )
+    if notes:
+        return (
+            2,
+            f"HUMAN — counsel note present ({notes[0].name}); confirm before non-owner billing",
+        )
+    return (
+        2,
+        "HUMAN — counsel/clinic required before non-owner billing (see when-to-get-counsel.md)",
+    )
+
+
+def _legal_approve_note_ok(hid: str, note: str) -> tuple[bool, str]:
+    """Validate approve --note for Tier A / Tier B legal gates."""
+    text = (note or "").strip()
+    lower = text.lower()
+    counsel_dir = ROOT / "docs" / "legal-desk" / "counsel"
+    has_counsel = counsel_dir.is_dir() and any(
+        p.is_file() and p.name != ".gitkeep" for p in counsel_dir.iterdir()
+    )
+    if "attorney approved" in lower and not has_counsel:
+        return False, 'refuse "attorney approved" without docs/legal-desk/counsel/ note'
+    if hid in LEGAL_TIER_A_GATES:
+        if "residual-risk" not in lower:
+            return False, 'Tier A note must include "residual-risk"'
+        if "owner-only+foss" not in lower and "owner-only+foss" not in text:
+            return False, 'Tier A note must include "owner-only+foss"'
+    if hid == "H-006b":
+        if not has_counsel:
+            return False, "H-006b requires a file under docs/legal-desk/counsel/"
+        if "residual-risk" not in lower and "counsel" not in lower:
+            return False, "H-006b note must mention counsel or residual-risk"
+    return True, "ok"
 
 
 def preflight_h021() -> tuple[int, str]:
@@ -389,6 +471,7 @@ PREFLIGHT_HANDLERS: dict[str, callable] = {
     "H-004": preflight_h004,
     "H-005": preflight_h005,
     "H-006": preflight_legal_packet,
+    "H-006b": preflight_h006b,
     "H-007": preflight_h007,
     "H-008": lambda: preflight_h008_h011("H-008"),
     "H-009": lambda: preflight_stub("H-009", "examples/web/playwright.config.ts"),
@@ -493,6 +576,11 @@ def cmd_approve(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
+    if hid in LEGAL_TIER_A_GATES or hid == "H-006b":
+        ok, reason = _legal_approve_note_ok(hid, args.note or "")
+        if not ok:
+            print(f"Cannot approve {hid}: {reason}", file=sys.stderr)
+            return 1
     data = load_gates()
     rec = gate_record(data, hid)
     rec["status"] = "approved"

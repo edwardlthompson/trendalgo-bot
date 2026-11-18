@@ -1,10 +1,39 @@
-"""Render a simple OHLCV close chart PNG for Telegram sendPhoto (no Qt)."""
+"""Telegram chart helpers — closes extract + enter/exit alert PNGs."""
 
 from __future__ import annotations
 
-import io
 from collections.abc import Sequence
 from typing import Any
+
+from trendalgo.notifications.telegram_alert_image import build_enter_alert_png, build_exit_alert_png
+
+__all__ = [
+    "chart_png_bytes",
+    "closes_from_coin",
+    "enter_alert_png",
+    "exit_alert_png",
+]
+
+
+def closes_from_coin(coin: dict[str, Any], *, window: str = "7d") -> list[float]:
+    keys = (
+        ("spark_closes_7d", "closes_7d", "chart_closes_1h", "closes")
+        if window == "7d"
+        else ("spark_closes_30d", "closes_30d", "closes")
+    )
+    for key in keys:
+        raw = coin.get(key)
+        if not isinstance(raw, list):
+            continue
+        out: list[float] = []
+        for item in raw:
+            try:
+                out.append(float(item))
+            except (TypeError, ValueError):
+                continue
+        if out:
+            return out
+    return []
 
 
 def chart_png_bytes(
@@ -13,45 +42,17 @@ def chart_png_bytes(
     title: str = "",
     hold_regions: Sequence[tuple[int, int]] | None = None,
 ) -> bytes | None:
-    """Return PNG bytes, or None when matplotlib is missing / series empty."""
+    """Legacy close-line PNG; prefer enter_alert_png for alerts."""
+    del hold_regions
     if len(closes) < 2:
         return None
-    try:
-        import matplotlib  # type: ignore[import-not-found]
-
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt  # type: ignore[import-not-found]
-    except ImportError:
-        return None
-    fig, ax = plt.subplots(figsize=(8, 3.2), dpi=120)
-    try:
-        xs = list(range(len(closes)))
-        ax.plot(xs, list(closes), color="#2563eb", linewidth=1.2)
-        for start, end in hold_regions or ():
-            if 0 <= start < end <= len(closes):
-                ax.axvspan(start, end, color="#16a34a", alpha=0.18)
-        if title:
-            ax.set_title(title, fontsize=10)
-        ax.grid(True, alpha=0.25)
-        ax.tick_params(labelsize=8)
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png", bbox_inches="tight")
-        return buf.getvalue()
-    except Exception:
-        return None
-    finally:
-        plt.close(fig)
+    coin = {"symbol": title or "?", "spark_closes_7d": list(closes)}
+    return build_enter_alert_png(coin)
 
 
-def closes_from_coin(coin: dict[str, Any], *, window: str = "7d") -> list[float]:
-    key = "closes_7d" if window == "7d" else "closes_30d"
-    raw = coin.get(key) or coin.get("closes") or []
-    if not isinstance(raw, list):
-        return []
-    out: list[float] = []
-    for item in raw:
-        try:
-            out.append(float(item))
-        except (TypeError, ValueError):
-            continue
-    return out
+def enter_alert_png(coin: dict[str, Any]) -> bytes | None:
+    return build_enter_alert_png(coin)
+
+
+def exit_alert_png(coin: dict[str, Any]) -> bytes | None:
+    return build_exit_alert_png(coin)

@@ -44,13 +44,15 @@ def validate_secret_sauce(
     )
     if not entries.any():
         return False, "no_entries"
+    params = dossier.eval_params()
+    tsl = max(0.0, float(params.get("trailing_stop_pct") or 0.0))
     stats = simulate_long_with_fees(
         df,
         entries,
         exits,
         stake_usd=stake_usd,
         fee=fee,
-        trailing_stop_pct=0.0,
+        trailing_stop_pct=tsl,
         collect_trades=False,
     )
     if stats["trades"] == 0:
@@ -59,7 +61,12 @@ def validate_secret_sauce(
     re_net = (re_profit / stake_usd) * 100.0 if stake_usd else 0.0
     trial_net = float(trial_row.get("net_pct") or 0.0)
     if abs(re_net - trial_net) > _EPS:
-        return False, f"net_mismatch:{re_net:.4g}vs{trial_net:.4g}"
-    if not (oracle_net > trial_net > peer_net):
+        return False, f"net_mismatch:{re_net:.4g}vs{trial_net:.4g};tsl={tsl:.4g}"
+    # SIM-04: trial must clear peer and stay within 5% of oracle (may exceed oracle).
+    if not (trial_net > peer_net):
         return False, "spectrum_fail"
+    if trial_net > oracle_net * 1.05:
+        return False, "spectrum_fail"
+    if trial_net > oracle_net:
+        return True, "spectrum_ok_above_oracle"
     return True, "ok"

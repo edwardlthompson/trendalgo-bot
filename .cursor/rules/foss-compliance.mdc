@@ -7,8 +7,9 @@ alwaysApply: false
 
 ## License
 
-- Pure FOSS under MIT license
-- No proprietary closed-source SDKs in production path
+- Product is **source-available under Elastic License 2.0** (ELv2; human approved 2026-11-11) — not MIT OSI FOSS
+- Free to run for own trading; no hosted/managed-service resale; no stripping billing/license-key protections
+- No proprietary closed-source SDKs in the production path (deps stay inspectable; ELv2 is not OSI open source)
 - Android: no Google Play Services, Firebase, or closed telemetry trackers
 
 ## Distribution

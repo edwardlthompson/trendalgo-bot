@@ -43,7 +43,7 @@ class GenericCcxtPortfolioAdapter:
         account_id = store.get_or_create_account(self.exchange_id, "default")
         store.set_account_meta(account_id, "spot")
 
-        if dry_run and not self.entry.has_api_keys():
+        if dry_run:
             from trendalgo.portfolio.stress_fixture import stress_holdings_for_exchange
 
             stress = stress_holdings_for_exchange(self.exchange_id)
@@ -101,7 +101,10 @@ class GenericCcxtPortfolioAdapter:
             journal.mark_halt_announced(self.exchange_id)
         tickers = exchange.fetch_tickers()
         holdings, total_usd = holdings_from_ccxt_balance(
-            balance, tickers, usd_aliases=self._usd_aliases()
+            balance,
+            tickers,
+            usd_aliases=self._usd_aliases(),
+            quote_currency=self.entry.quote_currency,
         )
         holdings = self._normalize_holdings(holdings)
         snap_id = store.insert_snapshot(

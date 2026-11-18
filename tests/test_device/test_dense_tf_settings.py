@@ -86,10 +86,18 @@ def test_scan_bt_prefs_round_trip(tmp_path: Path) -> None:
     )
     save_scan_bt_prefs(tmp_path, prefs)
     loaded = load_scan_bt_prefs(tmp_path)
-    assert "5m" in loaded.timeframes
+    # Mixed bands → hours only (exclusive).
+    assert "5m" not in loaded.timeframes
     assert "12h" in loaded.timeframes
+    assert "1h" in loaded.timeframes
     assert "RSI" in loaded.strategy_denylist
-    assert selected_timeframes(loaded)[0] == "5m"
+    assert selected_timeframes(loaded)[0] == "1h"
+    save_scan_bt_prefs(
+        tmp_path,
+        ScanBtPrefs(timeframes=["5m", "15m"], strategy_denylist=[], bt_signal_set="all_ta"),
+    )
+    sub = load_scan_bt_prefs(tmp_path)
+    assert selected_timeframes(sub) == ("5m", "15m")
 
 
 def test_enabled_strategies_honors_denylist() -> None:
@@ -239,22 +247,68 @@ def test_default_timeframes_are_hours_only(tmp_path: Path) -> None:
 
 
 def test_scan_bt_settings_dialog_wires_dump_keys(tmp_path: Path, qtbot: QtBot) -> None:
-    dlg = ScanBacktestSettingsDialog(tmp_path, show_signal_set=True, n_coins=3)
+    dlg = ScanBacktestSettingsDialog(tmp_path, n_coins=3)
     qtbot.addWidget(dlg)
     assert dlg.windowTitle()
     assert dlg._eta.text()
-    dlg._tf_boxes["5m"].setChecked(True)
+    assert S.SCAN_BT_ETA_TITLE
+    assert dlg._tf_boxes["5m"].isEnabled() is True
+    assert hasattr(dlg, "_ohlcvt_path")
+    # Without OHLCVT: bands stay exclusive.
     dlg._tf_boxes["1h"].setChecked(True)
+    dlg._tf_boxes["4h"].setChecked(True)
     for tf, box in dlg._tf_boxes.items():
-        if tf not in ("5m", "1h"):
+        if tf not in ("1h", "4h"):
             box.setChecked(False)
+    dlg._tf_boxes["5m"].setChecked(True)
+    assert dlg._tf_boxes["1h"].isChecked() is False
+    dlg._tf_boxes["1h"].setChecked(True)
+    assert dlg._tf_boxes["5m"].isChecked() is False
+    dlg._tf_boxes["4h"].setChecked(True)
     dlg._save()
     loaded = load_scan_bt_prefs(tmp_path)
-    assert "5m" in loaded.timeframes
+    assert "5m" not in loaded.timeframes
     assert "1h" in loaded.timeframes
-    assert needs_1m_base(tuple(loaded.timeframes)) is True
-    assert loaded.bt_signal_set in ("3commas", "all_ta")
-    for box in dlg._tf_boxes.values():
-        box.setChecked(False)
-    dlg._save()
-    assert dlg._eta.text() == S.SCAN_BT_NO_TFS
+    assert "4h" in loaded.timeframes
+    assert needs_1m_base(tuple(loaded.timeframes)) is False
+    assert loaded.bt_signal_set == "all_ta"
+    # OHLCVT present without catch-up still keeps bands exclusive.
+    arch = tmp_path / "ohlcvt_dir"
+    arch.mkdir()
+    (arch / "XBTUSD_1.csv").write_text("1,1,1,1,1,1,1\n", encoding="utf-8")
+    dlg2 = ScanBacktestSettingsDialog(tmp_path, n_coins=1)
+    qtbot.addWidget(dlg2)
+    dlg2._ohlcvt_path.setText(str(arch))
+    assert dlg2._mix is False
+    dlg2._tf_boxes["5m"].setChecked(True)
+    assert dlg2._tf_boxes["1h"].isChecked() is False
+    dlg2._tf_boxes["1h"].setChecked(True)
+    assert dlg2._tf_boxes["5m"].isChecked() is False
+    dlg2._save()
+    loaded2 = load_scan_bt_prefs(tmp_path)
+    assert "5m" not in loaded2.timeframes
+    assert "1h" in loaded2.timeframes
+    assert loaded2.ohlcvt_path == str(arch)
+
+
+def test_scan_bt_settings_ta_all_none(tmp_path: Path, qtbot: QtBot) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QPushButton
+
+    dlg = ScanBacktestSettingsDialog(tmp_path, n_coins=2)
+    qtbot.addWidget(dlg)
+    assert "for 2 coin" in dlg._eta.text()
+    none_btn = dlg.findChild(QPushButton, "scanBtTaNone")
+    all_btn = dlg.findChild(QPushButton, "scanBtTaAll")
+    assert none_btn is not None and all_btn is not None
+    none_btn.click()
+    assert all(
+        dlg._ta_list.item(i).checkState() == Qt.CheckState.Unchecked
+        for i in range(dlg._ta_list.count())
+    )
+    all_btn.click()
+    assert all(
+        dlg._ta_list.item(i).checkState() == Qt.CheckState.Checked
+        for i in range(dlg._ta_list.count())
+    )
+    assert "TA" in dlg._eta.text()

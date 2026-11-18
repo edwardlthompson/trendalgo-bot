@@ -21,7 +21,7 @@ S0–S12 used Freqtrade as the trading engine. The exchange program (S13–S20) 
 ## Strategy runtime contract
 
 | Hook | Purpose |
-|------|---------|
+| ------ | --------- |
 | `on_candle` | Update indicators per candle |
 | `signal` | Return entry signal or None |
 | `exit` | Return True to close position |
@@ -38,7 +38,7 @@ Templates register native module paths. Tests use fixture OHLCV — no Freqtrade
 ## Alternatives considered
 
 | Option | Rejected because |
-|--------|------------------|
+| -------- | ------------------ |
 | Keep Freqtrade optional | Dual engine maintenance; incomplete venue coverage |
 | Freqtrade + native hybrid | Complexity; user chose full removal |
 | Archive FT in `legacy/` | User: no archive — extract and delete |

@@ -17,8 +17,14 @@ def backtest_one_coin(
     stake: float,
     fee: Any,
     fee_bps_round_trip: float | None = None,
+    prefs_root: Any = None,
+    include_sauce: bool = True,
+    sauce_only_rows: list[dict[str, Any]] | None = None,
+    include_market_context: bool = True,
 ) -> tuple[str, list[dict[str, Any]], dict[str, float], dict[str, Any] | None]:
     """Run the Backtest-tab All-TA path for one Opportunity coin."""
+    from pathlib import Path
+
     from trendalgo.device.scan_identity import coin_exchange_id
     from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
 
@@ -30,6 +36,8 @@ def backtest_one_coin(
         "load_s": 0.0,
         "pass1_s": 0.0,
         "deepen_s": 0.0,
+        "sauce_s": 0.0,
+        "mc_s": 0.0,
     }
     if not symbol:
         return symbol, [], {**stats, "elapsed_s": 0.0}, None
@@ -38,9 +46,17 @@ def backtest_one_coin(
     gecko = coin.get("gecko_id")
     gecko_id = str(gecko) if gecko else None
     loader = loader_factory()
-    use_fee = fee
-    if fee_bps_round_trip is not None:
-        use_fee = fee_for_exchange(coin_exchange_id(coin), fee_bps_round_trip)
+    # Always prefer the coin's venue fee table (CEX-P3b); bps only as KeyError fallback.
+    eid = coin_exchange_id(coin)
+    use_fee = fee_for_exchange(eid, fee_bps_round_trip)
+    if (
+        fee is not None
+        and str(getattr(fee, "exchange_id", "") or "") == eid
+        and getattr(use_fee, "source", "") == "bps"
+    ):
+        use_fee = fee
+
+    root = Path(prefs_root) if prefs_root is not None else None
     rows, market_context = scan_pair_strategies(
         symbol=symbol,
         pair=pair,
@@ -50,10 +66,23 @@ def backtest_one_coin(
         fee=use_fee,
         loader=loader,
         gecko_id=gecko_id,
+        prefs_root=root,
+        include_sauce=include_sauce if sauce_only_rows is None else True,
+        sauce_only_rows=sauce_only_rows,
+        include_market_context=include_market_context,
+        exchange_id=eid,
     )
     deepened = sum(1 for r in rows if r.get("optimized"))
     stats["deepened"] = float(deepened)
     stats["elapsed_s"] = time.perf_counter() - t0
+    if isinstance(market_context, dict):
+        phase = market_context.get("phase_s")
+        if isinstance(phase, dict):
+            stats["load_s"] = float(phase.get("load_s") or 0.0)
+            stats["pass1_s"] = float(phase.get("pass1_s") or 0.0)
+            stats["deepen_s"] = float(phase.get("deepen_s") or 0.0)
+            stats["sauce_s"] = float(phase.get("sauce_s") or 0.0)
+            stats["mc_s"] = float(phase.get("mc_s") or market_context.get("mc_s") or 0.0)
     bid = coin.get("bid")
     ask = coin.get("ask")
     if market_context and isinstance(market_context, dict) and (bid is not None or ask is not None):

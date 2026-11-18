@@ -1,6 +1,7 @@
 # First run (non-expert)
 
-> You do **not** need exchange API keys to try the Scanner in dry-run.
+> You do **not** need exchange API keys for Scanner or Backtest research.
+> Public Kraken data powers both. Keys unlock multi-venue scan, portfolio sync, and live trading later.
 
 ## Easiest on your PC: TrendAlgo device app (recommended)
 
@@ -31,7 +32,7 @@ Use `-SkipBuild` if `dist\windows-device\TrendAlgoDevice\TrendAlgoDevice.exe` is
 2. In **Settings**, pick a **Theme** (Follow Windows, Light, or Dark) and an **Accent color**. The look changes when you save.
 3. **Portfolio** (home after first save) shows net worth, holdings, equity overlays, timeline scrubber, and a holdings heatmap from `portfolio.db`. It does not call the exchange. Live Sync needs a linked host (S-Parity-2).
 4. **Opportunity scanner** → set filters if you want, then **Run scan** (public Kraken data, no keys). Cancel stops it. Qualified / Watchlist / Logs tabs, share export, coin logos (when icons are installed), and sparklines match the dense LTS layout. Scan enter/leave history lives on the top-level **Alerts** tab (next to Portfolio).
-5. **Backtest** has **One indicator** (candlestick + trade markers) and **Fleet sweep** (pass-1 rankings, Create bot → Plan). It places no orders.
+5. **Backtest** has **One indicator** (candlestick + trade markers) and **Fleet sweep** (pass-1 rankings, Create bot → Plan). Cache-first public Kraken candles — no keys. **Refresh prices** re-pulls OHLCV. It places no orders.
 6. **Plan** builds bots (edit in place; stake fixed USD or % equity). Saving keeps the plan on this PC. **Send to host** lands in S-Parity-2.
 7. **Bot** shows denser local cards (controls disabled until host). **More** opens Glossary, Export, Research, **AI strategies**, Billing (non-charging), Settings (About), and Debug.
 

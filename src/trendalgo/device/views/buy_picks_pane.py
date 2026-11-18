@@ -86,6 +86,7 @@ class BuyPicksPane(QFrame):
         self.set_picks(rank_buy_picks(coins))
 
     def set_picks(self, picks: list[dict[str, Any]]) -> None:
+        picks = list(picks)[:10]
         while self._list_lay.count():
             item = self._list_lay.takeAt(0)
             w = item.widget()

@@ -65,6 +65,27 @@ def test_read_json_refuses_corrupt_and_non_object_content(tmp_path: Path) -> Non
         read_json(listed)
 
 
+def test_write_json_retries_access_denied_on_replace(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "scan_unit_timing.json"
+    write_json(target, {"n": 1})
+    hits = {"n": 0}
+    real_replace = profile.os.replace
+
+    def flaky(src: str, dst: str) -> None:
+        hits["n"] += 1
+        if hits["n"] < 3:
+            raise OSError(5, "Access is denied")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(profile.os, "replace", flaky)
+    write_json(target, {"n": 2})
+    assert read_json(target) == {"n": 2}
+    assert hits["n"] == 3
+
+
 def test_write_json_creates_folders_and_round_trips(tmp_path: Path) -> None:
     target = tmp_path / "a" / "b" / "settings.json"
     write_json(target, {"owner_id": "owner-1"})
@@ -78,10 +99,10 @@ def test_a_failed_write_keeps_the_old_file_and_leaves_no_temp_file(
     target = tmp_path / "plan.json"
     write_json(target, {"plan_version": 1})
 
-    def disk_full(*_args: object, **_kwargs: object) -> None:
+    def disk_full(*_args: object, **_kwargs: object) -> str:
         raise RuntimeError("disk full")
 
-    monkeypatch.setattr(profile.json, "dump", disk_full)
+    monkeypatch.setattr(profile.json, "dumps", disk_full)
     with pytest.raises(RuntimeError, match="disk full"):
         write_json(target, {"plan_version": 2})
     assert read_json(target) == {"plan_version": 1}

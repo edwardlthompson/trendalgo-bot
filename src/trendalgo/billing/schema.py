@@ -6,8 +6,17 @@ CREATE TABLE IF NOT EXISTS license_enrollment (
     enrolled INTEGER NOT NULL DEFAULT 0,
     license_rate_pct REAL NOT NULL DEFAULT 0.05,
     tier TEXT NOT NULL DEFAULT 'free',
+    share_class TEXT NOT NULL DEFAULT 'alpha',
     terms_version TEXT,
     install_uuid TEXT,
+    api_key_fingerprint TEXT,
+    machine_id TEXT,
+    seat_count INTEGER NOT NULL DEFAULT 1,
+    server_hwm_usd REAL NOT NULL DEFAULT 0,
+    consecutive_paid INTEGER NOT NULL DEFAULT 0,
+    pauses_used_quarter INTEGER NOT NULL DEFAULT 0,
+    pause_quarter TEXT,
+    deficit_months INTEGER NOT NULL DEFAULT 0,
     enrolled_at TEXT,
     first_profitable_trade_at TEXT,
     billing_starts_at TEXT,
@@ -40,6 +49,9 @@ CREATE TABLE IF NOT EXISTS license_statements (
     carry_forward_credit_usd REAL NOT NULL DEFAULT 0,
     net_loss_note TEXT,
     signed_hash TEXT NOT NULL,
+    bh_net_usd REAL NOT NULL DEFAULT 0,
+    excess_usd REAL NOT NULL DEFAULT 0,
+    benchmark_refs_json TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL
 );
 
@@ -47,6 +59,7 @@ CREATE TABLE IF NOT EXISTS license_status (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     grace_started_at TEXT,
     grace_day INTEGER NOT NULL DEFAULT 0,
+    max_grace_day INTEGER NOT NULL DEFAULT 0,
     suspended INTEGER NOT NULL DEFAULT 0,
     unpaid_period TEXT,
     licensed_until TEXT,
@@ -103,6 +116,8 @@ CREATE TABLE IF NOT EXISTS fee_periods (
     net_usd REAL NOT NULL,
     license_fee_usd REAL NOT NULL,
     deficit_out_usd REAL NOT NULL,
+    bh_net_usd REAL NOT NULL DEFAULT 0,
+    benchmark_refs_json TEXT NOT NULL DEFAULT '{}',
     finalized_at TEXT NOT NULL
 );
 """

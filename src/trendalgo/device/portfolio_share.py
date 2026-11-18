@@ -8,11 +8,13 @@ from pathlib import Path
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtWidgets import QWidget
 
+from trendalgo.device.export_prefs import suggested_png_path
+
 
 def default_portfolio_export_path(root: Path, *, label: str) -> Path:
     day = datetime.now(tz=UTC).date().isoformat()
     safe = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in label.lower()) or "page"
-    return root / "exports" / f"portfolio-{safe}-{day}.png"
+    return suggested_png_path(root, f"portfolio-{safe}-{day}.png")
 
 
 def share_widget_png(

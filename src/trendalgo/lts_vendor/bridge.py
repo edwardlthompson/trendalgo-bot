@@ -100,7 +100,8 @@ def merge_backtest_into_coins(
         contexts = backtest_summary.get("market_contexts")
         if isinstance(contexts, dict):
             ctx = contexts.get(symbol)
-            if isinstance(ctx, dict):
+            # Only stamp successful contexts so Buy picks / Top 10 can trust ok=True.
+            if isinstance(ctx, dict) and ctx.get("ok"):
                 coin["market_context"] = ctx
         for key in EDGE_KEYS:
             coin.pop(key, None)
@@ -164,6 +165,10 @@ def publish_final_results(
             progress.log(f"Backtest sweep failed: {exc}", level="error")
             bt_summary = None
     merge_backtest_into_coins(coins, bt_summary)
+    if bt_summary:
+        from trendalgo.notifications.grokbot_sweep import emit_sweep_complete
+
+        emit_sweep_complete(coins, bt_summary)
     preserve_chart_closes(coins, prev_coins)
     interval = resolve_scan_interval_seconds()
     with_bt = sum(

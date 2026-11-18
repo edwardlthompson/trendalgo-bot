@@ -20,7 +20,7 @@ Red CI → `/fix` or `/ci` + `/gates` first. Dirty Unreleased + empty AGENT → 
 ## By moment
 
 - **Start:** `/tour` · `/init` · `/setup` · `/setup-local` · `/gates` · `/coach` · `/brand`
-- **Build:** `/shape` · `/plan` · `/adr` · `/feature` · `/fix` · `/cleanup` · `/scope`
+- **Build:** `/shape` · `/plan` · `/adr` · `/legal-desk` · `/feature` · `/fix` · `/cleanup` · `/scope`
 - **UX:** `/ux-review` · `/ux-apply` · aliases `/ui-review` `/ux-audit` `/ui-audit`
 - **Publish:** `/update-deps` · `/prerelease` · `/push` · `/regress`
 - **Local:** `/best-of-n` · `/emulator` · `/recommend-model` · `/compress-memory` (opt-in Ollama: [`LOCAL_AGENT.md`](LOCAL_AGENT.md))

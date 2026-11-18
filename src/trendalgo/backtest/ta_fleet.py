@@ -12,6 +12,7 @@ from trendalgo.backtest.ta_simulator import (
     simulate_buy_and_hold,
     simulate_long_with_fees,
     simulate_oracle_max_gain,
+    simulate_oracle_tradable_proxy,
 )
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 from trendalgo.ta.cache import ohlcv_list_to_df, preset_warmup_bars
@@ -162,6 +163,17 @@ def oracle_max_row(
     if row is None:
         return None
     row["lookback_seconds"] = lookback_seconds
+    proxy = simulate_oracle_tradable_proxy(
+        df,
+        list(row.get("oracle_swings") or []),
+        stake_usd=stake_usd,
+        fee=fee,
+    )
+    if proxy is not None and stake_usd:
+        row["tradable_net_pct"] = round(
+            (float(proxy.get("net_profit") or 0.0) / stake_usd) * 100.0, 4
+        )
+        row["tradable_trades"] = int(proxy.get("trades") or 0)
     return row
 
 

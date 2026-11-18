@@ -1,34 +1,40 @@
-# Feature: security-onboarding
+# Feature: Security onboarding (exchange API keys)
 
-> Copy this file to `docs/features/security-onboarding.md` before Sprint 2+ work. Replace placeholders. Checklist markers: 🔲 open · ✅ done · ❌ blocked.
+> First-run / Settings guidance for exchange keys. Checklist: ✅ done where shipped.
+> Trigger: Coinigy-class third-party key revoke advisories (2026-11-13).
 
 ## Acceptance criteria
 
-- 🔲 User-visible behavior: _describe the happy path_
-- 🔲 Offline/error behavior: _describe degraded mode_
-- 🔲 Accessibility: _keyboard/screen reader expectations (web/Android)_
-- 🔲 i18n: keys added under `{feature}.*` (web `locales/`, Android `strings.xml`)
+- ✅ Docs state **trade + query only** — never Withdraw / Transfer
+- ✅ Docs recommend **IP allowlists** when the venue supports them
+- ✅ Docs forbid **reusing** bot keys with third-party portfolio/trading SaaS
+- ✅ Device Settings key help echoes the same rules (`SETTINGS_KEYS_HELP`)
+- ✅ Breach response steps live in [`SECURITY_TRIAGE.md`](../SECURITY_TRIAGE.md)
 
-## Smoke scenario
+## Operator happy path
 
-1. _Given_ app is running on the active stack
-2. _When_ user _performs primary action_
-3. _Then_ _expected outcome_ without console/logcat errors
+1. Create exchange API keys with **trade + query** (or query-only for portfolio sync).
+2. Disable withdraw/transfer; enable IP allowlist to the VPS if available.
+3. Paste keys only into the device vault / VPS `.env` — never into chat or third-party dashboards.
+4. Keep `TRENDALGO_MODE=dry-run` until `go-live-gate.sh --approve` per exchange.
 
-## Container map
+## Offline / error
 
-| Layer | Path |
-|-------|------|
-| Logic | `src/{feature}/` or stack equivalent |
-| View | `src/components/{Feature}Panel.ts` / `ui/{feature}/` |
-| Tests | co-located unit tests |
-| Wiring | composition root ≤10 lines |
+- Missing keys: public Kraken research desk still works; portfolio/keyed scan stay empty with honest empty states.
+- Third-party breach: revoke keys shared with that vendor; rotate TrendAlgo keys; see Security Triage.
 
 ## Definition of Done
 
-See `docs/FEATURE_MODULES.md` per-feature checklist and BUILD_PLAN Sprint 2+ feature template rows.
+- Canonical limits: [`API_ACCESS_LIMITS.md`](../API_ACCESS_LIMITS.md)
+- Threat notes: [`THREAT_MODEL.md`](../THREAT_MODEL.md) (key compromise)
+- Triage: [`SECURITY_TRIAGE.md`](../SECURITY_TRIAGE.md) § Exchange API-key hygiene
+- Device copy: `SETTINGS_KEYS_HELP` / scope help in `src/trendalgo/device/strings.py`
 
-## Notes
+## Smoke
 
-- Reference exemplar: About screen (`examples/web/src/about/`, `examples/android/.../about/`)
-- After each AGENT step: `bash scripts/watch-agent-gates.sh --once --autofix`
+```bash
+# Docs present and cross-linked (no runtime gate).
+test -f docs/features/security-onboarding.md
+rg -n "no withdraw|IP allowlist|not reused|Coinigy" docs/API_ACCESS_LIMITS.md docs/SECURITY_TRIAGE.md docs/features/security-onboarding.md
+
+```

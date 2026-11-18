@@ -1,4 +1,4 @@
-"""Backtest page polls progress into the status line (no activity panel)."""
+"""Backtest page feeds progress into the modal activity log (not page status)."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from trendalgo.device.views.backtest_page import BacktestPage  # noqa: E402
 from trendalgo.device.workers import WorkerPool  # noqa: E402
 
 
-def test_poll_updates_status_line(
+def test_poll_updates_scan_dialog_log(
     qtbot: QtBot,
     ctx: DeviceContext,
     pool: WorkerPool,
@@ -30,11 +30,16 @@ def test_poll_updates_status_line(
 
     page = BacktestPage(ctx, pool)
     qtbot.addWidget(page)
-    assert not hasattr(page, "_activity")
+    assert not hasattr(page, "_bar")
     monkeypatch.setattr(page._pool, "submit", lambda *_a, **_k: _Pending())
     page._pair.setText("ETH/USD")
     page._run.click()
+    assert page._scan_dialog is not None
     write_progress(ctx.root, {"message": "Loading ETH 1h…", "done": 0, "total": 10})
     page._poll()
-    assert "Loading ETH 1h…" in page._status.text()
+    assert "Loading ETH 1h…" in page._scan_dialog._phase.text()
+    assert "Loading ETH 1h…" in page._scan_dialog._log.toPlainText()
+    # Page status stays quiet during the run (verbosity lives in the modal).
+    assert page._status.text() == ""
     page._cancel_run()
+    assert page._scan_dialog is None

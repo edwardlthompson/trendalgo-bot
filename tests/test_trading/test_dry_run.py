@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from tests.support.api_client import make_api_client
 from trendalgo.risk.journal import TradeJournal
 from trendalgo.strategies.runtime.contract import Candle
 from trendalgo.strategies.runtime.loader import load_strategy
@@ -32,11 +33,8 @@ def test_dry_run_tick_journals_entry(tmp_path: Path) -> None:
 
 
 def test_runner_status_api() -> None:
-    from fastapi.testclient import TestClient
 
-    from trendalgo.api.app import create_app
-
-    client = TestClient(create_app())
+    client = make_api_client()
     resp = client.get("/api/v1/trading/runner/status")
     assert resp.status_code == 200
     assert resp.json()["engine"] == "native"

@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 
 from trendalgo.device import strings as S
 from trendalgo.device.context import DeviceContext
+from trendalgo.device.export_prefs import remember_export_dir
 from trendalgo.device.host_client import HostRefusedError
 from trendalgo.device.host_session import try_open_host_client
 from trendalgo.device.icons import nav_icon
@@ -361,6 +362,7 @@ class PortfolioPage(QWidget):
             show_problem(self._problem, str(exc))
             QMessageBox.warning(self, S.PORTFOLIO_EXPORT_MODULE, str(exc))
             return
+        remember_export_dir(self._ctx.root, out)
         clear_problem(self._problem)
         self._show_share_done(out)
 
@@ -385,6 +387,7 @@ class PortfolioPage(QWidget):
                 tab=f"page-{page.id}",
                 dest=dest,
             )
+            remember_export_dir(self._ctx.root, out)
         except OSError as exc:
             show_problem(self._problem, str(exc))
             QMessageBox.warning(self, S.PORTFOLIO_EXPORT_PAGE, str(exc))

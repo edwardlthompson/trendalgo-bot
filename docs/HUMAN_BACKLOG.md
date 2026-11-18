@@ -19,7 +19,7 @@
 |------|----------------------|----------------------------|
 | Soft scope | Checks docs/ADR exist | Needs `approve --note` (or was archived after approve) |
 | Soft + real action | Proves a helper exists | Needs VPS / GitHub / hour pick / etc. |
-| Hard | Packet or go-live script | Never AUTO — secrets, attorney, live trading |
+| Hard | Packet or go-live script | Never AUTO — secrets, legal residual-risk / Tier B counsel, live trading |
 | Monthly | Report / cost check | Recurring |
 
 ```bash
@@ -29,48 +29,29 @@ python scripts/founder_gate.py approve H-00N --note "why you approve"
 
 ```
 
-**Hard gates (never AUTO-approve):** H-006, H-008, H-010, H-011, H-023, H-028, **H-031**, **H-032**, **H-036**
+**Hard gates (never AUTO-approve):** H-006, **H-006b**, H-008, H-010, H-011, H-023, H-028, **H-031**, **H-032**, **H-036**
+
+Tier A legal (H-006 / H-022 / H-023) archived ✅ 2026-11-15. Tier B (**H-006b**): counsel/clinic before non-owner billing — see [`docs/legal-desk/when-to-get-counsel.md`](legal-desk/when-to-get-counsel.md).
 
 ---
 
-## Open gates (🔲 only)
+## Open gates (🔲 only) — complete in this order
 
-### Dashboard / calendar
+Canonical ordered pack also on [`BUILD_PLAN.md`](../BUILD_PLAN.md) **Human work**. Path: **legal → ops → secrets → live → expand**.
 
-| ID | Task | Owner | Status |
-|----|------|-------|--------|
-| PF-H1 | Optional: mint CoinMarketCal and/or Coindar API keys (Calendar wizard) | `[HUMAN]` | 🔲 |
-### DEX
-
-| ID | Task | Owner | Status |
-|----|------|-------|--------|
-| H-036 | Approve **live** DEX swap trading (hard) | `[HUMAN]` | 🔲 |
-### Exchange
-
-| ID | Task | Owner | Status |
-|----|------|-------|--------|
-| H-032 | Approve worldwide bot trading phases (hard) | `[HUMAN]` | 🔲 |
-### Post-delivery / ops
-
-| ID | Task | Owner | Status |
-|----|------|-------|--------|
-| H-003 | Branch protection setup (`setup-github-repo.sh`) | `[HUMAN]` | 🔲 |
-| H-004 | Provision VPS (Oracle / Hetzner) — script only checks DEPLOYMENT.md | `[HUMAN]` | 🔲 |
-| H-006 | Attorney + ADR-0008 (hard) | `[HUMAN]` | 🔲 |
-| H-007 | Approve ADR-0001 / S1 — blocked until `validate-bootstrap --quick` passes | `[HUMAN]` | 🔲 |
-| H-008 | Telegram token in `.env` (hard) | `[HUMAN]` | 🔲 |
-| H-010 | Explicit live-trading approval (hard) | `[HUMAN]` | 🔲 |
-| H-011 | Kraken read-only keys in `.env` (hard) | `[HUMAN]` | 🔲 |
-| H-017 | CoinStats parity compare + cancel sub — **deferred** (parity gaps; revisit later) | `[HUMAN]` | 🔲 |
-| H-022 | License ADR attorney (hard) | `[HUMAN]` | 🔲 |
-| H-023 | TERMS sign-off (hard) | `[HUMAN]` | 🔲 |
-### Recurring (never one-shot ✅)
-
-| ID | Cadence | Task | Owner | Status |
-|----|---------|------|-------|--------|
-| H-026 | Monthly | Review portfolio integrity report | `[HUMAN]` | 🔲 |
-| H-027 | Monthly | Confirm VPS cost ≤ $10 | `[HUMAN]` | 🔲 |
-| H-028 | Every go-live | Explicit go-live approve (hard) | `[HUMAN]` | 🔲 |
+| # | ID | Task | Kind | Status |
+|---|----|------|------|--------|
+| 1 | H-006b | Tier B: counsel/clinic before non-owner billing | Hard · legal Tier B | 🔲 |
+| 2 | H-004 | Provision VPS (Oracle / Hetzner) | Soft · ops | 🔲 |
+| 3 | H-011 | Kraken read-only keys in VPS `.env` | Hard · secrets | 🔲 |
+| 4 | H-010 | Explicit live-trading approval (`TRENDALGO_MODE=live`) | Hard · go-live | 🔲 |
+| 5 | H-028 | Per-exchange `go-live-gate.sh --approve` | Hard · go-live | 🔲 |
+| 6 | H-032 | Worldwide trading phases + CEXes beyond nine (CEX-P4b) | Hard · expand CEX | 🔲 |
+| 7 | H-035 / H-036 | DEX live program + **live** swap approve | Hard · expand DEX | 🔲 |
+| 8 | DEX-P4a | `trading_enabled` Arbitrum / Ethereum after Base | Hard · expand DEX | 🔲 |
+| 9 | H-017 | CoinStats parity compare + cancel sub (**deferred**) | Soft · deferred | 🔲 |
+| 10 | H-026 | Monthly: portfolio integrity report | Recurring | 🔲 |
+| 11 | H-027 | Monthly: VPS cost ≤ $10 | Recurring | 🔲 |
 ---
 
 ## AUTO-only (not open backlog)

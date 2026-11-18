@@ -13,9 +13,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
-    QProgressBar,
     QPushButton,
-    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -31,9 +29,8 @@ from trendalgo.device.backtest_sort import (
 )
 from trendalgo.device.context import DeviceContext
 from trendalgo.device.flow_layout import FlowLayout
-from trendalgo.device.icons import nav_icon
-from trendalgo.device.pair_scan_partial import clear_partial_rows, read_partial_rows
-from trendalgo.device.pair_scan_progress import clear_progress, progress_line, read_progress
+from trendalgo.device.pair_scan_partial import clear_partial_rows
+from trendalgo.device.pair_scan_progress import clear_progress, read_progress
 from trendalgo.device.pair_strategy_scan_job import pair_strategy_scan_job
 from trendalgo.device.results_view_prefs import (
     ResultsViewPrefs,
@@ -41,15 +38,13 @@ from trendalgo.device.results_view_prefs import (
     save_results_prefs,
 )
 from trendalgo.device.sauce_names import is_sauce
-from trendalgo.device.theme import active_mode
-from trendalgo.device.theme_css import colors_for
 from trendalgo.device.views.backtest_column_filter_row import FILTER_ROW, BacktestColumnFilterRow
 from trendalgo.device.views.backtest_page_job import (
-    apply_partial_rows,
     apply_scan_result,
     fail_scan,
     fill_or_empty,
 )
+from trendalgo.device.views.backtest_scan_dialog import BacktestScanDialog, apply_main_blur
 from trendalgo.device.views.backtest_share_dialog import run_backtest_share_dialog
 from trendalgo.device.views.glossary_popup import show_glossary_popup
 from trendalgo.device.views.market_context_pane import MarketContextPane
@@ -87,20 +82,21 @@ class BacktestPage(QWidget):
         pool: WorkerPool,
         *,
         on_open_plan: CreateBotCb | None = None,
+        on_toast: Callable[[str, str], None] | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._root = ctx.root
         self._pool = pool
         self._on_open_plan = on_open_plan
+        self._on_toast = on_toast
         self._pending: AsyncResult[Any] | None = None
+        self._scan_dialog: BacktestScanDialog | None = None
         self._rows: list[dict[str, Any]] = []
         self._all_rows: list[dict[str, Any]] = []
         self._market_context: dict[str, Any] | None = None
         self._sort_key = DEFAULT_SORT_KEY
         self._sort_dir = DEFAULT_SORT_DIR
-        self._last_log = ""
-        self._last_partial_n = -1
         self._timer = QTimer(self)
         self._timer.setInterval(POLL_MS)
         self._timer.timeout.connect(self._poll)
@@ -117,37 +113,48 @@ class BacktestPage(QWidget):
             self._pair.setText(prefs.last_pair)
         self._run = mark_primary(QPushButton(S.BACKTEST_RUN))
         self._run.setDefault(True)
-        self._settings = QToolButton()
+        self._refresh_prices = QPushButton(S.BACKTEST_REFRESH_PRICES)
+        self._refresh_prices.setToolTip(S.BACKTEST_REFRESH_PRICES_TIP)
+        self._settings = QPushButton(S.SCAN_BT_SETTINGS)
         self._settings.setObjectName("scanBtSettings")
-        self._settings.setText(S.SCAN_BT_SETTINGS)
         self._settings.setToolTip(S.SCAN_BT_SETTINGS_TIP)
+        self._settings.setCursor(Qt.CursorShape.PointingHandCursor)
         self._settings.clicked.connect(lambda _c=False: self._open_scan_settings())
         self._cancel = QPushButton(S.CANCEL)
         self._cancel.setEnabled(False)
-        self._share = QToolButton()
+        self._cancel.setVisible(False)
+        self._share = QPushButton(S.BACKTEST_SHARE)
         self._share.setObjectName("shareButton")
-        self._share.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self._share.setIcon(nav_icon("share", colors_for(active_mode())["onSurfaceVariant"], 20))
         self._share.setToolTip(S.BACKTEST_SHARE_TIP)
         self._share.setAccessibleName(S.BACKTEST_SHARE)
+        # View toggles live in Settings — keep widgets for prefs / fill_table.
         self._heatmap = QCheckBox(S.SCANNER_COLOR_RANKS)
         self._heatmap.setChecked(prefs.heatmap_enabled)
+        self._heatmap.hide()
         self._perfect = QCheckBox(S.BACKTEST_PERFECT_ONLY)
         self._perfect.setChecked(prefs.perfect_only)
         self._perfect.setToolTip(S.BACKTEST_PERFECT_HELP)
+        self._perfect.hide()
         self._derive = QPushButton(S.BACKTEST_DERIVE_RULE)
         self._derive.setToolTip(S.BACKTEST_DERIVE_RULE_HELP)
         self._derive.clicked.connect(lambda _c=False: self._derive_oracle_rule())
+        self._status_btn = QPushButton(S.SCANNER_STATUS)
+        self._status_btn.setObjectName("backtestStatus")
+        self._status_btn.setToolTip(S.SCANNER_STATUS_TIP)
+        self._calendar = QPushButton(S.COIN_EVENTS_CALENDAR)
+        self._calendar.setObjectName("backtestCalendar")
+        self._calendar.setToolTip(S.COIN_EVENTS_CALENDAR_TIP)
+        self._calendar.setAccessibleName(S.COIN_EVENTS_CALENDAR)
+        self._calendar.setVisible(False)
+        self._calendar.clicked.connect(lambda _c=False: self._open_coin_events())
+        self._pair.editTextChanged.connect(lambda _t="": self._refresh_calendar_btn())
         self._heatmap.toggled.connect(lambda _c: self._on_view_toggle())
         self._perfect.toggled.connect(lambda _c: self._on_view_toggle())
         self._status = QLabel()
         self._status.setObjectName("hint")
         self._status.setWordWrap(True)
+        self._status.hide()
         self._problem = problem_label()
-        self._bar = QProgressBar()
-        self._bar.setRange(0, 100)
-        self._bar.setValue(0)
-        self._bar.setTextVisible(True)
         self._empty = EmptyState(S.BACKTEST_EMPTY_TITLE, S.BACKTEST_EMPTY_BODY)
         self._market_ctx = MarketContextPane(
             expanded=not prefs.market_context_collapsed,
@@ -172,21 +179,21 @@ class BacktestPage(QWidget):
         for widget in (
             pair_label,
             self._pair,
-            self._settings,
             self._run,
             self._cancel,
+            self._settings,
+            self._refresh_prices,
             self._share,
-            self._heatmap,
-            self._perfect,
+            self._calendar,
             self._derive,
+            self._status_btn,
         ):
             toolbar.addWidget(widget)
+        self._refresh_calendar_btn()
 
         layout = QVBoxLayout(self)
         layout.addLayout(toolbar)
-        layout.addWidget(self._status)
         layout.addWidget(self._problem)
-        layout.addWidget(self._bar)
         layout.addWidget(self._market_ctx)
         layout.addWidget(self._empty)
         layout.addWidget(self._strategy_caption)
@@ -196,10 +203,45 @@ class BacktestPage(QWidget):
         self._fill.update(False)
 
         self._run.clicked.connect(lambda _c=False: self._start())
+        self._refresh_prices.clicked.connect(lambda _c=False: self._refresh_prices_clicked())
         self._cancel.clicked.connect(lambda _c=False: self._cancel_run())
         self._share.clicked.connect(lambda _c=False: self._share_png())
+        self._status_btn.clicked.connect(lambda _c=False: self._show_scan_status())
         if not self._restore_last_backtest():
             self._show_empty()
+
+    def _show_scan_status(self) -> None:
+        from trendalgo.device.views.scanner_filters import show_scan_status_dialog
+
+        show_scan_status_dialog(
+            self._status.text().strip() or S.SCANNER_STATUS_EMPTY,
+            parent=self.window(),
+        )
+
+    def _refresh_calendar_btn(self) -> None:
+        from trendalgo.device.calendar.coin_window import has_coin_events
+
+        pair = self._pair.text().strip()
+        show = bool(pair) and "/" in pair and has_coin_events(self._root, pair)
+        self._calendar.setVisible(show)
+
+    def _open_coin_events(self) -> None:
+        from trendalgo.device.views.coin_event_timeline_dialog import open_coin_event_timeline
+
+        pair = self._pair.text().strip()
+        if not pair or "/" not in pair:
+            return
+        coin = {"symbol": pair.split("/", 1)[0], "pair": pair}
+        open_coin_event_timeline(self._root, coin, parent=self.window())
+
+    def _refresh_prices_clicked(self) -> None:
+        from trendalgo.device.price_cache_clear import clear_price_caches
+
+        cleared = clear_price_caches(self._root)
+        note = ", ".join(cleared) if cleared else "none"
+        self._status.setText(f"{S.BACKTEST_REFRESH_PRICES}: cleared={note}")
+        if self._pending is None and "/" in self._pair.text().strip():
+            self._start()
 
     def _restore_last_backtest(self) -> bool:
         from trendalgo.device.last_pair_backtest import load_last_pair_backtest
@@ -215,7 +257,6 @@ class BacktestPage(QWidget):
             problem=self._problem,
             empty=self._empty,
             status=self._status,
-            bar=self._bar,
             persist=False,
             market_context=market_context,
         )
@@ -223,16 +264,35 @@ class BacktestPage(QWidget):
     def _open_scan_settings(self) -> None:
         from trendalgo.device.views.scan_bt_settings_dialog import open_scan_bt_settings
 
-        if open_scan_bt_settings(self._root, show_signal_set=False, n_coins=1, parent=self):
+        results: dict[str, object] = {}
+        try:
+            accepted = open_scan_bt_settings(
+                self._root,
+                n_coins=1,
+                parent=self.window(),
+                results_heatmap=bool(self._heatmap.isChecked()),
+                results_perfect=bool(self._perfect.isChecked()),
+                results_out=results,
+            )
+        except Exception as exc:
+            show_problem(self._problem, f"{S.SCAN_BT_SETTINGS}: {exc}")
+            return
+        if accepted:
+            if "heatmap_enabled" in results:
+                self._heatmap.setChecked(bool(results["heatmap_enabled"]))
+            if "perfect_only" in results:
+                self._perfect.setChecked(bool(results["perfect_only"]))
+            self._on_view_toggle()
             self._status.setText(S.SCAN_BT_SETTINGS_SAVED)
 
     def _start(self) -> None:
-        if self._pending is not None:
+        if self._pending is not None or self._scan_dialog is not None:
             return
         pair = self._pair.text().strip().upper()
         if "/" not in pair or len(pair.split("/", 1)[0].strip()) < 1:
             show_problem(self._problem, S.BACKTEST_PAIR_REQUIRED)
             return
+        from trendalgo.backtest.heartbeat_tf import needs_1m_base
         from trendalgo.device.scan_bt_prefs import (
             enabled_strategies,
             load_scan_bt_prefs,
@@ -240,17 +300,17 @@ class BacktestPage(QWidget):
         )
 
         prefs = load_scan_bt_prefs(self._root)
-        if not selected_timeframes(prefs):
+        timeframes = selected_timeframes(prefs)
+        strategies = enabled_strategies(prefs.strategy_denylist)
+        if not timeframes:
             show_problem(self._problem, S.SCAN_BT_NO_TFS)
             return
-        if not enabled_strategies(prefs.strategy_denylist):
+        if not strategies:
             show_problem(self._problem, S.SCAN_BT_NO_STRATEGIES)
             return
         clear_problem(self._problem)
         clear_progress(self._root)
         clear_partial_rows(self._root)
-        self._last_log = ""
-        self._last_partial_n = -1
         self._rows = []
         self._all_rows = []
         self._market_context = None
@@ -258,29 +318,30 @@ class BacktestPage(QWidget):
         self._filters.prepare_for_refill()
         self._table.setRowCount(0)
         self._show_running()
+        had_subhour = needs_1m_base(timeframes)
+        dialog = BacktestScanDialog(
+            self.window(),
+            pair=pair,
+            n_strategies=len(strategies),
+            n_timeframes=len(timeframes),
+            had_subhour=had_subhour,
+            on_cancel=self._cancel_run,
+            root=self._root,
+        )
+        self._scan_dialog = dialog
         self._pending = self._pool.submit(pair_strategy_scan_job, self._root, pair)
-        self._status.setText(S.BACKTEST_RUNNING)
         self._timer.start()
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
 
     def _poll(self) -> None:
         raw = read_progress(self._root)
-        line = progress_line(raw)
-        if line and line != self._last_log:
-            self._last_log = line
-            self._status.setText(line)
         job = self._pending
-        if raw:
-            done = int(raw.get("done") or 0)
-            total = max(1, int(raw.get("total") or 1))
-            pct = int(100 * done / total)
-            # Never paint 100% until the worker finishes and results are sorted.
-            if job is not None and not job.ready():
-                pct = min(99, pct)
-            self._bar.setValue(min(100, pct))
-        partial = read_partial_rows(self._root)
-        if partial is not None and len(partial) != self._last_partial_n:
-            self._last_partial_n = len(partial)
-            apply_partial_rows(self, partial)
+        ready = bool(job is not None and job.ready())
+        if self._scan_dialog is not None:
+            self._scan_dialog.update_progress(raw, worker_ready=ready)
+        # Defer table fill until the worker finishes (progress dialog is non-modal).
         if job is None:
             self._timer.stop()
             return
@@ -288,6 +349,7 @@ class BacktestPage(QWidget):
             return
         self._timer.stop()
         self._pending = None
+        self._close_scan_dialog()
         self._set_running(False)
         clear_partial_rows(self._root)
         try:
@@ -304,22 +366,43 @@ class BacktestPage(QWidget):
             )
             return
         rows, market_context = _unpack_scan_payload(payload)
+        from trendalgo.device.views.backtest_done_notify import unpack_job_meta
+
+        meta = unpack_job_meta(payload)
         apply_scan_result(
             self,
             rows,
             problem=self._problem,
             empty=self._empty,
             status=self._status,
-            bar=self._bar,
             market_context=market_context,
+            elapsed_s=meta.get("elapsed_s"),
+            data_source=meta.get("data_source"),
+            cache_age_s=meta.get("cache_age_s"),
+            notify=True,
         )
 
     def _cancel_run(self) -> None:
         self._timer.stop()
         self._pending = None
         self._pool.cancel()
+        self._close_scan_dialog()
         self._set_running(False)
         self._status.setText(S.BACKTEST_CANCELLED)
+
+    def _close_scan_dialog(self) -> None:
+        dialog = self._scan_dialog
+        self._scan_dialog = None
+        apply_main_blur(self.window(), enabled=False)
+        if dialog is None:
+            return
+        try:
+            dialog.finish_and_close()
+        except Exception:
+            try:
+                dialog.reject_cancel_close()
+            except Exception:
+                pass
 
     def _share_png(self) -> None:
         rows = self._rows if self._table.isVisible() else []
@@ -332,6 +415,7 @@ class BacktestPage(QWidget):
             heatmap=bool(self._heatmap.isChecked()),
             sort_key=self._sort_key,
             sort_dir=self._sort_dir,
+            market_context=self._market_context,
         )
         if note:
             self._create_note.setText(note)
@@ -349,7 +433,6 @@ class BacktestPage(QWidget):
         self._refresh_rows()
 
     def _on_filters_changed(self) -> None:
-        # Restart debounce so multi-digit entry is not applied mid-typing.
         self._filter_timer.start()
 
     def _apply_debounced_filters(self) -> None:
@@ -432,14 +515,12 @@ class BacktestPage(QWidget):
         return S.SECRET_SAUCE_CREATE_BOT
 
     def _derive_oracle_rule(self) -> None:
-        from trendalgo.device.sauce_names import SAUCE_LAB, is_sauce_lab
+        from trendalgo.device.sauce_names import create_bot_sauce_preference
         from trendalgo.device.scanner_alerts_store import append_log_alert
         from trendalgo.device.views.secret_sauce_study import show_secret_sauce_study
 
         rows = self._all_rows or self._rows
-        sauce = next((r for r in rows if is_sauce_lab(r.get("indicator"))), None)
-        if sauce is None:
-            sauce = next((r for r in rows if str(r.get("indicator") or "") == SAUCE_LAB), None)
+        sauce = create_bot_sauce_preference(list(rows))
         if sauce is not None and isinstance(sauce.get("heartbeat_dossier"), dict):
             show_secret_sauce_study(
                 self,
@@ -453,12 +534,11 @@ class BacktestPage(QWidget):
             S.BACKTEST_DERIVE_RULE,
             S.SECRET_SAUCE_STUDY_EMPTY,
         )
-        if sauce is None:
-            append_log_alert(
-                self._root,
-                kind="backtest_log",
-                reason="Secret Sauce not in results — re-run All-TA to mine per-coin heartbeat.",
-            )
+        append_log_alert(
+            self._root,
+            kind="backtest_log",
+            reason="Secret Sauce not in results — re-run All-TA to mine per-coin heartbeat.",
+        )
 
     def _fill_table(self) -> None:
         fill_or_empty(self)
@@ -474,10 +554,11 @@ class BacktestPage(QWidget):
         self._table.hide()
         self._fill.update(False)
         self._set_running(True)
-        self._bar.setValue(0)
 
     def _set_running(self, running: bool) -> None:
         self._run.setEnabled(not running)
-        self._cancel.setEnabled(running)
+        self._refresh_prices.setEnabled(not running)
+        self._cancel.setEnabled(False)
+        self._cancel.setVisible(False)
         self._pair.setEnabled(not running)
         self._share.setEnabled(not running)

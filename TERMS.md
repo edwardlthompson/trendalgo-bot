@@ -1,48 +1,42 @@
-# TrendAlgo Bot — Terms of Use (Draft)
+# TrendAlgo Bot — Terms of Use
 
-> **Attorney review required before public beta (H-023).** Not legal advice.
+> **Not legal advice.** Software-tool terms for owner-operated installs and public source-available distribution (Tier A, ADR-0020).
+> Non-owner performance-fee enrollment is **not offered** until Tier B (H-006b). Founder residual-risk posture: `docs/FOUNDER_LEGAL_POSTURE.md`.
 
 ## 1. Software only
 
-TrendAlgo Bot is self-hosted **software**. The operator is a software vendor, not a broker, exchange, investment adviser, or custodian.
+TrendAlgo Bot is self-hosted **software**. The operator is a software vendor, not a broker, exchange, investment adviser, money transmitter, or custodian.
 
 ## 2. Not investment advice
 
-Signals, backtests, and AI commentary are informational. You are solely responsible for trading decisions.
+Signals, backtests, scanners, and AI commentary are informational tools. You are solely responsible for trading decisions and for complying with laws that apply to you.
 
-## 3. Performance license
+## 3. License (ELv2)
 
-- Optional enrollment after free tier / dry-run.
-- Default rate: **5%** of bot-attributed **net-positive closed trades** (H-029).
-- **Net-loss trades = $0 license fee** for that trade.
-- License amounts are **calculated** by the software; you **initiate payment externally**.
+The product is licensed under the **Elastic License 2.0** (see root `LICENSE` and `docs/LICENSE_MODEL.md`). You may run it for your own trading. ELv2 limitations apply (no providing the software to third parties as a hosted/managed service with substantial feature access; no circumventing license/billing protections; no removing notices).
 
-## 4. No auto-collection
+## 4. Performance license — Tier B (not offered yet)
 
-TrendAlgo never holds withdrawal keys, auto-withdraws, or routes subaccount fees. Settlement is user-initiated (copy address / QR). Lightning invoicing is not available.
+Optional performance-contingent software license terms (monthly net / high-water mark, user-initiated settlement, entry-only enforcement) are described in `docs/MONETIZATION.md` and ADR-0017 for a **future** enrollment path. **They are not offered to non-owners in this TERMS version.** Official builds must not enroll or charge others until H-006b is cleared.
 
-## 5. Grace period
+## 5. No auto-collection
 
-Unpaid statements: 7-day grace with reminders. Live trading may be suspended after grace until user confirms external payment.
+TrendAlgo never holds withdrawal keys, auto-withdraws, or routes subaccount fees. Any future settlement is user-initiated (copy address / QR) only. Stripe/card processing for license fees is out of scope (ADR-0008).
 
-## 6. Bot-attributed trades
+## 6. Dry-run default
 
-Fees apply to trades recorded in the bot journal with `signal_source=bot`. Manual exchange trades outside the bot are excluded unless you import them.
+Live trading stays off until you explicitly pass go-live gates. Dry-run / paper paths are never blocked by license state.
 
-## 7. AGPL & official build
+## 7. Limitation of liability
 
-Source is AGPL-3.0. Official builds may include additional AI strategy value (see `LICENSE_MODEL.md`).
+Software is provided “as is” without warranties. See `docs/LEGAL.md`.
 
-## 8. Limitation of liability
+## 8. Governing law
 
-Software provided "as is" without warranties. See `docs/LEGAL.md`.
+Puerto Rico / United States — founder entity details are the operator’s responsibility. This section is a venue placeholder, not a counsel opinion.
 
-## 9. Governing law
+## 9. Consent log
 
-Puerto Rico / United States — attorney to finalize (H-006).
+Acceptance records: TERMS version + timestamp + install UUID only (no IP, no email) per data-minimization policy.
 
-## Consent log
-
-Acceptance records: TERMS version + timestamp + install UUID only (no IP, no email) per L4.
-
-Version: `2026-06-draft-1`
+Version: `2026-11-15-tier-a-1`
