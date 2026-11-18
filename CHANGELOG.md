@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.1](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.19.0...v1.19.1) (2026-11-18)
+
+
+### Changed
+
+* **release:** sync uv.lock to 1.19.0 after Release Please ([33472cd](https://github.com/edwardlthompson/trendalgo-bot/commit/33472cd02b59d925699d31e3e1e5a9a5cd3b7671))
+
+
+### Documentation
+
+* note v1.19.0 Windows ship in memory and decision log ([9bd0f67](https://github.com/edwardlthompson/trendalgo-bot/commit/9bd0f67708158bc121a866c0b31846860d3b9af2))
+
 ## [1.19.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.18.0...v1.19.0) (2026-11-18)
 
 
