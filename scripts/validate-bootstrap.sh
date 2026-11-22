@@ -20,7 +20,7 @@ REQUIRED=(
   CODE_OF_CONDUCT.md
   BUILD_PLAN.md
   AGENTS.md
-  AGENT_MEMORY.md
+  .agent/AGENT_MEMORY.md
   HUMAN_BACKLOG.md
   docs/START_HERE.md
   docs/CURSOR_MODES.md
