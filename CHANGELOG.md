@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.3](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.19.2...v1.19.3) (2026-11-22)
+
+
+### Fixed
+
+* **ci:** align bootstrap checks with .agent/AGENT_MEMORY.md and .agent/DECISION_LOG.md ([#88](https://github.com/edwardlthompson/trendalgo-bot/issues/88)) ([137e44a](https://github.com/edwardlthompson/trendalgo-bot/commit/137e44af5d353c41d5722dc5be8980694330bc33))
+* **ci:** sync uv.lock with pyproject.toml ([#89](https://github.com/edwardlthompson/trendalgo-bot/issues/89)) ([1d3ad56](https://github.com/edwardlthompson/trendalgo-bot/commit/1d3ad56aa2f041c6b06d7b8ebe269aef928ef1b4))
+
+
+### Changed
+
+* **argus:** move agent memory/log files into .agent/ ([#86](https://github.com/edwardlthompson/trendalgo-bot/issues/86)) ([9bc5f42](https://github.com/edwardlthompson/trendalgo-bot/commit/9bc5f424535f65da0d1027d8af974946dc2a0812))
+
 ## [1.19.2](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.19.1...v1.19.2) (2026-11-19)
 
 
