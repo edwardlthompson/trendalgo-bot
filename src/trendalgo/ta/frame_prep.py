@@ -23,7 +23,7 @@ def _epoch_bounds(df: pd.DataFrame) -> tuple[int, int]:
     idx = df.index
     if isinstance(idx, pd.DatetimeIndex) and len(idx) > 0:
         try:
-            return int(idx[0].timestamp()), int(idx[-1].timestamp())
+            return int(idx.asi8[0] // 1_000_000_000), int(idx.asi8[-1] // 1_000_000_000)
         except (TypeError, ValueError, OSError):
             pass
     return 0, len(df)
