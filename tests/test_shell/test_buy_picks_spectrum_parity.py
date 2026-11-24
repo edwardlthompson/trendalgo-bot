@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
-from trendalgo.device.buy_picks import rank_buy_picks
-from trendalgo.device.views.market_context_gfx import BUY_THRESHOLD, score_to_frac
+import pytest
+
+pytest.importorskip("PySide6")
+
+from trendalgo.device.buy_picks import rank_buy_picks  # noqa: E402
+from trendalgo.device.views.market_context_gfx import BUY_THRESHOLD, score_to_frac  # noqa: E402
 
 
 def _spectrum_tick_x(width: float, score: float, *, margin: float = 2.0) -> float:

@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from trendalgo.ta import fast_pta_indicators as fpi
+from trendalgo.ta.pandas_ta_catalog import pandas_ta_available
 from trendalgo.ta.signals import resolve_preset, signals_for_preset
 
 
@@ -21,6 +22,7 @@ def _sample_df(n: int = 240) -> pd.DataFrame:
     return pd.DataFrame({"open": o, "high": h, "low": lo, "close": c, "volume": v}, index=idx)
 
 
+@pytest.mark.skipif(not pandas_ta_available(), reason="pandas-ta-classic not installed")
 @pytest.mark.parametrize("sid", ["PSAR", "HILO", "HWC", "HWMA", "QQE", "LRSI", "FISHER", "JMA"])
 def test_fast_pta_matches_pandas_ta_signals(monkeypatch: pytest.MonkeyPatch, sid: str) -> None:
     df = _sample_df()

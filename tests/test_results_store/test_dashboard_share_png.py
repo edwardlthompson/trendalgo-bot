@@ -5,7 +5,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import pytest
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+pytest.importorskip("PySide6")
 
 from trendalgo.results_store.desk_share import share_dashboard_png  # noqa: E402
 
