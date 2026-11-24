@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.4](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.19.3...v1.19.4) (2026-11-24)
+
+
+### Fixed
+
+* **ci:** allow text fallback in test_polish3_metrics_and_alerts when matplotlib absent ([01f541e](https://github.com/edwardlthompson/trendalgo-bot/commit/01f541e08ff1ca7d612cc7b098efa83483391a97))
+* **ci:** remove disallowed hashFiles from avalonia-shell job if ([9fbcaf4](https://github.com/edwardlthompson/trendalgo-bot/commit/9fbcaf479abaf8ad0650f016d5bc0b7049ff96cc))
+* **ci:** skip PySide6 and pandas-ta-classic tests when desktop extras absent ([e96e1c5](https://github.com/edwardlthompson/trendalgo-bot/commit/e96e1c552085429fb1506e6029d50ce5ed307186))
+* **ci:** type numba decorators for headless CI and support .agent/AGENT_MEMORY.md ([0b5e25a](https://github.com/edwardlthompson/trendalgo-bot/commit/0b5e25ace14f8534e8f5e8653a69f98543ba6229))
+* **ci:** use DatetimeIndex.asi8 for pyright compatibility in frame_prep ([4ff51fe](https://github.com/edwardlthompson/trendalgo-bot/commit/4ff51fe29b09198847d6b6d5b85f38daea3bbb63))
+* isolate pair backtest, persist per-lane benchmark ETAs, and harden TradFi scan ([5bfe340](https://github.com/edwardlthompson/trendalgo-bot/commit/5bfe340f31e41d34cb3a4f71467a1803553ed60f))
+
+
+### Changed
+
+* sync uv.lock and template version to 1.19.3 ([09bd366](https://github.com/edwardlthompson/trendalgo-bot/commit/09bd36669dc3409b48db12e32b710e078118aa52))
+
 ## [1.19.3](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.19.2...v1.19.3) (2026-11-22)
 
 
