@@ -130,7 +130,6 @@ jobs:
   avalonia-shell:
     name: Avalonia Shell (.NET 8)
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj') != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v5
