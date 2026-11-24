@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -19,8 +20,9 @@ def _ensure_batch_kernels() -> tuple[Any, Any]:
     from numba import njit  # noqa: PLC0415
 
     sim_v2 = ensure_sim_v2_kernel()
+    njit_dec: Callable[[Any], Any] = njit(cache=True, nogil=True)
 
-    @njit(cache=True, nogil=True)
+    @njit_dec
     def _grid_v2(
         c: np.ndarray,
         o: np.ndarray,
@@ -48,7 +50,7 @@ def _ensure_batch_kernels() -> tuple[Any, Any]:
             out[idx, 5] = float(op)
         return out
 
-    @njit(cache=True, nogil=True)
+    @njit_dec
     def _rsx_best(
         c: np.ndarray,
         o: np.ndarray,

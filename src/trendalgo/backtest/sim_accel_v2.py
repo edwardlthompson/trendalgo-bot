@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -15,7 +16,9 @@ def ensure_sim_v2_kernel() -> Any:
         return _sim_v2_fn
     from numba import njit  # noqa: PLC0415
 
-    @njit(cache=True, nogil=True)
+    njit_dec: Callable[[Any], Any] = njit(cache=True, nogil=True)
+
+    @njit_dec
     def _sim_v2(
         c: np.ndarray,
         o: np.ndarray,

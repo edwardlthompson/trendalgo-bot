@@ -48,18 +48,21 @@ text = re.sub(
 readme.write_text(text, encoding="utf-8")
 
 mem = Path("AGENT_MEMORY.md")
-mt = mem.read_text(encoding="utf-8")
-mt = re.sub(
-    r"(\| Multi-stack template[^\|]+\| )[\d.]+( \| Template maintainer)",
-    lambda m: f"{m.group(1)}{version}{m.group(2)}",
-    mt,
-)
-mt = re.sub(
-    r"(\*\*Template version:\*\* `)[\d.]+(`)",
-    lambda m: f"{m.group(1)}{version}{m.group(2)}",
-    mt,
-)
-mem.write_text(mt, encoding="utf-8")
+if not mem.is_file():
+    mem = Path(".agent/AGENT_MEMORY.md")
+if mem.is_file():
+    mt = mem.read_text(encoding="utf-8")
+    mt = re.sub(
+        r"(\| Multi-stack template[^\|]+\| )[\d.]+( \| Template maintainer)",
+        lambda m: f"{m.group(1)}{version}{m.group(2)}",
+        mt,
+    )
+    mt = re.sub(
+        r"(\*\*Template version:\*\* `)[\d.]+(`)",
+        lambda m: f"{m.group(1)}{version}{m.group(2)}",
+        mt,
+    )
+    mem.write_text(mt, encoding="utf-8")
 
 plugin = Path(".cursor-plugin/plugin.json")
 if plugin.is_file():
