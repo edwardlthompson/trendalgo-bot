@@ -10,6 +10,29 @@ public static class BoardColumnFilterStore
     public static string FiltersPath =>
         Path.Combine(ProfilePaths.DeviceRoot, "scanner_filters.json");
 
+    public static string FiltersPathForLane(string? lane, bool watchlist = false)
+    {
+        var key = (lane ?? "crypto").Trim().ToLowerInvariant();
+        if (watchlist)
+        {
+            return key is "" or "crypto"
+                ? Path.Combine(ProfilePaths.DeviceRoot, "shell_watchlist_filters.json")
+                : Path.Combine(ProfilePaths.DeviceRoot, $"shell_watchlist_filters_{key}.json");
+        }
+        return key is "" or "crypto"
+            ? FiltersPath
+            : Path.Combine(ProfilePaths.DeviceRoot, $"scanner_filters_{key}.json");
+    }
+
+    public static void LoadForLane(BoardColumnFilterState state, string? lane, bool watchlist = false)
+    {
+        state.Reset();
+        Load(state, FiltersPathForLane(lane, watchlist));
+    }
+
+    public static void SaveForLane(BoardColumnFilterState state, string? lane, bool watchlist = false) =>
+        Save(state, FiltersPathForLane(lane, watchlist));
+
     public static void Load(BoardColumnFilterState state, string? path = null)
     {
         var file = path ?? FiltersPath;

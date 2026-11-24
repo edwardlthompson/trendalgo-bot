@@ -162,27 +162,6 @@
                      TextWrapping="Wrap"
                      Opacity="0.85"
                      Margin="0,0,0,4" />
-          <WrapPanel IsVisible="{Binding ShowDashboard}" Margin="0,4,0,4">
-            <Button Content="Sync All" Command="{Binding DashboardSyncCommand}" Margin="0,0,6,6" />
-            <Button Content="Customize" Command="{Binding DashboardCustomizeCommand}" Margin="0,0,6,6" />
-            <Button Content="Export TSV/CSV" Command="{Binding DashboardExportCommand}" Margin="0,0,6,6" />
-            <Button Content="Share PNG" Command="{Binding DashboardSharePngCommand}" Margin="0,0,6,6" />
-            <Button Content="Reload catalog" Command="{Binding DashboardReloadCommand}" Margin="0,0,6,6" />
-            <Button Content="Add page" Command="{Binding DashboardAddPageCommand}" Margin="0,0,6,6" />
-            <Button Content="Calendar setup" Command="{Binding DashboardOpenCalendarCommand}" Margin="0,0,6,6" />
-            <Button Content="Events" Command="{Binding DashboardOpenEventsCommand}" Margin="0,0,6,6" />
-            <TextBlock Text="{Binding DashboardPageTitle, StringFormat=Page: {0}}" VerticalAlignment="Center" Margin="0,0,8,6" Opacity="0.8" />
-            <TextBlock Text="Demo" IsVisible="{Binding DashboardDemo}" VerticalAlignment="Center" Margin="0,0,8,6" FontWeight="SemiBold" />
-          </WrapPanel>
-          <WrapPanel IsVisible="{Binding ShowDashboard}" Margin="0,0,0,4">
-            <Button Content="1D" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1D" Margin="0,0,4,4" />
-            <Button Content="1W" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1W" Margin="0,0,4,4" />
-            <Button Content="1M" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1M" Margin="0,0,4,4" />
-            <Button Content="3M" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="3M" Margin="0,0,4,4" />
-            <Button Content="YTD" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="YTD" Margin="0,0,4,4" />
-            <Button Content="1Y" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1Y" Margin="0,0,4,4" />
-            <TextBlock Text="{Binding DashboardRange, StringFormat=Range: {0}}" VerticalAlignment="Center" Opacity="0.75" Margin="6,0,0,4" />
-          </WrapPanel>
           <WrapPanel IsVisible="{Binding ShowGlossary}" Margin="0,4,0,4">
             <TextBox Width="200" Watermark="Search glossary" Text="{Binding GlossaryQuery}" Margin="0,0,6,6" />
             <Button Content="Search" Command="{Binding GlossarySearchCommand}" Margin="0,0,6,6" />
@@ -216,11 +195,20 @@
                        Text="{Binding LastScanText}"
                        FontWeight="SemiBold"
                        Opacity="0.88" />
-            <TextBlock Text="{Binding RowCount, StringFormat=Board rows: {0}}"
-                       Opacity="0.8" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="{Binding BoardRowsSummaryText}"
+                         VerticalAlignment="Center"
+                         Opacity="0.85" />
+              <Button Content="Reset filters"
+                      Command="{Binding ResetBoardFiltersCommand}"
+                      IsVisible="{Binding HasActiveBoardFilters}"
+                      Padding="8,2"
+                      FontSize="11.5" />
+            </StackPanel>
           </DockPanel>
         </StackPanel>
 
+        <Grid>
         <DockPanel IsVisible="{Binding ShowBoard}">
           <!-- Market Context (Buy Picks) above the board — PySide BuyPicksPane order -->
           <Expander DockPanel.Dock="Top"
@@ -239,7 +227,9 @@
               </StackPanel>
             </Expander.Header>
             <DataGrid ItemsSource="{Binding BuyPickRows}"
+                      MinHeight="96"
                       MaxHeight="220"
+                      HorizontalAlignment="Stretch"
                       IsReadOnly="True"
                       CanUserSortColumns="True"
                       CanUserResizeColumns="False"
@@ -300,9 +290,13 @@
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <Panel Width="28" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding Logo}" FontSize="10"
-                                 IsVisible="{Binding !HasLogoImage}"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <Border Background="#1E293B" CornerRadius="5" Padding="2"
+                              IsVisible="{Binding !HasLogoImage}"
+                              HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <TextBlock Text="{Binding Logo}" FontSize="9.5" FontWeight="SemiBold"
+                                   Foreground="#E2E8F0"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Border>
                       <Image Source="{Binding LogoImage}" Width="28" Height="28" Stretch="Uniform"
                              IsVisible="{Binding HasLogoImage}" />
                     </Panel>
@@ -473,37 +467,7 @@
           </DataGrid.Columns>
         </DataGrid>
 
-        <ScrollViewer IsVisible="{Binding ShowDashboard}" HorizontalScrollBarVisibility="Auto">
-          <ItemsControl ItemsSource="{Binding DashboardModules}"
-                        Width="{Binding DashboardCanvasWidth}"
-                        MinHeight="{Binding DashboardCanvasHeight}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <Canvas />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.Styles>
-              <Style Selector="ItemsControl > ContentPresenter">
-                <Setter Property="Canvas.Left" Value="{Binding PixelLeft}" />
-                <Setter Property="Canvas.Top" Value="{Binding PixelTop}" />
-                <Setter Property="Width" Value="{Binding PixelWidth}" />
-                <Setter Property="Height" Value="{Binding PixelHeight}" />
-              </Style>
-            </ItemsControl.Styles>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Background="#1A1A1A" CornerRadius="6" Padding="10" BorderBrush="#333" BorderThickness="1">
-                  <StackPanel Spacing="4">
-                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding Value}" FontSize="18" />
-                    <TextBlock Text="{Binding Detail}" Opacity="0.75" TextWrapping="Wrap" FontSize="12" />
-                    <TextBlock Text="{Binding Category}" Opacity="0.45" FontSize="11" />
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
+        <controls:DashboardPanel IsVisible="{Binding ShowDashboard}" />
 
         <ScrollViewer IsVisible="{Binding ShowBots}">
           <ItemsControl ItemsSource="{Binding BotRows}">
@@ -723,8 +687,9 @@
             <TextBlock Text="{Binding BillingTitle}" FontWeight="SemiBold" Margin="0,6,0,0" />
             <TextBlock Text="{Binding BillingBody}" TextWrapping="Wrap" Opacity="0.85" />
           </StackPanel>
-          <StackPanel IsVisible="{Binding ShowKeysEditor}" Spacing="6" Margin="0,8,0,0">
-            <TextBlock Text="API Keys &amp; Wizards (Windows CredMan)" FontWeight="SemiBold" FontSize="15" />
+          <StackPanel IsVisible="{Binding ShowKeysEditor}" Spacing="8" Margin="0,8,0,0">
+            <controls:ExchangeKeysPanel />
+            <TextBlock Text="Wizards (Telegram, Alpaca, Calendar, Setup)" FontWeight="SemiBold" FontSize="14" Margin="0,6,0,0" />
             <WrapPanel>
               <Button Content="Open setup wizard" Command="{Binding OpenWizardCommand}" CommandParameter="setup" Margin="0,0,6,6" />
               <Button Content="Telegram wizard" Command="{Binding OpenWizardCommand}" CommandParameter="telegram" Margin="0,0,6,6" />
@@ -841,21 +806,24 @@
             <TextBlock Text="{Binding ExportHubFolderHelp}" TextWrapping="Wrap" Opacity="0.8" />
             <TextBlock Text="Destination folder" Opacity="0.8" />
             <TextBox Text="{Binding ExportHubFolder}" Watermark="exports folder" />
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Content="{Binding ExportJournalLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="journal" />
-              <Button Content="{Binding ExportPlanLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="plan" />
-              <Button Content="{Binding ExportScanLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="scan" />
-            </StackPanel>
+            <WrapPanel>
+              <Button Content="{Binding ExportJournalLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="journal" Margin="0,0,8,6" />
+              <Button Content="{Binding ExportPlanLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="plan" Margin="0,0,8,6" />
+              <Button Content="{Binding ExportScanLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="scan" Margin="0,0,8,6" />
+              <Button Content="Portfolio Report (HTML/PDF)" Command="{Binding DashboardExportHtmlReportCommand}" Margin="0,0,8,6" />
+              <Button Content="Portfolio Holdings (CSV)" Command="{Binding DashboardExportCsvCommand}" Margin="0,0,8,6" />
+            </WrapPanel>
             <TextBlock Text="{Binding ExportHubStatus}" TextWrapping="Wrap" Opacity="0.85" />
           </StackPanel>
         </StackPanel>
         </ScrollViewer>
 
-        <Border IsVisible="{Binding !ShowWorkbook}" Padding="16" Margin="0,8,0,0">
+        <Border IsVisible="{Binding !ShowWorkbook}" IsHitTestVisible="False" Padding="16" Margin="0,8,0,0">
           <TextBlock Text="{Binding PageBody}" TextWrapping="Wrap"
                      IsVisible="{Binding !ShowExportHub}"
                      Opacity="0.85" />
         </Border>
+        </Grid>
       </DockPanel>
     </Grid>
   </DockPanel>

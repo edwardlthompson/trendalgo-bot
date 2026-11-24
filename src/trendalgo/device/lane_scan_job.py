@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import math
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
+import pandas as pd
+
 from trendalgo.brokers.forex_universe import load_forex_universe
-from trendalgo.brokers.tradfi_universe import load_tradfi_universe
+from trendalgo.brokers.tradfi_universe import load_seed_universe, load_tradfi_universe
 from trendalgo.device.alpaca_vault import resolve_alpaca_credentials
 from trendalgo.device.db import enable_wal
 from trendalgo.device.lane_chart_enrich import enrich_lane_coins_1h
@@ -115,37 +119,64 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
         )
         timings["bars_s"] = round(time.perf_counter() - t_bars, 3)
 
+        full_market_tradfi = lane == "tradfi" and len(symbols) > 500
+        seed_set = set(load_seed_universe()) if full_market_tradfi else set()
+        eff_min_adv = (
+            max(filters.min_adv_usd, 1_000_000.0) if full_market_tradfi else filters.min_adv_usd
+        )
+        eff_min_price = max(filters.min_price, 2.0) if full_market_tradfi else filters.min_price
+
         scored: list[tuple[str, list[OhlcvPoint], float, float, float]] = []
+        seed_fallback: list[tuple[str, list[OhlcvPoint], float, float, float]] = []
         skipped = 0
         for pair, points in bars_by_pair.items():
             if len(points) < 2:
                 skipped += 1
                 continue
-            is_watched = pair.upper() in wl_pairs or pair.split("/")[0].upper() in wl_syms
+            sym_u = pair.split("/")[0].strip().upper()
+            is_watched = pair.upper() in wl_pairs or sym_u in wl_syms
             adv = avg_dollar_volume(points) if lane == "tradfi" else 0.0
             price = last_close(points)
             gain = _gain_fraction(points)
             if lane == "tradfi" and not is_watched:
-                if filters.min_adv_usd > 0 and adv < filters.min_adv_usd:
+                if full_market_tradfi and (
+                    len(points) < 15 or _is_reverse_split_or_junk(points, adv)
+                ):
                     skipped += 1
                     continue
-                if filters.min_price > 0 and price < filters.min_price:
+                if eff_min_adv > 0 and adv < eff_min_adv:
+                    skipped += 1
+                    continue
+                if eff_min_price > 0 and price < eff_min_price:
                     skipped += 1
                     continue
                 move = abs_gain_pct(points)
-                if filters.min_abs_gain_pct > 0 and move < filters.min_abs_gain_pct:
-                    skipped += 1
-                    continue
                 rng = realized_range_pct(points)
-                if filters.min_range_pct > 0 and rng < filters.min_range_pct:
-                    skipped += 1
+                liq_mult = math.log10(max(adv, 10_000.0)) if full_market_tradfi else 1.0
+                sort_key = abs(gain) * liq_mult
+                if (filters.min_abs_gain_pct > 0 and move < filters.min_abs_gain_pct) or (
+                    filters.min_range_pct > 0 and rng < filters.min_range_pct
+                ):
+                    if full_market_tradfi and sym_u in seed_set:
+                        seed_fallback.append((pair, points, gain, adv, sort_key))
+                    else:
+                        skipped += 1
                     continue
-                sort_key = abs(gain)
             else:
                 sort_key = abs(gain)
             scored.append((pair, points, gain, adv, sort_key))
 
         scored.sort(key=lambda t: t[4], reverse=True)
+        if (
+            full_market_tradfi
+            and filters.top_n > 0
+            and len(scored) < filters.top_n
+            and seed_fallback
+        ):
+            seed_fallback.sort(key=lambda t: t[4], reverse=True)
+            scored.extend(seed_fallback[: max(0, filters.top_n - len(scored))])
+        elif full_market_tradfi:
+            skipped += len(seed_fallback)
         if lane == "tradfi" and filters.top_n > 0:
             kept = scored[: filters.top_n]
             kept_pairs = {t[0].upper() for t in kept}
@@ -160,8 +191,8 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
         progress.log(
             f"Filters: kept {len(kept)}/{len(symbols)} pairs "
             f"(|move|≥{filters.min_abs_gain_pct}% range≥{filters.min_range_pct}% "
-            f"top_n={filters.top_n or 'all'} adv≥{filters.min_adv_usd:,.0f} "
-            f"price≥{filters.min_price})"
+            f"top_n={filters.top_n or 'all'} adv≥{eff_min_adv:,.0f} "
+            f"price≥{eff_min_price})"
         )
 
         rows: list[OpportunityRow] = []
@@ -202,6 +233,7 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
         t_enr = time.perf_counter()
         lts = enrich_lane_coins_1h(root, lts, lane=lane, progress=progress)
         timings["enrich_s"] = round(time.perf_counter() - t_enr, 3)
+        _ensure_daily_market_context(lts, bars_by_pair)
         save_lts_rows(root, lts, lane=lane)
 
         bt_meta: dict[str, Any] = {}
@@ -212,6 +244,9 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
             timings["backtest_s"] = round(time.perf_counter() - t_bt, 3)
             by_key = {row_key(c): c for c in bt_rows}
             lts = [by_key.get(row_key(c), c) for c in lts]
+            _ensure_daily_market_context(lts, bars_by_pair)
+            if full_market_tradfi:
+                _prefetch_tradfi_logos(root, [str(c.get("symbol") or "") for c in lts])
             save_lts_rows(root, lts, lane=lane)
 
         timings["total_s"] = round(time.perf_counter() - t0, 3)
@@ -352,6 +387,74 @@ def _purge_synthetic_fx_cache(root: Path) -> None:
             try:
                 path.unlink()
             except OSError:
+                continue
+
+
+def _is_reverse_split_or_junk(points: list[OhlcvPoint], adv: float) -> bool:
+    """Reject unadjusted reverse-split/microcap spikes (e.g. >3.5x single-day jump on low ADV)."""
+    if adv >= 25_000_000.0:
+        return False
+    prev = 0.0
+    for p in points:
+        try:
+            c = float(p.close)
+        except (TypeError, ValueError):
+            continue
+        if prev > 0 and c > 0:
+            ratio = c / prev
+            if ratio > 3.5 or ratio < 0.15:
+                return True
+        if c > 0:
+            prev = c
+    return False
+
+
+def _ensure_daily_market_context(
+    lts: list[dict[str, Any]],
+    bars_by_pair: dict[str, list[OhlcvPoint]],
+) -> None:
+    """Populate Market Context from daily bars when 1h bars were too sparse (<50 bars)."""
+    from trendalgo.analytics.market_context import compute_market_context
+
+    for coin in lts:
+        mc = coin.get("market_context")
+        if isinstance(mc, dict) and mc.get("ok"):
+            continue
+        pair = str(coin.get("pair") or "").strip().upper()
+        pts = bars_by_pair.get(pair)
+        if not pts or len(pts) < 10:
+            continue
+        df = pd.DataFrame(
+            {
+                "open": [float(p.open) for p in pts],
+                "high": [float(p.high) for p in pts],
+                "low": [float(p.low) for p in pts],
+                "close": [float(p.close) for p in pts],
+                "volume": [float(p.volume) for p in pts],
+            }
+        )
+        computed = compute_market_context(df, period_bars=10).to_dict()
+        if computed.get("ok"):
+            coin["market_context"] = computed
+
+
+def _prefetch_tradfi_logos(root: Path, symbols: list[str]) -> None:
+    """Best-effort parallel cache of equity PNG logos into icon_cache/eq_<SYM>.png."""
+    try:
+        from trendalgo.device.lane_icons import equity_cache_path, prefetch_equity_logo
+    except Exception:
+        return
+    todo = [
+        s.strip().upper() for s in symbols if s.strip() and not equity_cache_path(root, s).is_file()
+    ]
+    if not todo:
+        return
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futs = [pool.submit(prefetch_equity_logo, root, sym) for sym in todo[:200]]
+        for fut in futs:
+            try:
+                fut.result(timeout=5)
+            except Exception:
                 continue
 
 

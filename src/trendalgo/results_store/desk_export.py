@@ -196,6 +196,10 @@ def export_surface(root: Path, surface: str, *, lane: str, pair: str) -> dict[st
     if surface == "credman":
         del root
         return load_credman_surface()
+    if surface == "exchange_keys":
+        from trendalgo.results_store.desk_exchange_keys import load_exchange_keys_surface
+
+        return load_exchange_keys_surface(root)
     if surface == "venue":
         from trendalgo.results_store.desk_venue import load_execution_venue_surface
 

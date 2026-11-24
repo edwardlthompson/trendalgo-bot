@@ -99,12 +99,56 @@ class GenericCcxtPortfolioAdapter:
         if reason is not None:
             store.insert_notification("trading", f"{self.exchange_id}: new buys halted", reason)
             journal.mark_halt_announced(self.exchange_id)
-        tickers = exchange.fetch_tickers()
+        try:
+            raw_tickers = exchange.fetch_tickers()
+            tickers: dict[str, Any] = dict(raw_tickers) if isinstance(raw_tickers, dict) else {}
+        except Exception:
+            tickers = {}
+
+        usd_all = frozenset({*self._usd_aliases(), "USD", "ZUSD", "USDT", "USDC"})
+        quote = self.entry.quote_currency.strip().upper() or "USD"
+        for raw_asset, qty in (balance.get("total") or {}).items():
+            try:
+                if float(qty or 0) <= 0:
+                    continue
+            except (TypeError, ValueError):
+                continue
+            sym = normalize_asset(str(raw_asset))
+            if sym in usd_all or sym.startswith("USD"):
+                continue
+            if any(
+                isinstance(tickers.get(f"{sym}/{q}"), dict)
+                and tickers[f"{sym}/{q}"].get("last") is not None
+                for q in (quote, "USD", "USDT", "USDC")
+            ):
+                continue
+            for q in (quote, "USD", "USDT", "USDC"):
+                pair = f"{sym}/{q}"
+                try:
+                    t = exchange.fetch_ticker(pair)
+                except Exception:
+                    continue
+                if isinstance(t, dict) and t.get("last") is not None:
+                    tickers[pair] = t
+                    break
+
+        prior_cost: dict[str, tuple[float, float]] = {}
+        prev_snap = store.latest_snapshot(account_id)
+        if prev_snap:
+            for prev_h in prev_snap.get("holdings") or []:
+                pa = normalize_asset(str(prev_h.get("asset") or ""))
+                pq = float(prev_h.get("quantity") or 0.0)
+                pc = float(prev_h.get("cost_basis_usd") or 0.0)
+                if pa and pq > 0 and pc > 0:
+                    prior_cost[pa] = (pq, pc)
+
         holdings, total_usd = holdings_from_ccxt_balance(
             balance,
             tickers,
             usd_aliases=self._usd_aliases(),
             quote_currency=self.entry.quote_currency,
+            prior_cost_basis=prior_cost,
+            honest_cost_basis=True,
         )
         holdings = self._normalize_holdings(holdings)
         snap_id = store.insert_snapshot(

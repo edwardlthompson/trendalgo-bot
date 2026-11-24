@@ -25,11 +25,12 @@ class VaultEntry:
     api_secret: str
     scope: KeyScope
     verified_at: str | None = None
+    passphrase: str = ""
 
 
-def _targets(exchange_id: str) -> tuple[str, str, str]:
+def _targets(exchange_id: str) -> tuple[str, str, str, str]:
     base = f"{TARGET_PREFIX}{exchange_id}"
-    return f"{base}/key", f"{base}/secret", f"{base}/meta"
+    return f"{base}/key", f"{base}/secret", f"{base}/meta", f"{base}/passphrase"
 
 
 class VaultSecretStore:
@@ -48,6 +49,7 @@ class VaultSecretStore:
     def bind_exchange(self, exchange_id: str, env_key: str, env_secret: str) -> None:
         self._env_names[env_key] = (exchange_id, "key")
         self._env_names[env_secret] = (exchange_id, "secret")
+        self._env_names[f"{env_key}_PASSPHRASE"] = (exchange_id, "passphrase")
 
     def bind_registry(self) -> None:
         from trendalgo.exchanges.registry import load_registry
@@ -69,18 +71,23 @@ class VaultSecretStore:
             exchange_id, which = binding
             entry = self.read_entry(exchange_id)
             if entry is not None:
-                return entry.api_key if which == "key" else entry.api_secret
+                if which == "key":
+                    return entry.api_key
+                if which == "passphrase":
+                    return entry.passphrase or None
+                return entry.api_secret
         return self._env.get(name)
 
     def read_entry(self, exchange_id: str) -> VaultEntry | None:
         vault = self._cred_store()
         if vault is None:
             return None
-        key_t, secret_t, meta_t = _targets(exchange_id)
+        key_t, secret_t, meta_t, pass_t = _targets(exchange_id)
         try:
             api_key = vault.read(key_t)
             api_secret = vault.read(secret_t)
             meta_raw = vault.read(meta_t) or "{}"
+            passphrase = vault.read(pass_t) or ""
         except CredentialError:
             return None
         if not api_key or not api_secret:
@@ -92,19 +99,22 @@ class VaultSecretStore:
         scope = meta.get("scope", "query")
         if scope not in ("query", "trade"):
             scope = "query"
+        if not passphrase and isinstance(meta.get("passphrase"), str):
+            passphrase = str(meta["passphrase"])
         return VaultEntry(
             exchange_id=exchange_id,
             api_key=api_key,
             api_secret=api_secret,
             scope=scope,  # type: ignore[arg-type]
             verified_at=meta.get("verified_at"),
+            passphrase=passphrase.strip(),
         )
 
     def write_entry(self, entry: VaultEntry) -> None:
         vault = self._cred_store()
         if vault is None:
             raise CredentialError("No credential vault available on this platform.")
-        key_t, secret_t, meta_t = _targets(entry.exchange_id)
+        key_t, secret_t, meta_t, pass_t = _targets(entry.exchange_id)
         try:
             vault.write(key_t, entry.api_key)
             vault.write(secret_t, entry.api_secret)
@@ -112,9 +122,16 @@ class VaultSecretStore:
                 meta_t,
                 json.dumps({"scope": entry.scope, "verified_at": entry.verified_at}),
             )
+            if entry.passphrase.strip():
+                vault.write(pass_t, entry.passphrase.strip())
+            else:
+                try:
+                    vault.delete(pass_t)
+                except CredentialError:
+                    pass
         except CredentialError:
             # Never leave a half-saved pair (key without secret/meta).
-            for target in (key_t, secret_t, meta_t):
+            for target in (key_t, secret_t, meta_t, pass_t):
                 try:
                     vault.delete(target)
                 except CredentialError:

@@ -36,6 +36,10 @@ def load_export_hub_surface(root: Path) -> dict[str, Any]:
             {"id": "plan", "label": S.EXPORT_PLAN},
             {"id": "scan", "label": S.EXPORT_SCAN},
         ],
+        "portfolio_actions": [
+            {"id": "portfolio_html", "label": "Executive Portfolio Report (HTML / PDF)"},
+            {"id": "portfolio_csv", "label": "Holdings & Equity CSV Bundle"},
+        ],
     }
 
 
@@ -51,6 +55,15 @@ def run_export_hub(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
             path = write_plan_json(dest, root / PLAN_FILE)
         elif kind == "scan":
             path = write_scan_json(dest, dbs["scanner"])
+        elif kind == "portfolio_html":
+            from trendalgo.portfolio.report_export import export_portfolio_html_report
+
+            path = export_portfolio_html_report(root, dest=dest if dest.suffix else None)
+        elif kind == "portfolio_csv":
+            from trendalgo.portfolio.report_export import export_portfolio_csv_bundle
+
+            bundle = export_portfolio_csv_bundle(root, dest_dir=dest)
+            path = Path(bundle["holdings_csv"])
         else:
             return {"ok": False, "error": "bad_kind", "problems": [f"Unknown export kind: {kind}"]}
     except FileNotFoundError:

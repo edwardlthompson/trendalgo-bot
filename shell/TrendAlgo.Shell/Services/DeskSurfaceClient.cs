@@ -157,6 +157,54 @@ public sealed class DeskSurfaceClient
         return RunJson(psi);
     }
 
+    public async Task<JsonDocument> VerifyExchangeKeyAsync(
+        string exchangeId, CancellationToken ct = default)
+    {
+        var warm = await PythonSidecarClient.Instance.TryRequestAsync(
+            _repoRoot,
+            new { op = "verify_exchange_key", exchange_id = exchangeId },
+            ct: ct).ConfigureAwait(false);
+        if (warm is not null)
+            return warm;
+        var psi = BasePsi();
+        psi.ArgumentList.Add("--verify-exchange-key");
+        psi.ArgumentList.Add(exchangeId);
+        return await RunJsonAsync(psi, "verify-exchange-key", allowFail: true, timeoutMs: 45_000, ct: ct)
+            .ConfigureAwait(false);
+    }
+
+    public async Task<JsonDocument> SyncPortfolioAsync(CancellationToken ct = default)
+    {
+        var warm = await PythonSidecarClient.Instance.TryRequestAsync(
+            _repoRoot,
+            new { op = "portfolio_sync" },
+            ct: ct).ConfigureAwait(false);
+        if (warm is not null)
+            return warm;
+        var psi = BasePsi();
+        psi.ArgumentList.Add("--portfolio-sync");
+        return await RunJsonAsync(psi, "portfolio-sync", allowFail: true, timeoutMs: 120_000, ct: ct)
+            .ConfigureAwait(false);
+    }
+
+    public Task<JsonDocument> ApplyDashboardLayoutAsync(
+        string jsonPath, CancellationToken ct = default)
+    {
+        var psi = BasePsi();
+        psi.ArgumentList.Add("--apply-dashboard-layout");
+        psi.ArgumentList.Add(jsonPath);
+        return RunJsonAsync(psi, "apply-dashboard-layout", allowFail: true, ct: ct);
+    }
+
+    public Task<JsonDocument> ExportPortfolioReportAsync(
+        string jsonPath, CancellationToken ct = default)
+    {
+        var psi = BasePsi();
+        psi.ArgumentList.Add("--export-portfolio-report");
+        psi.ArgumentList.Add(jsonPath);
+        return RunJsonAsync(psi, "export-portfolio-report", allowFail: true, timeoutMs: 60_000, ct: ct);
+    }
+
     public JsonDocument BotsPanic()
     {
         var psi = BasePsi();

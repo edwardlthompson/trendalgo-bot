@@ -25,6 +25,17 @@ def handle_request(root: Path, req: dict[str, Any]) -> dict[str, Any]:
         if op == "toggle_watch":
             data = run_mutate(root, toggle_watch=True, pair=pair, lane=lane, indicator="RSI")
             return {"id": req_id, "ok": True, "data": data}
+        if op == "verify_exchange_key":
+            from trendalgo.results_store.desk_exchange_keys import verify_saved_exchange_key
+
+            eid = str(req.get("exchange_id") or pair or "")
+            data = verify_saved_exchange_key(root, eid)
+            return {"id": req_id, "ok": bool(data.get("ok")), "data": data}
+        if op == "portfolio_sync":
+            from trendalgo.results_store.desk_portfolio_sync import run_live_portfolio_sync
+
+            data = run_live_portfolio_sync(root)
+            return {"id": req_id, "ok": bool(data.get("ok")), "data": data}
         if op == "ping":
             return {"id": req_id, "ok": True, "data": {"pong": True}}
         return {"id": req_id, "ok": False, "error": f"unknown op: {op}"}

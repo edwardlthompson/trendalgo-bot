@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="TrendAlgo.Shell.Controls.ExchangeKeysPanel">
+  <StackPanel Spacing="12">
+    <Border Background="#111827" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="8" Padding="14">
+      <StackPanel Spacing="10">
+        <DockPanel>
+          <Button DockPanel.Dock="Right"
+                  Content="Refresh inventory"
+                  Command="{Binding ExchangeKeysReloadCommand}" />
+          <StackPanel Spacing="2">
+            <TextBlock Text="Exchange API Keys (Windows Credential Manager)"
+                       FontSize="15" FontWeight="SemiBold" />
+            <TextBlock Text="Keys are encrypted in Windows CredMan — never written to JSON, logs, or exports. Read-only Query keys are enough for the Portfolio Dashboard."
+                       FontSize="12" Opacity="0.75" TextWrapping="Wrap" />
+          </StackPanel>
+        </DockPanel>
+
+        <Border Background="#0B1120" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="10">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="2" Margin="0,0,12,0">
+              <TextBlock Text="Add or Update Exchange Key" FontWeight="SemiBold" FontSize="13" />
+              <TextBlock Text="{Binding SelectedExchangeHint}" FontSize="11.5" Opacity="0.75" TextWrapping="Wrap" />
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Content="Verify Alpaca"
+                    Command="{Binding VerifyAlpacaKeysCommand}" />
+          </Grid>
+        </Border>
+
+        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto">
+          <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4" Margin="0,0,6,8">
+            <TextBlock Text="Exchange" FontSize="12" Opacity="0.8" />
+            <ComboBox ItemsSource="{Binding ExchangeKeyRows}"
+                      SelectedItem="{Binding SelectedExchangeOption}"
+                      HorizontalAlignment="Stretch">
+              <ComboBox.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding DisplayLabel}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </StackPanel>
+
+          <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4" Margin="6,0,0,8">
+            <TextBlock Text="Permission Scope" FontSize="12" Opacity="0.8" />
+            <ComboBox ItemsSource="{Binding ExchangeScopeChoices}"
+                      SelectedItem="{Binding ExchangeKeyScope}"
+                      HorizontalAlignment="Stretch" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,0,6,8">
+            <TextBlock Text="API Key" FontSize="12" Opacity="0.8" />
+            <TextBox Text="{Binding ExchangeApiKeyInput}"
+                     PasswordChar="•"
+                     Watermark="Paste exchange API Key" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4" Margin="6,0,0,8">
+            <TextBlock Text="API Secret (supports PEM)" FontSize="12" Opacity="0.8" />
+            <TextBox Text="{Binding ExchangeApiSecretInput}"
+                     PasswordChar="•"
+                     Watermark="Paste exchange API Secret" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4"
+                      IsVisible="{Binding SelectedExchangeNeedsPassphrase}">
+            <TextBlock Text="API Passphrase (required for OKX)" FontSize="12" Opacity="0.8" />
+            <TextBox Text="{Binding ExchangePassphraseInput}"
+                     PasswordChar="•"
+                     Watermark="Paste OKX API Passphrase" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                      Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+            <Button Content="Save &amp; Verify Live"
+                    Command="{Binding SaveAndVerifyExchangeKeyCommand}"
+                    IsEnabled="{Binding !IsVerifyingExchangeKey}"
+                    Background="#2563EB" Foreground="White" FontWeight="SemiBold" />
+            <Button Content="Save Only"
+                    Command="{Binding SaveOnlyExchangeKeyCommand}"
+                    IsEnabled="{Binding !IsVerifyingExchangeKey}" />
+            <TextBlock Text="{Binding ExchangeKeysStatusText}"
+                       VerticalAlignment="Center" Opacity="0.9" TextWrapping="Wrap" />
+          </StackPanel>
+        </Grid>
+
+        <TextBlock Text="Configured &amp; Supported Venues" FontWeight="SemiBold" FontSize="13" Margin="0,4,0,0" />
+        <ItemsControl ItemsSource="{Binding ExchangeKeyRows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Background="#0B1120" BorderBrush="#1E293B" BorderThickness="1"
+                      CornerRadius="6" Padding="10,8" Margin="0,0,0,6">
+                <Grid ColumnDefinitions="150,70,90,*,Auto">
+                  <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Brand}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding QuoteCurrency, StringFormat=Quote: {0}}" FontSize="11" Opacity="0.65" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Text="{Binding ScopeDisplay}" VerticalAlignment="Center" FontSize="11.5" Opacity="0.8" />
+                  <TextBlock Grid.Column="2" Text="{Binding RateDisplay}" VerticalAlignment="Center" FontSize="11.5" Opacity="0.7" />
+                  <TextBlock Grid.Column="3" Text="{Binding StatusBadge}" Foreground="{Binding StatusBrush}"
+                             VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" />
+                  <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6">
+                    <Button Content="Verify"
+                            IsEnabled="{Binding Configured}"
+                            Tag="{Binding Id}"
+                            Click="OnVerifyRowClick" />
+                    <Button Content="Remove"
+                            IsEnabled="{Binding Configured}"
+                            Tag="{Binding Id}"
+                            Click="OnDeleteRowClick" />
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

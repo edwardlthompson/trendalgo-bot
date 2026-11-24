@@ -20,8 +20,8 @@ from trendalgo.results_store.store import ResultsStore
 _SURFACES = (
     "results,dex,chart,events,sauce,alpaca,backtest,dashboard,"
     "alerts,bots,bots_perf,bots_journal,buy_picks,progress,glossary,debug,billing,"
-    "about,notify,credman,scan_settings,startup,venue,lanes,connection,settings_layout,"
-    "wizard,privacy,data,updates,export_hub,host_badge"
+    "about,notify,credman,exchange_keys,scan_settings,startup,venue,lanes,connection,"
+    "settings_layout,wizard,privacy,data,updates,export_hub,host_badge"
 ).split(",")
 
 
@@ -86,6 +86,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--apply-scan-settings", type=Path, default=None)
     p.add_argument("--apply-dashboard-customize", type=Path, default=None)
     p.add_argument("--apply-dashboard-mins", type=Path, default=None)
+    p.add_argument("--apply-dashboard-layout", type=Path, default=None)
+    p.add_argument("--verify-exchange-key", default=None)
+    p.add_argument("--portfolio-sync", action="store_true")
+    p.add_argument("--export-portfolio-report", type=Path, default=None)
     p.add_argument("--bots-panic", action="store_true")
     p.add_argument("--bots-publish-plan", action="store_true")
     p.add_argument("--bots-set-enabled", default=None, help="bot_id for --bots-enable/--bots-pause")
@@ -323,6 +327,38 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"ok": False, "error": "payload_not_object"}))
             return 1
         result = apply_dashboard_module_mins(root, payload)
+        print(json.dumps(result))
+        return 0 if result.get("ok") else 1
+    if args.apply_dashboard_layout is not None:
+        from trendalgo.results_store.desk_dashboard import apply_dashboard_layout
+
+        payload = json.loads(args.apply_dashboard_layout.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            print(json.dumps({"ok": False, "error": "payload_not_object"}))
+            return 1
+        result = apply_dashboard_layout(root, payload)
+        print(json.dumps(result))
+        return 0 if result.get("ok") else 1
+    if args.verify_exchange_key is not None:
+        from trendalgo.results_store.desk_exchange_keys import verify_saved_exchange_key
+
+        result = verify_saved_exchange_key(root, args.verify_exchange_key)
+        print(json.dumps(result))
+        return 0 if result.get("ok") else 1
+    if args.portfolio_sync:
+        from trendalgo.results_store.desk_portfolio_sync import run_live_portfolio_sync
+
+        result = run_live_portfolio_sync(root)
+        print(json.dumps(result))
+        return 0 if result.get("ok") else 1
+    if args.export_portfolio_report is not None:
+        from trendalgo.portfolio.report_export import run_portfolio_report_export
+
+        payload = json.loads(args.export_portfolio_report.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            print(json.dumps({"ok": False, "error": "payload_not_object"}))
+            return 1
+        result = run_portfolio_report_export(root, payload)
         print(json.dumps(result))
         return 0 if result.get("ok") else 1
     if args.enqueue:

@@ -226,8 +226,6 @@ public partial class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         var sw = Stopwatch.StartNew();
-        BoardColumnFilterStore.Load(QualifiedFilters);
-        BoardColumnFilterStore.Load(WatchlistFilters, WatchlistFiltersPath);
         var savedSort = BoardSortStore.Load();
         if (savedSort is not null)
         {
@@ -334,8 +332,9 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             await Task.Delay(350, token);
-            BoardColumnFilterStore.Save(QualifiedFilters);
-            BoardColumnFilterStore.Save(WatchlistFilters, WatchlistFiltersPath);
+            var lane = DeskLane();
+            BoardColumnFilterStore.SaveForLane(QualifiedFilters, lane, watchlist: false);
+            BoardColumnFilterStore.SaveForLane(WatchlistFilters, lane, watchlist: true);
             if (ShowBoard && BoardTab is not "logs")
                 ReloadBoard();
         }
@@ -549,11 +548,15 @@ public partial class MainViewModel : ViewModelBase
     private void ReloadBoard()
     {
         var sw = Stopwatch.StartNew();
+        var lane = DeskLane();
+        EnsureLaneFiltersLoaded(lane);
         BoardRows.Clear();
         OnPropertyChanged(nameof(ShowBoardColumnFilters));
         if (BoardTab == "logs")
             BoardTab = "qualified";
-        var rows = LaneBoardLoader.Load(DeskLane(), BoardTab);
+        var rows = LaneBoardLoader.Load(lane, BoardTab);
+        UnfilteredRowCount = rows.Count;
+        HasActiveBoardFilters = BoardFilters.HasActiveFilters || !string.IsNullOrWhiteSpace(BoardFilter);
         IEnumerable<OpportunityBoardRow> filtered = BoardColumnFilter.Apply(rows, BoardFilters);
         if (!string.IsNullOrWhiteSpace(BoardFilter))
         {
@@ -566,15 +569,19 @@ public partial class MainViewModel : ViewModelBase
         foreach (var row in BoardRowSorter.Sort(filtered, _boardSortKey, _boardSortAscending))
             BoardRows.Add(row);
         RowCount = BoardRows.Count;
+        OnPropertyChanged(nameof(BoardRowsSummaryText));
         sw.Stop();
-        var job = _results.JobState($"scan:{DeskLane()}") ?? "idle";
-        StatusText = $"{DeskLane()} / {BoardTab}: {RowCount} rows · {sw.ElapsedMilliseconds}ms · job={job}";
+        var job = _results.JobState($"scan:{lane}") ?? "idle";
+        StatusText = $"{lane} / {BoardTab}: {RowCount} rows · {sw.ElapsedMilliseconds}ms · job={job}";
         RefreshDeskLoadPct();
         RefreshLastScanText();
         if (BoardTab == "qualified")
-            _ = ReloadBuyPicksAsync();
+            RefreshBuyPicksFromBoardRows(lane);
         else
+        {
+            BuyPickRows.Clear();
             ShowBuyPicks = false;
+        }
         RefreshHandshake();
         BoardReloaded?.Invoke();
     }
@@ -793,50 +800,6 @@ public partial class MainViewModel : ViewModelBase
         catch { /* telemetry best-effort */ }
     }
 
-    partial void OnBuyPicksExpandedChanged(bool value) => PersistBuyPicksCollapsed(!value);
-
-    private static void PersistBuyPicksCollapsed(bool collapsed)
-    {
-        try
-        {
-            var path = Path.Combine(ProfilePaths.DeviceRoot, "results_view_prefs.json");
-            JsonObject root;
-            if (File.Exists(path))
-            {
-                root = JsonNode.Parse(File.ReadAllText(path)) as JsonObject ?? new JsonObject();
-            }
-            else
-                root = new JsonObject();
-            root["buy_picks_collapsed"] = collapsed;
-            Directory.CreateDirectory(ProfilePaths.DeviceRoot);
-            File.WriteAllText(path, JsonNodeWrite.ToIndented(root));
-        }
-        catch
-        {
-            /* prefs best-effort */
-        }
-    }
-
-    private void LoadBuyPicksCollapsedPref()
-    {
-        try
-        {
-            var path = Path.Combine(ProfilePaths.DeviceRoot, "results_view_prefs.json");
-            if (!File.Exists(path))
-                return;
-            using var doc = JsonDocument.Parse(File.ReadAllText(path));
-            if (doc.RootElement.TryGetProperty("buy_picks_collapsed", out var p)
-                && p.ValueKind is JsonValueKind.True or JsonValueKind.False)
-            {
-                BuyPicksExpanded = p.ValueKind != JsonValueKind.True;
-            }
-        }
-        catch
-        {
-            /* ignore */
-        }
-    }
-
     [RelayCommand]
     private void DeskRunScan()
     {
@@ -992,7 +955,7 @@ public partial class MainViewModel : ViewModelBase
                 StatusText = "Share board cancelled";
                 return;
             }
-            BoardColumnFilterStore.Save(BoardFilters);
+            BoardColumnFilterStore.SaveForLane(BoardFilters, DeskLane(), BoardTab == "watchlist");
             filtersPath = Path.Combine(Path.GetTempPath(), $"trendalgo-share-filters-{Guid.NewGuid():N}.json");
             File.WriteAllText(filtersPath, BoardFilters.ToShareFiltersJson(
                 BoardFilter,

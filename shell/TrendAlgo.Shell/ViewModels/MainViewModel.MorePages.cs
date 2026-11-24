@@ -229,6 +229,7 @@ public partial class MainViewModel
         }
         else if (ShowKeysEditor)
         {
+            ExchangeKeysReload();
             CredmanReload();
             ConnectionReload();
         }

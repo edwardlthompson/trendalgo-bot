@@ -1,0 +1,238 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:TrendAlgo.Shell.Controls"
+             x:Class="TrendAlgo.Shell.Controls.DashboardPanel">
+  <DockPanel>
+    <!-- Top Executive Toolbar -->
+    <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,2,0,8">
+      <WrapPanel>
+        <Button Content="{Binding SyncButtonLabel}"
+                Command="{Binding DashboardSyncCommand}"
+                IsEnabled="{Binding !IsPortfolioSyncing}"
+                Background="#2563EB" Foreground="White" FontWeight="SemiBold"
+                Margin="0,0,6,6" />
+        <Button Content="Connect Exchange"
+                Command="{Binding OpenExchangeKeysSettingsCommand}"
+                Margin="0,0,6,6" />
+        <Button Content="Customize"
+                Command="{Binding DashboardCustomizeCommand}"
+                Margin="0,0,6,6" />
+        <Button Content="{Binding DemoToggleLabel}"
+                Command="{Binding DashboardToggleDemoCommand}"
+                Margin="0,0,6,6" />
+        <Button Content="Share PNG"
+                Command="{Binding DashboardSharePngCommand}"
+                Margin="0,0,6,6" />
+        <Button Content="Export Report (HTML/PDF)"
+                Command="{Binding DashboardExportHtmlReportCommand}"
+                Margin="0,0,6,6" />
+        <Button Content="Export CSV"
+                Command="{Binding DashboardExportCsvCommand}"
+                Margin="0,0,6,6" />
+        <Button Content="Reload"
+                Command="{Binding DashboardReloadCommand}"
+                Margin="0,0,6,6" />
+      </WrapPanel>
+
+      <!-- Page Tabs + Range Selector + Status -->
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
+          <Button Content="1D" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1D" />
+          <Button Content="1W" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1W" />
+          <Button Content="1M" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1M" />
+          <Button Content="3M" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="3M" />
+          <Button Content="6M" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="6M" />
+          <Button Content="YTD" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="YTD" />
+          <Button Content="1Y" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1Y" />
+          <Button Content="ALL" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="ALL" />
+          <TextBlock Text="{Binding DashboardRange}" VerticalAlignment="Center" FontWeight="SemiBold" Margin="6,0,0,0" Opacity="0.85" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <ItemsControl ItemsSource="{Binding DashboardPages}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="4" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Content="{Binding Title}"
+                        Background="{Binding BackgroundBrush}"
+                        Foreground="White"
+                        Tag="{Binding Id}"
+                        Click="OnPageTabClick" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button Content="+ Page" Command="{Binding DashboardAddPageCommand}" />
+          <TextBlock Text="{Binding DashboardMetaSummary}"
+                     VerticalAlignment="Center" Opacity="0.75" FontSize="12" Margin="8,0,0,0" />
+        </StackPanel>
+      </DockPanel>
+
+      <!-- Empty / Onboarding Banner -->
+      <Border IsVisible="{Binding ShowDashboardEmptyBanner}"
+              Background="#111827" BorderBrush="#2563EB" BorderThickness="1" CornerRadius="8" Padding="12">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
+            <Button Content="Plug in Exchange Keys →"
+                    Command="{Binding OpenExchangeKeysSettingsCommand}"
+                    Background="#2563EB" Foreground="White" FontWeight="SemiBold" />
+            <Button Content="Preview Top-20 Demo"
+                    Command="{Binding DashboardToggleDemoCommand}" />
+          </StackPanel>
+          <StackPanel Spacing="2">
+            <TextBlock Text="Ready for Live Portfolio Analytics" FontWeight="SemiBold" FontSize="14" />
+            <TextBlock Text="Connect any read-only Exchange API key (Kraken, Coinbase Advanced, Binance.US, Gemini, OKX, Alpaca, etc.) and click Sync Live."
+                       FontSize="12" Opacity="0.8" TextWrapping="Wrap" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+    </StackPanel>
+
+    <!-- 24-Column Snap-to-Grid Portfolio Canvas -->
+    <ScrollViewer HorizontalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding DashboardModules}"
+                    Width="{Binding DashboardCanvasWidth}"
+                    MinHeight="{Binding DashboardCanvasHeight}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <Canvas />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.Styles>
+          <Style Selector="ItemsControl > ContentPresenter">
+            <Setter Property="Canvas.Left" Value="{Binding PixelLeft}" />
+            <Setter Property="Canvas.Top" Value="{Binding PixelTop}" />
+            <Setter Property="Width" Value="{Binding PixelWidth}" />
+            <Setter Property="Height" Value="{Binding PixelHeight}" />
+          </Style>
+        </ItemsControl.Styles>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Background="#111827" CornerRadius="10" Padding="12" BorderBrush="#1E293B" BorderThickness="1">
+              <DockPanel>
+                <!-- Tile Header -->
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                  <TextBlock DockPanel.Dock="Right"
+                             Text="{Binding DeltaText}"
+                             Foreground="{Binding DeltaBrush}"
+                             IsVisible="{Binding HasDelta}"
+                             FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13.5" Opacity="0.95" />
+                    <TextBlock Text="{Binding Value}" FontWeight="Bold" FontSize="14" Foreground="#F8FAFC" />
+                    <TextBlock Text="{Binding Detail}" FontSize="11.5" Opacity="0.65" VerticalAlignment="Center" />
+                  </StackPanel>
+                </DockPanel>
+
+                <!-- 1. Chart Visuals (Area, Multi-Line, Bars, Donut, Treemap, Alloc Bar, Gauge) -->
+                <controls:DashboardChartCanvas IsVisible="{Binding IsChartVisual}"
+                                               VisualKind="{Binding VisualKind}"
+                                               Series="{Binding Series}"
+                                               Slices="{Binding Slices}"
+                                               Bars="{Binding Bars}"
+                                               Cells="{Binding Cells}"
+                                               GaugeValue="{Binding GaugeValue}"
+                                               GaugeLabel="{Binding GaugeLabel}" />
+
+                <!-- 2. KPI 2x2 Grid -->
+                <ItemsControl IsVisible="{Binding IsKpiGrid}" ItemsSource="{Binding Kpis}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <UniformGrid Columns="2" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Background="#0B1120" BorderBrush="#1E293B" BorderThickness="1"
+                              CornerRadius="6" Padding="8" Margin="3">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Label}" FontSize="11" Opacity="0.65" />
+                          <TextBlock Text="{Binding Value}" FontSize="15" FontWeight="Bold"
+                                     Foreground="{Binding ValueBrush}" />
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 3. Ranked List (Gainers, Losers, Positions, Trades) -->
+                <ScrollViewer IsVisible="{Binding IsRankedList}">
+                  <ItemsControl ItemsSource="{Binding RankedRows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,3">
+                          <TextBlock Grid.Column="0" Text="{Binding Label}" FontWeight="SemiBold" FontSize="12" Margin="0,0,8,0" />
+                          <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12" Opacity="0.9" Margin="0,0,10,0" />
+                          <TextBlock Grid.Column="2" Text="{Binding Delta}" Foreground="{Binding DeltaBrush}"
+                                     FontWeight="SemiBold" FontSize="12" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+
+                <!-- 4. Open Orders Table -->
+                <ScrollViewer IsVisible="{Binding IsOrdersTable}">
+                  <ItemsControl ItemsSource="{Binding OrderRows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid ColumnDefinitions="70,*,60,80,70" Margin="0,2">
+                          <TextBlock Grid.Column="0" Text="{Binding Venue}" FontSize="11.5" Opacity="0.7" />
+                          <TextBlock Grid.Column="1" Text="{Binding Pair}" FontSize="12" FontWeight="SemiBold" />
+                          <TextBlock Grid.Column="2" Text="{Binding Side}" FontSize="11.5" />
+                          <TextBlock Grid.Column="3" Text="{Binding Price}" FontSize="12" HorizontalAlignment="Right" />
+                          <TextBlock Grid.Column="4" Text="{Binding Amount}" FontSize="12" HorizontalAlignment="Right" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+
+                <!-- 5. Holdings Table with Coin Icons -->
+                <ScrollViewer IsVisible="{Binding IsHoldingsTable}">
+                  <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="150,90,90,90,95,70,130" Margin="4,0,4,4">
+                      <TextBlock Grid.Column="0" Text="ASSET" FontSize="10.5" Opacity="0.6" FontWeight="SemiBold" />
+                      <TextBlock Grid.Column="1" Text="AMOUNT" FontSize="10.5" Opacity="0.6" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                      <TextBlock Grid.Column="2" Text="PRICE" FontSize="10.5" Opacity="0.6" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                      <TextBlock Grid.Column="3" Text="24H" FontSize="10.5" Opacity="0.6" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                      <TextBlock Grid.Column="4" Text="VALUE" FontSize="10.5" Opacity="0.6" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                      <TextBlock Grid.Column="5" Text="WEIGHT" FontSize="10.5" Opacity="0.6" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                      <TextBlock Grid.Column="6" Text="UNREALIZED P&amp;L" FontSize="10.5" Opacity="0.6" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding HoldingsRows}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <Border BorderBrush="#1E293B" BorderThickness="0,1,0,0" Padding="4,6">
+                            <Grid ColumnDefinitions="150,90,90,90,95,70,130">
+                              <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Image Source="{Binding IconBitmap}" Width="20" Height="20" />
+                                <StackPanel>
+                                  <TextBlock Text="{Binding Asset}" FontWeight="SemiBold" FontSize="12.5" />
+                                  <TextBlock Text="{Binding Venue}" FontSize="10" Opacity="0.6" />
+                                </StackPanel>
+                              </StackPanel>
+                              <TextBlock Grid.Column="1" Text="{Binding QuantityText}" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                              <TextBlock Grid.Column="2" Text="{Binding PriceText}" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                              <TextBlock Grid.Column="3" Text="{Binding ChangeText}" Foreground="{Binding ChangeBrush}" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                              <TextBlock Grid.Column="4" Text="{Binding ValueText}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                              <TextBlock Grid.Column="5" Text="{Binding AllocText}" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                              <TextBlock Grid.Column="6" Text="{Binding PnlText}" Foreground="{Binding PnlBrush}" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </ScrollViewer>
+              </DockPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

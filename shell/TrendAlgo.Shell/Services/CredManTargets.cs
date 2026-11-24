@@ -32,4 +32,7 @@ public static class CredManTargets
 
     public static string ExchangeTarget(string exchangeId, string which) =>
         $"{ExchangePrefix}{exchangeId}/{which}";
+
+    public static string ExchangePassphrase(string exchangeId) =>
+        $"{ExchangePrefix}{exchangeId}/passphrase";
 }

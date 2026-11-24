@@ -96,7 +96,9 @@ def _order_rows_by_pairs(rows: list[dict[str, Any]], pairs: list[str]) -> list[d
 def share_dashboard_png(
     root: Path, *, limit: int = 40, dest: Path | str | None = None
 ) -> dict[str, Any]:
-    """Export active dashboard page tiles (text panel via Qt)."""
+    """Export 2x high-DPI Executive Dashboard Share Card PNG via Qt."""
+    del limit
+    from trendalgo.device.portfolio_report_png import render_dashboard_report_png
     from trendalgo.results_store.desk_dashboard import load_dashboard_surface
 
     data = load_dashboard_surface(root)
@@ -104,24 +106,13 @@ def share_dashboard_png(
     tiles: list[Any] = tiles_raw if isinstance(tiles_raw, list) else []
     page = str(data.get("active_page_id") or "overview")
     path = _resolve_dest(root, dest, f"dashboard-{page}-{_day()}.png")
-    lines = [
-        f"TrendAlgo dashboard · {page}",
-        f"tiles={len(tiles)} · demo={bool(data.get('demo'))}",
-    ]
-    for tile in tiles[: max(1, limit)]:
-        if not isinstance(tile, dict):
-            continue
-        lines.append(f"{tile.get('title') or tile.get('id') or 'tile'}: {tile.get('value') or '—'}")
-    if not tiles:
-        lines.append("(empty page)")
-    ensure_export_qapp(root, force_dark=True)
-    _write_message_png(path, lines)
+    render_dashboard_report_png(root, path)
     remember_export_dir(root, path)
     return {
         "kind": "dashboard",
         "page": page,
         "path": str(path),
-        "rows": len(tiles),
+        "rows": max(1, len(tiles)),
     }
 
 

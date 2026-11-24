@@ -55,6 +55,33 @@ public sealed partial class BoardColumnFilterState : ObservableObject
     public double? ChartDistMax30dValue => ParseOptDouble(ChartDistMax30d);
     public double? Vol24MinValue => ParseOptDouble(Vol24Min);
 
+    public bool HasActiveFilters =>
+        MinGain7d is not null
+        || MinGain30d is not null
+        || MinBestBt is not null
+        || HealthMin is not null
+        || !string.IsNullOrWhiteSpace(BotVsBh)
+        || ChartDistMax7dValue is not null
+        || ChartDistMax30dValue is not null
+        || !string.IsNullOrWhiteSpace(VolAccel)
+        || Vol24MinValue is not null
+        || ViewExchanges is { Count: > 0 };
+
+    public void Reset()
+    {
+        MinGain7dText = "";
+        MinGain30dText = "";
+        MinBestBtText = "";
+        HealthMinText = "";
+        BotVsBh = "";
+        ChartDistMax7d = "";
+        ChartDistMax30d = "";
+        VolAccel = "";
+        Vol24Min = "";
+        ExchangeText = "";
+        SyncOptionsFromValues();
+    }
+
     public IReadOnlyList<string>? ViewExchanges
     {
         get

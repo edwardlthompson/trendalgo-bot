@@ -111,15 +111,26 @@ def ccxt_client(entry: ExchangeEntry, *, store: SecretStore | None = None) -> Se
     redactor = protect_logs(entry.env_key, entry.env_secret, store=store)
     api_key = store.get(entry.env_key) or ""
     secret = store.get(entry.env_secret) or ""
+    if "BEGIN " in secret and "\\n" in secret:
+        secret = secret.replace("\\n", "\n")
+    passphrase = (
+        store.get(f"{entry.env_key}_PASSPHRASE")
+        or store.get(f"{entry.id.upper()}_PASSPHRASE")
+        or ""
+    ).strip()
     redactor.watch_values(api_key, secret)
-    digest = hashlib.sha256(f"{api_key}\0{secret}".encode()).hexdigest()
+    if passphrase:
+        redactor.watch_values(passphrase)
+    digest = hashlib.sha256(f"{api_key}\0{secret}\0{passphrase}".encode()).hexdigest()
     cache_key = (entry.id, exchange_class, digest)
     with _CLIENTS_LOCK:
         if cache_key not in _CLIENTS:
             options: dict[str, Any] = {"enableRateLimit": True}
             if entry.id == "kraken":
                 options["options"] = {"adjustForTimeDifference": True}
-            config = {"apiKey": api_key, "secret": secret, **options}
+            config: dict[str, Any] = {"apiKey": api_key, "secret": secret, **options}
+            if passphrase:
+                config["password"] = passphrase
             _CLIENTS[cache_key] = SerializedExchange(
                 exchange_class(config),
                 exchange_id=entry.id,

@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TrendAlgo.Shell.Models;
 using TrendAlgo.Shell.Services;
@@ -45,9 +47,116 @@ public partial class MainViewModel
     }
 
     private CancellationTokenSource? _buyPicksCts;
+    private string _loadedFilterLane = "";
+
+    [ObservableProperty] private int _unfilteredRowCount;
+    [ObservableProperty] private bool _hasActiveBoardFilters;
+
+    public string BoardRowsSummaryText => RowCount < UnfilteredRowCount
+        ? $"Board rows: {RowCount} / {UnfilteredRowCount} ({UnfilteredRowCount - RowCount} hidden by filters)"
+        : $"Board rows: {RowCount}";
+
+    partial void OnBuyPicksExpandedChanged(bool value) => PersistBuyPicksCollapsed(!value);
+
+    private static void PersistBuyPicksCollapsed(bool collapsed)
+    {
+        try
+        {
+            var path = Path.Combine(ProfilePaths.DeviceRoot, "results_view_prefs.json");
+            JsonObject root = File.Exists(path)
+                ? JsonNode.Parse(File.ReadAllText(path)) as JsonObject ?? new JsonObject()
+                : new JsonObject();
+            root["buy_picks_collapsed"] = collapsed;
+            Directory.CreateDirectory(ProfilePaths.DeviceRoot);
+            File.WriteAllText(path, JsonNodeWrite.ToIndented(root));
+        }
+        catch
+        {
+            /* prefs best-effort */
+        }
+    }
+
+    private void LoadBuyPicksCollapsedPref()
+    {
+        try
+        {
+            var path = Path.Combine(ProfilePaths.DeviceRoot, "results_view_prefs.json");
+            if (!File.Exists(path))
+                return;
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            if (doc.RootElement.TryGetProperty("buy_picks_collapsed", out var p)
+                && p.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                BuyPicksExpanded = p.ValueKind != JsonValueKind.True;
+            }
+        }
+        catch
+        {
+            /* ignore */
+        }
+    }
+
+    private void EnsureLaneFiltersLoaded(string lane)
+    {
+        var key = (lane ?? "crypto").Trim().ToLowerInvariant();
+        if (string.Equals(_loadedFilterLane, key, StringComparison.OrdinalIgnoreCase))
+            return;
+        var prevReady = _filterPersistReady;
+        _filterPersistReady = false;
+        try
+        {
+            BoardColumnFilterStore.LoadForLane(QualifiedFilters, key, watchlist: false);
+            BoardColumnFilterStore.LoadForLane(WatchlistFilters, key, watchlist: true);
+            _loadedFilterLane = key;
+        }
+        finally
+        {
+            _filterPersistReady = prevReady;
+        }
+    }
 
     [RelayCommand]
-    private void ReloadBuyPicks() => _ = ReloadBuyPicksAsync();
+    private void ResetBoardFilters()
+    {
+        var prevReady = _filterPersistReady;
+        _filterPersistReady = false;
+        try
+        {
+            BoardFilters.Reset();
+            BoardFilter = "";
+            BoardColumnFilterStore.SaveForLane(BoardFilters, DeskLane(), BoardTab == "watchlist");
+        }
+        finally
+        {
+            _filterPersistReady = prevReady;
+        }
+        ReloadBoard();
+        StatusText = $"Filters cleared → {RowCount} rows";
+    }
+
+    private void RefreshBuyPicksFromBoardRows(string lane)
+    {
+        _buyPicksCts?.Cancel();
+        if (BoardTab != "qualified")
+        {
+            BuyPickRows.Clear();
+            ShowBuyPicks = false;
+            return;
+        }
+        var ranked = BuyPicksRanker.FromBoardRows(BoardRows);
+        if (ranked.Count > 0 || BoardRows.Count == 0 || BoardRows.Any(r => !string.IsNullOrWhiteSpace(r.PayloadJson)))
+        {
+            BuyPickRows.Clear();
+            foreach (var item in ranked)
+                BuyPickRows.Add(item);
+            ShowBuyPicks = BuyPickRows.Count > 0;
+            return;
+        }
+        _ = ReloadBuyPicksAsync();
+    }
+
+    [RelayCommand]
+    private void ReloadBuyPicks() => RefreshBuyPicksFromBoardRows(DeskLane());
 
     private async Task ReloadBuyPicksAsync()
     {
@@ -117,7 +226,7 @@ public partial class MainViewModel
     [RelayCommand]
     private void ApplyBoardFilter()
     {
-        BoardColumnFilterStore.Save(BoardFilters);
+        BoardColumnFilterStore.SaveForLane(BoardFilters, DeskLane(), BoardTab == "watchlist");
         ReloadBoard();
         StatusText = string.IsNullOrWhiteSpace(BoardFilter)
             ? $"Column filters → {RowCount} rows"
@@ -127,7 +236,7 @@ public partial class MainViewModel
     [RelayCommand]
     private void ApplyBoardColumnFilters()
     {
-        BoardColumnFilterStore.Save(BoardFilters);
+        BoardColumnFilterStore.SaveForLane(BoardFilters, DeskLane(), BoardTab == "watchlist");
         ReloadBoard();
         StatusText = $"Column filters → {RowCount} rows";
     }

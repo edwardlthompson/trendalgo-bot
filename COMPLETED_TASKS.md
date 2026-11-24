@@ -2,6 +2,23 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint Polish6-2026-11 POL6-01…03 (2026-11-24)
+
+Verification: `ruff format --check` + `ruff check` (0 errors), `mypy` (0 issues), `pyright` (0 errors), `pytest --no-cov -q` (`test_lane_scan_filters.py`, `test_lane_scan_move_cut.py`, `test_buy_picks.py`, `test_tradfi_universe.py`, `test_tradfi_liquidity_and_mc.py`: 19 passed), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release --nologo` (0 warnings, 0 errors), live TradFi `market_context` backfill (`200/200`), and live `TrendAlgo.Shell.exe` smoke launch.
+
+- ✅ [AGENT][LOCAL] POL6-01 Fix `MainWindow.axaml` `DockPanel` layout, synchronous in-memory `BuyPicksRanker.cs` for Market Context, and daily-bar Market Context fallback in `lane_scan_job.py` / `pair_strategy_scan.py`
+- ✅ [AGENT][LOCAL] POL6-02 Per-lane `BoardColumnFilterStore`, `X / Y (filtered)` board row indicator + `Reset filters` button, and TradFi full-market liquidity/reverse-split filter + liquidity-weighted momentum ranking + equity logo prefetch (`lane_scan_job.py`)
+- ✅ [AGENT][LOCAL] POL6-03 Unit tests, backfill missing Market Context on existing `lts_scan_rows_tradfi.json`, Release build, and live `TrendAlgo.Shell.exe` relaunch
+
+## Sprint Portfolio-2026-11 PF6-01…04 (2026-11-24)
+
+Verification: `ruff format --check src/trendalgo` (918 files formatted) + `ruff check` (0 errors), `mypy` (17 modified/new files, 0 issues), `pyright` (0 errors), `pytest --no-cov -q` (65 + 13 + 37 = 115 passed across `test_portfolio_pipeline_e2e.py`, `test_portfolio`, `test_exchanges`, `test_device`, and `test_results_store`), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release --nologo` (0 warnings, 0 errors), CLI smoke (`png_bytes=150427`, `html_bytes=19200`).
+
+- ✅ [AGENT][LOCAL] PF6-01 Exchange keys CredMan vault, passphrase/PEM/staked-asset hardening, live key verify, & multi-venue portfolio sync (`desk_exchange_keys.py`, `desk_portfolio_sync.py`, Avalonia `ExchangeKeysPanel`)
+- ✅ [AGENT][LOCAL] PF6-02 Rich multi-exchange Dashboard analytics payload across all 38 catalog modules, page tabs, range chips, & Demo/Live switching (`desk_portfolio_payload.py`, `desk_dashboard.py`)
+- ✅ [AGENT][LOCAL] PF6-03 Native Avalonia Dashboard visual controls (`DashboardChartCanvas.cs`, `DashboardPanel.axaml` — equity/benchmark curves, donut rings, treemap heatmap, daily P&L bars, radial gauges, holdings table with coin icons)
+- ✅ [AGENT][LOCAL] PF6-04 Executive Portfolio Report exports (self-contained printable HTML report with embedded SVG graphics, 2× high-DPI Dashboard PNG card, Holdings & Equity CSVs) + tests & release build relaunch
+
 ## Sprint Polish5-2026-11 POL5-01…05 (2026-11-24)
 
 Verification: `ruff format --check .` + `ruff check .` (0 errors), `mypy src` (0 issues in 912 files), `pyright` (0 errors), `pytest --no-cov -q` (109 passed across `test_results_store`, `test_ohlcv_resample`, `test_alpaca_ohlcv_bisect`, `test_telegram_format_lts`, `test_shell_parity_catalog`), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release --nologo` (0 warnings, 0 errors), isolated `ETH/USD` `--pair-backtest` (199 rows, `pairs_label=Single-pair backtest (1/1)`), `scan_settings` benchmark-calibrated ETAs (`Crypto ~10s/coin`, `TradFi ~4s/coin`, `Forex ~8s/coin`), `validate-template-index.sh`, `check-file-encoding.sh`, `check-file-limits.sh`, `check-repo-hygiene.sh` all passed.

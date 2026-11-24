@@ -204,12 +204,46 @@ def scan_pair_strategies(
             remember_skip(skip_best, sid, "insufficient_bars")
         done = total
         out = ensure_full_catalog(out, strat_list, symbol=symbol, stake_usd=stake, skips=skip_best)
-        publish()
-        emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
-        return out, {
+        fallback_mc: dict[str, Any] = {
             "data_source": data_source,
             "cache_age_s": cache_age_s,
         }
+        if include_market_context:
+            try:
+                from datetime import UTC, datetime, timedelta
+
+                from trendalgo.analytics.market_context import compute_market_context
+                from trendalgo.market.ohlcv_disk_cache import load_cached_ohlcv
+
+                df_1d: pd.DataFrame | None = None
+                if prefs_root is not None:
+                    until = datetime.now(tz=UTC)
+                    pts_1d = load_cached_ohlcv(
+                        prefs_root, f"{load_symbol}/USD", "1d", until - timedelta(days=40), until
+                    )
+                    if pts_1d and len(pts_1d) >= 10:
+                        df_1d = pd.DataFrame(
+                            {
+                                "open": [float(p.open) for p in pts_1d],
+                                "high": [float(p.high) for p in pts_1d],
+                                "low": [float(p.low) for p in pts_1d],
+                                "close": [float(p.close) for p in pts_1d],
+                                "volume": [float(p.volume) for p in pts_1d],
+                            }
+                        )
+                if df_1d is not None and not df_1d.empty:
+                    computed_mc = compute_market_context(df_1d, period_bars=10).to_dict()
+                    if computed_mc.get("ok"):
+                        fallback_mc = {
+                            **computed_mc,
+                            "data_source": data_source,
+                            "cache_age_s": cache_age_s,
+                        }
+            except Exception:
+                pass
+        publish()
+        emit(f"Scan complete — {len(out)} rows", phase="done", done=total)
+        return out, fallback_mc
 
     emit(
         f"Loaded {load_symbol}: {len(frames_by_tf)}/{len(ordered_tf)} TFs ({base_tf})",

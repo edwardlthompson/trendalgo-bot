@@ -7,6 +7,7 @@ from typing import Any
 
 __all__ = [
     "apply_dashboard_customize",
+    "apply_dashboard_layout",
     "apply_dashboard_module_mins",
     "load_dashboard_surface",
 ]
@@ -15,6 +16,10 @@ __all__ = [
 def load_dashboard_surface(root: Path) -> dict[str, Any]:
     from trendalgo.device.portfolio_layout_prefs import load_prefs
     from trendalgo.device.portfolio_module_catalog import CATALOG, catalog_by_category, spec_for
+    from trendalgo.results_store.desk_portfolio_payload import (
+        load_portfolio_analytics,
+        tile_visual_for,
+    )
 
     prefs = load_prefs(root)
     page = next((p for p in prefs.pages if p.id == prefs.active_page_id), None)
@@ -22,13 +27,19 @@ def load_dashboard_surface(root: Path) -> dict[str, Any]:
         page = prefs.pages[0]
     placements = list(page.placements) if page else []
     present = {p.id for p in placements}
+    analytics = load_portfolio_analytics(root)
     live = _live_glances(root)
     tiles: list[dict[str, Any]] = []
     for pl in placements:
         meta = spec_for(pl.id)
         title = meta.title if meta else pl.id
         category = meta.category if meta else ""
+        visual = tile_visual_for(pl.id, analytics)
         glance = live.get(pl.id) or {}
+        if not visual.get("value") and glance.get("value"):
+            visual["value"] = str(glance["value"])
+        if not visual.get("detail") and glance.get("detail"):
+            visual["detail"] = str(glance["detail"])
         tiles.append(
             {
                 "id": pl.id,
@@ -38,8 +49,7 @@ def load_dashboard_surface(root: Path) -> dict[str, Any]:
                 "row": pl.row,
                 "w": pl.w,
                 "h": pl.h,
-                "value": str(glance.get("value") or ""),
-                "detail": str(glance.get("detail") or ""),
+                **visual,
             }
         )
     catalog = [
@@ -63,11 +73,20 @@ def load_dashboard_surface(root: Path) -> dict[str, Any]:
         "tiles": tiles,
         "count": len(catalog),
         "tile_count": len(tiles),
-        "demo": (root / "portfolio-demo.db").is_file(),
+        "demo": bool(analytics.get("demo")),
+        "has_data": bool(analytics.get("has_data")),
         "ranges": ["1D", "1W", "1M", "3M", "YTD", "1Y"],
+        "range_chips": ["1D", "1W", "1M", "3M", "6M", "YTD", "1Y", "ALL"],
+        "active_range": str(analytics.get("active_range") or "1M"),
         "pages": pages or [{"id": "main", "title": "Main"}],
         "active_page_id": prefs.active_page_id,
         "calendar_cta": True,
+        "last_synced_local": str(analytics.get("last_synced_local") or ""),
+        "venues_summary": str(analytics.get("venues_summary") or ""),
+        "net_worth_usd": float(analytics.get("net_worth_usd") or 0.0),
+        "daily_pnl_usd": float(analytics.get("daily_pnl_usd") or 0.0),
+        "daily_pnl_pct": float(analytics.get("daily_pnl_pct") or 0.0),
+        "health_score": int(analytics.get("health_score") or 0),
         "grid": {
             "cols": cols,
             "rows": rows,
@@ -77,6 +96,56 @@ def load_dashboard_surface(root: Path) -> dict[str, Any]:
         "customize": customize,
         "module_mins": _module_mins_rows(prefs),
         "live": live,
+    }
+
+
+def apply_dashboard_layout(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    """Switch active Dashboard page, add a page, set range, or toggle Demo/Live."""
+    import json
+
+    from trendalgo.device.portfolio_demo import seed_demo_portfolio
+    from trendalgo.device.portfolio_layout_prefs import PageLayout, load_prefs, save_prefs
+
+    prefs = load_prefs(root)
+    changed_prefs = False
+    if payload.get("add_page"):
+        n = len(prefs.pages) + 1
+        new_id = f"page-{n}"
+        title = str(payload.get("page_title") or f"Page {n}").strip() or f"Page {n}"
+        prefs.pages.append(PageLayout(id=new_id, name=title, placements=[]))
+        prefs.active_page_id = new_id
+        changed_prefs = True
+    elif payload.get("active_page_id"):
+        want = str(payload["active_page_id"]).strip()
+        if any(p.id == want for p in prefs.pages):
+            prefs.active_page_id = want
+            changed_prefs = True
+    if changed_prefs:
+        save_prefs(root, prefs)
+
+    layout_path = root / "shell_dashboard_layout.json"
+    existing: dict[str, Any] = {}
+    if layout_path.is_file():
+        try:
+            raw = json.loads(layout_path.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                existing = raw
+        except Exception:
+            existing = {}
+
+    if "range" in payload and str(payload["range"]).strip():
+        existing["range"] = str(payload["range"]).strip().upper()
+    if "demo" in payload:
+        demo_on = bool(payload["demo"])
+        existing["demo"] = demo_on
+        if demo_on and not (root / "portfolio-demo.db").is_file():
+            seed_demo_portfolio(root / "portfolio-demo.db")
+    layout_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
+    return {
+        "ok": True,
+        "active_page_id": prefs.active_page_id,
+        "range": existing.get("range", "1M"),
+        "demo": existing.get("demo"),
     }
 
 
