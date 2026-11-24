@@ -5,20 +5,20 @@ human’s original prompt **verbatim**. Bootstrap stamps `AGENTS.md` only and wi
 not overwrite this file. Later sessions: read this before any BUILD_PLAN sprint row.
 
 <!-- agent-brief:one-liner -->
-Photoreal Cycles icons from a locked seed, camera, and lighting.
+Self-hosted crypto trading platform: native CCXT engine, LTS opportunity scanner, Secret Sauce Lab, and desktop shell.
 <!-- /agent-brief:one-liner -->
 
 <!-- agent-brief:keywords -->
-camera, messages, tame, neon
+crypto, trading, scanner, portfolio
 <!-- /agent-brief:keywords -->
 
 ## Rules
 
-- Generate store/PWA icons from a JSON manifest (seed, camera, lighting).
-- Machine QA only — do not ask a human to review thousands of frames.
-- Cycles OptiX is local GPU; CI stays CPU/headless or skip if Blender is missing.
+- Dry-run is the default; live orders require `TRENDALGO_MODE=live` and per-exchange `go-live-gate.sh --approve`.
+- Secret Sauce must beat fees and Buy & Hold under an honest Oracle ceiling (never force-sorted).
+- Dual-runtime desktop architecture (ADR-0021): C# Avalonia shell + permanent Python Research Engine sharing `results.db`.
 - Do not overwrite live `branding/assets/*.svg` (Sacred vector SoT).
 
 ## First milestone
 
-Seeded icon factory with QA JSON; sample manifest in CI; 4000+ run on This Computer.
+Kraken public research desk + 9-CEX read-only portfolio + Secret Sauce Lab + Avalonia/PySide6 desktop parity.

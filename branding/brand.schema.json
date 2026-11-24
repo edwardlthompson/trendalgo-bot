@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TrendAlgo Brand Contract",
+  "type": "object",
+  "required": ["brand_name", "icon", "icon_sha256", "source", "tokens"],
+  "properties": {
+    "brand_name": { "type": "string", "minLength": 1 },
+    "icon": { "type": "string", "minLength": 1 },
+    "icon_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "source": { "type": "string", "enum": ["owned", "inherited", "missing", "placeholder"] },
+    "tokens": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

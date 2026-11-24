@@ -68,9 +68,11 @@ def build_context_gfx_band(ctx: dict[str, Any]) -> QWidget | None:
     return root
 
 
-def build_buy_picks_gfx_band(coins: list[dict[str, Any]]) -> QWidget | None:
-    """Market Context top-10 band with ScoreSpectrum ticks (Qualified share)."""
-    picks = rank_buy_picks(coins)
+def build_buy_picks_gfx_band(
+    coins: list[dict[str, Any]], *, limit: int | None = None
+) -> QWidget | None:
+    """Market Context band with ScoreSpectrum ticks (Qualified list + share)."""
+    picks = rank_buy_picks(coins, limit=limit)
     if not picks:
         return None
     root = QWidget()

@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.ChartSurfaceWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Width="960"
+        Height="600"
+        MinWidth="480"
+        MinHeight="360"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="12">
+    <TextBlock x:Name="NoteText" DockPanel.Dock="Bottom" Opacity="0.75" TextWrapping="Wrap" Margin="0,8,0,0" />
+    <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,8">
+      <TextBlock x:Name="StatsText" FontWeight="SemiBold" TextWrapping="Wrap" />
+      <TextBlock Text="OHLC candles when chart_ohlc_1h is present; otherwise close sparkline. Trade markers: blue entry / amber exit." Opacity="0.8" TextWrapping="Wrap" />
+    </StackPanel>
+    <Grid RowDefinitions="220,*">
+      <Border Grid.Row="0" Background="#141414" CornerRadius="4" Padding="8" Margin="0,0,0,8">
+        <Canvas x:Name="SparkCanvas" MinHeight="200" SizeChanged="OnCanvasSized" />
+      </Border>
+      <DataGrid Grid.Row="1"
+                x:Name="Grid"
+                HorizontalAlignment="Stretch"
+                HorizontalScrollBarVisibility="Disabled"
+                IsReadOnly="True"
+                CanUserSortColumns="True"
+                AutoGenerateColumns="False"
+                GridLinesVisibility="Horizontal">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="#" Binding="{Binding Col1}" Width="60" />
+          <DataGridTextColumn Header="Close" Binding="{Binding Col2}" Width="*" />
+          <DataGridTextColumn Header="From high %" Binding="{Binding Col3}" Width="*" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Grid>
+  </DockPanel>
+</Window>

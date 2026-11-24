@@ -15,7 +15,13 @@ from pathlib import Path
 from typing import Any
 
 from trendalgo.device.db import enable_wal
-from trendalgo.device.lts_scan_model import build_lts_rows, load_filters, save_lts_rows
+from trendalgo.device.lts_scan_model import (
+    build_lts_rows,
+    load_filters,
+    load_lts_rows,
+    load_watchlist,
+    save_lts_rows,
+)
 from trendalgo.device.scan_eta_filters import merge_scan_meta
 from trendalgo.device.scan_identity import row_key
 from trendalgo.device.scan_lock import try_acquire_scan_lock
@@ -26,7 +32,7 @@ from trendalgo.device.secrets_vault import VaultSecretStore
 from trendalgo.exchanges.private_client import ccxt_client, set_secret_store
 from trendalgo.exchanges.registry import load_registry
 from trendalgo.scanner.pipeline import MarketFetcher, run_pipeline
-from trendalgo.scanner.progress import get_scan_progress
+from trendalgo.scanner.progress import get_scan_progress, set_scan_progress_lane
 from trendalgo.scanner.snapshot import QualifiedSnapshot
 from trendalgo.scanner.store import ScannerStore
 from trendalgo.scanner.venue_market import run_venue_pipeline
@@ -44,7 +50,8 @@ def scan_job(root: Path, fetcher: MarketFetcher | None = None) -> dict[str, Any]
 
 
 def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[str, Any]:
-    progress = get_scan_progress()
+    set_scan_progress_lane("crypto")
+    progress = get_scan_progress("crypto")
     progress.begin_job(SCAN_LABEL)
     reporter = ProgressReporter(root)
     timings: dict[str, float] = {}
@@ -141,6 +148,7 @@ def _scan_job_locked(root: Path, fetcher: MarketFetcher | None = None) -> dict[s
         bt_meta: dict[str, Any] = {}
         from trendalgo.device.lts_scan_model import coins_for_backtest
 
+        all_rows = _inject_watchlist_rows(root, all_rows)
         bt_candidates = coins_for_backtest(all_rows, saved)
         progress.log(
             f"Pass-1 backtest + Market Context sweep: {len(bt_candidates)} scan coins "
@@ -208,6 +216,7 @@ def _finish_public_pipeline(
     if run_pass1 and rows:
         from trendalgo.device.lts_scan_model import coins_for_backtest
 
+        rows = _inject_watchlist_rows(root, rows)
         saved = filters or {}
         bt_candidates = coins_for_backtest(rows, saved)
         progress.log(
@@ -234,6 +243,39 @@ def _finish_public_pipeline(
         "data_source": "Kraken public",
         "funnel": dict(funnel) if funnel else {},
     }
+
+
+def _inject_watchlist_rows(root: Path, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Ensure every watchlisted Crypto pair stays in the scan/backtest set even if filtered out."""
+    wl = [str(p).strip().upper() for p in load_watchlist(root, lane="crypto") if str(p).strip()]
+    if not wl:
+        return rows
+    wl_set = set(wl)
+    present: set[str] = set()
+    for r in rows:
+        pair = str(r.get("pair") or "").strip().upper()
+        if pair in wl_set:
+            r["watch"] = True
+            present.add(pair)
+    missing = [p for p in wl if p not in present]
+    if not missing:
+        return rows
+    prior_by_pair = {
+        str(r.get("pair") or "").strip().upper(): r
+        for r in load_lts_rows(root, lane="crypto")
+        if r.get("pair")
+    }
+    out = list(rows)
+    for pair in missing:
+        base = pair.split("/")[0]
+        seed = dict(prior_by_pair.get(pair) or {})
+        seed["pair"] = pair
+        seed.setdefault("symbol", base)
+        seed.setdefault("name", base)
+        seed.setdefault("exchange_id", "kraken")
+        seed["watch"] = True
+        out.append(seed)
+    return out
 
 
 def _merge_pass1_backtests(

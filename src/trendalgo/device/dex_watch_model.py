@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +19,10 @@ def dex_watch_rows_path(root: Path) -> Path:
 def save_dex_watch_rows(root: Path, rows: list[dict[str, Any]]) -> None:
     path = dex_watch_rows_path(root)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"rows": rows}, indent=2) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps({"saved_at": datetime.now(UTC).isoformat(), "rows": rows}, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def load_dex_watch_rows(root: Path) -> list[dict[str, Any]]:

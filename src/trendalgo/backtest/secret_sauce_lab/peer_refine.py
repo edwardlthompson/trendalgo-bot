@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from trendalgo.backtest.secret_sauce_dossier import dossier_from_dict
@@ -55,6 +57,7 @@ def refine_lab_from_peers(
     fee: Any,
     time_budget_s: float | None = None,
     frames_by_tf: dict[str, Any] | None = None,
+    emit: Callable[[str], None] | None = None,
 ) -> tuple[Any, RegimeSnapshot, dict[str, Any], str] | None:
     """Oracle-directed refine; peer peek only as last-resort skim under peer bar."""
     tf = str(sauce.get("timeframe") or "1h")
@@ -85,12 +88,22 @@ def refine_lab_from_peers(
     # When peer is already cleared, skew budget to residual coverage on primary TF.
     if peer_cleared and budgets:
         budgets = [max(budgets)] + [b * 0.35 for b in budgets[1:]]
-    for search_tf, budget in zip(tf_list, budgets, strict=False):
+    tf_tasks: list[tuple[int, str, Any, float]] = []
+    for idx_tf, (search_tf, budget) in enumerate(zip(tf_list, budgets, strict=False), start=1):
         search_frame = frame
         if frames_by_tf and frames_by_tf.get(search_tf) is not None:
             search_frame = frames_by_tf[search_tf]
         elif search_tf != tf:
             continue
+        tf_tasks.append((idx_tf, search_tf, search_frame, budget))
+
+    def _run_refine_tf(
+        task: tuple[int, str, Any, float],
+    ) -> list[tuple[Any, Any, float, str, str, Any, RegimeSnapshot]]:
+        idx_tf, search_tf, search_frame, budget = task
+        if emit is not None:
+            emit(f"Secret Sauce Lab refine [{idx_tf}/{len(tf_list)}] ({search_tf})…")
+        local_out: list[tuple[Any, Any, float, str, str, Any, RegimeSnapshot]] = []
         _search_tf_oracle_first(
             sauce,
             search_frame,
@@ -102,17 +115,30 @@ def refine_lab_from_peers(
             fee,
             stake,
             budget,
-            candidates,
+            local_out,
             oracle_swing_count=n_swings,
-            # Prefer peer-clearing hits but never empty the pool when under peer.
             require_peer_clear=False,
         )
+        return local_out
+
+    from trendalgo.device.scan_parallel import pass2_worker_count  # noqa: PLC0415
+
+    r_workers = min(len(tf_tasks), pass2_worker_count())
+    if r_workers > 1 and len(tf_tasks) > 1:
+        with ThreadPoolExecutor(max_workers=r_workers) as pool:
+            for chunk in pool.map(_run_refine_tf, tf_tasks):
+                candidates.extend(chunk)
+    else:
+        for task in tf_tasks:
+            candidates.extend(_run_refine_tf(task))
     # Last resort: RSX clear + fat + peer-pattern skim if still under peer.
     if (
         not peer_cleared
         and peer_usd is not None
         and (not candidates or max(c[2] for c in candidates) <= peer_usd)
     ):
+        if emit is not None:
+            emit("Secret Sauce Lab fallback refine…")
         clear_tf = peer_tf or tf
         clear_frame = (
             frames_by_tf.get(clear_tf)

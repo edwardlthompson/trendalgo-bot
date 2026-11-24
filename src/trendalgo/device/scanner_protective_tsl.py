@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pandas as pd
 
 from trendalgo.backtest.hill_climb_tsl import assign_protective_tsl_from_masks
 from trendalgo.backtest.ta_fleet import prepare_signals
+from trendalgo.device.scan_parallel import pass2_worker_count
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
 
 _SKIP = frozenset({"B&H", "Oracle max"})
@@ -25,6 +27,11 @@ def stamp_lts_protective_tsl(
     if name in _SKIP or str(row.get("skip_reason") or "").strip():
         return row
     if bool(row.get("ss_lab_pending")):
+        return row
+    try:
+        if int(row.get("trades") or 0) <= 0:
+            return row
+    except (TypeError, ValueError):
         return row
     raw = row.get("trailing_stop_loss_pct")
     if raw is None:
@@ -79,14 +86,25 @@ def stamp_rows_protective_tsl(
     stake: float,
 ) -> list[dict[str, Any]]:
     """Stamp every zero-TSL Results row that has a matching timeframe frame."""
-    out: list[dict[str, Any]] = []
-    for row in rows:
+    work: list[tuple[int, dict[str, Any], pd.DataFrame]] = []
+    out = list(rows)
+    for idx, row in enumerate(rows):
         tf = str(row.get("timeframe") or "")
         frame = frames_by_tf.get(tf)
-        if frame is None:
-            out.append(row)
-            continue
-        out.append(stamp_lts_protective_tsl(row, frame, fee=fee, stake=stake))
+        if frame is not None:
+            work.append((idx, row, frame))
+    workers = min(len(work), pass2_worker_count())
+    if workers > 1 and len(work) > 2:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = [
+                (idx, pool.submit(stamp_lts_protective_tsl, row, frame, fee=fee, stake=stake))
+                for idx, row, frame in work
+            ]
+            for idx, fut in futs:
+                out[idx] = fut.result()
+        return out
+    for idx, row, frame in work:
+        out[idx] = stamp_lts_protective_tsl(row, frame, fee=fee, stake=stake)
     return out
 
 

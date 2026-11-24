@@ -1,0 +1,862 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TrendAlgo.Shell.ViewModels"
+        xmlns:models="using:TrendAlgo.Shell.Models"
+        xmlns:controls="using:TrendAlgo.Shell.Controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="720"
+        x:Class="TrendAlgo.Shell.Views.MainWindow"
+        x:Name="Root"
+        x:DataType="vm:MainViewModel"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="TrendAlgo"
+        Width="1100"
+        Height="720"
+        MinWidth="480"
+        MinHeight="360">
+
+  <Design.DataContext>
+    <vm:MainViewModel />
+  </Design.DataContext>
+
+  <DockPanel Margin="12">
+    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" LastChildFill="True">
+      <StackPanel DockPanel.Dock="Right"
+                  Orientation="Vertical"
+                  Spacing="2"
+                  VerticalAlignment="Top"
+                  Margin="12,0,0,0"
+                  MaxWidth="280">
+        <TextBlock Text="{Binding HostBadgeLabel}"
+                   FontWeight="SemiBold"
+                   Opacity="0.9"
+                   TextWrapping="Wrap" />
+        <TextBlock Text="{Binding HandshakeText}"
+                   Opacity="0.75"
+                   TextWrapping="Wrap"
+                   FontSize="12" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <Border Width="32" Height="32" CornerRadius="6" ClipToBounds="True">
+          <Image Source="avares://TrendAlgo.Shell/Assets/app-logo.png" Width="32" Height="32" Stretch="UniformToFill" />
+        </Border>
+        <TextBlock Text="TrendAlgo"
+                   FontWeight="SemiBold"
+                   FontSize="17"
+                   VerticalAlignment="Center"
+                   Opacity="0.95" />
+      </StackPanel>
+    </DockPanel>
+
+    <TextBlock DockPanel.Dock="Bottom"
+               Text="{Binding StatusText}"
+               Opacity="0.8"
+               Margin="0,8,0,0" />
+
+    <Grid ColumnDefinitions="220,*">
+      <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,12,0">
+        <TextBlock Grid.Row="0" Text="Navigation" FontWeight="SemiBold" Margin="0,0,0,6" />
+        <ListBox x:Name="PrimaryList"
+                 Grid.Row="1"
+                 ItemsSource="{Binding PrimaryNav}"
+                 SelectionChanged="OnNavSelectionChanged">
+          <ListBox.Styles>
+            <Style Selector="ListBoxItem" x:DataType="models:NavDestination">
+              <Setter Property="IsVisible" Value="{Binding IsVisible}" />
+            </Style>
+          </ListBox.Styles>
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="models:NavDestination">
+              <TextBlock Text="{Binding Label}" Margin="{Binding Indent}" />
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
+
+      <DockPanel Grid.Column="1">
+        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,8">
+          <TextBlock Text="{Binding PageTitle}" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding PageBody}" TextWrapping="Wrap" Opacity="0.85"
+                     IsVisible="{Binding PageBody, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <DockPanel x:Name="DeskStripPanel"
+                     IsVisible="{Binding ShowDeskStrip}"
+                     SizeChanged="OnDeskStripSizeChanged"
+                     Margin="0,8,0,4"
+                     LastChildFill="False">
+            <Button x:Name="DeskRunBtn" DockPanel.Dock="Left" Content="Run scan" Command="{Binding DeskRunScanCommand}" Margin="0,0,6,0"
+                    ToolTip.Tip="Scan the desks checked in Scan Settings (or this desk if only one is selected)." />
+            <Button x:Name="DeskForceBtn" DockPanel.Dock="Left" Content="Force fresh scan (DEBUG)" Command="{Binding DeskForceFreshCommand}"
+                    IsVisible="{Binding ShowForceFresh}" Margin="0,0,6,0"
+                    ToolTip.Tip="Clears Qualified rows + price caches, then runs a live scan. Requires TRENDALGO_DEBUG_SCAN=1." />
+            <Button x:Name="DeskCancelBtn" DockPanel.Dock="Left" Content="Cancel" Command="{Binding DeskCancelCommand}" IsEnabled="{Binding ScanBusy}" Margin="0,0,6,0" />
+            <Button x:Name="DeskProgressBtn" DockPanel.Dock="Left" Content="Progress" Command="{Binding OpenScanProgressCommand}" Margin="0,0,6,0" />
+            <Button x:Name="DeskReloadBtn" DockPanel.Dock="Left" Content="Reload" Command="{Binding ReloadBoardCommand}" Margin="0,0,6,0" />
+            <Button x:Name="DeskShareBtn" DockPanel.Dock="Left" Content="Share PNG" Command="{Binding DeskShareCommand}" Margin="0,0,6,0" />
+            <Button x:Name="DeskSauceBtn" DockPanel.Dock="Left" Content="Run Secret Sauce" Command="{Binding DeskRunSauceCommand}" Margin="0,0,6,0" />
+            <Button x:Name="DeskSettingsBtn" DockPanel.Dock="Left" Content="Settings" Command="{Binding DeskOpenSettingsCommand}" Margin="0,0,6,0" />
+            <Button x:Name="DeskMoreBtn" DockPanel.Dock="Left" Content="More ▾" IsVisible="False" Margin="0,0,6,0">
+              <Button.Flyout>
+                <MenuFlyout Placement="Bottom">
+                  <MenuItem x:Name="MoreCancelItem" Header="Cancel" Command="{Binding DeskCancelCommand}" IsEnabled="{Binding ScanBusy}" IsVisible="False" />
+                  <MenuItem x:Name="MoreProgressItem" Header="Progress" Command="{Binding OpenScanProgressCommand}" IsVisible="False" />
+                  <MenuItem x:Name="MoreReloadItem" Header="Reload" Command="{Binding ReloadBoardCommand}" IsVisible="False" />
+                  <MenuItem x:Name="MoreShareItem" Header="Share PNG" Command="{Binding DeskShareCommand}" IsVisible="False" />
+                  <MenuItem x:Name="MoreSauceItem" Header="Run Secret Sauce" Command="{Binding DeskRunSauceCommand}" IsVisible="False" />
+                  <MenuItem x:Name="MoreSettingsItem" Header="Settings" Command="{Binding DeskOpenSettingsCommand}" IsVisible="False" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+            <TextBlock x:Name="DeskLoadText" DockPanel.Dock="Left" Text="{Binding DeskLoadPct}" VerticalAlignment="Center"
+                       Opacity="0.8" Margin="6,0,0,0" />
+          </DockPanel>
+          <TextBlock IsVisible="{Binding ShowScanProgress}"
+                     Text="{Binding ScanProgressText}"
+                     TextWrapping="Wrap"
+                     Opacity="0.9"
+                     Margin="0,4,0,4" />
+          <Border IsVisible="{Binding ShowAlpacaCta}" Background="#223349" Padding="10" Margin="0,4,0,4" CornerRadius="4">
+            <StackPanel Spacing="6">
+              <TextBlock Text="{Binding AlpacaCtaText}" TextWrapping="Wrap" />
+              <Button Content="Open Alpaca wizard (Settings)" Command="{Binding OpenAlpacaWizardCommand}" HorizontalAlignment="Left" />
+            </StackPanel>
+          </Border>
+          <WrapPanel IsVisible="{Binding ShowBacktestStrip}" Margin="0,4,0,4">
+            <TextBlock Text="Pair" VerticalAlignment="Center" Margin="0,0,6,6" />
+            <TextBox Width="120" Text="{Binding BacktestPair}" Margin="0,0,6,6" />
+            <Button Content="{Binding BacktestRunLabel}" Command="{Binding BacktestRunCommand}" Margin="0,0,6,6" />
+            <Button Content="Cancel" Command="{Binding BacktestCancelCommand}" Margin="0,0,6,6" />
+            <Button Content="Settings" Command="{Binding BacktestOpenSettingsCommand}" Margin="0,0,6,6" />
+            <Button Content="{Binding BacktestRefreshLabel}" Command="{Binding BacktestRefreshPricesCommand}" Margin="0,0,6,6" />
+            <Button Content="Share" Command="{Binding ShareStrategyPngCommand}" Margin="0,0,6,6" />
+            <Button Content="Events" Command="{Binding BacktestOpenEventsCommand}" Margin="0,0,6,6" />
+            <Button Content="{Binding BacktestStatusLabel}" Command="{Binding OpenScanProgressCommand}" Margin="0,0,6,6" />
+            <Button Content="Reload" Command="{Binding BacktestReloadCommand}" Margin="0,0,6,6" />
+            <Button Content="Results" Command="{Binding BacktestOpenResultsCommand}" Margin="0,0,6,6" />
+            <Button Content="Sauce" Command="{Binding BacktestOpenSauceCommand}" Margin="0,0,6,6" />
+            <Button Content="Chart" Command="{Binding BacktestOpenChartCommand}" Margin="0,0,6,6" />
+            <Button Content="Derive Oracle rule" Command="{Binding BacktestDeriveOracleCommand}" Margin="0,0,6,6" />
+            <Button Content="Glossary" Command="{Binding BacktestOpenGlossaryCommand}" Margin="0,0,6,6" />
+            <CheckBox Content="{Binding BacktestPerfectLabel}"
+                      IsChecked="{Binding BacktestPerfectOnly}"
+                      Margin="0,0,6,6"
+                      VerticalAlignment="Center" />
+          </WrapPanel>
+          <StackPanel IsVisible="{Binding ShowBacktestStrip}" Spacing="4" Margin="0,0,0,4">
+            <Button Content="Toggle market context"
+                    Command="{Binding BacktestToggleMarketCtxCommand}"
+                    HorizontalAlignment="Left" />
+            <TextBlock Text="{Binding MarketContextText}"
+                       TextWrapping="Wrap"
+                       Opacity="0.85"
+                       IsVisible="{Binding !BacktestMarketCtxCollapsed}" />
+            <TextBlock Text="{Binding BacktestStrategyCaption}" FontWeight="SemiBold"
+                       IsVisible="{Binding !BacktestEmpty}" />
+            <StackPanel IsVisible="{Binding BacktestEmpty}" Spacing="2">
+              <TextBlock Text="{Binding BacktestEmptyTitle}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding BacktestEmptyBody}" TextWrapping="Wrap" Opacity="0.85" />
+            </StackPanel>
+          </StackPanel>
+          <TextBlock IsVisible="{Binding ShowBots}"
+                     Text="{Binding BotsPrefillNote}"
+                     TextWrapping="Wrap"
+                     Opacity="0.85"
+                     Margin="0,0,0,4" />
+          <WrapPanel IsVisible="{Binding ShowDashboard}" Margin="0,4,0,4">
+            <Button Content="Sync All" Command="{Binding DashboardSyncCommand}" Margin="0,0,6,6" />
+            <Button Content="Customize" Command="{Binding DashboardCustomizeCommand}" Margin="0,0,6,6" />
+            <Button Content="Export TSV/CSV" Command="{Binding DashboardExportCommand}" Margin="0,0,6,6" />
+            <Button Content="Share PNG" Command="{Binding DashboardSharePngCommand}" Margin="0,0,6,6" />
+            <Button Content="Reload catalog" Command="{Binding DashboardReloadCommand}" Margin="0,0,6,6" />
+            <Button Content="Add page" Command="{Binding DashboardAddPageCommand}" Margin="0,0,6,6" />
+            <Button Content="Calendar setup" Command="{Binding DashboardOpenCalendarCommand}" Margin="0,0,6,6" />
+            <Button Content="Events" Command="{Binding DashboardOpenEventsCommand}" Margin="0,0,6,6" />
+            <TextBlock Text="{Binding DashboardPageTitle, StringFormat=Page: {0}}" VerticalAlignment="Center" Margin="0,0,8,6" Opacity="0.8" />
+            <TextBlock Text="Demo" IsVisible="{Binding DashboardDemo}" VerticalAlignment="Center" Margin="0,0,8,6" FontWeight="SemiBold" />
+          </WrapPanel>
+          <WrapPanel IsVisible="{Binding ShowDashboard}" Margin="0,0,0,4">
+            <Button Content="1D" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1D" Margin="0,0,4,4" />
+            <Button Content="1W" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1W" Margin="0,0,4,4" />
+            <Button Content="1M" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1M" Margin="0,0,4,4" />
+            <Button Content="3M" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="3M" Margin="0,0,4,4" />
+            <Button Content="YTD" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="YTD" Margin="0,0,4,4" />
+            <Button Content="1Y" Command="{Binding SelectDashboardRangeCommand}" CommandParameter="1Y" Margin="0,0,4,4" />
+            <TextBlock Text="{Binding DashboardRange, StringFormat=Range: {0}}" VerticalAlignment="Center" Opacity="0.75" Margin="6,0,0,4" />
+          </WrapPanel>
+          <WrapPanel IsVisible="{Binding ShowGlossary}" Margin="0,4,0,4">
+            <TextBox Width="200" Watermark="Search glossary" Text="{Binding GlossaryQuery}" Margin="0,0,6,6" />
+            <Button Content="Search" Command="{Binding GlossarySearchCommand}" Margin="0,0,6,6" />
+          </WrapPanel>
+          <WrapPanel IsVisible="{Binding ShowDebug}" Margin="0,4,0,4">
+            <Button Content="Reload device.log" Command="{Binding DebugReloadCommand}" Margin="0,0,6,6" />
+          </WrapPanel>
+          <WrapPanel IsVisible="{Binding ShowBots}" Margin="0,4,0,4">
+            <Button Content="+ Add bot" Command="{Binding BotsFabAddCommand}" Margin="0,0,6,6" FontWeight="SemiBold" />
+            <Button Content="Reload plan" Command="{Binding BotsReloadCommand}" Margin="0,0,6,6" />
+            <Button Content="Host poll 15s" Command="{Binding BotsToggleHostPollCommand}" Margin="0,0,6,6" />
+            <Button Content="Panic" Command="{Binding BotsPanicCommand}" Margin="0,0,6,6" />
+            <Button Content="Journal" Command="{Binding BotsJournalCommand}" Margin="0,0,6,6" />
+            <Button Content="Performance" Command="{Binding BotsPerformanceCommand}" Margin="0,0,6,6" />
+            <TextBlock Text="{Binding HostBadgeLabel}" VerticalAlignment="Center" Opacity="0.9" Margin="0,0,8,6" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding HostPollCaption}" VerticalAlignment="Center" Opacity="0.75" Margin="0,0,8,6" />
+            <TextBlock Text="{Binding HostSafetyLights}" VerticalAlignment="Center" Opacity="0.85" />
+          </WrapPanel>
+          <WrapPanel IsVisible="{Binding ShowBots}" Margin="0,0,0,4">
+            <TextBox Width="100" Watermark="Name" Text="{Binding PlanDraftName}" Margin="0,0,6,6" />
+            <TextBox Width="100" Watermark="Pair" Text="{Binding PlanDraftPair}" Margin="0,0,6,6" />
+            <TextBox Width="80" Watermark="Strategy" Text="{Binding PlanDraftStrategy}" Margin="0,0,6,6" />
+            <TextBox Width="60" Watermark="TF" Text="{Binding PlanDraftTimeframe}" Margin="0,0,6,6" />
+            <TextBox Width="60" Watermark="Stake" Text="{Binding PlanDraftStake}" Margin="0,0,6,6" />
+            <Button Content="Save plan draft" Command="{Binding BotsSavePlanDraftCommand}" Margin="0,0,6,6" />
+            <Button Content="Send to host" Command="{Binding BotsSendToHostCommand}" Margin="0,0,6,6" />
+          </WrapPanel>
+          <TextBlock Text="{Binding RowCount, StringFormat=Rows: {0}}" IsVisible="{Binding ShowWorkbook}" />
+          <DockPanel IsVisible="{Binding ShowBoard}" Margin="0,2,0,4">
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding LastScanText}"
+                       FontWeight="SemiBold"
+                       Opacity="0.88" />
+            <TextBlock Text="{Binding RowCount, StringFormat=Board rows: {0}}"
+                       Opacity="0.8" />
+          </DockPanel>
+        </StackPanel>
+
+        <DockPanel IsVisible="{Binding ShowBoard}">
+          <!-- Market Context (Buy Picks) above the board — PySide BuyPicksPane order -->
+          <Expander DockPanel.Dock="Top"
+                    IsVisible="{Binding ShowBuyPicks}"
+                    IsExpanded="{Binding BuyPicksExpanded}"
+                    Margin="0,0,0,8"
+                    HorizontalAlignment="Stretch">
+            <Expander.Header>
+              <StackPanel Spacing="2">
+                <TextBlock Text="Market Context" FontWeight="SemiBold" FontSize="14" />
+                <TextBlock Text="{Binding BuyPicksSubtitle}"
+                           Opacity="0.75"
+                           FontSize="12"
+                           TextWrapping="NoWrap"
+                           TextTrimming="None" />
+              </StackPanel>
+            </Expander.Header>
+            <DataGrid ItemsSource="{Binding BuyPickRows}"
+                      MaxHeight="220"
+                      IsReadOnly="True"
+                      CanUserSortColumns="True"
+                      CanUserResizeColumns="False"
+                      AutoGenerateColumns="False"
+                      GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column"
+                      Margin="0,6,0,0"
+                      RowHeight="28"
+                      Loaded="OnBuyPicksGridLoaded">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Pair" Binding="{Binding Pair}" Width="1.4*" MinWidth="68" SortMemberPath="Pair" />
+                <DataGridTemplateColumn Header="Bias" Width="2.2*" MinWidth="80" SortMemberPath="Score">
+                  <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                      <controls:ScoreSpectrumCell Score="{Binding Score}" Height="18" Margin="2,2" />
+                    </DataTemplate>
+                  </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Signal" Binding="{Binding Signal}" Width="1.1*" MinWidth="52" SortMemberPath="Signal" />
+                <DataGridTextColumn Header="Conf %" Binding="{Binding ConfidenceText}" Width="0.9*" MinWidth="46" SortMemberPath="Confidence" />
+                <DataGridTextColumn Header="Score" Binding="{Binding ScoreText}" Width="0.9*" MinWidth="46" SortMemberPath="Score" />
+                <DataGridTextColumn Header="Near" Binding="{Binding NearestSrText}" Width="0.9*" MinWidth="46" />
+                <DataGridTextColumn Header="R:R" Binding="{Binding RrText}" Width="0.8*" MinWidth="42" SortMemberPath="RrR1" />
+                <DataGridTextColumn Header="Levels" Binding="{Binding LevelsText}" Width="1.0*" MinWidth="50" SortMemberPath="Confluence" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Expander>
+          <!-- Column filters sit on the board grid (not above Market Context) -->
+          <DockPanel>
+          <controls:BoardColumnFilterBar x:Name="BoardFiltersBar"
+                                         DockPanel.Dock="Top"
+                                         Margin="0,0,0,0"
+                                         IsVisible="{Binding ShowBoardColumnFilters}"
+                                         DataContext="{Binding BoardFilters}" />
+          <DataGrid x:Name="BoardDataGrid"
+                    ItemsSource="{Binding BoardRows}"
+                    SelectedItem="{Binding SelectedBoardRow}"
+                    IsReadOnly="True"
+                    CanUserResizeColumns="False"
+                    CanUserSortColumns="True"
+                    RowHeight="72"
+                    GridLinesVisibility="Horizontal"
+                    AutoGenerateColumns="False"
+                    Loaded="OnBoardDataGridLoaded"
+                    Sorting="OnBoardSorting">
+            <DataGrid.ContextMenu>
+              <ContextMenu Opening="OnBoardContextMenuOpening">
+                <MenuItem x:Name="CtxWatchlistItem" Header="Watchlist" Command="{Binding ToggleSelectedWatchCommand}" />
+                <Separator />
+                <MenuItem Header="Show 7D Chart" Command="{Binding OpenBoardChart7dCommand}" />
+                <MenuItem Header="Show 30D Chart" Command="{Binding OpenBoardChart30dCommand}" />
+                <MenuItem Header="Backtest results" Command="{Binding OpenBoardResultsCommand}" />
+                <MenuItem Header="Coin events" Command="{Binding OpenBoardEventsCommand}" />
+              </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+              <DataGridTemplateColumn Header="Logo" Width="0.55*" MinWidth="28" SortMemberPath="Logo">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Panel Width="28" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Logo}" FontSize="10"
+                                 IsVisible="{Binding !HasLogoImage}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      <Image Source="{Binding LogoImage}" Width="28" Height="28" Stretch="Uniform"
+                             IsVisible="{Binding HasLogoImage}" />
+                    </Panel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Name" Width="1.35*" MinWidth="48" SortMemberPath="Name">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <DockPanel Margin="4,0" LastChildFill="True">
+                      <Border DockPanel.Dock="Right"
+                              Background="Transparent"
+                              Cursor="Hand"
+                              Padding="4,2"
+                              VerticalAlignment="Center"
+                              Tag="{Binding}"
+                              ToolTip.Tip="Click to toggle Watchlist"
+                              PointerPressed="OnCellActionPointerPressed"
+                              PointerReleased="OnWatchStarPointerReleased">
+                        <TextBlock Text="{Binding WatchGlyph}"
+                                   Foreground="{Binding WatchColorHex}"
+                                   FontSize="14"
+                                   VerticalAlignment="Center" />
+                      </Border>
+                      <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="7D %" Width="0.85*" MinWidth="32" SortMemberPath="Gain7d">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding Gain7dText}" HeatHex="{Binding HeatGain7d}" OpensChartWindow="7d"
+                                            ToolTip.Tip="Click to open 7D chart" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="7D chart" Width="2.30*" MinWidth="64" SortMemberPath="ChartDist7dPct">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:SparklineCell Closes="{Binding SparkCloses7d}"
+                                           Up="{Binding Spark7Up}"
+                                           DistFromHighPct="{Binding ChartDist7dPct}"
+                                           WindowKey="7d"
+                                           ToolTip.Tip="Click to open 7D chart"
+                                           Height="64" Margin="2,4" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="30D %" Width="0.85*" MinWidth="32" SortMemberPath="Gain30d">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding Gain30dText}" HeatHex="{Binding HeatGain30d}" OpensChartWindow="30d"
+                                            ToolTip.Tip="Click to open 30D chart" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="30D chart" Width="2.30*" MinWidth="64" SortMemberPath="ChartDist30dPct">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:SparklineCell Closes="{Binding SparkCloses30d}"
+                                           Up="{Binding Spark30Up}"
+                                           DistFromHighPct="{Binding ChartDist30dPct}"
+                                           WindowKey="30d"
+                                           ToolTip.Tip="Click to open 30D chart"
+                                           Height="64" Margin="2,4" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Best BT %" Width="0.95*" MinWidth="36" SortMemberPath="BestBtPct">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding BestBtText}" HeatHex="{Binding HeatBestBt}" OpensResults="True"
+                                            ToolTip.Tip="Click to open backtest results" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Best TA" Width="1.35*" MinWidth="48" SortMemberPath="BotBestLabel">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border Background="Transparent" Cursor="Hand" Tag="{Binding}"
+                            ToolTip.Tip="Click to open backtest results"
+                            PointerPressed="OnCellActionPointerPressed"
+                            PointerReleased="OnBestTaPointerReleased">
+                      <TextBlock Text="{Binding BestTaText}" VerticalAlignment="Center" Margin="6,0" TextTrimming="CharacterEllipsis" />
+                    </Border>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Bot vs B&amp;H" Width="1.00*" MinWidth="36" SortMemberPath="BotVsBhPct">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding BotVsBhText}" HeatHex="{Binding HeatBotVsBh}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Health" Width="0.80*" MinWidth="30" SortMemberPath="HealthScore">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding Health}" HeatHex="{Binding HeatHealth}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="HV 7D" Width="0.80*" MinWidth="30" SortMemberPath="Hv7d">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding Hv7dText}" HeatHex="{Binding HeatHv7d}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Max DD" Width="0.85*" MinWidth="32" SortMemberPath="MaxDd">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding MaxDdText}" HeatHex="{Binding HeatMaxDd}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Vol Δ%" Width="0.85*" MinWidth="32" SortMemberPath="VolDelta">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding VolDeltaText}" HeatHex="{Binding HeatVolDelta}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTextColumn Header="Exchange" Binding="{Binding Exchange}" Width="0.95*" MinWidth="36" SortMemberPath="Exchange" />
+              <DataGridTemplateColumn Header="24H Vol" Width="0.95*" MinWidth="36" SortMemberPath="Volume24h">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <controls:HeatValueCell Text="{Binding Volume24hText}" HeatHex="{Binding HeatVolume24h}" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Events" Width="0.75*" MinWidth="28" SortMemberPath="Events">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <Border Background="Transparent" Cursor="Hand" Tag="{Binding}"
+                            ToolTip.Tip="Click to open coin events"
+                            PointerPressed="OnCellActionPointerPressed"
+                            PointerReleased="OnEventsPointerReleased">
+                      <TextBlock Text="{Binding Events}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+          </DockPanel>
+        </DockPanel>
+
+        <DataGrid ItemsSource="{Binding StrategyRows}"
+                  IsVisible="{Binding ShowWorkbook}"
+                  IsReadOnly="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  AutoGenerateColumns="False">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Strategy" Binding="{Binding StrategyId}" Width="*" />
+            <DataGridTextColumn Header="Pair" Binding="{Binding Pair}" Width="120" />
+            <DataGridTextColumn Header="Payload" Binding="{Binding PayloadJson}" Width="2*" />
+            <DataGridTemplateColumn Header="Bot" Width="100" CanUserSort="False">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Button Content="Create Bot" Tag="{Binding}" Click="OnBacktestCreateBotClick" Padding="6,2" />
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+
+        <ScrollViewer IsVisible="{Binding ShowDashboard}" HorizontalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding DashboardModules}"
+                        Width="{Binding DashboardCanvasWidth}"
+                        MinHeight="{Binding DashboardCanvasHeight}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <Canvas />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.Styles>
+              <Style Selector="ItemsControl > ContentPresenter">
+                <Setter Property="Canvas.Left" Value="{Binding PixelLeft}" />
+                <Setter Property="Canvas.Top" Value="{Binding PixelTop}" />
+                <Setter Property="Width" Value="{Binding PixelWidth}" />
+                <Setter Property="Height" Value="{Binding PixelHeight}" />
+              </Style>
+            </ItemsControl.Styles>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="#1A1A1A" CornerRadius="6" Padding="10" BorderBrush="#333" BorderThickness="1">
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Value}" FontSize="18" />
+                    <TextBlock Text="{Binding Detail}" Opacity="0.75" TextWrapping="Wrap" FontSize="12" />
+                    <TextBlock Text="{Binding Category}" Opacity="0.45" FontSize="11" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <ScrollViewer IsVisible="{Binding ShowBots}">
+          <ItemsControl ItemsSource="{Binding BotRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="#1A1A1A" CornerRadius="6" Padding="12" Margin="0,0,0,8" BorderBrush="#333" BorderThickness="1">
+                  <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6" Margin="12,0,0,0">
+                      <Button Content="Resume"
+                              Tag="{Binding}"
+                              Click="OnBotResumeClick"
+                              IsEnabled="{Binding CanToggle}"
+                              MinWidth="72" />
+                      <Button Content="Pause"
+                              Tag="{Binding}"
+                              Click="OnBotPauseClick"
+                              IsEnabled="{Binding CanToggle}"
+                              MinWidth="72" />
+                    </StackPanel>
+                    <StackPanel Spacing="2">
+                      <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                      <TextBlock Opacity="0.85" Text="{Binding Pair}" />
+                      <TextBlock Opacity="0.75" Text="{Binding Strategy}" />
+                      <TextBlock Opacity="0.65" Text="{Binding State}" />
+                      <TextBlock Opacity="0.55" FontSize="11" Text="{Binding Source}" />
+                    </StackPanel>
+                  </DockPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+        <DataGrid ItemsSource="{Binding GlossaryRows}"
+                  IsVisible="{Binding ShowGlossary}"
+                  IsReadOnly="True"
+                  CanUserSortColumns="True"
+                  AutoGenerateColumns="False"
+                  GridLinesVisibility="Horizontal">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="120" />
+            <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="160" />
+            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="140" />
+            <DataGridTextColumn Header="Short" Binding="{Binding Short}" Width="*" />
+          </DataGrid.Columns>
+        </DataGrid>
+
+        <DockPanel IsVisible="{Binding ShowPoolWatchPage}">
+          <WrapPanel DockPanel.Dock="Top" Margin="0,4,0,6">
+            <Button Content="Scan pools" Command="{Binding PoolWatchScanCommand}" Margin="0,0,6,0" />
+            <Button Content="Reload" Command="{Binding PoolWatchReloadCommand}" Margin="0,0,6,0" />
+            <TextBlock Text="{Binding PoolWatchLastScanText}" VerticalAlignment="Center" Opacity="0.85" Margin="8,0,0,0" />
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding PoolWatchRows}"
+                    IsReadOnly="True"
+                    CanUserSortColumns="True"
+                    AutoGenerateColumns="False"
+                    GridLinesVisibility="Horizontal"
+                    HorizontalAlignment="Stretch"
+                    HorizontalScrollBarVisibility="Disabled">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Pair" Binding="{Binding Col1}" Width="1.6*" MinWidth="120" />
+              <DataGridTextColumn Header="Liquidity" Binding="{Binding Col2}" Width="1.2*" MinWidth="90" />
+              <DataGridTextColumn Header="24h %" Binding="{Binding Col3}" Width="0.9*" MinWidth="70" />
+              <DataGridTextColumn Header="Vol proxy" Binding="{Binding Col4}" Width="1.2*" MinWidth="90" />
+              <DataGridTextColumn Header="Source" Binding="{Binding Col5}" Width="1.1*" MinWidth="80" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+
+        <DockPanel IsVisible="{Binding ShowLogs}">
+          <WrapPanel DockPanel.Dock="Top" Margin="0,4,0,6">
+            <Button Content="Reload logs" Command="{Binding LogsReloadCommand}" Margin="0,0,6,0" />
+          </WrapPanel>
+          <DataGrid ItemsSource="{Binding ExecutionLogRows}"
+                    IsReadOnly="True"
+                    CanUserSortColumns="True"
+                    AutoGenerateColumns="False"
+                    GridLinesVisibility="Horizontal"
+                    HorizontalAlignment="Stretch">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="1.2*" MinWidth="120" />
+              <DataGridTextColumn Header="Kind" Binding="{Binding Kind}" Width="0.7*" MinWidth="70" />
+              <DataGridTextColumn Header="Scope" Binding="{Binding Scope}" Width="1.0*" MinWidth="90" />
+              <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="0.7*" MinWidth="70" />
+              <DataGridTextColumn Header="Stage Breakdown" Binding="{Binding Stages}" Width="2.0*" MinWidth="160" />
+              <DataGridTextColumn Header="Summary" Binding="{Binding Summary}" Width="2.2*" MinWidth="180" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+
+        <TextBox IsVisible="{Binding ShowDebug}"
+                 Text="{Binding DebugLogText}"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 IsReadOnly="True"
+                 FontFamily="Consolas"
+                 MinHeight="240" />
+
+        <StackPanel IsVisible="{Binding ShowBilling}" Spacing="8" Margin="0,8,0,0">
+          <TextBlock Text="{Binding BillingTitle}" FontWeight="SemiBold" FontSize="16" />
+          <TextBlock Text="{Binding BillingBody}" TextWrapping="Wrap" />
+          <Button Content="Settle on chain" IsEnabled="False" HorizontalAlignment="Left" />
+          <TextBlock Text="{Binding BillingSettleHelp}" TextWrapping="Wrap" Opacity="0.85" />
+          <Button Content="Reload" Command="{Binding BillingReloadCommand}" HorizontalAlignment="Left" />
+        </StackPanel>
+
+        <ScrollViewer IsVisible="{Binding ShowSettings}" Margin="0,8,0,0">
+        <StackPanel Spacing="10">
+          <StackPanel IsVisible="{Binding ShowNotifyMatrix}" Spacing="10">
+            <TextBlock Text="Notifications, Telegram &amp; Alerts" FontWeight="SemiBold" FontSize="15" />
+            <TextBlock Text="{Binding TelegramVaultStatus}" FontWeight="SemiBold" Opacity="0.95" TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="*,*">
+              <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,10,0">
+                <TextBlock Text="Telegram Bot Token" Opacity="0.8" />
+                <TextBox Text="{Binding TelegramTokenInput}"
+                         PasswordChar="{Binding TelegramTokenPasswordChar}"
+                         Watermark="123456789:ABC..." />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="4">
+                <TextBlock Text="Telegram Chat ID" Opacity="0.8" />
+                <TextBox Text="{Binding TelegramChatIdInput}"
+                         Watermark="Numeric chat ID (e.g. 1592...)" />
+              </StackPanel>
+            </Grid>
+            <CheckBox Content="Show bot token" IsChecked="{Binding ShowTelegramToken}" />
+            <CheckBox Content="Enable Telegram alerts" IsChecked="{Binding NotifyTelegramEnabled}" />
+            <WrapPanel>
+              <Button Content="Save Telegram credentials" Command="{Binding SaveTelegramCredsCommand}" Margin="0,0,6,6" />
+              <Button Content="Detect Chat ID" Command="{Binding DetectTelegramChatCommand}" Margin="0,0,6,6" />
+              <Button Content="Test Telegram" Command="{Binding AlertsTestTelegramCommand}" Margin="0,0,6,6" />
+              <Button Content="Test Rich Enter Alert" Command="{Binding AlertsTestTelegramRichCommand}" Margin="0,0,6,6" />
+              <Button Content="Test Windows Toast" Command="{Binding AlertsTestWindowsCommand}" Margin="0,0,6,6" />
+              <Button Content="Test Grokbot" Command="{Binding AlertsTestGrokbotCommand}" Margin="0,0,6,6" />
+              <Button Content="Save notify prefs" Command="{Binding AlertsSaveNotifyCommand}" Margin="0,0,6,6" />
+              <Button Content="{Binding NotifyAutostart, StringFormat=Start with Windows: {0}}"
+                      Command="{Binding ToggleNotifyAutostartCommand}" Margin="0,0,6,6" />
+            </WrapPanel>
+            <Border IsVisible="{Binding NotifyTestResult, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#1A2433" Padding="8" CornerRadius="4">
+              <TextBlock Text="{Binding NotifyTestResult}" TextWrapping="Wrap" />
+            </Border>
+            <TextBlock Text="{Binding NotifyRibbonText}" TextWrapping="Wrap" Opacity="0.85" />
+            <TextBlock Text="{Binding NotifyHelp}" TextWrapping="Wrap" Opacity="0.8" />
+            <WrapPanel>
+              <Button Content="Toggle Entered" Command="{Binding AlertsToggleKindMasterCommand}" CommandParameter="entered" Margin="0,0,6,6" />
+              <Button Content="Toggle Left" Command="{Binding AlertsToggleKindMasterCommand}" CommandParameter="left" Margin="0,0,6,6" />
+              <Button Content="Toggle Trades" Command="{Binding AlertsToggleKindMasterCommand}" CommandParameter="trades" Margin="0,0,6,6" />
+            </WrapPanel>
+            <DataGrid ItemsSource="{Binding NotifyKinds}"
+                      IsReadOnly="False"
+                      AutoGenerateColumns="False"
+                      GridLinesVisibility="Horizontal"
+                      MinHeight="120">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Kind" Binding="{Binding Label}" Width="*" IsReadOnly="True" />
+                <DataGridCheckBoxColumn Header="Windows" Binding="{Binding Windows}" Width="90" />
+                <DataGridCheckBoxColumn Header="Telegram" Binding="{Binding Telegram}" Width="90" />
+              </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Text="{Binding NotifyGrokHelp}" TextWrapping="Wrap" Opacity="0.8" />
+
+            <TextBlock Text="Alert History" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0" />
+            <WrapPanel>
+              <Button Content="All / Logs" Command="{Binding SelectAlertTabCommand}" CommandParameter="logs" Margin="0,0,6,6" />
+              <Button Content="Entered" Command="{Binding SelectAlertTabCommand}" CommandParameter="entered" Margin="0,0,6,6" />
+              <Button Content="Left" Command="{Binding SelectAlertTabCommand}" CommandParameter="left" Margin="0,0,6,6" />
+              <Button Content="Trades" Command="{Binding SelectAlertTabCommand}" CommandParameter="trades" Margin="0,0,6,6" />
+              <Button Content="Reload history" Command="{Binding AlertsReloadCommand}" Margin="0,0,8,6" />
+              <TextBlock Text="{Binding AlertTab, StringFormat=Filter: {0}}" VerticalAlignment="Center" Opacity="0.75" Margin="0,0,0,6" />
+            </WrapPanel>
+            <DataGrid ItemsSource="{Binding AlertRows}"
+                      IsReadOnly="True"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      AutoGenerateColumns="False"
+                      MinHeight="220"
+                      MaxHeight="420">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="When" Binding="{Binding At}" Width="185" />
+                <DataGridTextColumn Header="Kind" Binding="{Binding Kind}" Width="120" />
+                <DataGridTextColumn Header="Pair" Binding="{Binding Pair}" Width="110" />
+                <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="*" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowPrivacyEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Privacy" FontWeight="SemiBold" />
+            <CheckBox Content="{Binding PrivacyLabel}" IsChecked="{Binding PrivacySaveCrashes}" />
+            <TextBlock Text="{Binding PrivacyHelp}" TextWrapping="Wrap" Opacity="0.85" />
+            <Button Content="Save privacy" Command="{Binding PrivacySaveCommand}" HorizontalAlignment="Left" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowDataEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Data" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding DataHelp}" TextWrapping="Wrap" Opacity="0.85" />
+            <TextBlock Text="{Binding DataProfileRoot, StringFormat=Profile: {0}}" Opacity="0.75" TextWrapping="Wrap" />
+            <TextBlock Text="Export folder" Opacity="0.8" />
+            <TextBox Text="{Binding DataExportDir}" Watermark="Last PNG export directory" />
+            <CheckBox Content="{Binding DataUseUtcLabel}" IsChecked="{Binding DataUseUtc}" />
+            <TextBlock Text="{Binding DataUseUtcHelp}" TextWrapping="Wrap" Opacity="0.8" />
+            <Button Content="Save data prefs" Command="{Binding DataSaveCommand}" HorizontalAlignment="Left" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowUpdatesEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Updates &amp; About" FontWeight="SemiBold" FontSize="15" />
+            <TextBlock Text="{Binding UpdatesVersionLine}" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding UpdatesSupport}" TextWrapping="Wrap" Opacity="0.85" />
+            <TextBlock Text="{Binding UpdatesStatus}" TextWrapping="Wrap" Opacity="0.85" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Check for updates" Command="{Binding UpdatesCheckCommand}" />
+              <Button Content="Changelog" Command="{Binding UpdatesOpenChangelogCommand}" />
+              <Button Content="Feedback / donate" Command="{Binding OpenFeedbackCommand}" />
+              <Button Content="Glossary" Command="{Binding NavigateCommand}" CommandParameter="glossary" />
+              <Button Content="Debug log" Command="{Binding NavigateCommand}" CommandParameter="debug" />
+            </StackPanel>
+            <TextBlock Text="{Binding AboutText}" TextWrapping="Wrap" Opacity="0.9" Margin="0,6,0,0" />
+            <TextBlock Text="{Binding BillingTitle}" FontWeight="SemiBold" Margin="0,6,0,0" />
+            <TextBlock Text="{Binding BillingBody}" TextWrapping="Wrap" Opacity="0.85" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowKeysEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="API Keys &amp; Wizards (Windows CredMan)" FontWeight="SemiBold" FontSize="15" />
+            <WrapPanel>
+              <Button Content="Open setup wizard" Command="{Binding OpenWizardCommand}" CommandParameter="setup" Margin="0,0,6,6" />
+              <Button Content="Telegram wizard" Command="{Binding OpenWizardCommand}" CommandParameter="telegram" Margin="0,0,6,6" />
+              <Button Content="Alpaca wizard" Command="{Binding OpenWizardCommand}" CommandParameter="alpaca" Margin="0,0,6,6" />
+              <Button Content="Calendar wizard" Command="{Binding OpenWizardCommand}" CommandParameter="calendar" Margin="0,0,6,6" />
+            </WrapPanel>
+            <TextBlock Text="{Binding SettingsEditorBody}" TextWrapping="Wrap" FontFamily="Consolas" FontSize="12" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowConnectionEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Connection" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding ConnectionHelp}" TextWrapping="Wrap" Opacity="0.85" />
+            <TextBlock Text="First run — Owner ID required" Opacity="0.9"
+                       IsVisible="{Binding ConnectionFirstRun}" />
+            <TextBlock Text="Owner ID" Opacity="0.8" />
+            <TextBox Text="{Binding ConnectionOwnerId}" Watermark="owner-id" MaxLength="64" />
+            <TextBlock Text="Host URL" Opacity="0.8" />
+            <TextBox Text="{Binding ConnectionHostUrl}" Watermark="https://host.example:8443" />
+            <TextBlock Text="Certificate pin (SHA-256)" Opacity="0.8" />
+            <TextBox Text="{Binding ConnectionCertPin}" Watermark="64 hex chars (optional)" />
+            <TextBlock Text="{Binding HandshakeText}" TextWrapping="Wrap" Opacity="0.75" />
+            <Button Content="Save connection" Command="{Binding ConnectionSaveCommand}" HorizontalAlignment="Left" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowAppearanceEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Appearance" FontWeight="SemiBold" />
+            <TextBlock Text="Theme follows Windows (system), or force light/dark. Accent empty = Fluent default."
+                       TextWrapping="Wrap" Opacity="0.85" />
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Theme" Opacity="0.8" />
+                <ComboBox Width="140"
+                          ItemsSource="{Binding AppearanceThemeChoices}"
+                          SelectedItem="{Binding ThemeMode}" />
+              </StackPanel>
+              <StackPanel Spacing="4">
+                <TextBlock Text="Accent" Opacity="0.8" />
+                <ComboBox Width="160"
+                          ItemsSource="{Binding AppearanceAccentChoices}"
+                          SelectedItem="{Binding AccentColor}" />
+              </StackPanel>
+            </StackPanel>
+            <WrapPanel>
+              <Button Content="{Binding ThemeMode, StringFormat=Cycle theme: {0}}"
+                      Command="{Binding CycleThemeModeCommand}" Margin="0,0,6,6" />
+              <Button Content="Cycle accent" Command="{Binding CycleAccentCommand}" Margin="0,0,6,6" />
+              <Button Content="{Binding ThemeDensity, StringFormat=Density: {0}}"
+                      Command="{Binding CycleThemeDensityCommand}" Margin="0,0,6,6" />
+              <Button Content="Command palette" Command="{Binding OpenCommandPaletteCommand}" Margin="0,0,6,6" />
+            </WrapPanel>
+            <TextBlock Text="Workbook / export" FontWeight="SemiBold" Margin="0,8,0,0" />
+            <WrapPanel>
+              <Button Content="Reload workbook" Command="{Binding ReloadWorkbookCommand}" Margin="0,0,6,6" />
+              <TextBox Width="160" Watermark="Query (P1)" Text="{Binding QueryText}" Margin="0,0,6,6" />
+              <Button Content="Apply query" Command="{Binding ApplyQueryCommand}" Margin="0,0,6,6" />
+              <Button Content="Job dial 8" Command="{Binding SetJobDialCommand}" CommandParameter="8" Margin="0,0,6,6" />
+              <Button Content="Export TSV" Command="{Binding ExportSelectionCommand}" Margin="0,0,6,6" />
+            </WrapPanel>
+            <Button Content="Save appearance" Command="{Binding AppearanceSaveCommand}" HorizontalAlignment="Left" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowVenueEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Execution venue" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding VenueDisclosure}" TextWrapping="Wrap" Opacity="0.85" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Host (recommended)" Command="{Binding VenueSelectHostCommand}" />
+              <Button Content="This device" Command="{Binding VenueSelectDeviceCommand}" />
+              <TextBlock Text="{Binding VenueChoice, StringFormat=Selected: {0}}" VerticalAlignment="Center" Opacity="0.8" />
+            </StackPanel>
+            <CheckBox Content="I understand device-local risk"
+                      IsChecked="{Binding VenueAck}"
+                      IsEnabled="{Binding VenueAckLocked, Converter={x:Static BoolConverters.Not}}" />
+            <Button Content="Save venue" Command="{Binding VenueSaveCommand}" HorizontalAlignment="Left" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowLanesEditor}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Market lanes &amp; schedule" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding LanesHint}" TextWrapping="Wrap" Opacity="0.85" />
+            <TextBlock Text="{Binding LanesAlpacaHint}" TextWrapping="Wrap" Opacity="0.85" />
+            <TextBlock Text="{Binding LanesAlpacaKeyed, StringFormat=Alpaca keys present: {0}}" Opacity="0.75" />
+            <CheckBox Content="Auto-scan Crypto" IsChecked="{Binding LaneAutoCrypto}" />
+            <CheckBox Content="Auto-scan TradFi" IsChecked="{Binding LaneAutoTradfi}" />
+            <CheckBox Content="Auto-scan Forex" IsChecked="{Binding LaneAutoForex}" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="Scan interval (minutes, 60m aligns to :00 every hour):" VerticalAlignment="Center" />
+              <NumericUpDown Width="130" Minimum="60" Maximum="1440" Increment="60" FormatString="0"
+                             Value="{Binding LanesIntervalMinutes}" />
+            </StackPanel>
+            <TextBlock Text="{Binding ScheduleStatusText}" Opacity="0.85" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Save lanes &amp; schedule" Command="{Binding LanesSaveCommand}" />
+              <Button Content="Set up Alpaca…" Command="{Binding LanesOpenAlpacaCommand}" />
+            </StackPanel>
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowDashboardMins}" Spacing="6" Margin="0,8,0,0">
+            <TextBlock Text="Dashboard · module minimum sizes" FontWeight="SemiBold" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Save module mins" Command="{Binding DashboardMinsSaveCommand}" />
+              <Button Content="Reset to defaults" Command="{Binding DashboardMinsResetCommand}" />
+            </StackPanel>
+            <DataGrid ItemsSource="{Binding DashboardMinRows}"
+                      IsReadOnly="False"
+                      AutoGenerateColumns="False"
+                      GridLinesVisibility="Horizontal"
+                      MinHeight="180"
+                      MaxHeight="360">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="100" IsReadOnly="True" />
+                <DataGridTextColumn Header="Module" Binding="{Binding Title}" Width="*" IsReadOnly="True" />
+                <DataGridTextColumn Header="Min W" Binding="{Binding MinW}" Width="70" />
+                <DataGridTextColumn Header="Min H" Binding="{Binding MinH}" Width="70" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </StackPanel>
+          <StackPanel IsVisible="{Binding ShowExportHub}" Spacing="8" Margin="0,8,0,0">
+            <TextBlock Text="{Binding ExportHubTitle}" FontWeight="SemiBold" FontSize="15" />
+            <TextBlock Text="{Binding ExportHubSubtitle}" TextWrapping="Wrap" Opacity="0.9" />
+            <TextBlock Text="{Binding ExportHubFolderHelp}" TextWrapping="Wrap" Opacity="0.8" />
+            <TextBlock Text="Destination folder" Opacity="0.8" />
+            <TextBox Text="{Binding ExportHubFolder}" Watermark="exports folder" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="{Binding ExportJournalLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="journal" />
+              <Button Content="{Binding ExportPlanLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="plan" />
+              <Button Content="{Binding ExportScanLabel}" Command="{Binding ExportHubRunCommand}" CommandParameter="scan" />
+            </StackPanel>
+            <TextBlock Text="{Binding ExportHubStatus}" TextWrapping="Wrap" Opacity="0.85" />
+          </StackPanel>
+        </StackPanel>
+        </ScrollViewer>
+
+        <Border IsVisible="{Binding !ShowWorkbook}" Padding="16" Margin="0,8,0,0">
+          <TextBlock Text="{Binding PageBody}" TextWrapping="Wrap"
+                     IsVisible="{Binding !ShowExportHub}"
+                     Opacity="0.85" />
+        </Border>
+      </DockPanel>
+    </Grid>
+  </DockPanel>
+</Window>

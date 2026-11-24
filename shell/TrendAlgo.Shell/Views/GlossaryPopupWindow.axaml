@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.GlossaryPopupWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Glossary"
+        Width="520"
+        Height="420"
+        MinWidth="420"
+        MinHeight="280"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="14">
+    <Button DockPanel.Dock="Bottom" Content="Close" HorizontalAlignment="Right" MinWidth="88"
+            Click="OnClose" Margin="0,10,0,0" />
+    <ScrollViewer>
+      <StackPanel Spacing="10">
+        <TextBlock x:Name="TitleText" FontWeight="SemiBold" FontSize="18" TextWrapping="Wrap" />
+        <TextBlock x:Name="CategoryText" Opacity="0.75" TextWrapping="Wrap" />
+        <TextBlock x:Name="BodyText" TextWrapping="Wrap" />
+        <Border x:Name="FormulaPanel" Background="#141414" CornerRadius="4" Padding="12,10" IsVisible="False">
+          <StackPanel Spacing="6">
+            <TextBlock x:Name="FormulaHeading" FontWeight="SemiBold" Text="Formula" />
+            <TextBlock x:Name="FormulaText" TextWrapping="Wrap" FontFamily="Consolas,Courier New,monospace" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

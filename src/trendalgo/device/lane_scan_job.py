@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -18,7 +19,8 @@ from trendalgo.device.lane_scan_filters import (
     load_lane_scan_filters,
     realized_range_pct,
 )
-from trendalgo.device.lts_scan_model import build_lts_rows, save_lts_rows
+from trendalgo.device.lts_scan_model import build_lts_rows, load_watchlist, save_lts_rows
+from trendalgo.device.scan_eta_filters import merge_scan_meta
 from trendalgo.device.scan_identity import row_key
 from trendalgo.device.scan_job import _merge_pass1_backtests
 from trendalgo.device.scan_lock import try_acquire_scan_lock
@@ -31,7 +33,7 @@ from trendalgo.market.alpaca_ohlcv import (
 )
 from trendalgo.market.ohlcv_disk_cache import load_cached_ohlcv, save_cached_ohlcv
 from trendalgo.market.types import OhlcvPoint
-from trendalgo.scanner.progress import get_scan_progress
+from trendalgo.scanner.progress import get_scan_progress, set_scan_progress_lane
 from trendalgo.scanner.snapshot import OpportunityRow, QualifiedSnapshot
 from trendalgo.scanner.store import ScannerStore
 
@@ -77,29 +79,41 @@ def lane_scan_job(root: Path, lane: LaneScanId) -> dict[str, Any]:
 
 
 def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
-    progress = get_scan_progress()
+    set_scan_progress_lane(lane)
+    progress = get_scan_progress(lane)
     label = "TradFi scan" if lane == "tradfi" else "Forex scan"
     progress.begin_job(label)
     reporter = ProgressReporter(root, lane=lane)
     reporter.start()
+    timings: dict[str, float] = {}
+    t0 = time.perf_counter()
     try:
         filters = load_lane_scan_filters(root, lane)
+        wl_pairs = {p.strip().upper() for p in load_watchlist(root, lane=lane) if p.strip()}
+        wl_syms = {p.split("/")[0] for p in wl_pairs}
         symbols = (
             list(load_tradfi_universe(root=root))
             if lane == "tradfi"
             else list(load_forex_universe())
         )
+        seen_sym = {s.strip().upper() for s in symbols}
+        for wl_item in sorted(wl_syms if lane == "tradfi" else wl_pairs):
+            if wl_item and wl_item not in seen_sym:
+                symbols.append(wl_item)
+                seen_sym.add(wl_item)
         progress.log(f"Universe: {len(symbols)} {lane} symbols")
         progress.phase(f"{label} · bars", total=len(symbols), unit="pairs")
         until = datetime.now(tz=UTC)
         since = until - timedelta(days=_LOOKBACK_DAYS)
         exchange_id = "tradfi" if lane == "tradfi" else "forex"
 
+        t_bars = time.perf_counter()
         bars_by_pair = (
             _fetch_tradfi_bars(root, symbols, since, until, progress=progress)
             if lane == "tradfi"
             else _fetch_forex_bars(root, symbols, since, until, progress=progress)
         )
+        timings["bars_s"] = round(time.perf_counter() - t_bars, 3)
 
         scored: list[tuple[str, list[OhlcvPoint], float, float, float]] = []
         skipped = 0
@@ -107,10 +121,11 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
             if len(points) < 2:
                 skipped += 1
                 continue
+            is_watched = pair.upper() in wl_pairs or pair.split("/")[0].upper() in wl_syms
             adv = avg_dollar_volume(points) if lane == "tradfi" else 0.0
             price = last_close(points)
             gain = _gain_fraction(points)
-            if lane == "tradfi":
+            if lane == "tradfi" and not is_watched:
                 if filters.min_adv_usd > 0 and adv < filters.min_adv_usd:
                     skipped += 1
                     continue
@@ -133,6 +148,13 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
         scored.sort(key=lambda t: t[4], reverse=True)
         if lane == "tradfi" and filters.top_n > 0:
             kept = scored[: filters.top_n]
+            kept_pairs = {t[0].upper() for t in kept}
+            for item in scored[filters.top_n :]:
+                p_up = item[0].upper()
+                if p_up in wl_pairs or p_up.split("/")[0] in wl_syms:
+                    if p_up not in kept_pairs:
+                        kept.append(item)
+                        kept_pairs.add(p_up)
         else:
             kept = scored
         progress.log(
@@ -173,18 +195,39 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
         for coin, (_pair, _pts, _g, adv, _sk) in zip(lts, kept, strict=False):
             if lane == "tradfi":
                 coin["volume_24h"] = adv
+            p_up = str(coin.get("pair") or "").strip().upper()
+            if p_up in wl_pairs or p_up.split("/")[0] in wl_syms:
+                coin["watch"] = True
         # Crypto-parity board: real 1h wicks + HV / Max DD / Vol Δ from Alpaca hours.
+        t_enr = time.perf_counter()
         lts = enrich_lane_coins_1h(root, lts, lane=lane, progress=progress)
+        timings["enrich_s"] = round(time.perf_counter() - t_enr, 3)
         save_lts_rows(root, lts, lane=lane)
 
         bt_meta: dict[str, Any] = {}
         if lts:
             progress.log(f"All-TA pass-1 on {len(lts)} filtered {lane} pairs")
+            t_bt = time.perf_counter()
             bt_rows, bt_meta = _merge_pass1_backtests(lts, root)
+            timings["backtest_s"] = round(time.perf_counter() - t_bt, 3)
             by_key = {row_key(c): c for c in bt_rows}
             lts = [by_key.get(row_key(c), c) for c in lts]
             save_lts_rows(root, lts, lane=lane)
 
+        timings["total_s"] = round(time.perf_counter() - t0, 3)
+        merge_scan_meta(
+            root,
+            elapsed_s=timings["total_s"],
+            funnel={
+                "listed_n": len(symbols),
+                "after_volume_n": len(scored),
+                "after_activity_n": len(scored),
+                "qualified_n": len(lts),
+                "min_volume_usd": float(filters.min_adv_usd),
+                "require_continuous_1h": False,
+            },
+            lane=lane,
+        )
         progress.log(
             f"{label} done: {len(lts)} pairs · skipped={skipped} · scan_id={scan_id}",
             level="success",
@@ -196,6 +239,7 @@ def _lane_scan_locked(root: Path, lane: LaneScanId) -> dict[str, Any]:
             "lane": lane,
             "degraded": snapshot.degraded,
             "backtest": bt_meta,
+            "timings": timings,
             "data_source": "Alpaca paper (keyed)",
             "filters": {
                 "min_adv_usd": filters.min_adv_usd,

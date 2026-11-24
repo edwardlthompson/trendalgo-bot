@@ -1,14 +1,18 @@
-"""Rank Qualified scanner coins by Market Context consensus score (always top 10)."""
+"""Rank Qualified scanner coins by Market Context consensus score (full filtered set)."""
 
 from __future__ import annotations
 
 from typing import Any
 
-_TOP_N = 10
 
+def rank_buy_picks(
+    coins: list[dict[str, Any]], *, limit: int | None = None
+) -> list[dict[str, Any]]:
+    """Coins by consensus score (any signal). Pure; no I/O.
 
-def rank_buy_picks(coins: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Top ``_TOP_N`` coins by consensus score (any signal). Pure; no I/O."""
+    Default ``limit=None`` returns every coin with Market Context (list + PNG).
+    Pass a positive ``limit`` only when a caller still wants a preview slice.
+    """
     scored: list[dict[str, Any]] = []
     for coin in coins:
         row = _pick_row(coin)
@@ -22,7 +26,9 @@ def rank_buy_picks(coins: list[dict[str, Any]]) -> list[dict[str, Any]]:
         ),
         reverse=True,
     )
-    return scored[:_TOP_N]
+    if limit is None:
+        return scored
+    return scored[: max(0, int(limit))]
 
 
 def _pick_row(coin: dict[str, Any]) -> dict[str, Any] | None:

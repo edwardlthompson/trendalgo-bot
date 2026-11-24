@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:TrendAlgo.Shell.Models"
+             x:Class="TrendAlgo.Shell.Controls.BacktestColumnFilterBar"
+             x:DataType="models:BacktestFilterState"
+             x:Name="Root">
+  <!-- Slot order must match ResultsSurfaceWindow DataGrid columns. -->
+  <Border Background="#1A2433" Padding="0,2" CornerRadius="3" HorizontalAlignment="Stretch" ClipToBounds="True">
+    <StackPanel x:Name="FilterRow" Orientation="Horizontal" Spacing="0">
+      <Border x:Name="SlotIndicator" Width="140" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="name" ToolTip.Tip="Indicator contains"
+                 Text="{Binding IndicatorContains}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotTimeframe" Width="72" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="tf" ToolTip.Tip="Exact timeframe"
+                 Text="{Binding Timeframe}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotParams" Width="160" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="params" ToolTip.Tip="Params contains"
+                 Text="{Binding ParamsContains}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotNet" Width="72" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="min%" ToolTip.Tip="Min Net %"
+                 Text="{Binding MinNetPct}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotFees" Width="64" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="max$" ToolTip.Tip="Max fees $"
+                 Text="{Binding MaxFees}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotOpen" Width="48" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="open" ToolTip.Tip="Max open trades (0=fully closed)"
+                 Text="{Binding MaxOpen}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotWins" Width="48" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="wins" ToolTip.Tip="Min wins"
+                 Text="{Binding MinWins}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotLosses" Width="56" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="loss" ToolTip.Tip="Max losses"
+                 Text="{Binding MaxLosses}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotWinPct" Width="64" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="win%" ToolTip.Tip="Min Win %"
+                 Text="{Binding MinWinPct}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotTsl" Width="56" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="tsl" ToolTip.Tip="Max TSL %"
+                 Text="{Binding MaxTslPct}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotTslHits" Width="64" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="hits" ToolTip.Tip="Max TSL hits (0=zero-hit)"
+                 Text="{Binding MaxTslHits}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotTslHitPct" Width="72" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="hit%" ToolTip.Tip="Max TSL hit %"
+                 Text="{Binding MaxTslHitPct}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotStrength" Width="72" MinWidth="0" Padding="1,0">
+        <TextBox MinWidth="0" Watermark="str" ToolTip.Tip="Min Strength 0–100"
+                 Text="{Binding MinStrength}" HorizontalAlignment="Stretch" />
+      </Border>
+      <Border x:Name="SlotEvents" Width="56" MinWidth="0" />
+      <Border x:Name="SlotBot" Width="88" MinWidth="0" />
+    </StackPanel>
+  </Border>
+</UserControl>

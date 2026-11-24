@@ -5,6 +5,8 @@ node_modules/
 mypy-errors.txt
 .cursor-*.png
 .cursor-*.jpg
+.cursor/probe_*.py
+.tmp-*
 scripts/_probe-*.py
 __pycache__/
 *.py[cod]
@@ -17,6 +19,9 @@ tools/rcedit*.exe
 dist/
 build/
 *.egg-info/
+shell/**/bin/
+shell/**/obj/
+shell/**/.vs/
 .coverage
 htmlcov/
 coverage/

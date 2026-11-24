@@ -3,9 +3,16 @@
 <!-- remaining-tally -->
 **Remaining:** AGENT 1 · LOCAL 0 · CLOUD 1 · AUTO 0 · HUMAN 0 · ADB 0 · **1 open**
 <!-- /remaining-tally -->
-<!-- tally note: DEX-P4b CLOUD after Scan UX + AlgoSpecial FX ✅ -->
+<!-- tally note: DEX-P4b CLOUD; Sprint Audit-2026-11 + Sprint Avalonia-gaps + Sprint Polish-2026-11 + Sprint Polish2-2026-11 + Sprint Polish3-2026-11 + Sprint Polish4-2026-11 + Sprint Polish5-2026-11 archived -->
 > **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Completed work:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md) · **Support:** [`docs/SUPPORT_MATRIX.md`](docs/SUPPORT_MATRIX.md)
+> **Sprint Polish5-2026-11** archived in COMPLETED_TASKS.md (POL5-01…05, 2026-11-24).
+> **Sprint Polish4-2026-11** archived in COMPLETED_TASKS.md (POL4-01…06, 2026-11-24).
+> **Sprint Polish3-2026-11** archived in COMPLETED_TASKS.md (POL3-01…04, 2026-11-24).
+> **Sprint Polish2-2026-11** archived in COMPLETED_TASKS.md (POL2-01…04, 2026-11-24).
+> **Sprint Polish-2026-11** archived in COMPLETED_TASKS.md (POL-01…05, 2026-11-24).
+> **Sprint Audit-2026-11** archived in COMPLETED_TASKS.md (AUD-01…17, 2026-11-23).
+> **Sprint Avalonia-gaps** archived in COMPLETED_TASKS.md @ `fc9b718` (AV-G-TF1…OTH5, 2026-11-19). Gap file: [`docs/AVALONIA_PARITY_GAPS.md`](docs/AVALONIA_PARITY_GAPS.md).
 > **Sauce / Market Context / logos** archived in COMPLETED_TASKS.md @ `665d6f5` · v1.15.2.
 > **Multi-venue Sequential (CEX/DEX/TF)** archived in COMPLETED_TASKS.md (2026-11-15).
 > **TradFi top-500 + Forex research (TF-P5…P11 + FX-P1…P4)** archived in COMPLETED_TASKS.md @ `54b409c` (2026-11-15).
@@ -17,31 +24,38 @@
 <!-- product-brief-sync:begin -->
 > Read `AGENT.md` before any sprint row.
 
-**One-liner:** Photoreal Cycles icons from a locked seed, camera, and lighting.
-**Do not drift:** camera, messages, tame, neon
+**One-liner:** Self-hosted crypto trading platform: native CCXT engine, LTS opportunity scanner, Secret Sauce Lab, and desktop shell.
+**Do not drift:** crypto, trading, scanner, portfolio
 
 **Rules:**
-- Generate store/PWA icons from a JSON manifest (seed, camera, lighting).
-- Machine QA only — do not ask a human to review thousands of frames.
-- Cycles OptiX is local GPU; CI stays CPU/headless or skip if Blender is missing.
+- Dry-run is the default; live orders require `TRENDALGO_MODE=live` and per-exchange `go-live-gate.sh --approve`.
+- Secret Sauce must beat fees and Buy & Hold under an honest Oracle ceiling (never force-sorted).
+- Dual-runtime desktop architecture (ADR-0021): C# Avalonia shell + permanent Python Research Engine sharing `results.db`.
 - Do not overwrite live `branding/assets/*.svg` (Sacred vector SoT).
 
-**First milestone:** Seeded icon factory with QA JSON; sample manifest in CI; 4000+ run on This Computer.
+**First milestone:** Kraken public research desk + 9-CEX read-only portfolio + Secret Sauce Lab + Avalonia/PySide6 desktop parity.
 <!-- product-brief-sync:end -->
 
 ## Now
 
-> Day-to-day device: `.\scripts\packaging\relaunch-device.ps1` (source-first; no PyInstaller).
-> Follow-ups: LIVE/NOTIF botd cron wiring; SIM snapshot regen; H-006b before non-owner billing (ADR-0020 Tier B).
+> Day-to-day device: `.\scripts\packaging\relaunch-device.ps1` (source-first; no PyInstaller) · Avalonia: `dotnet build shell/TrendAlgo.Shell` then relaunch.
+> Avalonia-gaps LOCAL complete. Follow-ups: LIVE/NOTIF polish; H-006b; CLOUD DEX-P4b.
 
 | Marker | State |
 |--------|-------|
 | 🔲 | Open |
 | ✅ | Done |
 | ❌ | Blocked |
+
 ### Sequential (agent)
 
-> Local Sequential clear. Next AGENT work is `[CLOUD]` DEX-P4b under Open work (skipped on This Computer `/build`).
+> **Sprint Polish5-2026-11** archived in COMPLETED_TASKS.md — no open LOCAL POL5-* rows. Index was POL5-01…05.
+> **Sprint Polish4-2026-11** archived in COMPLETED_TASKS.md — no open LOCAL POL4-* rows. Index was POL4-01…06.
+> **Sprint Polish3-2026-11** archived in COMPLETED_TASKS.md — no open LOCAL POL3-* rows. Index was POL3-01…04.
+> **Sprint Polish2-2026-11** archived — no open LOCAL POL2-* rows. Index was POL2-01…04.
+> **Sprint Polish-2026-11** archived — no open LOCAL POL-* rows. Index was POL-01…05.
+> **Sprint Audit-2026-11** archived — no open LOCAL AUD-* rows. Index was AUD-01…17.
+> **Sprint Avalonia-gaps** archived — no open LOCAL AV-G-* rows. Index was AV-G-TF1…OTH5.
 
 ### Human work (complete in this order)
 

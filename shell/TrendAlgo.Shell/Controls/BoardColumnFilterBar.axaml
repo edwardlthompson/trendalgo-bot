@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:TrendAlgo.Shell.Models"
+             x:Class="TrendAlgo.Shell.Controls.BoardColumnFilterBar"
+             x:DataType="models:BoardColumnFilterState"
+             x:Name="Root">
+  <Border Background="#1A2433" Padding="0,2" CornerRadius="3" HorizontalAlignment="Stretch" ClipToBounds="True">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled">
+      <StackPanel x:Name="FilterRow" Orientation="Horizontal" Spacing="0">
+        <Border x:Name="SlotLogo" Width="52" MinWidth="0" />
+        <Border x:Name="SlotName" Width="120" MinWidth="0" />
+        <Border x:Name="SlotGain7" Width="72" MinWidth="0" Padding="1,0">
+          <TextBox MinWidth="0" Watermark="min%" ToolTip.Tip="Min 7D % — empty=all; 0=positive only"
+                   Text="{Binding MinGain7dText}" HorizontalAlignment="Stretch" />
+        </Border>
+        <Border x:Name="SlotSpark7" Width="260" MinWidth="0" Padding="1,0">
+          <ComboBox MinWidth="0" ItemsSource="{x:Static models:BoardColumnFilterState.ChartDistOptions}"
+                    SelectedItem="{Binding ChartDist7Option}"
+                    ToolTip.Tip="Max 7d chart dist from high"
+                    HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Label}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </Border>
+        <Border x:Name="SlotGain30" Width="72" MinWidth="0" Padding="1,0">
+          <TextBox MinWidth="0" Watermark="min%" ToolTip.Tip="Min 30D %"
+                   Text="{Binding MinGain30dText}" HorizontalAlignment="Stretch" />
+        </Border>
+        <Border x:Name="SlotSpark30" Width="260" MinWidth="0" Padding="1,0">
+          <ComboBox MinWidth="0" ItemsSource="{x:Static models:BoardColumnFilterState.ChartDistOptions}"
+                    SelectedItem="{Binding ChartDist30Option}"
+                    ToolTip.Tip="Max 30d chart dist from high"
+                    HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Label}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </Border>
+        <Border x:Name="SlotBestBt" Width="88" MinWidth="0" Padding="1,0">
+          <TextBox MinWidth="0" Watermark="min%" ToolTip.Tip="Min Best BT %"
+                   Text="{Binding MinBestBtText}" HorizontalAlignment="Stretch" />
+        </Border>
+        <Border x:Name="SlotBestTa" Width="140" MinWidth="0" />
+        <Border x:Name="SlotBotVsBh" Width="100" MinWidth="0" Padding="1,0">
+          <ComboBox MinWidth="0" ItemsSource="{x:Static models:BoardColumnFilterState.BotVsBhOptions}"
+                    SelectedItem="{Binding BotVsBhOption}"
+                    ToolTip.Tip="Bot+ = bot beat B&amp;H; B&amp;H+ = buy-and-hold edge"
+                    HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Label}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </Border>
+        <Border x:Name="SlotHealth" Width="80" MinWidth="0" Padding="1,0">
+          <TextBox MinWidth="0" Watermark="min" ToolTip.Tip="Min health score 0–100"
+                   Text="{Binding HealthMinText}" HorizontalAlignment="Stretch" />
+        </Border>
+        <Border x:Name="SlotHv" Width="72" MinWidth="0" />
+        <Border x:Name="SlotMaxDd" Width="72" MinWidth="0" />
+        <Border x:Name="SlotVolDelta" Width="76" MinWidth="0" Padding="1,0">
+          <ComboBox MinWidth="0" ItemsSource="{x:Static models:BoardColumnFilterState.VolAccelOptions}"
+                    SelectedItem="{Binding VolAccelOption}"
+                    ToolTip.Tip="Volume acceleration"
+                    HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Label}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </Border>
+        <Border x:Name="SlotExchange" Width="96" MinWidth="0" Padding="1,0">
+          <TextBox MinWidth="0" Watermark="exch" ToolTip.Tip="Exchange ids (comma-separated); empty=all"
+                   Text="{Binding ExchangeText}" HorizontalAlignment="Stretch" />
+        </Border>
+        <Border x:Name="SlotVol24" Width="96" MinWidth="0" Padding="1,0">
+          <ComboBox MinWidth="0" ItemsSource="{x:Static models:BoardColumnFilterState.Vol24Options}"
+                    SelectedItem="{Binding Vol24Option}"
+                    ToolTip.Tip="Min 24h volume"
+                    HorizontalAlignment="Stretch">
+            <ComboBox.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Label}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </Border>
+        <Border x:Name="SlotEvents" Width="72" MinWidth="0" />
+      </StackPanel>
+    </ScrollViewer>
+  </Border>
+</UserControl>

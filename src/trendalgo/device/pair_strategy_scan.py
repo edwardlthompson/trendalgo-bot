@@ -47,6 +47,7 @@ from trendalgo.device.scanner_all_ta_prune import deepen_seeds, fleet_row_to_lts
 from trendalgo.device.scanner_protective_tsl import stamp_rows_protective_tsl
 from trendalgo.device.scanner_tsl_seeds import best_signal_per_strategy, select_tsl_seeds
 from trendalgo.device.sim_accel_label import warm_tsl_grid_kernels
+from trendalgo.ta.indicator_cache import invalidate_frames
 
 # Re-export row helpers for existing imports.
 __all__ = [
@@ -151,7 +152,8 @@ def scan_pair_strategies(
         remaining_units = [u for u in remaining_units if u not in done_keys]
         if ledger is not None and prefs_root is not None:
             record_units(ledger, samples)
-            flush_ledger(prefs_root, ledger)
+            if on_progress is not None:
+                flush_ledger(prefs_root, ledger)
 
     def publish() -> None:
         if on_rows is not None:
@@ -192,7 +194,8 @@ def scan_pair_strategies(
                 )
             ],
         )
-        flush_ledger(prefs_root, ledger)
+        if on_progress is not None:
+            flush_ledger(prefs_root, ledger)
     for note in load_meta.get("notes") or []:
         emit(str(note), phase="load")
     if not frames_by_tf:
@@ -357,7 +360,8 @@ def scan_pair_strategies(
                     )
                 ],
             )
-            flush_ledger(prefs_root, ledger)
+            if on_progress is not None:
+                flush_ledger(prefs_root, ledger)
 
     out = dedupe_indicator_tf(out)
     out = ensure_full_catalog(out, strat_list, symbol=symbol, stake_usd=stake, skips=skip_best)
@@ -373,6 +377,8 @@ def scan_pair_strategies(
         publish()
         sauce_s = 0.0
         if ledger is not None and prefs_root is not None:
+            if on_progress is None and catalog_units:
+                flush_ledger(prefs_root, ledger)
             slow = top_slowest(catalog_units, 20)
             write_last_run(
                 prefs_root,
@@ -405,6 +411,8 @@ def scan_pair_strategies(
             "mc_s": round(float(market_context.get("mc_s") or 0.0), 3),
         }
         market_context["include_sauce"] = False
+        market_context["bars_base"] = _bars_base(frames_by_tf)
+        market_context["n_frames"] = len(frames_by_tf)
         emit(
             f"Scan complete — {len(out)} rows",
             phase="done",
@@ -418,6 +426,7 @@ def scan_pair_strategies(
             eta_remaining_s=0.0,
         )
         publish()
+        invalidate_frames(frames_by_tf.values())
         return out, market_context
 
     emit(S.SCAN_PHASE_SAUCE_COINCIDENCE, phase="sauce", catalog_ready=True)
@@ -474,7 +483,14 @@ def scan_pair_strategies(
     if base is not None:
         emit(S.SCAN_PHASE_SAUCE_REFINE, phase="sauce")
         try:
-            base = refine_sauce_from_peers(base, out, frames_by_tf, stake=stake, fee=fee)
+            base = refine_sauce_from_peers(
+                base,
+                out,
+                frames_by_tf,
+                stake=stake,
+                fee=fee,
+                emit=lambda m: emit(m, phase="sauce"),
+            )
         except (TypeError, ValueError, KeyError, IndexError):
             pass
         ok, reason = validate_sauce_against_peers(base, out, frames_by_tf, stake=stake, fee=fee)
@@ -541,6 +557,7 @@ def scan_pair_strategies(
     emit("Secret Sauce Final / helpers done", phase="sauce", ss_final_done=True)
     done = min(total, done + 1)
 
+    emit("Stamping protective TSL…", phase="sauce")
     out = stamp_rows_protective_tsl(out, frames_by_tf, fee=fee, stake=stake)
     publish()
 
@@ -591,6 +608,8 @@ def scan_pair_strategies(
         "mc_s": round(float(market_context.get("mc_s") or 0.0), 3),
     }
     market_context["include_sauce"] = True
+    market_context["bars_base"] = _bars_base(frames_by_tf)
+    market_context["n_frames"] = len(frames_by_tf)
     emit(
         f"Scan complete — {len(out)} rows",
         phase="done",
@@ -604,6 +623,7 @@ def scan_pair_strategies(
         eta_remaining_s=0.0,
     )
     publish()
+    invalidate_frames(frames_by_tf.values())
     return out, market_context
 
 

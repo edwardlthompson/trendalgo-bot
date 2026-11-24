@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.CrashReviewWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Saved crash to review"
+        Width="520" Height="360"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+  <DockPanel Margin="16">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Name="KeepBtn" Content="Keep for later" Click="OnKeep" />
+      <Button Name="ClearBtn" Content="Clear saved crash" Click="OnClear" />
+    </StackPanel>
+    <StackPanel Spacing="8">
+      <TextBlock Name="BodyText" TextWrapping="Wrap" />
+      <TextBox Name="DetailBox" AcceptsReturn="True" IsReadOnly="True"
+               TextWrapping="Wrap" Height="220" FontFamily="Consolas,Cascadia Mono,monospace" />
+    </StackPanel>
+  </DockPanel>
+</Window>

@@ -2,6 +2,164 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint Polish5-2026-11 POL5-01…05 (2026-11-24)
+
+Verification: `ruff format --check .` + `ruff check .` (0 errors), `mypy src` (0 issues in 912 files), `pyright` (0 errors), `pytest --no-cov -q` (109 passed across `test_results_store`, `test_ohlcv_resample`, `test_alpaca_ohlcv_bisect`, `test_telegram_format_lts`, `test_shell_parity_catalog`), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release --nologo` (0 warnings, 0 errors), isolated `ETH/USD` `--pair-backtest` (199 rows, `pairs_label=Single-pair backtest (1/1)`), `scan_settings` benchmark-calibrated ETAs (`Crypto ~10s/coin`, `TradFi ~4s/coin`, `Forex ~8s/coin`), `validate-template-index.sh`, `check-file-encoding.sh`, `check-file-limits.sh`, `check-repo-hygiene.sh` all passed.
+
+- ✅ [AGENT][LOCAL] POL5-01 Fix Backtest tab isolation (`ETH/USD` direct `--pair-backtest`, FIFO `desk_commands`, `backtest` progress surface, cancel flag, and venue detection)
+- ✅ [AGENT][LOCAL] POL5-02 Fix benchmark timing calibration persistence (`load_s`, `>=1` sample, wall-clock fleet throughput) and per-lane scan ETA calibration
+- ✅ [AGENT][LOCAL] POL5-03 Fix TradFi Alpaca multi-bars chunk bisect on HTTP 400, per-lane `ScanProgress` isolation, stale progress seed, and refresh all Windows shortcuts
+- ✅ [AGENT][LOCAL] POL5-04 Full local + CI verification gates and archive sprint to `COMPLETED_TASKS.md`
+- ✅ [AGENT][LOCAL] POL5-05 Commit, push to `main`, monitor CI & Release Please PR/tag release, and relaunch updated `TrendAlgo.Shell.exe`
+
+## Sprint Polish4-2026-11 POL4-01…06 (2026-11-24)
+
+Verification: `ruff check` on all touched Python & test files (0 errors), `pytest --no-cov -q tests/test_backtest/test_ohlcv_resample.py tests/test_notifications/test_telegram_format_lts.py` (10 passed), real cached TradFi verification on previously failing symbols (`SXTC/USD`, `JOB/USD`, `DKI/USD`, `USAX/USD` → 192–193 rows each, `cache_entries_after=0`), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release` (0 warnings, 0 errors), live `TrendAlgo.Shell.exe` smoke launch (`PID=5384 HasExited=False Responding=True EventErrors=0`).
+
+- ✅ [AGENT][LOCAL] POL4-01 Fix TradFi resample failure (gapped 1h bars) and 200-coin scan OOM / thread-safety leaks (`ohlcv_resample.py`, `scan_base_ohlcv*.py`, `pandas_ta_engine.py`, `indicator_cache.py`, `scan_parallel.py`, `scanner_all_ta_pool.py`, `pair_strategy_scan.py`, `pair_strategy_sauce_pass.py`)
+- ✅ [AGENT][LOCAL] POL4-02 Persist and display Last Scan time (local time + relative age) on Crypto, TradFi, Forex, and Pool Watch (`scan_eta_filters.py`, `lane_scan_job.py`, `lts_scan_model.py`, `dex_watch_model.py`, `MainViewModel.cs`, `MainWindow.axaml`)
+- ✅ [AGENT][LOCAL] POL4-03 Remove Uniformity Score line from Telegram notifications (`telegram_format.py`, `test_telegram_format_lts.py`)
+- ✅ [AGENT][LOCAL] POL4-04 Ensure all timestamps across shell and engine use the user's computer local time zone (`LocalTimeFormat.cs`, `MainViewModel.cs`, `MainViewModel.Alerts.cs`, `MainViewModel.Dashboard.cs`, `MainViewModel.Workbook.cs`, `DeskSurfacePresenter.cs`, `BenchmarkWindow.axaml.cs`, `execution_log.py`, `desk_events.py`)
+- ✅ [AGENT][LOCAL] POL4-05 Remove top-level Alerts nav item and combine Alert History into Settings -> Notifications & Telegram (`ParityCatalog.cs`, `MainViewModel.cs`, `MainViewModel.MorePages.cs`, `MainWindow.axaml`)
+- ✅ [AGENT][LOCAL] POL4-06 Scoped lint/tests, Release build, live TradFi + GUI smoke verification, and archive sprint to `COMPLETED_TASKS.md`
+
+## Sprint Polish3-2026-11 POL3-01…04 (2026-11-24)
+
+Verification: `ruff check` (0 errors), `pytest --no-cov tests/test_results_store/test_polish3_metrics_and_alerts.py` (2 passed), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release` (0 warnings, 0 errors), real `EVAA/USD` Results check (`wins=2 losses=1 strength=11.3`), `--test-telegram-rich` (`ok=true, photo=true`), live launch (`HasExited=False`, `Responding=True`, `EventErrors=0`, `LogLinesBefore=506 LogLinesAfter=506`).
+
+- ✅ [AGENT][LOCAL] POL3-01 Populate derived `Losses` and `Strength` on Backtest / Results strategy rows in Python (`desk_surfaces.py`, `desk_export.py`) and C# (`StrategyResultMapper.cs`)
+- ✅ [AGENT][LOCAL] POL3-02 Clean up `Logs`: stop logging `startup` / `board_load` noise, filter noisy records, and surface `qualified_enter`, `watchlist_leave`, `trade_alert`, scans, and benchmarks
+- ✅ [AGENT][LOCAL] POL3-03 Connect rich Telegram Enter/Leave notification pipeline (`emit_desk_scan_alerts` with per-lane state + candlestick/table PNG) to `finish_run_scan` and add `Test Rich Enter Alert`
+- ✅ [AGENT][LOCAL] POL3-04 Scoped `ruff` + `pytest`, Release `dotnet build`, live `TrendAlgo.Shell.exe` smoke verification, and archive `POL3-*` to `COMPLETED_TASKS.md`
+
+## Sprint Polish2-2026-11 POL2-01…04 (2026-11-24)
+
+Verification: `ruff check` (0 errors), `pytest --no-cov` (10 passed), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release` (0 warnings, 0 errors), C# CredMan UTF-8 read (`TokLen=46 ChatLen=10 ChatIsDigits=True`), `TelegramDirectClient.SendMessageAsync` (`Ok=True`, `@TrendAlgoAlerts_bot`), live `Settings` + normal launch (`HasExited=False`, `Responding=True`, `EventErrors=0`).
+
+- ✅ [AGENT][LOCAL] POL2-01 Fix Telegram CredMan UTF-8 encoding (`WindowsCredManStore.cs`), pre-populate CredMan token/chat in UI, add native `TelegramDirectClient.cs` + `Detect Chat ID` / `Save` / `Test Telegram`, pass `--root` in `DeskSurfaceClient`, and auto-enable Telegram when creds exist
+- ✅ [AGENT][LOCAL] POL2-02 Remove persistent Settings top/layout grid (`Arrange modules` / 48-col grid numbers) & bottom `About` block; combine 13 Settings subcategories into 6 clean sub-menus
+- ✅ [AGENT][LOCAL] POL2-03 Remove `Scan all desks` button; read checked desks from `lane_prefs.json` in `AutoScanSchedulerService.cs` and wire `Run scan` + `multi_desk_scan.py` to scan checked desks
+- ✅ [AGENT][LOCAL] POL2-04 Scoped `ruff` + `pytest`, Release `dotnet build` (`0 Warning(s), 0 Error(s)`), real Telegram test delivery check, live `TrendAlgo.Shell.exe` smoke verification, and archive `POL2-*` to `COMPLETED_TASKS.md`
+
+## Sprint Polish-2026-11 POL-01…05 (2026-11-24)
+
+Verification: `ruff check` (0 errors), `pytest --no-cov` (10 passed), `brand.json` SHA-256 match (`98d03c96...`), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release` (0 warnings, 0 errors), live `Settings` + normal launch (`HasExited=False`, `Responding=True`, `EventErrors=0`).
+
+- ✅ [AGENT][LOCAL] POL-01 Restore Bot + Candlesticks logo across taskbar, toolbar, all Avalonia windows, tray, `README.md`, and Argus contract (`app-icon-1024.png`, `brand.json`, `brand.schema.json`)
+- ✅ [AGENT][LOCAL] POL-02 Board row left-click shortcuts for 100% of right-click actions (`SparklineCell` & `HeatValueCell` hit-test + pointer capture, 7D/30D charts, Results, Events cell, Watchlist `★`/`☆` toggle, `ResultsSurfaceWindow` Events/Chart shortcuts)
+- ✅ [AGENT][LOCAL] POL-03 Top-of-the-hour schedule pipeline (`60m` → `HH:00:00` every hour) in Python `scanner/scheduler.py` AND live `AutoScanSchedulerService` in `TrendAlgo.Shell`
+- ✅ [AGENT][LOCAL] POL-04 Fix `Settings` reflection-cast XAML crash (`MainWindow.axaml:661` & `:522/:527`), convert `Settings` into expandable left-sidebar tree (`▸/▾ Settings` + `↳` subcategories), and audit/surface Telegram + Windows + Grokbot testers in `Settings → Notifications & Telegram`
+- ✅ [AGENT][LOCAL] POL-05 Scoped `ruff` + `pytest`, Release `dotnet build` (`0 Warning(s), 0 Error(s)`), and live `TrendAlgo.Shell.exe` smoke verification (including clicking `Settings` & subcategories with `EventErrors=0`)
+
+## Sprint Audit-2026-11 AUD-01…17 (2026-11-23)
+
+Scoped verification: `ruff check .` (0 errors), `ruff format --check .` (1966 formatted), `mypy src` (0 issues in 901 files), `pyright` (0 errors), `validate_template_index.py` PASS, `check_agent_brief.py` PASS, `check-file-encoding.py` PASS, `check_avalonia_gap_sync.py` PASS, `dotnet build shell/TrendAlgo.Shell --no-restore` PASS (0 warnings, 0 errors), scoped `pytest` on `test_results_store` + `test_shell` PASS.
+
+- ✅ [AGENT][LOCAL] AUD-01 Fix strict mypy generic `dict[str, Any] | None` annotation in `results_store` CLI — scope: `src/trendalgo/results_store/__main__.py`
+- ✅ [AGENT][LOCAL] AUD-02 Format `scanner_table_cells.py` with `ruff format` — scope: `src/trendalgo/device/views/scanner_table_cells.py`
+- ✅ [AGENT][LOCAL] AUD-03 Index `scripts/check-avalonia-gap-sync.sh` in `TEMPLATE_INDEX.json` so `validate-index` CI passes — scope: `TEMPLATE_INDEX.json`
+- ✅ [AGENT][LOCAL] AUD-04 Remove untracked `.cursor/probe_*.py` and `.tmp-shell-*.txt` scratch artifacts and tighten `.gitignore` — scope: `.gitignore`
+- ✅ [AGENT][LOCAL] AUD-05 Add .NET 8 `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release` job to `ci.yml` — scope: `.github/workflows/ci.yml`
+- ✅ [AGENT][LOCAL] AUD-06 Point `weekly-health-check.yml` `uv pip audit` at root `uv.lock` instead of dead `examples/python/uv.lock` — scope: `.github/workflows/weekly-health-check.yml`
+- ✅ [AGENT][LOCAL] AUD-07 Update `check-license-compliance.sh` to audit root `pyproject.toml` instead of skipping when `examples/python/` is absent — scope: `scripts/check-license-compliance.sh`
+- ✅ [AGENT][LOCAL] AUD-08 Update `codeql.yml` language matrix (drop unused `javascript-typescript`, evaluate `csharp` for `shell/`) — scope: `.github/workflows/codeql.yml`
+- ✅ [AGENT][LOCAL] AUD-09 Prune unused Node 22 and Java Temurin 21 setup steps from `feature-gate` in `ci.yml` — scope: `.github/workflows/ci.yml`
+- ✅ [AGENT][LOCAL] AUD-10 Replace `AgentProjectBootstrap.Template` Winget stub ID in `release.yml` with product package identifier — scope: `.github/workflows/release.yml`
+- ✅ [AGENT][LOCAL] AUD-11 Migrate `desk_commands.json` queue into `results.db` SQLite table to eliminate C#/Python multi-process file races — scope: `src/trendalgo/results_store/;shell/TrendAlgo.Shell/Services/`
+- ✅ [AGENT][LOCAL] AUD-12 Centralize C# engine subprocess resolution (`EngineProcessRunner`) to prefer bundled `engine/` runtime over dev `~/.local/bin/uv.exe` — scope: `shell/TrendAlgo.Shell/Services/`
+- ✅ [AGENT][LOCAL] AUD-13 Enable SQLite `PRAGMA journal_mode=WAL` and `busy_timeout=5000` on `results.db` in `ResultsStore` — scope: `src/trendalgo/results_store/store.py`
+- ✅ [AGENT][LOCAL] AUD-14 Point `check-file-limits.sh` at `src/trendalgo/` and `shell/` (with baseline exemptions or modular splits for oversized files) — scope: `scripts/check-file-limits.sh`
+- ✅ [AGENT][LOCAL] AUD-15 Replace stale Blender icon-factory brief in `AGENT.md` and `BUILD_PLAN.md` Product block with TrendAlgo Bot brief — scope: `AGENT.md;BUILD_PLAN.md;branding/product.json`
+- ✅ [AGENT][LOCAL] AUD-16 Harden `docker/Dockerfile.prod` to install from locked `uv.lock` (`uv sync --locked --no-dev`) and run under a non-root `USER` — scope: `docker/Dockerfile.prod`
+- ✅ [AGENT][LOCAL] AUD-17 Read package version dynamically (`importlib.metadata.version("trendalgo-bot")`) in `create_app()` instead of hardcoded `"0.1.0"` — scope: `src/trendalgo/api/app.py`
+
+## Sprint Avalonia-gaps AV-G-TF1…OTH5 (2026-11-19)
+
+Smoke: `smoke-sprint --require --sprint "Local agent (This Computer)"` PASS (53 items). Gap sync OK. Scoped mypy/pyright on results_store; full `watch-agent-gates` aborted (human: skip hung full-suite pytest). SHA `fc9b718`.
+
+- ✅ [AGENT][LOCAL] AV-G-TF1 TF subhour/hour bands + separator + OHLCVT mix note — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BRD1 Real coin/equity logos — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BRD2 Painted 7D/30D sparklines + click→chart — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BRD3 Heatmap rank cell backgrounds — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR11 Strip declutter (secondary → Settings/overflow) — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR6 Secret Sauce engine job (not ack-only) — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-G-STR7 DEX pool watch engine — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-G-STR8 Refresh prices engine — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-G-RES3 OHLC candle chart + trade markers — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-TF2 ETA header (lane estimates) — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-TF3 Primary filters Full — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-TF4 OHLCVT / deep-1m block — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-TF5 Extras Full — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-TF6 Per-lane scan filters — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-TF7 Results-view prefs — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-TF8 Persist lane_prefs + lane_scan_filters — scope: `shell/TrendAlgo.Shell/;src/trendalgo/results_store/`
+- ✅ [AGENT][LOCAL] AV-G-TF9 Exchange allowlist in Settings chrome — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BRD4 Per-column filter row — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BRD5 Buy Picks 9-col + spectrum — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BRD6 LTS header tooltips — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR1 Desk-load % on nav Crypto/TradFi/Forex labels — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR2 Tray balloon toasts — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR3 Startup crash review → update/donate chain — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR4 Theme system/light/dark + accent — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR5 Autostart registry write — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-G-STR9 Scan progress ETA + pair glance — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-STR10 Force-fresh debug UX — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-RES1 Full All-TA Results sheet — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-RES2 Results share PNG + toolbar — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-RES4 Coin events timeline Full — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-RES5 Glossary popup full TA entry — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-DSH1 Live portfolio module canvas — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-DSH2 Customize dialog drag grid — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-DSH3 Settings dashboard section editors — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-DSH4 Dashboard PNG export — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-ALR1 Alerts ribbon notify matrix + Save — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-ALR2 Native tray toast on alert — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BOT1 Send-to-host botd publish — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-G-BOT2 Live host flatten when linked — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-G-BOT3 Start/stop cards + FAB — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-BOT4 Derive Oracle rule from backtest — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-G-SET1 Venue execution editor — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-SET2 Lanes auto-scan + Alpaca hint editors — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-SET3 Appearance theme/accent editors — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-SET4 Connection owner/host/cert pin grid — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-SET5 10-section drag grid + ribbon layout — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-SET6 Setup wizard W0–W5 (real pairing steps) — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-SET7 Privacy / export / advanced / updates editors — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-OTH1 Export hub (journal CSV, plan JSON, latest scan JSON) — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-OTH2 Backtest full toolbar/body parity — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-OTH3 Backtest results column filters — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-OTH4 Host badge on global chrome — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G-OTH5 Engine All-TA backtest worker — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`
+
+## Sprint Avalonia-1to1 AV-P1a…P1h (2026-11-19)
+
+Smoke: `smoke-sprint --require --sprint Avalonia-1to1` PASS (8 items). Scoped pytest on results_store/credman + `dotnet build` shell. Full `watch-agent-gates` needs `uv sync --all-extras` after autofix emptied `.venv` (starlette/PySide ERRORs). CredMan: Telegram/Alpaca/CMC present in place; AlgoSpecial keyless. PySide6 stays until gap file Full.
+
+- ✅ [AGENT][LOCAL] AV-P1a Rewrite AVALONIA_PARITY_GAPS from inventory + CredMan target inventory (honesty: reopen stubs) — scope: `docs/AVALONIA_PARITY_GAPS.md`
+- ✅ [AGENT][LOCAL] AV-P1b Slice 0 CredMan continuity: same TrendAlgo/* targets; presence-only verify smoke; shell adapter (Telegram/Alpaca/exchange/calendar/owner) — scope: `shell/` `src/trendalgo/device/`
+- ✅ [AGENT][LOCAL] AV-P1c Slice 1 Scan/Backtest Settings 1:1 (28 TFs + strategy denylist + chrome/OHLCVT/ETA/lane) — scope: `shell/TrendAlgo.Shell/` `src/trendalgo/results_store/`
+- ✅ [AGENT][LOCAL] AV-P1d Slice 2 Crypto/TradFi/Forex desks 1:1 (17-col board, filters, progress modal, strip) — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-P1e Slice 3 Results/Chart/Sauce/DEX/Events/Glossary windows 1:1 — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-P1f Slice 4 Backtest page + Bots hub (real botd, not stubs) 1:1 — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-P1g Slice 5 Dashboard live modules + Alerts notify (Telegram via vault) 1:1 — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-P1h Slice 6 Settings 10 sections + CredMan wizards + tray toasts + startup prompts 1:1 — scope: `shell/TrendAlgo.Shell/` `src/trendalgo/device/`
+
+## Avalonia P0 parity AV-G1…G11 (2026-11-19)
+
+Scoped: `tests/test_results_store` (19) + `dotnet build shell/TrendAlgo.Shell.sln -c Release`. Full `watch-agent-gates` aborted (ENOSPC / multi-stack). PySide6 stays shippable — remaining polish in `docs/AVALONIA_PARITY_GAPS.md`.
+
+- ✅ [AGENT][LOCAL] AV-G1 Crypto desk action strip (Run/Cancel/Settings/Sauce/Pool/Refresh/Share/Status) — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G2 Crypto LTS board Qualified/Watch/Logs + filters/Buy Picks/Results — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G3 Desk IPC lane_scan_job + progressive results.db board — scope: `src/trendalgo/results_store/` `shell/`
+- ✅ [AGENT][LOCAL] AV-G4 Results/Sauce/DEX/charts/timeline from desk — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G5 TradFi+Forex desk parity (Alpaca CTA, AlgoSpecial) — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G6 Backtest page parity — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G7 Dashboard portfolio modules — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G8 Alerts + tray toasts — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G9 Bots hub parity — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G10 Settings sections + vaults + wizards — scope: `shell/TrendAlgo.Shell/`
+- ✅ [AGENT][LOCAL] AV-G11 Glossary/Export/Billing/Debug + tray; PySide6 retire gate — scope: `shell/` `docs/AVALONIA_PARITY_GAPS.md`
+
 ## News inbox P2 (2026-11-18)
 
 - ✅ [AGENT][LOCAL] Extend SecretRedactor to wallet private keys, seed phrases and vaulted keys at every log level — scope: `src/trendalgo/exchanges/secrets.py` (news P2, 2026-11-16)

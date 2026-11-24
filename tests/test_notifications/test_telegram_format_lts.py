@@ -33,7 +33,7 @@ def test_enter_caption_uses_lts_fields_not_dashes() -> None:
     assert "+12.5%" in text
     assert "+40.0%" in text
     assert "72" in text
-    assert "58" in text
+    assert "Uniformity Score" not in text
     assert "<a href=" in text
 
 

@@ -12,7 +12,6 @@ from trendalgo.notifications.telegram_coin_fields import (
     exchange_volumes,
     gain_pct,
     health_score,
-    uniformity_score,
     volume_24h,
 )
 from trendalgo.notifications.telegram_keyboard import primary_market_url
@@ -34,9 +33,6 @@ def format_qualified_enter(coin: dict[str, Any]) -> str:
     g7, g30 = gain_pct(coin, "7d"), gain_pct(coin, "30d")
     lines.append(f"   7d: {_signed_pct(g7)}\n")
     lines.append(f"   30d: {_signed_pct(g30)}\n\n")
-    uni = uniformity_score(coin)
-    if uni is not None:
-        lines.append(f"📈 Uniformity Score: {uni:.0f}/100\n")
     health = health_score(coin)
     if health is not None:
         label = coin.get("health_label")

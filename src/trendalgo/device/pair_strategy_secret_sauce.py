@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from trendalgo.device.sauce_names import SAUCE_ALL, SAUCE_LAB, SAUCE_LEGACY, SAUCE_TA, is_sauce_lab
@@ -183,6 +184,7 @@ def refine_sauce_from_peers(
     stake: float,
     fee: Any,
     time_budget_s: float | None = None,
+    emit: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     """Second-pass Lab refine: maximize fee Net % toward Oracle; peer clear is floor."""
     from trendalgo.backtest.secret_sauce_lab.peer_refine import refine_lab_from_peers
@@ -201,6 +203,7 @@ def refine_sauce_from_peers(
         fee=fee,
         time_budget_s=(time_budget_s if time_budget_s is not None else lab_time_budget_s(swings_n)),
         frames_by_tf=frames_by_tf,
+        emit=emit,
     )
     if packed is None:
         out = dict(sauce)

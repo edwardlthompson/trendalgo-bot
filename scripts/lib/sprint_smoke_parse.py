@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-HEADER = re.compile(r"^###\s+(?P<title>(?:M\d+|Sprint\s+).+)$")
+# Child standing queues use "Local agent" / "Cloud agent"; playbooks use "Sprint …" / "M*".
+HEADER = re.compile(r"^###\s+(?P<title>(?:M\d+|Sprint\s+|Local agent|Cloud agent).+)$")
 ROW = re.compile(
     r"^(?P<num>\d+[a-z]?)\.\s+(?P<status>🔲|✅|❌)\s+"
     r"\[(?P<owner>AGENT|AUTO|HUMAN|ADB)\]"

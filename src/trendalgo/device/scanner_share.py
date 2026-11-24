@@ -36,6 +36,8 @@ def scanner_filter_summary(filters: dict[str, Any]) -> str:
         "bt_signal_set": "signals",
         "heatmap_enabled": "color ranks",
         "perfect_only": "perfect only",
+        "pair_contains": "pair",
+        "view_exchanges": "exchange",
     }
     parts: list[str] = []
     seen: set[str] = set()
@@ -54,6 +56,8 @@ def scanner_filter_summary(filters: dict[str, Any]) -> str:
                 parts.append(f"{label}={float(raw):,.0f}")
             except (TypeError, ValueError):
                 parts.append(f"{label}={raw}")
+        elif key == "view_exchanges" and isinstance(raw, list):
+            parts.append(f"{label}={','.join(str(x) for x in raw)}")
         else:
             parts.append(f"{label}={raw}")
         seen.add(label)
@@ -66,25 +70,32 @@ def export_scanner_list_png(
     coins: list[dict[str, Any]],
     title: str,
     filters: dict[str, Any] | None = None,
+    filter_line: str | None = None,
     heatmap: bool = False,
     sort_key: str = "health",
     sort_dir: int = -1,
     include_market_context: bool = True,
+    market_context_limit: int | None = None,
     icon_root: Path | None = None,
     lane: str = "crypto",
 ) -> Path:
     if not coins:
         raise ValueError("no rows to export")
+    from trendalgo.device.export_qt import pin_export_fonts
+
+    pin_export_fonts()
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    line = filter_line if filter_line is not None else scanner_filter_summary(filters or {})
     panel = build_scanner_export_panel(
         coins=coins,
         title=title,
-        filter_line=scanner_filter_summary(filters or {}),
+        filter_line=line,
         heatmap=heatmap,
         sort_key=sort_key,
         sort_dir=sort_dir,
         include_market_context=include_market_context,
+        market_context_limit=market_context_limit,
         icon_root=icon_root,
         lane=lane,
     )

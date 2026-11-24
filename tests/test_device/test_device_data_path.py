@@ -57,6 +57,7 @@ def test_data_dir_points_the_four_databases_at_the_api_folder(
     assert paths["bots"] == data / "bots.db"
     assert paths["journal"] == data / "journal.db"
     assert paths["candles"] == data / "ohlcv_prices.db"
+    assert paths["results"] == tmp_path / "profile" / "results.db"
 
 
 def test_candle_env_still_wins_for_the_candle_file_alone(

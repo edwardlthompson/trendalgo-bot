@@ -14,8 +14,13 @@ HISTORY_FILE = "scanner_alerts.json"
 MAX_HISTORY = 200
 
 
-def load_previous_qualified(root: Path) -> set[str]:
-    raw = read_json(root / STATE_FILE)
+def _state_file(lane: str = "crypto") -> str:
+    key = str(lane or "crypto").strip().lower() or "crypto"
+    return STATE_FILE if key == "crypto" else f"scanner_alert_state_{key}.json"
+
+
+def load_previous_qualified(root: Path, *, lane: str = "crypto") -> set[str]:
+    raw = read_json(root / _state_file(lane))
     if not isinstance(raw, dict):
         return set()
     keys = raw.get("qualified")
@@ -24,8 +29,8 @@ def load_previous_qualified(root: Path) -> set[str]:
     return {str(k).upper() for k in keys if str(k).strip()}
 
 
-def load_previous_coins(root: Path) -> dict[str, dict[str, Any]]:
-    raw = read_json(root / STATE_FILE)
+def load_previous_coins(root: Path, *, lane: str = "crypto") -> dict[str, dict[str, Any]]:
+    raw = read_json(root / _state_file(lane))
     if not isinstance(raw, dict):
         return {}
     coins = raw.get("coins")
@@ -43,6 +48,7 @@ def save_previous_qualified(
     keys: set[str],
     *,
     coins: list[dict[str, Any]] | None = None,
+    lane: str = "crypto",
 ) -> None:
     payload: dict[str, Any] = {
         "qualified": sorted(keys),
@@ -75,7 +81,7 @@ def save_previous_qualified(
                 if k in coin
             }
         payload["coins"] = slim
-    write_json(root / STATE_FILE, payload)
+    write_json(root / _state_file(lane), payload)
 
 
 def append_alerts(root: Path, events: list[AlertEvent]) -> list[dict[str, Any]]:

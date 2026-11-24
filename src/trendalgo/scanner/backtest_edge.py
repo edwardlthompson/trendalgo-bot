@@ -78,7 +78,9 @@ def bot_vs_bh_edge(
     buy_hold_net = _net(chosen_bh)
     if buy_hold_net is None:
         return None
-    label = f"{best_row.get('indicator', '')} {best_row.get('timeframe', '')}".strip()
+    # bot_best_* stays the best non-baseline TA (edge math / tip). Board UI may
+    # prefer B&H for display when buy_hold_net > best_net (see best_pill / shell).
+    label = f"{best_row.get('timeframe', '')} {best_row.get('indicator', '')}".strip()
     return {
         "bot_vs_bh_pct": round(best_net - buy_hold_net, 6),
         "bot_best_net_pct": round(best_net, 6),

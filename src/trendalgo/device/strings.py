@@ -796,14 +796,14 @@ MARKET_CTX_SPREAD = "Spread {pct}%"
 MARKET_CTX_UNAVAILABLE = "Unavailable"
 MARKET_CTX_NO_VOLUME = "No volume"
 MARKET_CTX_STRATEGY_CAPTION = "Strategy results"
-BUY_PICKS_TITLE = "Market Context top 10"
+BUY_PICKS_TITLE = "Market Context"
 BUY_PICKS_SUBTITLE = (
-    "Highest consensus scores on the filtered board — plus top TA gain when All-TA ran"
+    "Consensus scores for every pair on the filtered board — plus top TA gain when All-TA ran"
 )
 BUY_PICKS_SUBTITLE_FALLBACK = BUY_PICKS_SUBTITLE
 BUY_PICKS_EMPTY = (
     "No Market Context yet — run a full Opportunity scan (All-TA). "
-    "Public Kraken OHLCV works without keys; Top 10 fills after the backtest pass."
+    "Public Kraken OHLCV works without keys; rows fill after the backtest pass."
 )
 BUY_PICKS_TA_NONE = "—"
 BUY_PICKS_COL_PAIR = "Pair"

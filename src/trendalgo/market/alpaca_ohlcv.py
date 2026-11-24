@@ -142,15 +142,18 @@ def fetch_alpaca_equity_bars_multi(
     last_call = 0.0
     size = max(1, int(chunk_size))
     total_chunks = max(1, (len(cleaned) + size - 1) // size) if cleaned else 0
-    for i in range(0, len(cleaned), size):
-        chunk = cleaned[i : i + size]
+
+    def _fetch_chunk(syms: list[str]) -> None:
+        nonlocal last_call
+        if not syms:
+            return
         page_token: str | None = None
         while True:
             elapsed = time.monotonic() - last_call
             if last_call > 0 and elapsed < min_interval:
                 time.sleep(min_interval - elapsed)
             params: dict[str, str] = {
-                "symbols": ",".join(chunk),
+                "symbols": ",".join(syms),
                 "timeframe": _timeframe_param(timeframe),
                 "start": since.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "end": until.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -170,8 +173,19 @@ def fetch_alpaca_equity_bars_multi(
                 },
                 method="GET",
             )
-            with open_fn(req, timeout=_HTTP_TIMEOUT_S) as resp:
-                payload = json.loads(resp.read().decode("utf-8"))
+            try:
+                with open_fn(req, timeout=_HTTP_TIMEOUT_S) as resp:
+                    payload = json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as exc:
+                last_call = time.monotonic()
+                if exc.code == 400 and len(syms) > 1 and page_token is None:
+                    mid = len(syms) // 2
+                    _fetch_chunk(syms[:mid])
+                    _fetch_chunk(syms[mid:])
+                    return
+                if exc.code == 400:
+                    return
+                raise
             last_call = time.monotonic()
             bars_map = payload.get("bars") if isinstance(payload, dict) else None
             if isinstance(bars_map, dict):
@@ -187,9 +201,13 @@ def fetch_alpaca_equity_bars_multi(
             page_token = str(token) if token else None
             if not page_token:
                 break
-        for sym, points in list(out.items()):
-            points.sort(key=lambda p: p.time)
-            out[sym] = points
+
+    for i in range(0, len(cleaned), size):
+        chunk = cleaned[i : i + size]
+        _fetch_chunk(chunk)
+        for sym in chunk:
+            if sym in out:
+                out[sym].sort(key=lambda p: p.time)
         if on_chunk is not None and chunk:
             done = (i // size) + 1
             on_chunk(done, total_chunks, chunk[0])

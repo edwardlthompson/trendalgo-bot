@@ -47,7 +47,7 @@ def test_open_context_creates_the_folder_and_names_every_file(tmp_path: Path) ->
     assert ctx.settings_path == root / "settings.json"
     assert ctx.plan_path == root / "plan.json"
     assert ctx.lock_path == root / "device.lock"
-    assert set(ctx.databases) == {"scanner", "bots", "journal", "candles"}
+    assert set(ctx.databases) == {"scanner", "bots", "journal", "candles", "results"}
 
 
 def test_read_json_returns_none_for_a_missing_file(tmp_path: Path) -> None:

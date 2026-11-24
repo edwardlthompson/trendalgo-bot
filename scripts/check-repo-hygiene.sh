@@ -15,6 +15,7 @@ run_step() {
 
 run_step bash scripts/check-tracked-artifacts.sh
 run_step bash scripts/check-large-tracked-files.sh
+run_step bash scripts/check-avalonia-gap-sync.sh
 
 REQUIRED_IGNORES=(
   node_modules/

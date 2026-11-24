@@ -111,9 +111,11 @@ def render_readme(root: Path, product: dict, *, for_preview: bool = False) -> st
     urls = product["urls"]
     badge = product["badge"]
     if for_preview:
+        icon_path = "../assets/app-icon-512.png"
         hero_path = "../assets/readme-hero.svg"
         lockup_path = "../assets/logo-lockup.svg"
     else:
+        icon_path = "branding/assets/app-icon-512.png"
         hero_path = "branding/assets/readme-hero.svg"
         lockup_path = "branding/assets/logo-lockup.svg"
 
@@ -125,6 +127,7 @@ def render_readme(root: Path, product: dict, *, for_preview: bool = False) -> st
         "{{quick_start}}": render_list(product["quick_start"], ordered=True),
         "{{install}}": product["install"],
         "{{usage}}": product["usage"],
+        "{{icon_path}}": icon_path,
         "{{hero_path}}": hero_path,
         "{{lockup_path}}": lockup_path,
         "{{badge_license}}": badge["license"],

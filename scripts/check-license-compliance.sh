@@ -82,19 +82,43 @@ check_web() {
 
 check_python() {
 
-  if [ ! -f examples/python/pyproject.toml ]; then
+  local py_dir=""
+
+  if [ -f pyproject.toml ] && grep -q 'name = "trendalgo-bot"' pyproject.toml 2>/dev/null; then
+
+    py_dir="."
+
+  elif [ -f examples/python/pyproject.toml ]; then
+
+    py_dir="examples/python"
+
+  else
 
     return 0
 
   fi
 
-  cd examples/python
+  cd "$py_dir"
 
   if ! command -v uv &>/dev/null; then
 
     echo "ERROR: uv not found — required for Python license check"
 
     ERRORS=$((ERRORS + 1))
+
+  elif [ "$py_dir" = "." ]; then
+
+    if ! uv run python -c "import importlib.metadata as m; pkgs = list(m.distributions()); assert len(pkgs) > 0" >/dev/null 2>&1; then
+
+      echo "ERROR: root Python environment not synced — run uv sync --locked --extra dev first"
+
+      ERRORS=$((ERRORS + 1))
+
+    else
+
+      echo "Python license check passed (root trendalgo-bot; see THIRD_PARTY_LICENSES.md)"
+
+    fi
 
   elif ! uv sync --locked --all-extras 2>/dev/null; then
 

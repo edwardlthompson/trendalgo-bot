@@ -24,6 +24,7 @@ from trendalgo.device.pair_strategy_secret_sauce import (
 )
 from trendalgo.device.scan_base_ohlcv import load_scan_frames
 from trendalgo.device.scanner_protective_tsl import stamp_rows_protective_tsl
+from trendalgo.ta.indicator_cache import invalidate_frames
 
 ProgressFn = Callable[[dict[str, Any]], None]
 RowsFn = Callable[[list[dict[str, Any]]], None]
@@ -221,6 +222,7 @@ def run_sauce_only_pass(
 
     out = stamp_rows_protective_tsl(out, frames_by_tf, fee=fee, stake=stake)
     publish()
+    invalidate_frames(frames_by_tf.values())
     done = total
     emit(f"Sauce-only complete — {len(out)} rows", phase="done", done=total)
     publish()

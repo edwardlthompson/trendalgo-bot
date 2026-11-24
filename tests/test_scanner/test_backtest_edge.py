@@ -16,7 +16,7 @@ def test_bot_beating_buy_and_hold_is_positive() -> None:
     )
     assert edge is not None
     assert edge["bot_vs_bh_pct"] == round(99.4 - 25.1, 6)
-    assert edge["bot_best_label"] == "Bollinger %B 4h"
+    assert edge["bot_best_label"] == "4h Bollinger %B"
 
 
 def test_bot_trailing_buy_and_hold_is_negative_not_hidden() -> None:
@@ -46,7 +46,7 @@ def test_oracle_max_is_not_counted_as_best_bot() -> None:
     )
     assert edge is not None
     assert edge["bot_best_net_pct"] == 40.0
-    assert edge["bot_best_label"] == "Secret Sauce 1h"
+    assert edge["bot_best_label"] == "1h Secret Sauce"
     assert edge["bot_vs_bh_pct"] == 15.0
 
 

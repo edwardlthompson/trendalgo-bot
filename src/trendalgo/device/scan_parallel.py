@@ -31,8 +31,19 @@ def all_ta_coin_workers() -> int:
         except ValueError:
             pass
     budget = cpu_budget()
-    # Cap outer coins at 10 so pass2 keeps ~budget/3 workers on high-core CPUs.
-    return max(1, min(budget // 3, 10))
+    # Cap outer coins at 8 so pass2 keeps ~budget/3 workers without spiking memory on large sweeps.
+    return max(1, min(budget // 3, 8))
+
+
+def all_ta_sauce_workers(n_coins: int = 1) -> int:
+    """Worker count for multi-coin Secret Sauce pass. Env TRENDALGO_SAUCE_WORKERS wins."""
+    raw = os.environ.get("TRENDALGO_SAUCE_WORKERS", "").strip()
+    if raw:
+        try:
+            return max(1, min(int(n_coins), 24, int(raw)))
+        except ValueError:
+            pass
+    return max(1, min(int(n_coins), cpu_budget(), 16))
 
 
 def pass2_worker_count() -> int:

@@ -115,14 +115,7 @@ jobs:
       PYTEST_ADDOPTS: "--ignore=tests/test_device --ignore=tests/test_lts_vendor --cov-fail-under=55"
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: "22"
       - uses: astral-sh/setup-uv@v7
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "21"
       - name: Sync trendalgo-bot python (dev tools)
         if: ${{ hashFiles('pyproject.toml') != '' }}
         # Device/Qt/TA-Lib stay off CI runners (Windows goldens + headless Qt). Local: --extra device.
@@ -133,6 +126,18 @@ jobs:
         run: uv sync --locked --extra dev
       - name: Run feature gate (strict multi-stack)
         run: bash scripts/feature-gate.sh --stack multi --strict --json
+
+  avalonia-shell:
+    name: Avalonia Shell (.NET 8)
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj') != '' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build TrendAlgo.Shell (Release)
+        run: dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release --nologo
 
   validate-index:
     name: Validate Template Index

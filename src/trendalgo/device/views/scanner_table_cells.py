@@ -228,13 +228,8 @@ def best_pill(
     *,
     heat_bg: str | None = None,
 ) -> None:
-    raw = coin.get("bot_best_net_pct")
-    if raw is None:
-        table.setItem(row, COL_BEST, QTableWidgetItem("—"))
-        return
-    try:
-        value = float(raw)
-    except (TypeError, ValueError):
+    value, label = _best_display(coin)
+    if value is None:
         table.setItem(row, COL_BEST, QTableWidgetItem("—"))
         return
     frame = QFrame()
@@ -256,13 +251,37 @@ def best_pill(
     top.setAlignment(Qt.AlignmentFlag.AlignCenter)
     top.setStyleSheet(f"color: {fg}; font-weight: 600;")
     layout.addWidget(top)
-    label = str(coin.get("bot_best_label") or "").strip()
     if label:
         sub = QLabel(label)
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub.setStyleSheet(f"color: {fg}; font-size: 10px;")
         layout.addWidget(sub)
     table.setCellWidget(row, COL_BEST, frame)
+
+
+def _best_display(coin: dict[str, Any]) -> tuple[float | None, str]:
+    """Best BT net + label; prefer B&H when it beats every TA strategy."""
+    raw = coin.get("bot_best_net_pct")
+    label = str(coin.get("bot_best_label") or "").strip()
+    try:
+        ta = float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        ta = None
+    bh_raw = coin.get("buy_hold_net_pct")
+    if bh_raw is None:
+        nested = coin.get("backtest_buy_hold")
+        bh_raw = nested.get("net_pct") if isinstance(nested, dict) else None
+    try:
+        bh = float(bh_raw) if bh_raw is not None else None
+    except (TypeError, ValueError):
+        bh = None
+    if ta is None and bh is None:
+        return None, ""
+    if bh is not None and (ta is None or bh > ta):
+        nested = coin.get("backtest_buy_hold")
+        bh_tf = str(nested.get("timeframe") or "").strip() if isinstance(nested, dict) else ""
+        return bh, (f"{bh_tf} B&H".strip() if bh_tf else "B&H")
+    return ta, label
 
 
 def exchange_chip(table: QTableWidget, row: int, coin: dict[str, Any]) -> None:

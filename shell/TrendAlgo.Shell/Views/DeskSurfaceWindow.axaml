@@ -1,0 +1,53 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.DeskSurfaceWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Width="780"
+        Height="520"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="12">
+    <TextBlock x:Name="NoteText"
+               DockPanel.Dock="Bottom"
+               Opacity="0.75"
+               TextWrapping="Wrap"
+               Margin="0,8,0,0" />
+    <StackPanel x:Name="ActionBar"
+                DockPanel.Dock="Bottom"
+                Orientation="Horizontal"
+                Spacing="8"
+                Margin="0,8,0,0"
+                IsVisible="False">
+      <Button x:Name="CreateBotBtn" Content="Create Bot" Click="OnCreateBot" MinWidth="88"
+              IsVisible="False" />
+      <Button x:Name="SharePngBtn" Content="Share PNG" Click="OnSharePng" MinWidth="88"
+              IsVisible="False"
+              ToolTip.Tip="Export this strategy sheet as a PNG image." />
+      <Button x:Name="GlossaryBtn" Content="Glossary" Click="OnGlossary" MinWidth="88" />
+    </StackPanel>
+    <TextBlock x:Name="DisclaimerText"
+               DockPanel.Dock="Top"
+               TextWrapping="Wrap"
+               Margin="0,0,0,8"
+               IsVisible="False" />
+    <TextBox x:Name="FilterBox"
+             DockPanel.Dock="Top"
+             Watermark="Filter rows…"
+             Margin="0,0,0,8"
+             IsVisible="False"
+             TextChanged="OnFilterChanged" />
+    <DataGrid x:Name="Grid"
+              IsReadOnly="True"
+              CanUserResizeColumns="False"
+              CanUserSortColumns="True"
+              AutoGenerateColumns="False"
+              GridLinesVisibility="Horizontal">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="A" Binding="{Binding Col1}" Width="Auto" />
+        <DataGridTextColumn Header="B" Binding="{Binding Col2}" Width="Auto" />
+        <DataGridTextColumn Header="C" Binding="{Binding Col3}" Width="Auto" />
+        <DataGridTextColumn Header="D" Binding="{Binding Col4}" Width="Auto" />
+        <DataGridTextColumn Header="E" Binding="{Binding Col5}" Width="Auto" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</Window>

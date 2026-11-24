@@ -8,8 +8,10 @@ import numpy as np
 import pandas as pd
 
 from trendalgo.backtest.oracle_pattern_mine import CompositeRule, RuleConjunct
+from trendalgo.backtest.sim_accel import accel_backend
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
+from trendalgo.ta.frame_prep import ohlcv_arrays
 
 _MAX_TRADES = 200
 
@@ -35,8 +37,8 @@ def search_rsx_neighborhood(
         if time_budget_s is None or not math.isfinite(float(time_budget_s))
         else float(time_budget_s)
     )
-    closes = df["close"].to_numpy(dtype=float)
-    sma20 = np.array([float(np.mean(closes[max(0, i - 19) : i + 1])) for i in range(len(closes))])
+    o_arr, h_arr, l_arr, closes, _ = ohlcv_arrays(df)
+    sma20 = _sma20_causal(closes)
     entry_periods = _periods_around(peer_period)
     exit_periods = _exit_periods(peer_period)
     entry_levels = sorted(
@@ -50,60 +52,186 @@ def search_rsx_neighborhood(
     cache: dict[int, np.ndarray | None] = {}
     best: tuple[CompositeRule, CompositeRule, float, str] | None = None
     n = len(df)
-    for ep in entry_periods:
-        if time.perf_counter() - t0 > budget:
-            break
-        ra = _cached(cache, df, ep)
-        if ra is None:
-            continue
-        for xp in exit_periods:
+    if not math.isfinite(budget) and accel_backend() in {"numba", "cuda"}:
+        best = _search_rsx_numba(
+            df,
+            closes,
+            o_arr,
+            h_arr,
+            l_arr,
+            sma20,
+            cache,
+            entry_periods,
+            exit_periods,
+            entry_levels,
+            exit_levels,
+            fee=fee,
+            stake_usd=stake_usd,
+            peer_period=peer_period,
+            peer_entry=peer_entry,
+            peer_exit=peer_exit,
+            strategy_id=strategy_id,
+            n=n,
+        )
+    else:
+        for ep in entry_periods:
             if time.perf_counter() - t0 > budget:
                 break
-            xa = _cached(cache, df, xp)
-            if xa is None:
+            ra = _cached(cache, df, ep)
+            if ra is None:
                 continue
-            for el in entry_levels:
-                for xl in exit_levels:
-                    if el < 10 or xl > 90 or el >= xl:
-                        continue
-                    em0 = _cross_up_level(ra, float(el))
-                    xm0 = _cross_down_level(xa, float(xl))
-                    variants: list[tuple[str, np.ndarray]] = [
-                        ("plain", em0),
-                        ("sma20", em0 & (closes >= sma20)),
-                    ]
-                    for tag, em in variants:
-                        if (
-                            ep == peer_period
-                            and xp == peer_period
-                            and el == int(round(peer_entry))
-                            and xl == int(round(peer_exit))
-                            and tag == "plain"
-                        ):
+            for xp in exit_periods:
+                if time.perf_counter() - t0 > budget:
+                    break
+                xa = _cached(cache, df, xp)
+                if xa is None:
+                    continue
+                for el in entry_levels:
+                    for xl in exit_levels:
+                        if el < 10 or xl > 90 or el >= xl:
                             continue
-                        if time.perf_counter() - t0 > budget:
-                            break
-                        if not em.any() or not xm0.any():
-                            continue
-                        if (em.sum() / n) > 0.55 or (xm0.sum() / n) > 0.80:
-                            continue
-                        stats = simulate_long_with_fees(
-                            df, em, xm0, stake_usd=stake_usd, fee=fee, trailing_stop_pct=0.0
-                        )
-                        trades = int(stats.get("trades") or 0)
-                        if trades < 1 or trades > _MAX_TRADES:
-                            continue
-                        net = float(stats.get("net_profit") or 0.0)
-                        if best is not None and net <= best[2]:
-                            continue
-                        er, xr = _rules(strategy_id, ep, xp, el, xl, tag)
-                        best = (er, xr, net, "rsx_neighborhood")
+                        em0 = _cross_up_level(ra, float(el))
+                        xm0 = _cross_down_level(xa, float(xl))
+                        variants: list[tuple[str, np.ndarray]] = [
+                            ("plain", em0),
+                            ("sma20", em0 & (closes >= sma20)),
+                        ]
+                        for tag, em in variants:
+                            if (
+                                ep == peer_period
+                                and xp == peer_period
+                                and el == int(round(peer_entry))
+                                and xl == int(round(peer_exit))
+                                and tag == "plain"
+                            ):
+                                continue
+                            if time.perf_counter() - t0 > budget:
+                                break
+                            if not em.any() or not xm0.any():
+                                continue
+                            if (em.sum() / n) > 0.55 or (xm0.sum() / n) > 0.80:
+                                continue
+                            stats = simulate_long_with_fees(
+                                df, em, xm0, stake_usd=stake_usd, fee=fee, trailing_stop_pct=0.0
+                            )
+                            trades = int(stats.get("trades") or 0)
+                            if trades < 1 or trades > _MAX_TRADES:
+                                continue
+                            net = float(stats.get("net_profit") or 0.0)
+                            if best is not None and net <= best[2]:
+                                continue
+                            er, xr = _rules(strategy_id, ep, xp, el, xl, tag)
+                            best = (er, xr, net, "rsx_neighborhood")
     # Last resort: catalog-parity re-expression when no distinct mutant clears peer.
     if peer_net_usd is not None and (best is None or best[2] <= peer_net_usd):
         exact = _eval_exact(df, fee, stake_usd, peer_period, peer_entry, peer_exit, strategy_id)
         if exact is not None and exact[2] > peer_net_usd:
             return exact
     return best
+
+
+def _sma20_causal(closes: np.ndarray) -> np.ndarray:
+    n = len(closes)
+    if n == 0:
+        return np.empty(0, dtype=np.float64)
+    csum = np.empty(n + 1, dtype=np.float64)
+    csum[0] = 0.0
+    np.cumsum(closes, out=csum[1:])
+    idx = np.arange(n)
+    starts = np.maximum(0, idx - 19)
+    return (csum[idx + 1] - csum[starts]) / (idx - starts + 1)
+
+
+def _search_rsx_numba(
+    df: pd.DataFrame,
+    closes: np.ndarray,
+    o_arr: np.ndarray,
+    h_arr: np.ndarray,
+    l_arr: np.ndarray,
+    sma20: np.ndarray,
+    cache: dict[int, np.ndarray | None],
+    entry_periods: list[int],
+    exit_periods: list[int],
+    entry_levels: list[int],
+    exit_levels: list[int],
+    *,
+    fee: ExchangeFeeSchedule,
+    stake_usd: float,
+    peer_period: int,
+    peer_entry: float,
+    peer_exit: float,
+    strategy_id: str,
+    n: int,
+) -> tuple[CompositeRule, CompositeRule, float, str] | None:
+    from trendalgo.backtest.sim_accel_grid_v2 import numba_rsx_best  # noqa: PLC0415
+
+    e_masks: list[np.ndarray] = []
+    e_ep: list[int] = []
+    e_el: list[int] = []
+    e_tag: list[int] = []
+    above_sma = closes >= sma20
+    for ep in entry_periods:
+        ra = _cached(cache, df, ep)
+        if ra is None:
+            continue
+        for el in entry_levels:
+            if el < 10:
+                continue
+            em0 = _cross_up_level(ra, float(el))
+            if em0.any() and (em0.sum() / n) <= 0.55:
+                e_masks.append(em0)
+                e_ep.append(ep)
+                e_el.append(el)
+                e_tag.append(0)
+            em1 = em0 & above_sma
+            if em1.any() and (em1.sum() / n) <= 0.55:
+                e_masks.append(em1)
+                e_ep.append(ep)
+                e_el.append(el)
+                e_tag.append(1)
+
+    x_masks: list[np.ndarray] = []
+    x_xp: list[int] = []
+    x_xl: list[int] = []
+    for xp in exit_periods:
+        xa = _cached(cache, df, xp)
+        if xa is None:
+            continue
+        for xl in exit_levels:
+            if xl > 90:
+                continue
+            xm0 = _cross_down_level(xa, float(xl))
+            if xm0.any() and (xm0.sum() / n) <= 0.80:
+                x_masks.append(xm0)
+                x_xp.append(xp)
+                x_xl.append(xl)
+
+    if not e_masks or not x_masks:
+        return None
+    ok, ei, xi, best_net = numba_rsx_best(
+        closes,
+        o_arr,
+        h_arr,
+        l_arr,
+        np.asarray(e_masks, dtype=np.bool_),
+        np.asarray(e_ep, dtype=np.int64),
+        np.asarray(e_el, dtype=np.int64),
+        np.asarray(e_tag, dtype=np.int64),
+        np.asarray(x_masks, dtype=np.bool_),
+        np.asarray(x_xp, dtype=np.int64),
+        np.asarray(x_xl, dtype=np.int64),
+        stake_usd,
+        fee.round_trip_taker_cost(stake_usd),
+        peer_period,
+        int(round(peer_entry)),
+        int(round(peer_exit)),
+        _MAX_TRADES,
+    )
+    if not ok:
+        return None
+    tag = "sma20" if e_tag[ei] == 1 else "plain"
+    er, xr = _rules(strategy_id, e_ep[ei], x_xp[xi], e_el[ei], x_xl[xi], tag)
+    return er, xr, best_net, "rsx_neighborhood"
 
 
 def _periods_around(peer_period: int) -> list[int]:
@@ -187,17 +315,17 @@ def _rsx_series(df: pd.DataFrame, period: int) -> np.ndarray | None:
 
 def _cross_up_level(series: np.ndarray, level: float) -> np.ndarray:
     """Match catalog bounded_reversal: prev < level <= curr (NaN → False)."""
-    s = pd.Series(series)
-    return np.asarray(
-        ((s.shift(1) < level) & (s >= level)).fillna(False).to_numpy(dtype=bool), dtype=bool
-    )
+    out = np.zeros(len(series), dtype=np.bool_)
+    if len(series) > 1:
+        out[1:] = (series[:-1] < level) & (series[1:] >= level)
+    return out
 
 
 def _cross_down_level(series: np.ndarray, level: float) -> np.ndarray:
-    s = pd.Series(series)
-    return np.asarray(
-        ((s.shift(1) > level) & (s <= level)).fillna(False).to_numpy(dtype=bool), dtype=bool
-    )
+    out = np.zeros(len(series), dtype=np.bool_)
+    if len(series) > 1:
+        out[1:] = (series[:-1] > level) & (series[1:] <= level)
+    return out
 
 
 def _rules(

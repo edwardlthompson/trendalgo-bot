@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
+from importlib.metadata import PackageNotFoundError, version
 from typing import TYPE_CHECKING
 
 from fastapi import Depends, FastAPI
@@ -51,6 +52,13 @@ from trendalgo.scanner.scheduler import start_scheduler
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
+
+
+def _app_version() -> str:
+    try:
+        return version("trendalgo-bot")
+    except PackageNotFoundError:
+        return "0.1.0"
 
 
 def _cors_origins() -> list[str]:
@@ -105,7 +113,7 @@ def create_app(state: AppState | None = None) -> FastAPI:
     protect_known_secrets()
     app = FastAPI(
         title="TrendAlgo API",
-        version="0.1.0",
+        version=_app_version(),
         lifespan=lifespan,
         max_body_size=1 * 1024 * 1024,
     )

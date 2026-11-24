@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pandas as pd
@@ -37,10 +38,11 @@ def mine_best_across_tfs(
     best: tuple[HeartbeatDossier, RegimeSnapshot, dict[str, Any], str] | None = None
     best_net = float("-inf")
     oracle_net_on_oracle_tf: float | None = None
-    for tf in tfs:
+
+    def _run_tf(tf: str) -> tuple[str, HeartbeatDossier, RegimeSnapshot, dict[str, Any]] | None:
         frame = frames_by_tf.get(tf)
         if frame is None or getattr(frame, "empty", True):
-            continue
+            return None
         trades = remap_oracle_trades(frame, oracle_trades, oracle_tf=oracle_tf, search_tf=tf)
         try:
             packed = run_secret_sauce_lab(
@@ -53,20 +55,35 @@ def mine_best_across_tfs(
                 require_peer_clear=False,
             )
         except (TypeError, ValueError, KeyError, IndexError):
-            continue
+            return None
         if packed is None:
-            continue
+            return None
         dossier, regime = packed
         trial = eval_lab_trial(frame, dossier, fee=fee, stake_usd=stake_usd, timeframe=tf)
         if trial is None:
+            return None
+        return tf, dossier, regime, dict(trial)
+
+    from trendalgo.device.scan_parallel import pass2_worker_count  # noqa: PLC0415
+
+    workers = min(len(tfs), pass2_worker_count())
+    if workers > 1 and len(tfs) > 1:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            tf_results = list(pool.map(_run_tf, tfs))
+    else:
+        tf_results = [_run_tf(tf) for tf in tfs]
+
+    for item in tf_results:
+        if item is None:
             continue
+        tf, dossier, regime, trial = item
         net = float(trial.get("net_profit") or 0.0)
         if tf == oracle_tf:
             oracle_net_on_oracle_tf = net
         # Prefer Oracle TF when within 5% relative of denser-TF winner (UX honesty).
         if best is None:
             best_net = net
-            best = (dossier, regime, dict(trial), tf)
+            best = (dossier, regime, trial, tf)
         elif net > best_net:
             if (
                 best[3] == oracle_tf
@@ -77,10 +94,10 @@ def mine_best_across_tfs(
                 pass  # keep Oracle TF
             else:
                 best_net = net
-                best = (dossier, regime, dict(trial), tf)
+                best = (dossier, regime, trial, tf)
         elif tf == oracle_tf and best[3] != oracle_tf and best_net > 0 and net >= best_net / 1.05:
             best_net = net
-            best = (dossier, regime, dict(trial), tf)
+            best = (dossier, regime, trial, tf)
     return best
 
 

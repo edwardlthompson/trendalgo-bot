@@ -243,11 +243,29 @@ def fee_for_exchange(
     exchange_id: str,
     fee_bps_round_trip: float | None = None,
 ) -> ExchangeFeeSchedule:
-    """Prefer stored exchange schedule; fall back to round-trip bps."""
+    """Prefer stored exchange schedule; fall back to lane defaults or round-trip bps."""
     eid = (exchange_id or "kraken").strip().lower() or "kraken"
     try:
         return get_fee_schedule(eid)
     except KeyError:
+        if eid == "tradfi":
+            return ExchangeFeeSchedule(
+                exchange_id="tradfi",
+                taker_pct=0.0002,
+                maker_pct=0.0001,
+                tier="alpaca_equity",
+                source_url="https://alpaca.markets/docs/trading/orders/#fees",
+                source="lane_default",
+            )
+        if eid == "forex":
+            return ExchangeFeeSchedule(
+                exchange_id="forex",
+                taker_pct=0.00015,
+                maker_pct=0.0001,
+                tier="fx_major",
+                source_url="https://alpaca.markets/docs/market-data/",
+                source="lane_default",
+            )
         bps = 52.0 if fee_bps_round_trip is None else float(fee_bps_round_trip)
         taker = max(0.0, bps / 10_000.0 / 2.0)
         return ExchangeFeeSchedule(

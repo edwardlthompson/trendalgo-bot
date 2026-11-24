@@ -144,9 +144,11 @@ def split_task_paths(task: str) -> tuple[list[str], list[str]]:
         in_clause = any(lo <= m.start() < hi for lo, hi in removed_spans)
         (gone if in_clause else present).append(path)
     for m in _BACKTICK.finditer(scope):
-        path = _repo_path(m.group(1), task)
-        if path is not None:
-            (gone if removal_row else present).append(path)
+        # Multi-path scopes: `shell/…/;src/…/` (BUILD_PLAN venue rows).
+        for chunk in m.group(1).split(";"):
+            path = _repo_path(chunk, task)
+            if path is not None:
+                (gone if removal_row else present).append(path)
     return list(dict.fromkeys(present)), list(dict.fromkeys(gone))
 
 

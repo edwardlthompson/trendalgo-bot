@@ -7,7 +7,7 @@
 
 - ✅ Dedicated Market Context pane (Signal / Levels / Risk / Structure) above strategy results on Backtest tab
 - ✅ Same pane in Scanner Results dialog; never mixed into `BACKTEST_RESULT_HEADERS`
-- ✅ Scanner Qualified **Market Context top 10** band: always highest consensus scores on the filtered board (+ top TA net% when All-TA ran)
+- ✅ Scanner Qualified **Market Context** band: consensus scores for every pair on the filtered board (+ top TA net% when All-TA ran)
 - ✅ Seven classic pivots (S1–S3, PP, R1–R3) with strength; consensus −2…+2 → Buy/Sell/Neutral + confidence
 - ✅ Regime labels: Trending Up/Down, Ranging, Volatile, Compressing (mapped from Sauce detector)
 - ✅ Risk: ATR×1.5 stop distance; R:R to R1 and R2

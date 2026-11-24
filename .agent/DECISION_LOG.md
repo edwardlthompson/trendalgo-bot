@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-18 — Avalonia shell + permanent Python engine (ADR-0021)
+- **Status:** Accepted
+- **Context:** PySide6 grids struggle at All-TA scale; full C# indicator rewrite risked catalog quality; inventory freeze at v1.19.0 required before cutover.
+- **Decision:** Dual-runtime forever — Avalonia chrome (`shell/`) + Python Research Engine; shared `results.db` + IPC; PySide6 stays shippable until inventory P0 parity ✅.
+- **Alternatives considered:** Stay Qt-only; Electron/Tauri; cull All-TA (rejected).
+- **Consequences:** ADR-0021; `results_store` + device bridge; Avalonia Workbook spike; packaging bundle script; BUILD_PLAN AV-05…AV-07 for full parity / frozen tri-OS.
+
 ### 2026-11-18 — Ship v1.19.0 Forex desk + news P2 + Windows EXE
 - **Status:** Accepted
 - **Context:** `/ship` for a Windows release; Forex WIP + news P2 (SecretRedactor, FastAPI body limits) uncommitted; upd rewrote CodeQL to `vcodeql-bundle-*`.

@@ -1,6 +1,6 @@
 name: CodeQL
 
-# Matrix: JS/TS + Python (Android removed — web-only TrendAlgo stack).
+# Matrix: Python + C# Avalonia shell (JS/TS and Android retired).
 
 on:
   push:
@@ -22,12 +22,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - language: javascript-typescript
           - language: python
+            build-mode: none
+          - language: csharp
+            build-mode: none
     steps:
       - uses: actions/checkout@v7
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
       - uses: github/codeql-action/analyze@v4

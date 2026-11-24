@@ -16,7 +16,18 @@ def progress_path(root: Path) -> Path:
 
 def write_progress(root: Path, payload: dict[str, Any]) -> None:
     try:
-        write_json(progress_path(root), payload)
+        out = dict(payload)
+        existing = read_progress(root)
+        events: list[str] = []
+        if isinstance(existing, dict) and isinstance(existing.get("events"), list):
+            events = [str(x) for x in existing["events"] if str(x).strip()]
+        msg = str(out.get("message") or "").strip()
+        if msg and (not events or events[-1] != msg):
+            events.append(msg)
+        if len(events) > 120:
+            events = events[-120:]
+        out["events"] = events
+        write_json(progress_path(root), out)
     except OSError:
         pass
 

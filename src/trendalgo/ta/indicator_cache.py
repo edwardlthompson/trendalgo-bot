@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 from collections import OrderedDict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,7 +14,7 @@ import pandas as pd
 from trendalgo.ta.frame_cache import ATTR_SIGNATURE
 from trendalgo.ta.signatures import OhlcvSignature, canonical_ta_params_hash
 
-MAX_INDICATOR_CACHE_ENTRIES = 512
+MAX_INDICATOR_CACHE_ENTRIES = 4096
 
 
 @dataclass(frozen=True)
@@ -100,3 +101,14 @@ def signature_from_df(df: pd.DataFrame) -> OhlcvSignature | None:
     if sig.bar_count != len(df):
         return None
     return sig
+
+
+def invalidate_frames(frames: Iterable[pd.DataFrame], *, scope: str = "default") -> None:
+    """Drop cached indicator outputs for finished per-coin OHLCV frames."""
+    cache = _indicators.get(scope)
+    if cache is None:
+        return
+    for frame in frames:
+        sig = signature_from_df(frame)
+        if sig is not None:
+            cache.invalidate_signature(sig)

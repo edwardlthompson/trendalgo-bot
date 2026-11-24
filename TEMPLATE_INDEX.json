@@ -2348,6 +2348,13 @@
       "path": "rules.manifest.json",
       "purpose": "Rules manifest",
       "status": "not_started"
+    },
+    {
+      "path": "scripts/check-avalonia-gap-sync.sh",
+      "purpose": "Gate ensuring docs/AVALONIA_PARITY_GAPS.md AV-G-* items stay synced with BUILD_PLAN.md",
+      "read_when": "ci_or_local_gate",
+      "update_when": "never",
+      "owner": "maintainer"
     }
   ],
   "modules": {

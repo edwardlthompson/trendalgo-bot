@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.LoadingWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Loading"
+        Width="360"
+        Height="116"
+        CanResize="False"
+        ShowInTaskbar="False"
+        SystemDecorations="BorderOnly"
+        Topmost="True"
+        WindowStartupLocation="CenterOwner"
+        Background="#131B26">
+  <Border BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="18,16">
+    <StackPanel Spacing="12" VerticalAlignment="Center">
+      <TextBlock x:Name="MessageText"
+                 Text="Loading…"
+                 FontWeight="SemiBold"
+                 FontSize="14"
+                 TextWrapping="NoWrap"
+                 TextTrimming="CharacterEllipsis" />
+      <ProgressBar IsIndeterminate="True" Height="6" />
+    </StackPanel>
+  </Border>
+</Window>

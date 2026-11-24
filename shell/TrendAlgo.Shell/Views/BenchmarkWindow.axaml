@@ -1,0 +1,89 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.BenchmarkWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Hardware Benchmark &amp; Results"
+        Width="1040"
+        Height="680"
+        MinWidth="760"
+        MinHeight="480"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="12">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+      <Button x:Name="CancelBtn" Content="Cancel" Click="OnCancel" IsVisible="False" MinWidth="88" />
+      <Button x:Name="CloseBtn" Content="Close" Click="OnClose" MinWidth="88" />
+    </StackPanel>
+
+    <Border x:Name="ProgressPanel"
+            DockPanel.Dock="Top"
+            Background="#1A2433"
+            CornerRadius="4"
+            Padding="12"
+            Margin="0,0,0,10"
+            IsVisible="False">
+      <StackPanel Spacing="6">
+        <TextBlock x:Name="ProgressHeader" Text="Running real-data 3-asset benchmark…" FontWeight="SemiBold" FontSize="15" />
+        <TextBlock x:Name="ProgressCounts" Text="Tests: 0 / 0 · Remaining: 0" FontWeight="SemiBold" />
+        <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Value="0" Height="8" />
+        <TextBlock x:Name="ProgressMessage" Text="Starting…" Opacity="0.85" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+
+    <Border x:Name="SummaryPanel"
+            DockPanel.Dock="Top"
+            Background="#1A2433"
+            CornerRadius="4"
+            Padding="10"
+            Margin="0,0,0,10">
+      <StackPanel Spacing="4">
+        <TextBlock x:Name="SummaryTitle" Text="Benchmark Results" FontWeight="SemiBold" FontSize="15" />
+        <TextBlock x:Name="SummaryDetail" Text="No benchmark run yet." Opacity="0.9" TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
+
+    <Grid RowDefinitions="Auto,*,Auto,2*">
+      <TextBlock Grid.Row="0" Text="Per-Desk Stage Breakdown (Crypto · TradFi · Forex)" FontWeight="SemiBold" Margin="0,0,0,4" />
+      <DataGrid Grid.Row="1"
+                x:Name="AssetsGrid"
+                IsReadOnly="True"
+                AutoGenerateColumns="False"
+                GridLinesVisibility="Horizontal"
+                HorizontalAlignment="Stretch"
+                HorizontalScrollBarVisibility="Disabled"
+                Margin="0,0,0,10">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Desk" Binding="{Binding Lane}" Width="0.7*" MinWidth="60" />
+          <DataGridTextColumn Header="Asset" Binding="{Binding Pair}" Width="0.85*" MinWidth="72" />
+          <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="0.8*" MinWidth="64" />
+          <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="0.9*" MinWidth="70" />
+          <DataGridTextColumn Header="Bars" Binding="{Binding Bars}" Width="0.55*" MinWidth="46" />
+          <DataGridTextColumn Header="Fetch" Binding="{Binding Fetch}" Width="0.65*" MinWidth="50" />
+          <DataGridTextColumn Header="Pass-1" Binding="{Binding Pass1}" Width="0.65*" MinWidth="50" />
+          <DataGridTextColumn Header="Deepen" Binding="{Binding Deepen}" Width="0.65*" MinWidth="50" />
+          <DataGridTextColumn Header="MC" Binding="{Binding Mc}" Width="0.55*" MinWidth="46" />
+          <DataGridTextColumn Header="Sauce" Binding="{Binding Sauce}" Width="0.65*" MinWidth="50" />
+          <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="0.65*" MinWidth="50" />
+          <DataGridTextColumn Header="Best Strategy / Sauce" Binding="{Binding TopResult}" Width="1.8*" MinWidth="130" />
+        </DataGrid.Columns>
+      </DataGrid>
+
+      <TextBlock Grid.Row="2" Text="Detailed Sub-Tests &amp; Slowest Strategy × Timeframe Units" FontWeight="SemiBold" Margin="0,0,0,4" />
+      <DataGrid Grid.Row="3"
+                x:Name="SubtestsGrid"
+                IsReadOnly="True"
+                AutoGenerateColumns="False"
+                CanUserSortColumns="True"
+                GridLinesVisibility="Horizontal"
+                HorizontalAlignment="Stretch"
+                HorizontalScrollBarVisibility="Disabled">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Asset" Binding="{Binding Asset}" Width="1.2*" MinWidth="100" />
+          <DataGridTextColumn Header="Component / Strategy" Binding="{Binding Component}" Width="1.5*" MinWidth="120" />
+          <DataGridTextColumn Header="TF" Binding="{Binding Timeframe}" Width="0.6*" MinWidth="50" />
+          <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="0.75*" MinWidth="64" />
+          <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" Width="1.6*" MinWidth="120" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Grid>
+  </DockPanel>
+</Window>

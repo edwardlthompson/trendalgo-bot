@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="branding/assets/app-icon-512.png" alt="TrendAlgo Bot logo" width="144" />
+</p>
+
+<p align="center">
   <img src="branding/assets/readme-hero.svg" alt="TrendAlgo Bot" width="960" />
 </p>
 

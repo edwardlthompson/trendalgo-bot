@@ -2,13 +2,21 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 
+from trendalgo.ta.fast_pta_indicators import compute_fast_pta
 from trendalgo.ta.frame_cache import ATTR_READONLY
 from trendalgo.ta.pandas_ta_catalog import id_to_pandas_ta_slug, is_pandas_ta_indicator
+
+warnings.filterwarnings(
+    "ignore",
+    message=".*PeriodArray/Index representation will drop timezone.*",
+    category=UserWarning,
+)
 
 
 def _ensure_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
@@ -81,9 +89,13 @@ def compute_pandas_ta(name: str, df: pd.DataFrame, **params: Any) -> dict[str, n
     if not is_pandas_ta_indicator(name):
         raise KeyError(f"not a pandas-ta-classic indicator: {name}")
     _ensure_ohlcv(df)
+    clean = {k: v for k, v in params.items() if v is not None}
+    fast = compute_fast_pta(name.upper(), df, clean)
+    if fast is not None:
+        return fast
     slug = id_to_pandas_ta_slug(name)
     if df.attrs.get(ATTR_READONLY) and isinstance(df.index, pd.DatetimeIndex):
-        work = df
+        work = df.copy(deep=False)
     else:
         work = df.copy()
         if not isinstance(work.index, pd.DatetimeIndex) and "timestamp_ms" in work.columns:
@@ -91,6 +103,5 @@ def compute_pandas_ta(name: str, df: pd.DataFrame, **params: Any) -> dict[str, n
     accessor = getattr(work.ta, slug, None)
     if accessor is None:
         raise KeyError(f"pandas-ta-classic missing indicator: {slug}")
-    clean = {k: v for k, v in params.items() if v is not None}
     result = accessor(**clean)
     return _normalize_result(result, length=len(work))

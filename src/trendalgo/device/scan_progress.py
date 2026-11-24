@@ -33,7 +33,8 @@ class ProgressReporter:
         *,
         lane: str = "crypto",
     ) -> None:
-        self._path = root / progress_file_name(lane)
+        self._lane = (lane or "crypto").strip().lower() or "crypto"
+        self._path = root / progress_file_name(self._lane)
         self._interval = interval_s
         self._halt = threading.Event()
         self._thread = threading.Thread(target=self._loop, name="scan-progress", daemon=True)
@@ -55,7 +56,7 @@ class ProgressReporter:
 
     def _write(self) -> None:
         # Full recent ring so the UI can catch up if a poll missed a write.
-        latest = get_scan_progress().snapshot(after=0, limit=_EVENT_LIMIT)
+        latest = get_scan_progress(self._lane).snapshot(after=0, limit=_EVENT_LIMIT)
         events = list(latest.get("events") or [])
         last_seq = int(latest.get("last_seq") or 0)
         message = str(events[-1]["message"]) if events else ""

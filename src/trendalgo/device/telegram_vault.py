@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from trendalgo.device.wizard.credentials import (
     CredentialError,
     CredentialStore,
@@ -17,12 +19,17 @@ def load_telegram_creds(
     store: CredentialStore | None = None,
 ) -> tuple[str | None, str | None]:
     vault = store or _safe_store()
-    if vault is None:
-        return None, None
-    try:
-        return vault.read(TELEGRAM_TOKEN_TARGET), vault.read(TELEGRAM_CHAT_TARGET)
-    except CredentialError:
-        return None, None
+    token: str | None = None
+    chat: str | None = None
+    if vault is not None:
+        try:
+            token = vault.read(TELEGRAM_TOKEN_TARGET)
+            chat = vault.read(TELEGRAM_CHAT_TARGET)
+        except CredentialError:
+            token, chat = None, None
+    token = token or os.environ.get("TELEGRAM_BOT_TOKEN") or None
+    chat = chat or os.environ.get("TELEGRAM_CHAT_ID") or None
+    return token, chat
 
 
 def save_telegram_creds(

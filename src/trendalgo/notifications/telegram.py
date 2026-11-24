@@ -50,8 +50,18 @@ class TelegramCommands:
         parse_mode: str | None = None,
         reply_markup: str | dict[str, object] | None = None,
     ) -> bool:
+        ok, _ = self.send_message_detailed(text, parse_mode=parse_mode, reply_markup=reply_markup)
+        return ok
+
+    def send_message_detailed(
+        self,
+        text: str,
+        *,
+        parse_mode: str | None = None,
+        reply_markup: str | dict[str, object] | None = None,
+    ) -> tuple[bool, str | None]:
         if not self.enabled or not self.token or not self.chat_id:
-            return False
+            return False, "missing_creds"
         url = f"https://api.telegram.org/bot{self.token}/sendMessage"
         fields: dict[str, str] = {"chat_id": self.chat_id, "text": text}
         if parse_mode:
@@ -64,9 +74,18 @@ class TelegramCommands:
         try:
             req = request.Request(url, data=data, method="POST")
             with request.urlopen(req, timeout=15) as resp:
-                return int(resp.status) == 200
-        except (error.URLError, TimeoutError, OSError):
-            return False
+                return int(resp.status) == 200, None
+        except error.HTTPError as exc:
+            detail = f"HTTP {exc.code}"
+            try:
+                body = json.loads(exc.read().decode("utf-8"))
+                if isinstance(body, dict) and body.get("description"):
+                    detail = f"HTTP {exc.code}: {body['description']}"
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                pass
+            return False, detail
+        except (error.URLError, TimeoutError, OSError) as exc:
+            return False, str(exc)
 
     def send_photo(
         self,

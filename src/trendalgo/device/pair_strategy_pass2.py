@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import multiprocessing
+import os
 import time
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
@@ -80,58 +81,71 @@ def run_catalog_pass2(
         if on_progress is not None:
             on_progress({"message": message, "done": done, "total": total, **extra})
 
-    for timeframe in ordered_tf:
-        frame = frames_by_tf.get(timeframe)
-        if frame is None:
-            done += len(strat_list)
-            continue
-        from trendalgo.device import strings as S
-
-        emit(
-            f"{S.SCAN_PHASE_CATALOG} {timeframe} ×{len(strat_list)} (workers={workers})",
-            phase="catalog",
-            timeframe=timeframe,
-        )
-        results = _map_strategies(frame, timeframe, strat_list, fee, stake, workers)
-        tf_hits: list[dict[str, Any]] = []
-        tf_units: list[UnitSample] = []
-        for index, (sid, row, reason, elapsed_s) in enumerate(results, start=1):
-            done += 1
-            sample = UnitSample(
-                strategy=sid,
-                timeframe=timeframe,
-                pair=pair_text,
-                elapsed_s=float(elapsed_s),
-                phase="catalog",
-            )
-            tf_units.append(sample)
-            all_units.append(sample)
-            if index == 1 or index == len(strat_list) or index % 32 == 0:
-                emit(
-                    f"{timeframe} {sid} ({index}/{len(strat_list)})",
-                    phase="catalog",
-                    timeframe=timeframe,
-                    strategy=sid,
-                    unit_elapsed_s=round(float(elapsed_s), 3),
-                )
-            if row is None:
-                skip_best.setdefault(sid, reason or "compute_error")
+    use_proc_pool = (
+        os.environ.get("TRENDALGO_PASS2_PROCESS_POOL", "").strip() == "1"
+        and not multiprocessing.current_process().daemon
+    )
+    shared_pool = (
+        ThreadPoolExecutor(max_workers=workers) if workers > 1 and not use_proc_pool else None
+    )
+    try:
+        for timeframe in ordered_tf:
+            frame = frames_by_tf.get(timeframe)
+            if frame is None:
+                done += len(strat_list)
                 continue
-            signal_rows.append(row)
-            tf_hits.append(row)
-        if on_tf_rows is not None and tf_hits:
-            on_tf_rows(timeframe, tf_hits)
-        slow = top_slowest(tf_units, 3)
-        if slow:
-            bits = ", ".join(f"{u.strategy}@{u.timeframe} {u.elapsed_s:.2f}s" for u in slow)
-            emit(f"Slow: {bits}", phase="tf_done", timeframe=timeframe)
-        if on_unit_timings is not None and tf_units:
-            on_unit_timings(tf_units)
-        emit(
-            f"{timeframe} catalog done — {len(signal_rows)} signal rows",
-            phase="tf_done",
-            timeframe=timeframe,
-        )
+            from trendalgo.device import strings as S
+
+            emit(
+                f"{S.SCAN_PHASE_CATALOG} {timeframe} ×{len(strat_list)} (workers={workers})",
+                phase="catalog",
+                timeframe=timeframe,
+            )
+            results = _map_strategies(
+                frame, timeframe, strat_list, fee, stake, workers, pool=shared_pool
+            )
+            tf_hits: list[dict[str, Any]] = []
+            tf_units: list[UnitSample] = []
+            for index, (sid, row, reason, elapsed_s) in enumerate(results, start=1):
+                done += 1
+                sample = UnitSample(
+                    strategy=sid,
+                    timeframe=timeframe,
+                    pair=pair_text,
+                    elapsed_s=float(elapsed_s),
+                    phase="catalog",
+                )
+                tf_units.append(sample)
+                all_units.append(sample)
+                if index == 1 or index == len(strat_list) or index % 32 == 0:
+                    emit(
+                        f"{timeframe} {sid} ({index}/{len(strat_list)})",
+                        phase="catalog",
+                        timeframe=timeframe,
+                        strategy=sid,
+                        unit_elapsed_s=round(float(elapsed_s), 3),
+                    )
+                if row is None:
+                    skip_best.setdefault(sid, reason or "compute_error")
+                    continue
+                signal_rows.append(row)
+                tf_hits.append(row)
+            if on_tf_rows is not None and tf_hits:
+                on_tf_rows(timeframe, tf_hits)
+            slow = top_slowest(tf_units, 3)
+            if slow:
+                bits = ", ".join(f"{u.strategy}@{u.timeframe} {u.elapsed_s:.2f}s" for u in slow)
+                emit(f"Slow: {bits}", phase="tf_done", timeframe=timeframe)
+            if on_unit_timings is not None and tf_units:
+                on_unit_timings(tf_units)
+            emit(
+                f"{timeframe} catalog done — {len(signal_rows)} signal rows",
+                phase="tf_done",
+                timeframe=timeframe,
+            )
+    finally:
+        if shared_pool is not None:
+            shared_pool.shutdown(wait=True)
     return signal_rows, skip_best, done, all_units
 
 
@@ -142,15 +156,22 @@ def _map_strategies(
     fee: Any,
     stake: float,
     workers: int,
+    *,
+    pool: ThreadPoolExecutor | None = None,
 ) -> list[BtResult]:
     if workers <= 1 or len(strat_list) < 4:
         return [_bt_one_local(frame, timeframe, sid, fee, stake) for sid in strat_list]
-    if multiprocessing.current_process().daemon:
-        return _map_threads(frame, timeframe, strat_list, fee, stake, workers)
-    try:
-        return _map_process(frame, timeframe, strat_list, fee, stake, workers)
-    except (OSError, PermissionError, ValueError, RuntimeError, AssertionError):
-        return _map_threads(frame, timeframe, strat_list, fee, stake, workers)
+    if pool is not None:
+        return _map_threads_on_pool(pool, frame, timeframe, strat_list, fee, stake)
+    if (
+        os.environ.get("TRENDALGO_PASS2_PROCESS_POOL", "").strip() == "1"
+        and not multiprocessing.current_process().daemon
+    ):
+        try:
+            return _map_process(frame, timeframe, strat_list, fee, stake, workers)
+        except (OSError, PermissionError, ValueError, RuntimeError, AssertionError):
+            return _map_threads(frame, timeframe, strat_list, fee, stake, workers)
+    return _map_threads(frame, timeframe, strat_list, fee, stake, workers)
 
 
 def _bt_one_local(
@@ -190,6 +211,24 @@ def _map_process(
     return [out[sid] for sid in strat_list]
 
 
+def _map_threads_on_pool(
+    pool: ThreadPoolExecutor,
+    frame: pd.DataFrame,
+    timeframe: str,
+    strat_list: tuple[str, ...],
+    fee: Any,
+    stake: float,
+) -> list[BtResult]:
+    out: dict[str, BtResult] = {}
+    futs = {
+        pool.submit(_bt_one_local, frame, timeframe, sid, fee, stake): sid for sid in strat_list
+    }
+    for fut in as_completed(futs):
+        sid, row, reason, elapsed = fut.result()
+        out[sid] = (sid, row, reason, elapsed)
+    return [out[sid] for sid in strat_list]
+
+
 def _map_threads(
     frame: pd.DataFrame,
     timeframe: str,
@@ -198,12 +237,5 @@ def _map_threads(
     stake: float,
     workers: int,
 ) -> list[BtResult]:
-    out: dict[str, BtResult] = {}
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        futs = {
-            pool.submit(_bt_one_local, frame, timeframe, sid, fee, stake): sid for sid in strat_list
-        }
-        for fut in as_completed(futs):
-            sid, row, reason, elapsed = fut.result()
-            out[sid] = (sid, row, reason, elapsed)
-    return [out[sid] for sid in strat_list]
+        return _map_threads_on_pool(pool, frame, timeframe, strat_list, fee, stake)

@@ -1,4 +1,7 @@
 {
-  "name": "brand",
-  "note": "stub for doc-link gate; replace with real brand"
+  "brand_name": "TrendAlgo Bot",
+  "icon": "branding/assets/app-icon-1024.png",
+  "icon_sha256": "98d03c96610f74696f5c25ad19f7e5c670f9e47e76e24382f638438a11ec9e36",
+  "source": "owned",
+  "tokens": "config/tokens.json"
 }

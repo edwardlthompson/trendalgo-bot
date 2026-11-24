@@ -21,13 +21,34 @@ from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
 from trendalgo.device.sim_accel_label import catalog_accel_label
 
 
-def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
+def _detect_pair_exchange(root: Path, pair: str, explicit: str | None = None) -> str:
+    if explicit and explicit.strip().lower() in {"kraken", "tradfi", "forex"}:
+        return explicit.strip().lower()
+    text = str(pair or "").strip().upper()
+    try:
+        from trendalgo.brokers.forex_universe import load_forex_universe
+
+        if text in {x.strip().upper() for x in load_forex_universe()}:
+            return "forex"
+    except Exception:  # noqa: BLE001
+        pass
+    return "kraken"
+
+
+def pair_strategy_scan_job(
+    root: Path,
+    pair: str,
+    *,
+    exchange_id: str | None = None,
+) -> dict[str, Any]:
     """Worker entry: All-TA settings + progress file under the profile.
 
     Returns ``{"rows", "market_context", "elapsed_s", "data_source", "cache_age_s"}``.
     """
     clear_progress(root)
     clear_partial_rows(root)
+    cancel_path = root / "pair_backtest_cancel.flag"
+    cancel_path.unlink(missing_ok=True)
     text = str(pair or "").strip().upper()
     if not text or "/" not in text:
         write_progress(root, {"message": "Pair must look like BTC/USD", "phase": "error"})
@@ -63,6 +84,20 @@ def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
     subhour = needs_1m_base(timeframes)
 
     def _stamp_progress(payload: dict[str, Any]) -> None:
+        if cancel_path.is_file():
+            write_progress(
+                root,
+                {
+                    "message": f"Backtest cancelled ({text})",
+                    "phase": "cancelled",
+                    "current_pair": text,
+                    "done": 0,
+                    "total": total,
+                    "pairs_done": 0,
+                    "pairs_total": 1,
+                },
+            )
+            raise InterruptedError("Backtest cancelled by user")
         body = dict(payload)
         body["current_pair"] = text
         body["pairs_total"] = 1
@@ -70,6 +105,7 @@ def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
         body["pairs_done"] = 1 if phase == "done" else 0
         write_progress(root, body)
 
+    eid = _detect_pair_exchange(root, text, exchange_id)
     _stamp_progress(
         {
             "message": (
@@ -95,17 +131,55 @@ def pair_strategy_scan_job(root: Path, pair: str) -> dict[str, Any]:
         prefs_root=root,
         on_progress=_stamp_progress,
         on_rows=lambda r: write_partial_rows(root, r),
+        exchange_id=eid,
     )
+    # Fallback to TradFi if Kraken had 0 frames and symbol is in TradFi universe.
+    ctx0 = market_context if isinstance(market_context, dict) else {}
+    if eid == "kraken" and int(ctx0.get("n_frames") or 0) == 0:
+        try:
+            from trendalgo.brokers.tradfi_universe import load_tradfi_universe
+
+            if symbol in {s.strip().upper() for s in load_tradfi_universe(root=root)}:
+                eid = "tradfi"
+                rows, market_context = scan_pair_strategies(
+                    symbol=symbol,
+                    pair=text,
+                    timeframes=timeframes,
+                    strat_list=strat_list,
+                    stake=stake,
+                    fee=fee,
+                    loader=loader,
+                    prefs_root=root,
+                    on_progress=_stamp_progress,
+                    on_rows=lambda r: write_partial_rows(root, r),
+                    exchange_id="tradfi",
+                )
+        except Exception:  # noqa: BLE001
+            pass
     elapsed_s = round(time.perf_counter() - t0, 3)
+    ctx_ps = (
+        market_context.get("phase_s")
+        if isinstance(market_context, dict) and isinstance(market_context.get("phase_s"), dict)
+        else {}
+    )
     try:
         record_sample(
             root,
             TimingSample(
-                elapsed_s=elapsed_s,
+                elapsed_s=max(
+                    0.2,
+                    float(ctx_ps.get("load_s") or 0.0)
+                    + float(ctx_ps.get("pass1_s") or 0.0)
+                    + float(ctx_ps.get("deepen_s") or 0.0)
+                    or elapsed_s,
+                ),
                 n_strategies=len(strat_list),
                 n_timeframes=len(timeframes),
                 had_subhour=subhour,
                 ts=time.time(),
+                load_s=float(ctx_ps.get("load_s") or 0.0),
+                mc_s=float(ctx_ps.get("mc_s") or 0.0),
+                sauce_s=float(ctx_ps.get("sauce_s") or 0.0),
             ),
         )
     except OSError:

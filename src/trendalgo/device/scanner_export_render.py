@@ -33,6 +33,7 @@ def build_scanner_export_panel(
     sort_key: str,
     sort_dir: int,
     include_market_context: bool = True,
+    market_context_limit: int | None = None,
     icon_root: Path | None = None,
     lane: str = "crypto",
 ) -> QWidget:
@@ -56,7 +57,7 @@ def build_scanner_export_panel(
     filt.setWordWrap(True)
     layout.addWidget(filt)
     if include_market_context:
-        picks_band = build_buy_picks_gfx_band(coins)
+        picks_band = build_buy_picks_gfx_band(coins, limit=market_context_limit)
         if picks_band is not None:
             layout.addWidget(picks_band)
     if icon_root is not None and (lane or "").strip().lower() == "tradfi":

@@ -1,17 +1,26 @@
-# TrendAlgo API — production image (Sprint 4)
+# TrendAlgo API — production image (Sprint 4 / AUD-16)
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system trendalgo \
+    && useradd --system --gid trendalgo --create-home --home-dir /home/trendalgo trendalgo
+
+COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /uvx /bin/
 
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
-RUN pip install --no-cache-dir .
+RUN uv sync --locked --no-dev --no-install-project \
+    && uv pip install --system --no-cache . \
+    && mkdir -p /app/data /app/config /app/user_data \
+    && chown -R trendalgo:trendalgo /app
 
 ENV PORT=8080
 ENV TRENDALGO_DATA_DIR=/app/data
 ENV TRENDALGO_USER_DATA=/app/user_data
+
+USER trendalgo
 
 EXPOSE 8080
 HEALTHCHECK --interval=60s --timeout=10s --retries=3 \

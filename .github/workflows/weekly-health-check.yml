@@ -25,8 +25,14 @@ jobs:
         run: bash scripts/simulate-template-upgrade.sh
 
       - name: Setup uv for Python audit
-        if: hashFiles('examples/python/uv.lock') != ''
+        if: hashFiles('uv.lock') != '' || hashFiles('examples/python/uv.lock') != ''
         uses: astral-sh/setup-uv@v7
+
+      - name: uv pip audit (root product)
+        if: hashFiles('uv.lock') != ''
+        run: |
+          uv sync --locked --extra dev
+          uv pip audit
 
       - name: uv pip audit (examples/python)
         if: hashFiles('examples/python/uv.lock') != ''

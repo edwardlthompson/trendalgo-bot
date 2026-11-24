@@ -10,6 +10,7 @@ import pandas as pd
 from trendalgo.strategies.runtime.indicators import close_series, ema, macd, rsi, sma
 from trendalgo.ta.custom_indicators import compute_custom
 from trendalgo.ta.extended_catalog import CUSTOM_TA_NAMES
+from trendalgo.ta.frame_prep import ohlcv_arrays
 from trendalgo.ta.indicator_cache import get_indicator_cache, signature_from_df
 from trendalgo.ta.pandas_fallbacks import (
     compute_bbands,
@@ -51,7 +52,7 @@ def compute_talib(name: str, df: pd.DataFrame, **params: Any) -> dict[str, np.nd
     fn = getattr(talib, name, None)
     if fn is None:
         raise KeyError(f"unknown TA-Lib function: {name}")
-    o, h, lo, c, v = (_arr(df, x) for x in _OHLCV)
+    o, h, lo, c, v = ohlcv_arrays(df)
     upper = name.upper()
     if upper.startswith("CDL"):
         return {"pattern": np.asarray(fn(o, h, lo, c), dtype=float)}

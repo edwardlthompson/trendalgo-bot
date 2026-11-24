@@ -24,6 +24,7 @@ from trendalgo.market.ohlcvt_tip_journal import (
     stitch_with_journal,
     write_started,
 )
+from trendalgo.ta.frame_prep import stamp_scan_frame
 
 KRAKEN_OHLC_BAR_CAP = 720
 
@@ -66,13 +67,14 @@ def load_scan_frames(
     from trendalgo.device.scan_base_ohlcv_alpaca import is_alpaca_lane, load_alpaca_band_frames
 
     if is_alpaca_lane(exchange_id):
-        return load_alpaca_band_frames(
+        frames, meta = load_alpaca_band_frames(
             symbol=symbol,
             pair=pair,
             timeframes=timeframes,
             exchange_id=exchange_id,
             prefs_root=prefs_root,
         )
+        return {tf: stamp_scan_frame(f) for tf, f in frames.items()}, meta
     path, tip_on, mix = _resolve_ohlcvt(prefs_root, ohlcvt_path, ohlcvt_auto_tip)
     ordered = comparable_scan_timeframes(timeframes, deep_1m=mix)
     sub_only = tuple(tf for tf in ordered if is_subhour_tf(tf))
@@ -93,9 +95,10 @@ def load_scan_frames(
                 return frames, meta
             # Sub-hour from archive; hours still exclusive live path if somehow mixed prefs.
             return frames, meta
-    return load_exclusive_band_frames(
+    frames, meta = load_exclusive_band_frames(
         symbol=symbol, pair=pair, timeframes=timeframes, loader=loader, gecko_id=gecko_id
     )
+    return {tf: stamp_scan_frame(f) for tf, f in frames.items()}, meta
 
 
 def _resolve_ohlcvt(
@@ -189,7 +192,7 @@ def _load_from_ohlcvt(
 
     frame = trim_ohlcv_frame(frame, SCAN_LOOKBACK_DAYS)
     frames: dict[str, pd.DataFrame] = {}
-    for tf, built in frames_from_base(frame, timeframes).items():
+    for tf, built in frames_from_base(frame, timeframes, base_timeframe="1m").items():
         if len(built) >= MIN_BARS_FLOOR:
             frames[tf] = built
         else:

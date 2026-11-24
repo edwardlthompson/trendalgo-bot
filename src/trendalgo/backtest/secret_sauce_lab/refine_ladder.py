@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 _DENSE_TFS = ("1h", "2h", "3h", "4h")
@@ -48,12 +49,14 @@ def refine_tf_candidates(peer_tf: str | None, sauce_tf: str) -> list[str]:
     return out
 
 
-def refine_tf_budgets(n_tf: int, time_budget_s: float) -> list[float]:
+def refine_tf_budgets(n_tf: int, time_budget_s: float | None) -> list[float]:
     """Peer TF gets a plurality; remaining TFs share the rest (keep hunting Oracle gap)."""
     n = max(1, n_tf)
+    if time_budget_s is None or not math.isfinite(float(time_budget_s)):
+        return [float("inf")] * n
     if n == 1:
-        return [time_budget_s]
+        return [float(time_budget_s)]
     # 50% peer TF, rest split evenly — peer clear first, then Oracle hunt.
-    head = time_budget_s * 0.50
-    rest = (time_budget_s - head) / (n - 1)
+    head = float(time_budget_s) * 0.50
+    rest = (float(time_budget_s) - head) / (n - 1)
     return [head] + [rest] * (n - 1)

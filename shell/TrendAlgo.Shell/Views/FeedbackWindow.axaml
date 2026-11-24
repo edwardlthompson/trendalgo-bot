@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.FeedbackWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Feedback / Updates"
+        Width="480"
+        Height="360"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="16">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+      <Button Content="Open changelog" Click="OnChangelog" />
+      <Button Content="Close" Click="OnClose" />
+    </StackPanel>
+    <StackPanel Spacing="10">
+      <TextBlock Name="VersionText" FontWeight="SemiBold" />
+      <TextBlock Text="Update / donate / crash review prompts stay coordinated with the device About panel."
+                 TextWrapping="Wrap" Opacity="0.85" />
+      <TextBlock Name="BodyText" TextWrapping="Wrap" />
+      <TextBlock Name="DonateText" TextWrapping="Wrap" Opacity="0.9" />
+      <TextBox Name="FeedbackBox" AcceptsReturn="True" Height="100"
+               Watermark="Feedback notes (open a GitHub issue from device Feedback for filing)" />
+      <TextBlock Name="CrashText" TextWrapping="Wrap" Opacity="0.8"
+                 Text="Crash privacy + review: use Settings → privacy on device until shell vault adapters land." />
+    </StackPanel>
+  </DockPanel>
+</Window>

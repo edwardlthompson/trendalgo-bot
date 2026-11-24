@@ -1,0 +1,209 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:TrendAlgo.Shell.Models"
+        x:Class="TrendAlgo.Shell.Views.ScanSettingsWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Scan / Backtest Settings"
+        Width="920"
+        Height="640"
+        MinWidth="720"
+        MinHeight="480"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="12">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+      <TextBlock Text="{Binding Note}" Opacity="0.8" TextWrapping="Wrap" Width="520" VerticalAlignment="Center" />
+      <Button Content="Cancel" Click="OnCancel" MinWidth="88" />
+      <Button Content="Save" Click="OnSave" MinWidth="88" />
+    </StackPanel>
+
+    <Grid ColumnDefinitions="*,Auto,*,Auto,*" RowDefinitions="Auto,*">
+      <Border Grid.Column="0" Grid.ColumnSpan="5" Grid.Row="0"
+              Background="#1A2433" CornerRadius="4" Padding="10" Margin="0,0,0,10">
+        <StackPanel Spacing="4">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Spacing="4" Margin="8,0,0,0" VerticalAlignment="Top">
+              <Button Content="Quick benchmark (1 coin · 1 stock · 1 FX)"
+                      Click="OnRunBenchmark"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Center" />
+              <Button Content="Benchmark Results"
+                      Click="OnOpenBenchmarkResults"
+                      IsEnabled="{Binding HasBenchmarkResults}"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Center" />
+            </StackPanel>
+            <TextBlock Text="{Binding EtaTitle}" FontWeight="SemiBold" VerticalAlignment="Center" />
+          </DockPanel>
+          <TextBlock Text="{Binding EtaLines}" TextWrapping="Wrap" Opacity="0.9" />
+          <TextBlock Text="{Binding EtaTotal}" FontWeight="SemiBold" Margin="0,2,0,0" />
+          <Border IsVisible="{Binding EtaOverrun}" Background="#4A2D0B" CornerRadius="3" Padding="8,6" Margin="0,2,0,0">
+            <DockPanel>
+              <Button DockPanel.Dock="Right"
+                      Content="Auto-adjust interval"
+                      Click="OnAutoAdjustInterval"
+                      Margin="8,0,0,0" />
+              <TextBlock Text="{Binding EtaWarning}" Foreground="#FDE68A" TextWrapping="Wrap" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+          <TextBlock Text="{Binding EtaNote}" Opacity="0.75" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <ScrollViewer Grid.Column="0" Grid.Row="1" Margin="0,0,4,0" MinWidth="280">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Primary filters" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap" />
+          <TextBlock Text="Min volume (USD)" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="0" Maximum="1000000000000" Increment="100000"
+                         FormatString="N0" Value="{Binding MinVolume}" />
+          <TextBlock Text="Kraken USD volume floor for Qualified." Opacity="0.75" FontSize="11"
+                     TextWrapping="Wrap" />
+          <CheckBox IsChecked="{Binding RequireContinuous1h}">
+            <TextBlock Text="Require continuous 1h bars" TextWrapping="Wrap" />
+          </CheckBox>
+          <TextBlock Text="Kraken OHLCVT" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0"
+                     TextWrapping="Wrap" />
+          <TextBox Text="{Binding OhlcvtPath}" Watermark="Price Data\Kraken_OHLCVT_Full.zip"
+                   TextWrapping="Wrap" />
+          <Button Content="Browse ZIP…" Click="OnBrowseOhlcvt" HorizontalAlignment="Left" />
+          <CheckBox IsChecked="{Binding OhlcvtAutoTip}">
+            <TextBlock Text="Record live 1m tip into rolling journal" TextWrapping="Wrap" />
+          </CheckBox>
+          <TextBlock Text="{Binding SubhourMixNote}" Opacity="0.8" FontSize="11" TextWrapping="Wrap" />
+          <TextBlock Text="Market Context &amp; Sauce Pan" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0"
+                     TextWrapping="Wrap" />
+          <CheckBox IsChecked="{Binding MarketContext}">
+            <TextBlock Text="Market Context with scan" TextWrapping="Wrap" />
+          </CheckBox>
+          <CheckBox IsChecked="{Binding SauceWithScan}">
+            <TextBlock Text="Include Secret Sauce with scan" TextWrapping="Wrap" />
+          </CheckBox>
+          <TextBlock Text="Sauce top-N (Oracle rank)" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="1" Maximum="50" Increment="1" Value="{Binding SauceTopN}" />
+          <TextBlock Text="Desks to scan" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0"
+                     TextWrapping="Wrap"
+                     ToolTip.Tip="Checked desks are scanned when you click Run scan and on each scheduled interval." />
+          <CheckBox Content="Crypto" IsChecked="{Binding AutoScanCrypto}" />
+          <CheckBox Content="TradFi" IsChecked="{Binding AutoScanTradfi}" />
+          <CheckBox Content="Forex" IsChecked="{Binding AutoScanForex}" />
+          <TextBlock Text="TradFi lane filters" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0"
+                     TextWrapping="Wrap" />
+          <WrapPanel Orientation="Horizontal">
+            <Button Content="Wide" Tag="wide" Click="OnTradfiPreset" MinWidth="52" Margin="0,0,4,4" />
+            <Button Content="Balanced" Tag="balanced" Click="OnTradfiPreset" MinWidth="64" Margin="0,0,4,4" />
+            <Button Content="Tight" Tag="tight" Click="OnTradfiPreset" MinWidth="52" Margin="0,0,4,4" />
+            <Button Content="Strict" Tag="strict" Click="OnTradfiPreset" MinWidth="52" Margin="0,0,4,4" />
+          </WrapPanel>
+          <TextBlock Text="Min |gain| %" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="0" Maximum="100" Increment="0.5" Value="{Binding TradfiAbsGain}" />
+          <TextBlock Text="Min range %" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="0" Maximum="100" Increment="0.5" Value="{Binding TradfiRange}" />
+          <TextBlock Text="Top N (0 = off)" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="0" Maximum="500" Increment="10" Value="{Binding TradfiTopN}" />
+          <TextBlock Text="Min ADV USD" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="0" Maximum="1000000000000" Increment="1000000"
+                         FormatString="N0" Value="{Binding TradfiAdv}" />
+          <TextBlock Text="Min price" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="0" Maximum="1000000" Increment="1" Value="{Binding TradfiPrice}" />
+          <TextBlock Text="Exchange allowlist" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0"
+                     TextWrapping="Wrap" />
+          <TextBlock Text="Keyed venues for live crypto scans (none = public Kraken)." Opacity="0.75"
+                     FontSize="11" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding Exchanges}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="models:PrefToggleRow">
+                <CheckBox IsChecked="{Binding Enabled}" Margin="0,1">
+                  <TextBlock Text="{Binding Id}" TextWrapping="Wrap" />
+                </CheckBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="Chrome" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0"
+                     TextWrapping="Wrap" />
+          <TextBlock Text="Auto-scan interval (min)" TextWrapping="Wrap" />
+          <NumericUpDown Minimum="15" Maximum="1440" Increment="15" Value="{Binding IntervalMinutes}" />
+          <TextBlock Text="Results view" FontWeight="SemiBold" FontSize="15" Margin="0,8,0,0"
+                     TextWrapping="Wrap" />
+          <CheckBox IsChecked="{Binding Heatmap}">
+            <TextBlock Text="Color ranks / heatmap" TextWrapping="Wrap" />
+          </CheckBox>
+          <CheckBox IsChecked="{Binding PerfectOnly}"
+                    ToolTip.Tip="Hide strategies that are not Perfect on the Results sheet.">
+            <TextBlock Text="Perfect Strategies only" TextWrapping="Wrap" />
+          </CheckBox>
+        </StackPanel>
+      </ScrollViewer>
+
+      <GridSplitter Grid.Column="1" Grid.Row="1" Width="6" ResizeDirection="Columns"
+                    HorizontalAlignment="Center" VerticalAlignment="Stretch" />
+
+      <DockPanel Grid.Column="2" Grid.Row="1" Margin="4,0" MinWidth="200">
+        <StackPanel DockPanel.Dock="Top" Spacing="4">
+          <TextBlock Text="Timeframes" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding TfSummary}" Opacity="0.8" TextWrapping="Wrap" />
+        </StackPanel>
+        <ScrollViewer>
+          <ItemsControl ItemsSource="{Binding TfBands}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="models:TfBandGroup">
+                <StackPanel Spacing="4" Margin="0,0,0,8">
+                  <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                      <Button Content="All" MinWidth="56" Tag="{Binding}" Click="OnBandAll" />
+                      <Button Content="None" MinWidth="56" Tag="{Binding}" Click="OnBandNone" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center"
+                               TextWrapping="Wrap" />
+                  </DockPanel>
+                  <TextBlock Text="{Binding Note}"
+                             IsVisible="{Binding ShowNote}"
+                             TextWrapping="Wrap"
+                             Opacity="0.85"
+                             FontSize="12"
+                             Margin="0,0,0,4" />
+                  <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="models:PrefToggleRow">
+                        <CheckBox IsChecked="{Binding Enabled}" Margin="0,2">
+                          <TextBlock Text="{Binding Id}" TextWrapping="Wrap" />
+                        </CheckBox>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Separator IsVisible="{Binding ShowSeparatorAfter}" Margin="0,8,0,4" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
+
+      <GridSplitter Grid.Column="3" Grid.Row="1" Width="6" ResizeDirection="Columns"
+                    HorizontalAlignment="Center" VerticalAlignment="Stretch" />
+
+      <DockPanel Grid.Column="4" Grid.Row="1" Margin="4,0,0,0" MinWidth="200">
+        <StackPanel DockPanel.Dock="Top" Spacing="6">
+          <TextBlock Text="Strategies (denylist = unchecked)" FontWeight="SemiBold" FontSize="15"
+                     TextWrapping="Wrap" />
+          <TextBox Watermark="Search strategies…" Text="{Binding StrategyFilter}"
+                   TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Content="All" Click="OnStratAll" MinWidth="56" />
+            <Button Content="None" Click="OnStratNone" MinWidth="56" />
+            <TextBlock Text="{Binding StratSummary}" VerticalAlignment="Center" Opacity="0.8"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </StackPanel>
+        <ScrollViewer>
+          <ItemsControl ItemsSource="{Binding VisibleStrategies}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="models:PrefToggleRow">
+                <CheckBox IsChecked="{Binding Enabled}" Margin="0,1">
+                  <TextBlock Text="{Binding Id}" TextWrapping="Wrap" />
+                </CheckBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </DockPanel>
+    </Grid>
+  </DockPanel>
+</Window>

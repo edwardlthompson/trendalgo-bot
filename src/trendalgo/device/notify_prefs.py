@@ -55,7 +55,10 @@ def prefs_path(root: Path) -> Path:
 def load_prefs(root: Path) -> NotifyPrefs:
     raw = read_json(prefs_path(root))
     if not isinstance(raw, dict):
-        return NotifyPrefs()
+        from trendalgo.device.telegram_vault import load_telegram_creds
+
+        token, chat = load_telegram_creds()
+        return NotifyPrefs(telegram_enabled=bool(token and chat))
     # Prefer new keys; fall back to legacy event masters.
     return NotifyPrefs(
         windows_logs=_bool(raw.get("windows_logs"), False),

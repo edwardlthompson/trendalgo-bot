@@ -8,6 +8,7 @@ from collections.abc import Iterable
 import pandas as pd
 
 from trendalgo.backtest.heartbeat_tf import timeframe_minutes
+from trendalgo.ta.frame_prep import stamp_scan_frame
 
 _AGG = {
     "open": "first",
@@ -33,15 +34,20 @@ def _pandas_rule(timeframe: str) -> str | None:
     return None
 
 
-def resample_ohlcv(frame: pd.DataFrame, timeframe: str) -> pd.DataFrame:
+def resample_ohlcv(
+    frame: pd.DataFrame,
+    timeframe: str,
+    *,
+    base_timeframe: str | None = None,
+) -> pd.DataFrame:
     """Resample base OHLCV to ``timeframe`` (1m/5m/…/Nh/1d)."""
     text = str(timeframe).strip().lower()
-    base_mins = _infer_base_minutes(frame)
+    base_mins = timeframe_minutes(base_timeframe) if base_timeframe else _infer_base_minutes(frame)
     target_mins = timeframe_minutes(text)
     if target_mins is not None and base_mins is not None and target_mins == base_mins:
-        return frame
+        return stamp_scan_frame(frame)
     if text in ("1h",) and base_mins == 60:
-        return frame
+        return stamp_scan_frame(frame)
 
     rule = _pandas_rule(text)
     if rule is None:
@@ -50,22 +56,30 @@ def resample_ohlcv(frame: pd.DataFrame, timeframe: str) -> pd.DataFrame:
         raise ValueError(f"Cannot resample {base_mins}m bars down to {timeframe}")
 
     resampled = frame.resample(rule).agg(_AGG)
-    return pd.DataFrame(resampled).dropna(how="any")
+    return stamp_scan_frame(pd.DataFrame(resampled).dropna(how="any"))
 
 
 def frames_from_1h(frame_1h: pd.DataFrame, timeframes: Iterable[str]) -> dict[str, pd.DataFrame]:
     """Build Nh frames from one 1h frame (no network I/O)."""
-    return frames_from_base(frame_1h, timeframes)
+    return frames_from_base(frame_1h, timeframes, base_timeframe="1h")
 
 
-def frames_from_base(frame: pd.DataFrame, timeframes: Iterable[str]) -> dict[str, pd.DataFrame]:
+def frames_from_base(
+    frame: pd.DataFrame,
+    timeframes: Iterable[str],
+    *,
+    base_timeframe: str | None = None,
+) -> dict[str, pd.DataFrame]:
     """Build TF frames from one fine base frame (1m or 1h)."""
     out: dict[str, pd.DataFrame] = {}
     for tf in timeframes:
         key = str(tf).strip()
         if not key:
             continue
-        out[key] = resample_ohlcv(frame, key)
+        try:
+            out[key] = resample_ohlcv(frame, key, base_timeframe=base_timeframe)
+        except ValueError:
+            continue
     return out
 
 
@@ -75,7 +89,9 @@ def _infer_base_minutes(frame: pd.DataFrame) -> int | None:
     idx = frame.index
     if not isinstance(idx, pd.DatetimeIndex):
         return None
-    delta = (idx[1] - idx[0]).total_seconds()
-    if delta <= 0:
+    diffs = idx.asi8[1:] - idx.asi8[:-1]
+    pos = diffs[diffs > 0]
+    if len(pos) == 0:
         return None
-    return max(1, int(round(delta / 60.0)))
+    # Minimum positive step avoids overnight/weekend/holiday market-hour gaps.
+    return max(1, int(round(float(pos.min()) / 60_000_000_000.0)))

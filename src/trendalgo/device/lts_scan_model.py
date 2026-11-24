@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -41,7 +42,16 @@ def save_lts_rows(root: Path, rows: list[dict[str, Any]], *, lane: str = "crypto
         key = row_key(coin)
         if key:
             deduped[key] = coin
-    write_json(lts_rows_path(root, lane), {"rows": list(deduped.values())})
+    saved = list(deduped.values())
+    write_json(
+        lts_rows_path(root, lane), {"saved_at": datetime.now(UTC).isoformat(), "rows": saved}
+    )
+    try:
+        from trendalgo.device.results_bridge import publish_opportunity_rows
+
+        publish_opportunity_rows(root, saved, lane=lane)
+    except Exception:
+        pass  # JSON board remains source of truth if results.db is locked
 
 
 def load_lts_rows(root: Path, *, lane: str = "crypto") -> list[dict[str, Any]]:

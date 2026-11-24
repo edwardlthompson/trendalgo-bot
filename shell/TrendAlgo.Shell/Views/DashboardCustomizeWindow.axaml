@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.DashboardCustomizeWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Customize dashboard"
+        Width="520"
+        Height="640"
+        MinWidth="420"
+        MinHeight="420"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="14">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+      <Button Content="Cancel" Click="OnCancel" MinWidth="88" />
+      <Button Content="Save" Click="OnSave" MinWidth="88" />
+    </StackPanel>
+    <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+      <TextBlock Text="Choose modules for the active page. Grid pack places new tiles into free cells." TextWrapping="Wrap" Opacity="0.85" />
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="Cols" VerticalAlignment="Center" />
+          <NumericUpDown x:Name="ColsBox" Minimum="4" Maximum="32" Value="24" Width="80" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <TextBlock Text="Rows" VerticalAlignment="Center" />
+          <NumericUpDown x:Name="RowsBox" Minimum="4" Maximum="96" Value="24" Width="80" />
+        </StackPanel>
+        <CheckBox x:Name="ShowGridBox" Content="Show grid" VerticalAlignment="Center" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button Content="Select all" Click="OnSelectAll" />
+        <Button Content="Clear all" Click="OnClearAll" />
+      </StackPanel>
+    </StackPanel>
+    <ListBox x:Name="ModuleList" SelectionMode="Single">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Title}" Margin="0,2" />
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </DockPanel>
+</Window>

@@ -19,6 +19,7 @@ from trendalgo.device.scan_base_ohlcv_forex_fallback import (
 )
 from trendalgo.market.ohlcv_disk_cache import load_cached_ohlcv, save_cached_ohlcv
 from trendalgo.market.types import OhlcvPoint
+from trendalgo.ta.frame_prep import stamp_scan_frame
 
 _LANE_IDS = frozenset({"tradfi", "forex"})
 
@@ -56,7 +57,7 @@ def load_alpaca_band_frames(
         if frame_1h is not None and not frame_1h.empty:
             frame_1h = trim_ohlcv_frame(frame_1h, lookback)
             sources.append(src)
-            for tf, frame in frames_from_base(frame_1h, hour_tfs).items():
+            for tf, frame in frames_from_base(frame_1h, hour_tfs, base_timeframe="1h").items():
                 if len(frame) >= MIN_BARS_FLOOR:
                     frames[tf] = frame
                 else:
@@ -74,7 +75,7 @@ def load_alpaca_band_frames(
                 notes.append("1m Alpaca base unavailable — sub-hour TFs skipped")
             else:
                 sources.append(f"1m:alpaca:{eid}")
-                for tf, frame in frames_from_base(frame_1m, sub_tfs).items():
+                for tf, frame in frames_from_base(frame_1m, sub_tfs, base_timeframe="1m").items():
                     if len(frame) >= MIN_BARS_FLOOR:
                         frames[tf] = frame
                     else:
@@ -106,13 +107,13 @@ def _load_hour_frame(
     *,
     prefs_root: Path | None,
 ) -> tuple[pd.DataFrame | None, str]:
-    """Return (frame, source_label). Forex falls back to covering cache + AlgoSpecial."""
+    """Return (frame, source_label). Forex/TradFi fall back to covering disk cache."""
     if exchange_id == "forex":
         return _load_forex_hour(pair, since, until, prefs_root=prefs_root)
-    frame = _load_tradfi_frame(pair, "1h", since, until, prefs_root=prefs_root)
+    frame, src = _load_tradfi_frame_with_source(pair, "1h", since, until, prefs_root=prefs_root)
     if frame is None:
         return None, ""
-    return frame, f"1h:alpaca:{exchange_id}"
+    return frame, f"1h:{src}:{exchange_id}"
 
 
 def _load_forex_hour(
@@ -139,6 +140,36 @@ def _load_forex_hour(
     return _points_to_frame(points), source
 
 
+def _load_tradfi_frame_with_source(
+    pair: str,
+    timeframe: str,
+    since: datetime,
+    until: datetime,
+    *,
+    prefs_root: Path | None,
+) -> tuple[pd.DataFrame | None, str]:
+    points: list[OhlcvPoint] | None = None
+    source = "alpaca"
+    if prefs_root is not None:
+        cached = load_cached_ohlcv(prefs_root, pair, timeframe, since, until)
+        if cached and not _is_synthetic_volume(cached):
+            points = cached
+            source = "cache"
+    if not points:
+        points = _fetch_points("tradfi", pair, timeframe, since, until)
+        if points and prefs_root is not None and not _is_synthetic_volume(points):
+            save_cached_ohlcv(prefs_root, pair, timeframe, since, until, points)
+            source = "alpaca"
+    if (not points or _is_synthetic_volume(points)) and prefs_root is not None:
+        covering = load_covering_cached_ohlcv(prefs_root, pair, timeframe, since, until)
+        if covering and not _is_synthetic_volume(covering):
+            points = covering
+            source = "cache"
+    if not points or _is_synthetic_volume(points):
+        return None, ""
+    return _points_to_frame(points), source
+
+
 def _load_tradfi_frame(
     pair: str,
     timeframe: str,
@@ -147,18 +178,8 @@ def _load_tradfi_frame(
     *,
     prefs_root: Path | None,
 ) -> pd.DataFrame | None:
-    points: list[OhlcvPoint] | None = None
-    if prefs_root is not None:
-        cached = load_cached_ohlcv(prefs_root, pair, timeframe, since, until)
-        if cached and not _is_synthetic_volume(cached):
-            points = cached
-    if not points:
-        points = _fetch_points("tradfi", pair, timeframe, since, until)
-        if points and prefs_root is not None and not _is_synthetic_volume(points):
-            save_cached_ohlcv(prefs_root, pair, timeframe, since, until, points)
-    if not points or _is_synthetic_volume(points):
-        return None
-    return _points_to_frame(points)
+    frame, _ = _load_tradfi_frame_with_source(pair, timeframe, since, until, prefs_root=prefs_root)
+    return frame
 
 
 def _is_synthetic_volume(points: list[OhlcvPoint]) -> bool:
@@ -215,4 +236,4 @@ def _points_to_frame(points: list[OhlcvPoint]) -> pd.DataFrame:
         }
         for p in points
     ]
-    return pd.DataFrame(rows).set_index("timestamp").sort_index()
+    return stamp_scan_frame(pd.DataFrame(rows).set_index("timestamp").sort_index())

@@ -28,6 +28,7 @@ class TimingSample:
     ts: float = 0.0
     mc_s: float = 0.0
     sauce_s: float = 0.0
+    load_s: float = 0.0
 
 
 @dataclass
@@ -64,6 +65,7 @@ def load_history(root: Path) -> ScanTimeHistory:
                     ts=float(item.get("ts") or 0),
                     mc_s=max(0.0, float(item.get("mc_s") or 0)),
                     sauce_s=max(0.0, float(item.get("sauce_s") or 0)),
+                    load_s=max(0.0, float(item.get("load_s") or 0)),
                 )
             )
         except (TypeError, ValueError):
@@ -182,7 +184,7 @@ def estimate_label(
 
 
 def _recompute(hist: ScanTimeHistory) -> ScanTimeHistory:
-    if len(hist.samples) < 3:
+    if not hist.samples:
         return hist
     load_1h: list[float] = []
     load_1m: list[float] = []
@@ -191,9 +193,11 @@ def _recompute(hist: ScanTimeHistory) -> ScanTimeHistory:
     sauce_vals: list[float] = []
     for s in hist.samples:
         combos = max(1, s.n_strategies * max(1, s.n_timeframes))
-        # Attribute ~30% of elapsed to load when subhour, else ~15%.
-        load_frac = 0.35 if s.had_subhour else 0.15
-        load_s = s.elapsed_s * load_frac
+        if s.load_s > 0:
+            load_s = min(s.elapsed_s, s.load_s)
+        else:
+            load_frac = 0.35 if s.had_subhour else 0.15
+            load_s = s.elapsed_s * load_frac
         work_s = max(0.0, s.elapsed_s - load_s)
         if s.had_subhour:
             load_1m.append(load_s)

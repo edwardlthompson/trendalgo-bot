@@ -13,6 +13,7 @@ class OhlcvSignature:
     bar_count: int
     first_ts: int
     last_ts: int
+    price_tag: int = 0
 
     @classmethod
     def from_ohlcv(cls, ohlcv: list[dict[str, Any]]) -> OhlcvSignature:

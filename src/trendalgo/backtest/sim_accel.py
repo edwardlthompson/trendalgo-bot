@@ -45,18 +45,29 @@ def simulate_arrays(
     lows: np.ndarray | None = None,
 ) -> tuple[float, float, int, int, int, int]:
     """Return gross, fees, trades, wins, tsl_hits, open_trades."""
-    use_legacy = (
-        int(fill_offset) == 0
-        and float(slippage_bps) == 0.0
-        and opens is None
-        and highs is None
-        and lows is None
-    )
-    if use_legacy and accel_backend() in {"numba", "cuda"}:
+    if accel_backend() in {"numba", "cuda"}:
         try:
-            from trendalgo.backtest.sim_accel_kernels import numba_one  # noqa: PLC0415
+            from trendalgo.backtest.sim_accel_v2 import numba_sim_v2  # noqa: PLC0415
 
-            return numba_one(closes, entries, exits, stake_usd, fee_per_trade, trailing_stop_pct)
+            c_f = np.ascontiguousarray(closes, dtype=np.float64)
+            o_f = c_f if opens is None else np.ascontiguousarray(opens, dtype=np.float64)
+            h_f = c_f if highs is None else np.ascontiguousarray(highs, dtype=np.float64)
+            l_f = c_f if lows is None else np.ascontiguousarray(lows, dtype=np.float64)
+            en_b = np.ascontiguousarray(entries, dtype=np.bool_)
+            ex_b = np.ascontiguousarray(exits, dtype=np.bool_)
+            return numba_sim_v2(
+                c_f,
+                o_f,
+                h_f,
+                l_f,
+                en_b,
+                ex_b,
+                stake_usd,
+                fee_per_trade,
+                trailing_stop_pct,
+                fill_offset,
+                slippage_bps,
+            )
         except Exception:
             pass
     return python_one(
@@ -74,6 +85,82 @@ def simulate_arrays(
     )
 
 
+def simulate_tsl_grid_v2(
+    closes: np.ndarray,
+    opens: np.ndarray | None,
+    highs: np.ndarray | None,
+    lows: np.ndarray | None,
+    entries: np.ndarray,
+    exits: np.ndarray,
+    tsls: tuple[float, ...] | list[float],
+    *,
+    stake_usd: float,
+    fee: ExchangeFeeSchedule,
+    fill_offset: int = 1,
+    slippage_bps: float = 0.0,
+) -> list[dict[str, Any]]:
+    """Evaluate a TSL grid in one compiled nogil loop with full SIM-01/SIM-02 parity."""
+    fee_per = float(fee.round_trip_taker_cost(stake_usd))
+    c_f = np.ascontiguousarray(closes, dtype=np.float64)
+    o_f = c_f if opens is None else np.ascontiguousarray(opens, dtype=np.float64)
+    h_f = c_f if highs is None else np.ascontiguousarray(highs, dtype=np.float64)
+    l_f = c_f if lows is None else np.ascontiguousarray(lows, dtype=np.float64)
+    en_b = np.ascontiguousarray(entries, dtype=np.bool_)
+    ex_b = np.ascontiguousarray(exits, dtype=np.bool_)
+    tsl_arr = np.asarray([max(0.0, float(t)) for t in tsls], dtype=np.float64)
+    if accel_backend() in {"numba", "cuda"}:
+        try:
+            from trendalgo.backtest.sim_accel_grid_v2 import numba_tsl_grid_v2  # noqa: PLC0415
+
+            mat = numba_tsl_grid_v2(
+                c_f,
+                o_f,
+                h_f,
+                l_f,
+                en_b,
+                ex_b,
+                tsl_arr,
+                stake_usd,
+                fee_per,
+                fill_offset,
+                slippage_bps,
+            )
+            return [
+                pack_stats(
+                    (
+                        float(mat[i, 0]),
+                        float(mat[i, 1]),
+                        int(mat[i, 2]),
+                        int(mat[i, 3]),
+                        int(mat[i, 4]),
+                        int(mat[i, 5]),
+                        float(tsl_arr[i]),
+                    ),
+                    fee,
+                )
+                for i in range(len(tsl_arr))
+            ]
+        except Exception:
+            pass
+    out: list[dict[str, Any]] = []
+    for tsl in tsl_arr:
+        gross, fees, trades, wins, hits, open_n = python_one(
+            c_f,
+            en_b,
+            ex_b,
+            stake_usd,
+            fee_per,
+            float(tsl),
+            fill_offset=fill_offset,
+            slippage_bps=slippage_bps,
+            opens=o_f,
+            highs=h_f,
+            lows=l_f,
+        )
+        out.append(pack_stats((gross, fees, trades, wins, hits, open_n, float(tsl)), fee))
+    return out
+
+
 def simulate_tsl_grid(
     closes: np.ndarray,
     entries: np.ndarray,
@@ -83,32 +170,20 @@ def simulate_tsl_grid(
     stake_usd: float,
     fee: ExchangeFeeSchedule,
 ) -> list[dict[str, Any]]:
-    """Simulate each TSL; CUDA batch when available and grid is large enough."""
-    fee_per = float(fee.round_trip_taker_cost(stake_usd))
-    closes_f = np.ascontiguousarray(closes, dtype=np.float64)
-    entries_b = np.ascontiguousarray(entries.astype(np.bool_), dtype=np.bool_)
-    exits_b = np.ascontiguousarray(exits.astype(np.bool_), dtype=np.bool_)
-    tsl_arr = np.asarray([max(0.0, float(t)) for t in tsls], dtype=np.float64)
-    if accel_backend() == "cuda" and len(tsl_arr) >= _CUDA_GRID_MIN:
-        try:
-            from trendalgo.backtest.sim_accel_kernels import cuda_tsl_grid  # noqa: PLC0415
-
-            rows = cuda_tsl_grid(closes_f, entries_b, exits_b, tsl_arr, stake_usd, fee_per)
-            return [pack_stats(r, fee) for r in rows]
-        except Exception:
-            pass
-    out: list[dict[str, Any]] = []
-    for tsl in tsl_arr:
-        gross, fees, trades, wins, hits, open_n = simulate_arrays(
-            closes_f,
-            entries_b,
-            exits_b,
-            stake_usd=stake_usd,
-            fee_per_trade=fee_per,
-            trailing_stop_pct=float(tsl),
-        )
-        out.append(pack_stats((gross, fees, trades, wins, hits, open_n, float(tsl)), fee))
-    return out
+    """Simulate each TSL; batched nogil/CUDA when available."""
+    return simulate_tsl_grid_v2(
+        closes,
+        None,
+        None,
+        None,
+        entries,
+        exits,
+        tsls,
+        stake_usd=stake_usd,
+        fee=fee,
+        fill_offset=0,
+        slippage_bps=0.0,
+    )
 
 
 def pack_stats(row: tuple[float, ...], fee: ExchangeFeeSchedule) -> dict[str, Any]:

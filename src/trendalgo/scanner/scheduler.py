@@ -5,8 +5,10 @@ from __future__ import annotations
 import os
 import threading
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any, cast
 
+from trendalgo.device.scanner_schedule import next_aligned_run
 from trendalgo.scanner.alerts import AlertSink, emit_alerts_for_snapshot
 from trendalgo.scanner.pipeline import run_pipeline
 from trendalgo.scanner.progress import ScanProgress, get_scan_progress
@@ -146,6 +148,11 @@ def _start_backtest_job(
         raise
 
 
+def compute_start_date(interval_minutes: int, *, now: datetime | None = None) -> datetime:
+    """Return the next wall-clock aligned boundary (60m -> top of next hour :00:00)."""
+    return next_aligned_run(max(60, int(interval_minutes)), now=now)
+
+
 def start_scheduler(
     store: ScannerStore,
     on_log: Callable[[str], None] | None = None,
@@ -158,11 +165,13 @@ def start_scheduler(
 
     settings = store.get_settings()
     minutes = max(60, int(settings.interval_minutes))
+    start_at = compute_start_date(minutes)
     scheduler = BackgroundScheduler()
     scheduler.add_job(
         lambda: run_scheduled_scan(store, on_log, on_alert),
         "interval",
         minutes=minutes,
+        start_date=start_at,
         id="trendalgo-scanner",
         replace_existing=True,
         coalesce=True,
@@ -170,5 +179,7 @@ def start_scheduler(
     )
     scheduler.start()
     if on_log:
-        on_log(f"scanner scheduler started: every {minutes}m")
+        on_log(
+            f"scanner scheduler started: every {minutes}m (next aligned run {start_at.isoformat()})"
+        )
     return cast(object, scheduler)

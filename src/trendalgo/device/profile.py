@@ -39,6 +39,7 @@ BOTS_DB = "bots.db"
 JOURNAL_DB = "journal.db"
 CANDLES_DB = "ohlcv_prices.db"
 PORTFOLIO_DB = "portfolio.db"
+RESULTS_DB = "results.db"  # Avalonia ↔ engine shared store (ADR-0021)
 SETTINGS_FILE = "settings.json"
 PLAN_FILE = "plan.json"
 LOCK_FILE = "device.lock"
@@ -71,6 +72,7 @@ def db_paths(root: Path) -> dict[str, Path]:
         "bots": data / BOTS_DB,
         "journal": data / JOURNAL_DB,
         "candles": Path(override) if override else data / CANDLES_DB,
+        "results": root / RESULTS_DB,
     }
 
 

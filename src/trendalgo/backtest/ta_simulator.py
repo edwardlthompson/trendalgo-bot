@@ -15,6 +15,7 @@ import pandas as pd
 
 from trendalgo.backtest.sim_fill import apply_entry_slip, apply_exit_slip, gap_through_long_exit
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
+from trendalgo.ta.frame_prep import ohlcv_arrays
 
 
 def _bar_time(df: pd.DataFrame, index: int) -> str:
@@ -72,10 +73,7 @@ def simulate_long_with_fees(
     fill_offset: int = 1,
     slippage_bps: float = 0.0,
 ) -> dict[str, Any]:
-    closes = df["close"].to_numpy(dtype=float)
-    opens = df["open"].to_numpy(dtype=float) if "open" in df.columns else closes
-    highs = df["high"].to_numpy(dtype=float) if "high" in df.columns else closes
-    lows = df["low"].to_numpy(dtype=float) if "low" in df.columns else closes
+    opens, highs, lows, closes, _ = ohlcv_arrays(df)
     fee_per_trade = fee.round_trip_taker_cost(stake_usd)
     tsl = max(0.0, trailing_stop_pct)
     offset = max(0, int(fill_offset))

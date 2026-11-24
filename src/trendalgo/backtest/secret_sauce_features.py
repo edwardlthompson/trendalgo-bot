@@ -190,12 +190,10 @@ def match_feat(feat: dict[str, float], conjuncts: tuple[RuleConjunct, ...]) -> b
 
 
 def entries_for_secret_sauce(df: pd.DataFrame, rule: CompositeRule) -> np.ndarray:
-    feats = causal_features(df)
-    entries = np.zeros(len(df), dtype=bool)
-    for i, feat in enumerate(feats):
-        if match_feat(feat, rule.conjuncts):
-            entries[i] = True
-    return entries
+    from trendalgo.backtest.secret_sauce_lab.columnar import feature_matrix, mask_conjuncts
+
+    cols, _ = feature_matrix(df)
+    return mask_conjuncts(cols, rule.conjuncts)
 
 
 def exits_for_secret_sauce(df: pd.DataFrame, rule: CompositeRule) -> np.ndarray:
@@ -220,16 +218,10 @@ def masks_for_secret_sauce(
         packed = masks_for_rsx_rules(df, entry_rule, exit_rule)
         if packed is not None:
             return packed
-    feats = causal_features(df)
-    n = len(df)
-    entries = np.zeros(n, dtype=bool)
-    exits = np.zeros(n, dtype=bool)
-    for i, feat in enumerate(feats):
-        if match_feat(feat, entry_conjuncts):
-            entries[i] = True
-        if match_feat(feat, exit_conjuncts):
-            exits[i] = True
-    return entries, exits
+    from trendalgo.backtest.secret_sauce_lab.columnar import feature_matrix, mask_conjuncts
+
+    cols, _ = feature_matrix(df)
+    return mask_conjuncts(cols, entry_conjuncts), mask_conjuncts(cols, exit_conjuncts)
 
 
 def _volume_at(i: int, closes: np.ndarray, vols: np.ndarray, prev: float) -> dict[str, float]:

@@ -6,6 +6,7 @@ and a bounded event log. The dashboard polls ``GET /api/v1/scanner/progress``.
 
 from __future__ import annotations
 
+import contextvars
 import threading
 import time
 from collections import deque
@@ -312,7 +313,24 @@ class ScanProgress:
 
 
 _PROGRESS = ScanProgress()
+_LANE_PROGRESS: dict[str, ScanProgress] = {"crypto": _PROGRESS}
+_PROGRESS_LOCK = threading.Lock()
+_SCAN_LANE: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "trendalgo_scan_lane", default="crypto"
+)
 
 
-def get_scan_progress() -> ScanProgress:
-    return _PROGRESS
+def set_scan_progress_lane(lane: str) -> str:
+    key = (lane or "crypto").strip().lower() or "crypto"
+    _SCAN_LANE.set(key)
+    return key
+
+
+def get_scan_progress(lane: str | None = None) -> ScanProgress:
+    key = (lane if lane is not None else _SCAN_LANE.get()).strip().lower() or "crypto"
+    with _PROGRESS_LOCK:
+        prog = _LANE_PROGRESS.get(key)
+        if prog is None:
+            prog = ScanProgress()
+            _LANE_PROGRESS[key] = prog
+        return prog

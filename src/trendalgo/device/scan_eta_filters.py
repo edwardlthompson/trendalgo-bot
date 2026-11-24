@@ -54,6 +54,7 @@ def merge_scan_meta(
     *,
     elapsed_s: float | None = None,
     funnel: dict[str, Any] | None = None,
+    lane: str = "crypto",
 ) -> None:
     """Patch only last-scan meta keys under lock (never clobber UI filter prefs)."""
 
@@ -76,7 +77,7 @@ def merge_scan_meta(
                 "require_continuous_1h": bool(funnel.get("require_continuous_1h", True)),
             }
 
-    mutate_json(root / FILTERS_FILE, _apply)
+    mutate_json(root / lane_data_file(FILTERS_FILE, lane), _apply)
 
 
 def write_filters_ui(root: Path, payload: dict[str, Any], *, lane: str = "crypto") -> None:

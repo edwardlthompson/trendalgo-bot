@@ -38,7 +38,7 @@ def load_exclusive_band_frames(
         sources.append(f"1h:{src}")
         if frame_1h is not None and not frame_1h.empty:
             frame_1h = trim_ohlcv_frame(frame_1h, lookback)
-            for tf, frame in frames_from_base(frame_1h, hour_tfs).items():
+            for tf, frame in frames_from_base(frame_1h, hour_tfs, base_timeframe="1h").items():
                 if len(frame) >= MIN_BARS_FLOOR:
                     frames[tf] = frame
                 else:
@@ -56,7 +56,7 @@ def load_exclusive_band_frames(
                 f"(Kraken OHLC ~{SUBHOUR_LOOKBACK_HOURS}h cap)"
             )
             sources.append("1m:kraken_public")
-            for tf, frame in frames_from_base(frame_1m, sub_tfs).items():
+            for tf, frame in frames_from_base(frame_1m, sub_tfs, base_timeframe="1m").items():
                 if len(frame) >= MIN_BARS_FLOOR:
                     frames[tf] = frame
                 else:

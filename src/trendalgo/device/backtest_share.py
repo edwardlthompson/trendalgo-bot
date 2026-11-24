@@ -53,6 +53,9 @@ def export_backtest_table_png(
     """Render filtered rows + active filters into a content-sized PNG at *path*."""
     if not rows:
         raise ValueError("no rows to export")
+    from trendalgo.device.export_qt import pin_export_fonts
+
+    pin_export_fonts()
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     panel = build_export_panel(

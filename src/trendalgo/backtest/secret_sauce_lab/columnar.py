@@ -8,19 +8,13 @@ import numpy as np
 import pandas as pd
 
 from trendalgo.backtest.oracle_pattern_mine import RuleConjunct
+from trendalgo.backtest.secret_sauce_feature_cache import get_cached_feature_matrix
 from trendalgo.backtest.secret_sauce_features import causal_features
 
 
 def feature_matrix(df: pd.DataFrame) -> tuple[dict[str, np.ndarray], list[dict[str, float]]]:
-    """Build name→float array map from causal_features (one pass)."""
-    feats = causal_features(df)
-    if not feats:
-        return {}, feats
-    keys = list(feats[0].keys())
-    cols: dict[str, np.ndarray] = {
-        k: np.array([float(f.get(k) or 0.0) for f in feats], dtype=float) for k in keys
-    }
-    return cols, feats
+    """Build or reuse cached name→float array map from causal_features (one pass)."""
+    return get_cached_feature_matrix(df, causal_features)
 
 
 def mask_conjuncts(

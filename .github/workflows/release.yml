@@ -139,7 +139,7 @@ jobs:
           output-file: sbom-go.cyclonedx.json
 
       - name: Generate Winget manifest stub
-        run: bash scripts/generate-winget-manifest.sh "AgentProjectBootstrap.Template" "$(cat .template-version | tr -d '[:space:]')"
+        run: bash scripts/generate-winget-manifest.sh "TrendAlgo.TrendAlgoBot" "$(cat .template-version | tr -d '[:space:]')"
 
       - name: Generate provenance attestation
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v2.2.0

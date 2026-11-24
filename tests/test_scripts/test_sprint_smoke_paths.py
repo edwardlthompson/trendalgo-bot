@@ -46,6 +46,13 @@ def test_scope_paths_must_exist_when_the_row_deletes_nothing() -> None:
     assert gone == []
 
 
+def test_semicolon_separated_scope_paths_split() -> None:
+    task = "AV-G-OTH5 worker — scope: `shell/TrendAlgo.Shell/;src/trendalgo/device/`"
+    present, gone = split_task_paths(task)
+    assert present == ["shell/TrendAlgo.Shell/", "src/trendalgo/device/"]
+    assert gone == []
+
+
 def test_removed_clause_and_delete_scope_are_expected_absent() -> None:
     task = (
         "`p7` Delete old files. Removed `examples/web/`, `.github/workflows/pages.yml`, "

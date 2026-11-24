@@ -1,4 +1,4 @@
-"""Buy picks / Market Context top-10 ranking."""
+"""Buy picks / Market Context ranking (full filtered set)."""
 
 from __future__ import annotations
 
@@ -52,9 +52,16 @@ def test_always_ranks_by_score_including_non_buys() -> None:
     assert [p["symbol"] for p in picks] == ["BTC", "SOL", "ETH"]
 
 
-def test_caps_at_ten() -> None:
-    coins = [_coin(symbol=f"C{i}", signal="Neutral", score=float(i) / 10.0) for i in range(15)]
+def test_default_returns_full_filtered_set() -> None:
+    coins = [_coin(symbol=f"C{i}", signal="Neutral", score=float(i) / 10.0) for i in range(21)]
     picks = rank_buy_picks(coins)
+    assert len(picks) == 21
+    assert picks[0]["symbol"] == "C20"
+
+
+def test_optional_limit_still_caps() -> None:
+    coins = [_coin(symbol=f"C{i}", signal="Neutral", score=float(i) / 10.0) for i in range(15)]
+    picks = rank_buy_picks(coins, limit=10)
     assert len(picks) == 10
     assert picks[0]["symbol"] == "C14"
 

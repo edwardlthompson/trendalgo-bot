@@ -16,8 +16,10 @@ from trendalgo.backtest.secret_sauce_lab.search_folds import (
     restrict_mask,
 )
 from trendalgo.backtest.secret_sauce_lab.search_metrics import enrich_trial_stats
+from trendalgo.backtest.sim_accel import simulate_tsl_grid_v2
 from trendalgo.backtest.ta_simulator import simulate_long_with_fees
 from trendalgo.exchanges.fees import ExchangeFeeSchedule
+from trendalgo.ta.frame_prep import ohlcv_arrays
 
 # Uncapped Sauce search (human opted to wait). Finite seed lists still bound work.
 _TIME_BUDGET_S = float("inf")
@@ -107,6 +109,22 @@ def search_best_pair(
     # Train fold is shorter — only require ≥1 trade there; coverage floor is full-window.
     fold_min_trades = 1 if train_indexes is not None else min_trades
     t0 = time.perf_counter()
+    o_arr, h_arr, l_arr, c_arr, _ = ohlcv_arrays(df)
+    _sauce_tsls = (
+        0.0,
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+        0.06,
+        0.08,
+        0.10,
+        0.12,
+        0.15,
+        0.18,
+        0.20,
+    )
     # (er, xr, family, tsl, train, hold, gate_tier, stats)
     candidates: list[tuple[Any, ...]] = []
     trial_count = 0
@@ -127,33 +145,25 @@ def search_best_pair(
         train_net_v: float | None = None
         hold_net_v: float | None = None
         gate_tier = _GATE_NONE
-        # L — deepen TSL 0–20% (1pp steps above 0, plus common seeds).
-        for tsl in (
-            0.0,
-            0.01,
-            0.02,
-            0.03,
-            0.04,
-            0.05,
-            0.06,
-            0.08,
-            0.10,
-            0.12,
-            0.15,
-            0.18,
-            0.20,
-        ):
+        em_t = restrict_mask(em, train_indexes) if train_indexes is not None else em
+        xm_t = restrict_mask(xm, train_indexes) if train_indexes is not None else xm
+        em_h = restrict_mask(em, holdout_indexes) if holdout_indexes else None
+        xm_h = restrict_mask(xm, holdout_indexes) if holdout_indexes else None
+        # L — deepen TSL 0–20% in one compiled nogil batch.
+        grid_stats = simulate_tsl_grid_v2(
+            c_arr,
+            o_arr,
+            h_arr,
+            l_arr,
+            em_t,
+            xm_t,
+            _sauce_tsls,
+            stake_usd=stake_usd,
+            fee=fee,
+            fill_offset=1,
+        )
+        for tsl, stats in zip(_sauce_tsls, grid_stats, strict=False):
             trial_count += 1
-            if train_indexes is not None:
-                em_t = restrict_mask(em, train_indexes)
-                xm_t = restrict_mask(xm, train_indexes)
-                stats = simulate_long_with_fees(
-                    df, em_t, xm_t, stake_usd=stake_usd, fee=fee, trailing_stop_pct=tsl
-                )
-            else:
-                stats = simulate_long_with_fees(
-                    df, em, xm, stake_usd=stake_usd, fee=fee, trailing_stop_pct=tsl
-                )
             trades = int(stats.get("trades") or 0)
             if trades < fold_min_trades or trades > _MAX_TRADES:
                 continue
@@ -167,9 +177,7 @@ def search_best_pair(
             best_tsl = float(tsl)
             best_stats = enriched
             train_net_v = trial_net
-            if holdout_indexes:
-                em_h = restrict_mask(em, holdout_indexes)
-                xm_h = restrict_mask(xm, holdout_indexes)
+            if holdout_indexes and em_h is not None and xm_h is not None:
                 hstats = simulate_long_with_fees(
                     df, em_h, xm_h, stake_usd=stake_usd, fee=fee, trailing_stop_pct=tsl
                 )

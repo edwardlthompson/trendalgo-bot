@@ -48,41 +48,62 @@ build_web_view_find() {
 }
 
 echo "Checking view file limits (max $VIEW_LIMIT lines)..."
-check_files "view" "$VIEW_LIMIT" < <(build_web_view_find)
+if [ -d "$ROOT/examples" ]; then
+  check_files "view" "$VIEW_LIMIT" < <(build_web_view_find)
+fi
 
 echo "Checking static data file limits (max $DATA_LIMIT lines)..."
-check_files "data" "$DATA_LIMIT" < <(find "$ROOT/examples/web/src/data" -type f -name "*.ts" \
-  ! -name "*.test.*" ! -name "*.spec.*" -print0 2>/dev/null)
+if [ -d "$ROOT/examples/web/src/data" ]; then
+  check_files "data" "$DATA_LIMIT" < <(find "$ROOT/examples/web/src/data" -type f -name "*.ts" \
+    ! -name "*.test.*" ! -name "*.spec.*" -print0 2>/dev/null)
+fi
 
 echo "Checking logic file limits (max $LOGIC_LIMIT lines)..."
-while IFS= read -r -d '' file; do
-  lines=$(wc -l < "$file" | tr -d ' ')
-  if [ "$lines" -gt "$LOGIC_LIMIT" ]; then
-    echo "FAIL [logic] $file: $lines lines (max $LOGIC_LIMIT)"
-    ERRORS=$((ERRORS + 1))
-  fi
-done < <(find "$ROOT/examples" -type f \( -name "*.ts" -o -name "*.py" -o -name "*.kt" \) \
-  ! -name "*.test.*" ! -name "*.spec.*" \
-  ! -path "*/node_modules/*" ! -path "*/.venv/*" ! -path "*/.venv*/*" \
-  ! -path "*/site-packages/*" ! -path "*/.git/*" \
-  ! -path "*/examples/web/e2e/*" \
-  ! -path "*/examples/web/src/api/*" \
-  ! -path "*/examples/web/src/appBootstrap.ts" \
-  ! -path "*/examples/web/src/AppShell.ts" \
-  ! -path "*/examples/web/src/shell/*" \
-  ! -path "*/examples/web/src/portfolio/*" \
-  ! -path "*/examples/web/src/scanner/*" \
-  ! -path "*/examples/web/src/components/*" \
-  ! -path "*/examples/web/src/dashboard/*" \
-  ! -path "*/examples/web/src/bots/*" \
-  ! -path "*/examples/web/src/charts/*" \
-  ! -path "*/examples/web/src/backtest/*" \
-  ! -path "*/examples/web/src/ohlcv/*" \
-  ! -path "*/examples/web/src/data/*" \
-  ! -path "*/examples/android/app/src/main/java/*/ui/GoldenPath*.kt" \
-  ! -path "*/examples/android/app/src/main/java/*/ui/*/*.kt" \
-  ! -path "*/examples/web/src/main.ts" \
-  -print0 2>/dev/null)
+if [ -d "$ROOT/examples" ]; then
+  while IFS= read -r -d '' file; do
+    lines=$(wc -l < "$file" | tr -d ' ')
+    if [ "$lines" -gt "$LOGIC_LIMIT" ]; then
+      echo "FAIL [logic] $file: $lines lines (max $LOGIC_LIMIT)"
+      ERRORS=$((ERRORS + 1))
+    fi
+  done < <(find "$ROOT/examples" -type f \( -name "*.ts" -o -name "*.py" -o -name "*.kt" \) \
+    ! -name "*.test.*" ! -name "*.spec.*" \
+    ! -path "*/node_modules/*" ! -path "*/.venv/*" ! -path "*/.venv*/*" \
+    ! -path "*/site-packages/*" ! -path "*/.git/*" \
+    ! -path "*/examples/web/e2e/*" \
+    ! -path "*/examples/web/src/api/*" \
+    ! -path "*/examples/web/src/appBootstrap.ts" \
+    ! -path "*/examples/web/src/AppShell.ts" \
+    ! -path "*/examples/web/src/shell/*" \
+    ! -path "*/examples/web/src/portfolio/*" \
+    ! -path "*/examples/web/src/scanner/*" \
+    ! -path "*/examples/web/src/components/*" \
+    ! -path "*/examples/web/src/dashboard/*" \
+    ! -path "*/examples/web/src/bots/*" \
+    ! -path "*/examples/web/src/charts/*" \
+    ! -path "*/examples/web/src/backtest/*" \
+    ! -path "*/examples/web/src/ohlcv/*" \
+    ! -path "*/examples/web/src/data/*" \
+    ! -path "*/examples/android/app/src/main/java/*/ui/GoldenPath*.kt" \
+    ! -path "*/examples/android/app/src/main/java/*/ui/*/*.kt" \
+    ! -path "*/examples/web/src/main.ts" \
+    -print0 2>/dev/null)
+fi
+
+# Product source checks (src/trendalgo + shell/TrendAlgo.Shell)
+# Enforce hard ceiling (1300 lines) on active product modules so mega-files cannot grow unchecked,
+# while reporting advisory counts above the 150/250 target budgets.
+PRODUCT_HARD_LIMIT=1300
+if [ -d "$ROOT/src/trendalgo" ]; then
+  echo "Checking product Python file limits (hard ceiling $PRODUCT_HARD_LIMIT lines)..."
+  check_files "product-py" "$PRODUCT_HARD_LIMIT" < <(find "$ROOT/src/trendalgo" -type f -name "*.py" \
+    ! -path "*/lts_vendor/*" ! -path "*/__pycache__/*" -print0 2>/dev/null)
+fi
+if [ -d "$ROOT/shell/TrendAlgo.Shell" ]; then
+  echo "Checking product Avalonia C# file limits (hard ceiling $PRODUCT_HARD_LIMIT lines)..."
+  check_files "product-cs" "$PRODUCT_HARD_LIMIT" < <(find "$ROOT/shell/TrendAlgo.Shell" -type f -name "*.cs" \
+    ! -path "*/bin/*" ! -path "*/obj/*" -print0 2>/dev/null)
+fi
 
 if [ "$ERRORS" -gt 0 ]; then
   echo "$ERRORS file(s) exceed line limits"

@@ -21,6 +21,7 @@ from trendalgo.device.scan_bt_prefs import (
 )
 from trendalgo.device.scan_parallel import (
     all_ta_coin_workers,
+    all_ta_sauce_workers,
     parallel_log_bits,
     set_coin_parallel,
 )
@@ -50,17 +51,16 @@ def _sauce_pool_on_seeds(
     on_ok: Any,
     on_ctx: Any,
 ) -> bool:
-    """Serial Sauce-only via ``_run_pool`` (patchable in tests)."""
+    """Sauce-only via ``_run_pool`` (patchable in tests)."""
     if not sauce_coins:
         return False
-    set_coin_parallel(1)
+    workers = all_ta_sauce_workers(len(sauce_coins))
+    set_coin_parallel(workers)
     progress.phase("Backtest (Secret Sauce)…", total=len(sauce_coins), unit="coins")
-    progress.log(
-        f"Sauce pass: {len(sauce_coins)} coins · sauce-only · {parallel_log_bits()} (serial)"
-    )
+    progress.log(f"Sauce pass: {len(sauce_coins)} coins · sauce-only · {parallel_log_bits()}")
     _run_pool(
         sauce_coins,
-        workers=1,
+        workers=workers,
         include_sauce=True,
         loader_factory=loader_factory,
         timeframes=timeframes,
@@ -176,23 +176,9 @@ def run_all_ta_scan_backtests(
             deepen_s += float(stats.get("deepen_s", 0.0))
         elapsed_coin = float(stats.get("elapsed_s", 0))
         per_coin.append({"symbol": symbol, "elapsed_s": round(elapsed_coin, 3), "phase": label})
-        try:
-            record_sample(
-                root,
-                TimingSample(
-                    elapsed_s=elapsed_coin,
-                    n_strategies=len(strat_list),
-                    n_timeframes=len(tf_list),
-                    had_subhour=subhour,
-                    bars_base=int(stats.get("bars_base", 0) or 0),
-                    ts=time.time(),
-                    mc_s=float(stats.get("mc_s", 0.0) or 0.0),
-                    sauce_s=float(stats.get("sauce_s", 0.0) or 0.0),
-                ),
-            )
-        except OSError:
-            pass
 
+    t_sauce_wall = time.perf_counter()
+    sauce_wall_s = 0.0
     try:
         progress.phase("Backtest (All TA catalog)…", total=len(coins), unit="coins")
         progress.log(f"Pass-1 catalog+deepen on {len(coins)} coins (Sauce deferred)")
@@ -213,6 +199,7 @@ def run_all_ta_scan_backtests(
             on_score=lambda sym, rows: scored.append((sym, oracle_rank_score(rows))),
             include_market_context=mc_with,
         )
+        pass1_wall_s = max(0.2, time.perf_counter() - started)
         if mc_with:
             mc_ok = sum(1 for c in market_contexts.values() if isinstance(c, dict) and c.get("ok"))
             progress.log(f"Market Context: {mc_ok} ok / {len(coins)} coins")
@@ -226,6 +213,7 @@ def run_all_ta_scan_backtests(
                 f"Sauce: {len(sauce_coins)} of {len(coins)} "
                 f"(top{sauce_top_n}; {', '.join(sauce_syms) or 'none'})"
             )
+            t_sauce_wall = time.perf_counter()
             if sauce_coins and _sauce_pool_on_seeds(
                 sauce_coins,
                 loader_factory=loader_factory,
@@ -240,7 +228,24 @@ def run_all_ta_scan_backtests(
                 on_ok=lambda s, r, st: _accumulate(s, r, st, tally=False, label="sauce"),
                 on_ctx=lambda sym, ctx: market_contexts.__setitem__(sym, ctx),
             ):
+                sauce_wall_s = max(0.0, time.perf_counter() - t_sauce_wall)
                 mark_sauce_ever(root, sauce_syms)
+        if coins:
+            try:
+                record_sample(
+                    root,
+                    TimingSample(
+                        elapsed_s=max(0.2, pass1_wall_s / len(coins)),
+                        n_strategies=len(strat_list),
+                        n_timeframes=len(tf_list),
+                        had_subhour=subhour,
+                        ts=time.time(),
+                        load_s=round(load_s / max(1, len(coins)), 4),
+                        sauce_s=round(sauce_wall_s / len(sauce_syms), 4) if sauce_syms else 0.0,
+                    ),
+                )
+            except OSError:
+                pass
     finally:
         set_coin_parallel(1)
 

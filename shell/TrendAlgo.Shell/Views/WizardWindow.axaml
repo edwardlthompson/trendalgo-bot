@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TrendAlgo.Shell.Views.WizardWindow"
+        Icon="avares://TrendAlgo.Shell/Assets/app-icon.ico"
+        Title="Wizard"
+        Width="640"
+        Height="720"
+        MinWidth="520"
+        MinHeight="520"
+        WindowStartupLocation="CenterOwner">
+  <DockPanel Margin="16">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+      <Button Content="Back" Name="BackBtn" Click="OnBack" IsEnabled="False" />
+      <Button Content="Quick benchmark" Name="BenchmarkBtn" Click="OnBenchmark" IsVisible="False"
+              ToolTip.Tip="Benchmark 1 coin, 1 stock, and 1 currency to calibrate scan ETA." />
+      <Button Content="Next" Name="NextBtn" Click="OnNext" />
+      <Button Content="Continue" Name="ContinueBtn" Click="OnContinue" IsVisible="False" />
+      <Button Content="Save to CredMan" Name="FinishBtn" Click="OnFinish" IsVisible="False" />
+      <Button Content="Close" Click="OnClose" />
+    </StackPanel>
+    <ScrollViewer>
+      <StackPanel Spacing="10">
+        <TextBlock Name="TitleText" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock Name="StepLabel" Opacity="0.75" TextWrapping="Wrap" />
+        <TextBlock Name="BodyText" TextWrapping="Wrap" />
+        <TextBlock Name="SourcesText" TextWrapping="Wrap" Opacity="0.85" />
+
+        <!-- CredMan short wizards (telegram/alpaca/calendar) -->
+        <TextBlock Name="Field1Label" IsVisible="False" />
+        <TextBox Name="Field1Box" IsVisible="False" PasswordChar="*" />
+        <TextBlock Name="Field2Label" IsVisible="False" />
+        <TextBox Name="Field2Box" IsVisible="False" PasswordChar="*" />
+
+        <!-- Setup W0/W3/W5 ack -->
+        <CheckBox Name="AckBox" Content="I have read this step." IsVisible="False" />
+
+        <!-- Setup W1 Kraken permissions -->
+        <StackPanel Name="KeysPanel" IsVisible="False" Spacing="4">
+          <TextBlock Name="PermissionHelp" TextWrapping="Wrap" Opacity="0.85" />
+          <CheckBox Name="Perm0" />
+          <CheckBox Name="Perm1" />
+          <CheckBox Name="Perm2" />
+          <CheckBox Name="Perm3" />
+          <CheckBox Name="Perm4" />
+          <CheckBox Name="WithdrawOff" />
+        </StackPanel>
+
+        <!-- Setup W2 practice -->
+        <StackPanel Name="PracticePanel" IsVisible="False" Spacing="6">
+          <TextBlock Name="PracticeNote" TextWrapping="Wrap" Opacity="0.85" />
+          <TextBlock Text="Continue runs the four loopback practice checks (no exchange orders)."
+                     TextWrapping="Wrap" Opacity="0.75" />
+        </StackPanel>
+
+        <!-- Setup W4 pair -->
+        <StackPanel Name="PairPanel" IsVisible="False" Spacing="6">
+          <TextBlock Name="PairNote" TextWrapping="Wrap" Opacity="0.85" />
+          <TextBlock Name="PairHostLabel" />
+          <TextBox Name="PairHostBox" Watermark="http://127.0.0.1:…" />
+          <TextBlock Name="PairSecretLabel" />
+          <TextBox Name="PairSecretBox" PasswordChar="*" />
+          <TextBlock Name="PairSecretHelp" Opacity="0.75" TextWrapping="Wrap" />
+          <TextBlock Name="PairCodeLabel" />
+          <TextBox Name="PairCodeBox" Watermark="XXXX-XXXX" />
+          <TextBlock Name="PairCodeHelp" Opacity="0.75" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <TextBlock Name="CapacityHelp" IsVisible="False" TextWrapping="Wrap" Opacity="0.85" />
+        <TextBlock Name="HintText" Opacity="0.8" TextWrapping="Wrap" />
+        <TextBlock Name="StatusText" TextWrapping="Wrap" />
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

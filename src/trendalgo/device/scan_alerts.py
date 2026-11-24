@@ -32,18 +32,19 @@ def process_scan_alerts(
     telegram: TelegramCommands | None = None,
     floors: dict[str, float] | None = None,
     board_coins: list[dict[str, Any]] | None = None,
+    lane: str = "crypto",
 ) -> tuple[list[AlertEvent], list[dict[str, Any]]]:
     """Diff vs last filtered set; Telegram for new enters and filtered leaves.
 
     Cold seed: empty previous + non-empty current persists state with no events
     so a first run never spams every coin on the board.
     """
-    previous = load_previous_qualified(root)
+    previous = load_previous_qualified(root, lane=lane)
     keys = coin_keys(coins)
     if not previous and keys:
-        save_previous_qualified(root, keys, coins=coins)
+        save_previous_qualified(root, keys, coins=coins, lane=lane)
         return [], load_history(root)
-    prev_coins = load_previous_coins(root)
+    prev_coins = load_previous_coins(root, lane=lane)
     watch = watchlist_keys(watchlist_pairs)
     events = diff_alerts(
         previous=previous,
@@ -54,7 +55,7 @@ def process_scan_alerts(
         floors=floors,
     )
     history = append_alerts(root, events) if events else load_history(root)
-    save_previous_qualified(root, keys, coins=coins)
+    save_previous_qualified(root, keys, coins=coins, lane=lane)
     prefs = load_prefs(root)
     for plan in plans_for(events, prefs):
         for event in plan.events:

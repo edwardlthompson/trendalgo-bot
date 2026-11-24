@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextvars
+import gc
 import time
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -13,7 +15,11 @@ from trendalgo.device.scan_bt_prefs import (
     load_scan_bt_prefs,
     selected_timeframes,
 )
-from trendalgo.device.scan_parallel import parallel_log_bits, set_coin_parallel
+from trendalgo.device.scan_parallel import (
+    all_ta_sauce_workers,
+    parallel_log_bits,
+    set_coin_parallel,
+)
 from trendalgo.device.scan_stake import DEFAULT_SCAN_EXCHANGE, DEVICE_SCAN_STAKE_USD
 from trendalgo.device.scanner_all_ta_coin import backtest_one_coin
 from trendalgo.device.scanner_all_ta_prune import fee_for_exchange
@@ -59,6 +65,7 @@ def run_pool(
                 seed = list(seed_rows_by_symbol.get(sym_key) or [])
             futs[
                 pool.submit(
+                    contextvars.copy_context().run,
                     backtest_one_coin,
                     c,
                     loader_factory=loader_factory,
@@ -80,7 +87,11 @@ def run_pool(
             try:
                 symbol, rows, stats, market_context = fut.result()
             except Exception as exc:
-                progress.log(f"All-TA coin failed: {exc}", level="error")
+                detail = str(exc).strip() or type(exc).__name__
+                progress.log(
+                    f"All-TA coin failed ({fallback or '?'}): {detail}",
+                    level="error",
+                )
                 progress.step(done, total=n_coins, pair=fallback)
                 continue
             if symbol:
@@ -91,6 +102,9 @@ def run_pool(
                 if isinstance(market_context, dict) and "ok" in market_context:
                     on_ctx(str(symbol).upper(), market_context)
             progress.step(done, total=n_coins, pair=symbol or fallback)
+            if done % 15 == 0:
+                gc.collect()
+    gc.collect()
 
 
 def sauce_pool_on_seeds(
@@ -108,17 +122,16 @@ def sauce_pool_on_seeds(
     on_ok: Any,
     on_ctx: Any,
 ) -> bool:
-    """Serial Sauce-only pool. Returns True if the pool ran."""
+    """Parallel Sauce-only pool. Returns True if the pool ran."""
     if not sauce_coins:
         return False
-    set_coin_parallel(1)
+    workers = all_ta_sauce_workers(len(sauce_coins))
+    set_coin_parallel(workers)
     progress.phase("Backtest (Secret Sauce)…", total=len(sauce_coins), unit="coins")
-    progress.log(
-        f"Sauce pass: {len(sauce_coins)} coins · sauce-only · {parallel_log_bits()} (serial)"
-    )
+    progress.log(f"Sauce pass: {len(sauce_coins)} coins · sauce-only · {parallel_log_bits()}")
     run_pool(
         sauce_coins,
-        workers=1,
+        workers=workers,
         include_sauce=True,
         loader_factory=loader_factory,
         timeframes=timeframes,

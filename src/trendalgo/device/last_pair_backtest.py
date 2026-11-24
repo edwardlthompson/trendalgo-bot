@@ -29,6 +29,12 @@ def save_last_pair_backtest(
     if isinstance(market_context, dict):
         payload["market_context"] = market_context
     write_json(root / LAST_BACKTEST_FILE, payload)
+    try:
+        from trendalgo.device.results_bridge import publish_strategy_rows
+
+        publish_strategy_rows(root, list(rows), pair=text)
+    except Exception:
+        pass  # JSON backtest file remains source of truth if results.db is locked
 
 
 def load_last_pair_backtest(
