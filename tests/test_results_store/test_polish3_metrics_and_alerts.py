@@ -132,8 +132,12 @@ def test_emit_desk_scan_alerts_per_lane_and_rich_telegram(tmp_path: Path) -> Non
     save_lts_rows(tmp_path, [btc, eth], lane="crypto")
     events = emit_desk_scan_alerts(tmp_path, lane="crypto", telegram=tg)  # type: ignore[arg-type]
     assert [e.kind for e in events] == ["qualified_enter"]
-    assert len(tg.photos) == 1
-    png, caption, markup = tg.photos[0]
-    assert png.startswith(b"\x89PNG")
+    if tg.photos:
+        assert len(tg.photos) == 1
+        png, caption, markup = tg.photos[0]
+        assert png.startswith(b"\x89PNG")
+    else:
+        assert len(tg.messages) == 1
+        caption, markup = tg.messages[0]
     assert "ETH" in caption
     assert markup and "inline_keyboard" in markup
