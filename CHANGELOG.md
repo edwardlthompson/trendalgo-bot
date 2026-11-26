@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.19.4...v1.20.0) (2026-11-26)
+
+
+### Added
+
+* **portfolio,tradfi:** complete portfolio dashboard/reports pipeline and tradfi mc/liquidity fixes ([ca2064f](https://github.com/edwardlthompson/trendalgo-bot/commit/ca2064f6f7cf532a1f8cc1f83682568fbe7d8166))
+* **shell:** match Backtest tab to single-coin Results surface ([4a7d183](https://github.com/edwardlthompson/trendalgo-bot/commit/4a7d18331549d60813ca66b8fa0fae73865b879c))
+
 ## [1.19.4](https://github.com/edwardlthompson/trendalgo-bot/compare/v1.19.3...v1.19.4) (2026-11-24)
 
 
