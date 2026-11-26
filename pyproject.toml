@@ -1,6 +1,6 @@
 [project]
 name = "trendalgo-bot"
-version = "1.19.4"
+version = "1.20.0"
 description = "Self-hosted crypto trading platform — native CCXT engine, portfolio, scanner, billing"
 readme = "README.md"
 license = "Elastic-2.0"
