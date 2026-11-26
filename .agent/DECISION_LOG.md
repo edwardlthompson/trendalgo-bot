@@ -17,6 +17,13 @@
 
 ## Entries
 
+### 2026-11-26 — Ship v1.20.0 Portfolio + TradFi + Backtest Results surface parity
+- **Status:** Accepted
+- **Context:** Uncommitted `POL7-01` WIP (Backtest tab parity with `ResultsSurfaceWindow.axaml`) needed `MainViewModel.Backtest.cs` and `MainWindow.axaml` wiring before committing, pushing to `main`, and merging Release Please `1.20.0` (#91).
+- **Decision:** Complete `BacktestResultsPanel` wiring in `MainViewModel.Backtest.cs` (cloning `market_context` before `JsonDocument` disposal and disabling `ShowWorkbook`), archive `POL7-01`, sync `uv.lock` on `release-please--branches--main` before merging PR #91, and ship `v1.20.0`.
+- **Alternatives considered:** Ship `1.20.0` without `POL7-01` (rejected — WIP already half-landed on working tree); merge PR #91 without `uv.lock` sync (rejected — breaks `uv sync --locked` on `main` CI).
+- **Consequences:** Backtest tab renders 4 `MarketContextCardGraphic` cards, `BacktestColumnFilterBar`, and `HeatValueCell` columns; `v1.20.0` includes SBOM + Windows MSI/`setup.exe`.
+
 ### 2026-11-18 — Avalonia shell + permanent Python engine (ADR-0021)
 - **Status:** Accepted
 - **Context:** PySide6 grids struggle at All-TA scale; full C# indicator rewrite risked catalog quality; inventory freeze at v1.19.0 required before cutover.

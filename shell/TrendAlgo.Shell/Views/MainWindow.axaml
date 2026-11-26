@@ -142,21 +142,6 @@
                       Margin="0,0,6,6"
                       VerticalAlignment="Center" />
           </WrapPanel>
-          <StackPanel IsVisible="{Binding ShowBacktestStrip}" Spacing="4" Margin="0,0,0,4">
-            <Button Content="Toggle market context"
-                    Command="{Binding BacktestToggleMarketCtxCommand}"
-                    HorizontalAlignment="Left" />
-            <TextBlock Text="{Binding MarketContextText}"
-                       TextWrapping="Wrap"
-                       Opacity="0.85"
-                       IsVisible="{Binding !BacktestMarketCtxCollapsed}" />
-            <TextBlock Text="{Binding BacktestStrategyCaption}" FontWeight="SemiBold"
-                       IsVisible="{Binding !BacktestEmpty}" />
-            <StackPanel IsVisible="{Binding BacktestEmpty}" Spacing="2">
-              <TextBlock Text="{Binding BacktestEmptyTitle}" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding BacktestEmptyBody}" TextWrapping="Wrap" Opacity="0.85" />
-            </StackPanel>
-          </StackPanel>
           <TextBlock IsVisible="{Binding ShowBots}"
                      Text="{Binding BotsPrefillNote}"
                      TextWrapping="Wrap"
@@ -466,6 +451,8 @@
             </DataGridTemplateColumn>
           </DataGrid.Columns>
         </DataGrid>
+
+        <controls:BacktestResultsPanel IsVisible="{Binding ShowBacktestStrip}" />
 
         <controls:DashboardPanel IsVisible="{Binding ShowDashboard}" />
 

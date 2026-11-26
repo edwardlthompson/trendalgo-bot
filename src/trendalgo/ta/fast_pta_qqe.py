@@ -22,7 +22,7 @@ def fast_qqe(c: np.ndarray, params: dict[str, Any]) -> dict[str, np.ndarray]:
         return {"value": np.full(len(c), np.nan, dtype=np.float64)}
     c_s = pd.Series(c)
     rsi_s = pta_rsi(c_s, length=length)
-    if rsi_s is None:
+    if not isinstance(rsi_s, pd.Series):
         return {"value": np.full(len(c), np.nan, dtype=np.float64)}
     rsi_ma = pta_ema(rsi_s, length=smooth)
     if rsi_ma is None:

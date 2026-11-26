@@ -100,6 +100,7 @@ public static class StrategyResultMapper
             _ => ind,
         };
 
+        var ev = Str(row, "events_label", "events");
         return new StrategyResultRow
         {
             Indicator = label,
@@ -116,7 +117,7 @@ public static class StrategyResultMapper
             TslHitsText = isBh || tslHits is null ? "—" : tslHits.Value.ToString("0", CultureInfo.InvariantCulture),
             TslHitPctText = isBh ? "—" : DashPct(tslHitPct),
             StrengthText = strength is null ? "—" : strength.Value.ToString("0.0", CultureInfo.InvariantCulture),
-            EventsText = "",
+            EventsText = string.IsNullOrWhiteSpace(ev) ? "·" : ev,
             Role = role,
             NetPct = net,
             FeesPaid = fees,

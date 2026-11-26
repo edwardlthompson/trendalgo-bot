@@ -75,9 +75,7 @@ public static class ParityCatalog
 
     public static string Body(string id) => id switch
     {
-        "workbook" or "crypto" or "tradfi" or "forex" => "",
-        "backtest" =>
-            "Pair All-TA backtest — run/cancel/settings + last_pair_backtest.json grid (MC/create-bot polish open).",
+        "workbook" or "crypto" or "tradfi" or "forex" or "backtest" => "",
         "sauce" => "Sauce Lab / Study entry — jobs stay in Python engine.",
         "poolwatch" => "Research only — Uniswap v3 / Base DEX liquidity pools. DEX liquidity can vanish.",
         "dex" => "Uniswap/Base pool watch surface (disclaimer + rows from engine).",
@@ -97,7 +95,7 @@ public static class ParityCatalog
     };
 
     public static bool ShowsWorkbook(string id) =>
-        id is "workbook" or "crypto" or "tradfi" or "forex" or "backtest" or "sauce";
+        id is "workbook" or "crypto" or "tradfi" or "forex" or "sauce";
 
     public static bool ShowsDeskStrip(string id) =>
         id is "crypto" or "tradfi" or "forex";

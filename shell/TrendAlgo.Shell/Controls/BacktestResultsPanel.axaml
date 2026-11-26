@@ -1,0 +1,204 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:TrendAlgo.Shell.Controls"
+             xmlns:models="clr-namespace:TrendAlgo.Shell.Models"
+             xmlns:vm="clr-namespace:TrendAlgo.Shell.ViewModels"
+             x:Class="TrendAlgo.Shell.Controls.BacktestResultsPanel"
+             x:DataType="vm:MainViewModel">
+  <DockPanel>
+    <TextBlock DockPanel.Dock="Bottom"
+               Text="{Binding BacktestNoteText}"
+               Opacity="0.75"
+               TextWrapping="NoWrap"
+               TextTrimming="None"
+               Margin="0,8,0,0" />
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+      <Button Content="Show 7D Chart" Command="{Binding BacktestOpenChart7dCommand}" MinWidth="100" />
+      <Button Content="Show 30D Chart" Command="{Binding BacktestOpenChart30dCommand}" MinWidth="106" />
+      <Button Content="Coin events" Command="{Binding BacktestOpenEventsCommand}" MinWidth="96" />
+      <Button Content="Share PNG" Command="{Binding ShareStrategyPngCommand}" MinWidth="88"
+              ToolTip.Tip="Export this strategy sheet as a PNG image." />
+      <Button Content="Glossary" Command="{Binding BacktestOpenGlossaryCommand}" MinWidth="88" />
+      <Button Content="Apply filters" Command="{Binding ApplyBacktestColumnFiltersCommand}" MinWidth="88" />
+      <Button Content="Clear filters" Command="{Binding ClearBacktestColumnFiltersCommand}" MinWidth="88" />
+    </StackPanel>
+
+    <Expander x:Name="MarketCtxExpander"
+              DockPanel.Dock="Top"
+              IsExpanded="{Binding BacktestMarketCtxExpanded, Mode=TwoWay}"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Stretch"
+              Margin="0,0,0,8">
+      <Expander.Header>
+        <StackPanel Spacing="2">
+          <TextBlock Text="Market Context" FontWeight="SemiBold" TextWrapping="NoWrap" />
+          <TextBlock Text="Where this coin stands now — not a strategy backtest"
+                     Opacity="0.75" FontSize="12" TextWrapping="NoWrap" />
+        </StackPanel>
+      </Expander.Header>
+      <Grid ColumnDefinitions="*,*,*,*" Margin="0,8,0,0">
+        <Border Grid.Column="0" Background="#1A2433" CornerRadius="4" Padding="8" Margin="0,0,6,0">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Signal" FontWeight="SemiBold" TextWrapping="NoWrap" />
+            <controls:MarketContextCardGraphic x:Name="GfxSignal" Kind="signal" />
+            <TextBlock Text="{Binding BacktestMcSignal}" TextWrapping="Wrap" Opacity="0.9" FontSize="12" />
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="1" Background="#1A2433" CornerRadius="4" Padding="8" Margin="0,0,6,0">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Key levels" FontWeight="SemiBold" TextWrapping="NoWrap" />
+            <controls:MarketContextCardGraphic x:Name="GfxLevels" Kind="levels" />
+            <TextBlock Text="{Binding BacktestMcLevels}" TextWrapping="Wrap" Opacity="0.9" FontSize="12" />
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Background="#1A2433" CornerRadius="4" Padding="8" Margin="0,0,6,0">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Risk" FontWeight="SemiBold" TextWrapping="NoWrap" />
+            <controls:MarketContextCardGraphic x:Name="GfxRisk" Kind="risk" />
+            <TextBlock Text="{Binding BacktestMcRisk}" TextWrapping="Wrap" Opacity="0.9" FontSize="12" />
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="3" Background="#1A2433" CornerRadius="4" Padding="8">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Structure" FontWeight="SemiBold" TextWrapping="NoWrap" />
+            <controls:MarketContextCardGraphic x:Name="GfxStructure" Kind="structure" />
+            <TextBlock Text="{Binding BacktestMcStructure}" TextWrapping="Wrap" Opacity="0.9" FontSize="12" />
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Expander>
+
+    <Border DockPanel.Dock="Top"
+            IsVisible="{Binding BacktestEmpty}"
+            Background="#1A2433"
+            CornerRadius="6"
+            Padding="14"
+            Margin="0,0,0,8">
+      <StackPanel Spacing="4">
+        <TextBlock Text="{Binding BacktestEmptyTitle}" FontWeight="SemiBold" FontSize="14" />
+        <TextBlock Text="{Binding BacktestEmptyBody}" TextWrapping="Wrap" Opacity="0.85" />
+      </StackPanel>
+    </Border>
+
+    <TextBlock DockPanel.Dock="Top"
+               Text="{Binding BacktestStrategyCaption}"
+               FontWeight="SemiBold"
+               Margin="0,0,0,6"
+               IsVisible="{Binding !BacktestEmpty}"
+               TextWrapping="NoWrap" />
+    <controls:BacktestColumnFilterBar x:Name="ColumnFiltersBar"
+                                      DockPanel.Dock="Top"
+                                      Margin="0,0,0,6"
+                                      IsVisible="{Binding ShowBacktestColumnFilters}"
+                                      DataContext="{Binding BacktestFilters}" />
+
+    <DataGrid x:Name="Grid"
+              ItemsSource="{Binding BacktestResultRows}"
+              SelectedItem="{Binding SelectedBacktestResultRow}"
+              IsVisible="{Binding !BacktestEmpty}"
+              HorizontalAlignment="Stretch"
+              HorizontalScrollBarVisibility="Disabled"
+              VerticalScrollBarVisibility="Auto"
+              IsReadOnly="True"
+              CanUserResizeColumns="False"
+              CanUserSortColumns="True"
+              AutoGenerateColumns="False"
+              GridLinesVisibility="Horizontal"
+              RowHeight="36">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Indicator" Binding="{Binding Indicator}" Width="1.5*"
+                            MinWidth="64" SortMemberPath="Indicator" x:DataType="models:StrategyResultRow" />
+        <DataGridTextColumn Header="Timeframe" Binding="{Binding Timeframe}" Width="0.8*"
+                            MinWidth="40" SortMemberPath="Timeframe" x:DataType="models:StrategyResultRow" />
+        <DataGridTextColumn Header="Params" Binding="{Binding Params}" Width="1.7*"
+                            MinWidth="70" SortMemberPath="Params" x:DataType="models:StrategyResultRow" />
+        <DataGridTemplateColumn Header="Net %" Width="0.9*" MinWidth="44" SortMemberPath="NetPct">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding NetPctText}" HeatHex="{Binding HeatNet}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Fees $" Width="0.8*" MinWidth="40" SortMemberPath="FeesPaid">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding FeesText}" HeatHex="{Binding HeatFees}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Open" Width="0.65*" MinWidth="34" SortMemberPath="OpenTrades">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding OpenText}" HeatHex="{Binding HeatOpen}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Wins" Width="0.65*" MinWidth="34" SortMemberPath="Wins">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding WinsText}" HeatHex="{Binding HeatWins}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Losses" Width="0.7*" MinWidth="36" SortMemberPath="Losses">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding LossesText}" HeatHex="{Binding HeatLosses}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Win %" Width="0.8*" MinWidth="40" SortMemberPath="WinPct">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding WinPctText}" HeatHex="{Binding HeatWinPct}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTextColumn Header="TSL" Binding="{Binding TslText}" Width="0.7*"
+                            MinWidth="36" SortMemberPath="TslPct" x:DataType="models:StrategyResultRow" />
+        <DataGridTemplateColumn Header="TSL Hits" Width="0.8*" MinWidth="40" SortMemberPath="TslHits">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding TslHitsText}" HeatHex="{Binding HeatTslHits}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="TSL Hit %" Width="0.85*" MinWidth="42" SortMemberPath="TslHitPct">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding TslHitPctText}" HeatHex="{Binding HeatTslHitPct}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Strength" Width="0.85*" MinWidth="42" SortMemberPath="Strength">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <controls:HeatValueCell Text="{Binding StrengthText}" HeatHex="{Binding HeatStrength}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Events" Width="0.7*" MinWidth="36" SortMemberPath="EventsText">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <Border Background="Transparent" Cursor="Hand"
+                      ToolTip.Tip="Click to open coin events"
+                      PointerPressed="OnEventsCellPressed"
+                      PointerReleased="OnEventsCellReleased">
+                <TextBlock Text="{Binding EventsText}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Bot" Width="1.05*" MinWidth="64" CanUserSort="False">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="models:StrategyResultRow">
+              <Button Content="Create Bot" Tag="{Binding}" Click="OnCreateBotRow"
+                      IsEnabled="{Binding CanCreateBot}" Padding="4,2"
+                      HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</UserControl>

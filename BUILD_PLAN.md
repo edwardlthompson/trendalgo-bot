@@ -1,11 +1,12 @@
 # TrendAlgo Bot — BUILD_PLAN
 
 <!-- remaining-tally -->
-**Remaining:** AGENT 2 · LOCAL 1 · CLOUD 1 · AUTO 0 · HUMAN 0 · ADB 0 · **2 open**
+**Remaining:** AGENT 1 · LOCAL 0 · CLOUD 1 · AUTO 0 · HUMAN 0 · ADB 0 · **1 open**
 <!-- /remaining-tally -->
 <!-- tally note: DEX-P4b CLOUD; Sprint Audit-2026-11 + Sprint Avalonia-gaps + Sprint Polish-2026-11 + Sprint Polish2-2026-11 + Sprint Polish3-2026-11 + Sprint Polish4-2026-11 + Sprint Polish5-2026-11 archived -->
 > **Detail:** [`docs/specs/audit-remediation.md`](docs/specs/audit-remediation.md) · [`docs/CANONICAL_PLAN.md`](docs/CANONICAL_PLAN.md) · **Human gates:** [`docs/HUMAN_BACKLOG.md`](docs/HUMAN_BACKLOG.md) · **Risks:** [`docs/RISK_REGISTER.md`](docs/RISK_REGISTER.md)
 > **Completed work:** [`COMPLETED_TASKS.md`](COMPLETED_TASKS.md) · **Post-delivery:** [`docs/POST_DELIVERY_PLAN.md`](docs/POST_DELIVERY_PLAN.md) · **Exchange:** [`docs/EXCHANGE_ROADMAP.md`](docs/EXCHANGE_ROADMAP.md) · **DEX:** [`docs/DEX_ROADMAP.md`](docs/DEX_ROADMAP.md) · **Support:** [`docs/SUPPORT_MATRIX.md`](docs/SUPPORT_MATRIX.md)
+> **Sprint Polish7-2026-11** archived in COMPLETED_TASKS.md (POL7-01, 2026-11-26).
 > **Sprint Polish6-2026-11** archived in COMPLETED_TASKS.md (POL6-01…03, 2026-11-24).
 > **Sprint Portfolio-2026-11** archived in COMPLETED_TASKS.md (PF6-01…04, 2026-11-24).
 > **Sprint Polish5-2026-11** archived in COMPLETED_TASKS.md (POL5-01…05, 2026-11-24).
@@ -51,9 +52,7 @@
 
 ### Sequential (agent)
 
-#### Sprint Polish7-2026-11
-- 🔲 [AGENT][LOCAL] POL7-01 Make Backtest tab match single-coin Results surface (`ResultsSurfaceWindow.axaml` parity: replace raw `MarketContextText` dictionary string and 4-column `ShowWorkbook` JSON `Payload` grid with the 4 visual `MarketContextCardGraphic` cards (`Signal`, `Levels`, `Risk`, `Structure`), `BacktestColumnFilterBar`, and formatted `StrategyResultRow` / `StrategyResultMapper` + `HeatValueCell` columns for `Net %`, `Profit $`, `Win %`, `Trades`, `Wins`, `Losses`, `Strength`, `Max DD %`, `Profit Factor`, `TSL %`, `TSL Hit %`, `Timeframe`, `Params`, `Dossier`, `Create Bot`) — scope: `shell/TrendAlgo.Shell/Views/MainWindow.axaml`, `shell/TrendAlgo.Shell/ViewModels/MainViewModel.Backtest.cs`, `shell/TrendAlgo.Shell/Models/ParityCatalog.cs`
-
+> **Sprint Polish7-2026-11** archived in COMPLETED_TASKS.md — no open LOCAL POL7-* rows. Index was POL7-01.
 > **Sprint Polish6-2026-11** archived in COMPLETED_TASKS.md — no open LOCAL POL6-* rows. Index was POL6-01…03.
 > **Sprint Portfolio-2026-11** archived in COMPLETED_TASKS.md — no open LOCAL PF6-* rows. Index was PF6-01…04.
 > **Sprint Polish5-2026-11** archived in COMPLETED_TASKS.md — no open LOCAL POL5-* rows. Index was POL5-01…05.

@@ -2,6 +2,12 @@
 
 > Archive of finished BUILD_PLAN items.
 
+## Sprint Polish7-2026-11 POL7-01 (2026-11-26)
+
+Verification: `ruff check .` + `ruff format --check .`, `mypy src`, `pyright`, `pytest --no-cov -q tests/test_results_store/test_backtest_surface.py tests/test_shell/test_backtest_results_panel_parity.py tests/test_shell_parity_catalog.py`, `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release --nologo` (`0 Warning(s), 0 Error(s)`), and `pre-release-gate -- --local`.
+
+- ✅ [AGENT][LOCAL] POL7-01 Make Backtest tab match single-coin Results surface (`ResultsSurfaceWindow.axaml` parity: replace raw `MarketContextText` dictionary string and 4-column `ShowWorkbook` JSON `Payload` grid with the 4 visual `MarketContextCardGraphic` cards (`Signal`, `Levels`, `Risk`, `Structure`), `BacktestColumnFilterBar`, and formatted `StrategyResultRow` / `StrategyResultMapper` + `HeatValueCell` columns for `Net %`, `Profit $`, `Win %`, `Trades`, `Wins`, `Losses`, `Strength`, `Max DD %`, `Profit Factor`, `TSL %`, `TSL Hit %`, `Timeframe`, `Params`, `Dossier`, `Create Bot`) — scope: `shell/TrendAlgo.Shell/Views/MainWindow.axaml`, `shell/TrendAlgo.Shell/ViewModels/MainViewModel.Backtest.cs`, `shell/TrendAlgo.Shell/Models/ParityCatalog.cs`
+
 ## Sprint Polish6-2026-11 POL6-01…03 (2026-11-24)
 
 Verification: `ruff format --check` + `ruff check` (0 errors), `mypy` (0 issues), `pyright` (0 errors), `pytest --no-cov -q` (`test_lane_scan_filters.py`, `test_lane_scan_move_cut.py`, `test_buy_picks.py`, `test_tradfi_universe.py`, `test_tradfi_liquidity_and_mc.py`: 19 passed), `dotnet build shell/TrendAlgo.Shell/TrendAlgo.Shell.csproj -c Release --nologo` (0 warnings, 0 errors), live TradFi `market_context` backfill (`200/200`), and live `TrendAlgo.Shell.exe` smoke launch.

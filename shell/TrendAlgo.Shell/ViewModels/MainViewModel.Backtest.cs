@@ -1,8 +1,11 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Avalonia.Controls.ApplicationLifetimes;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TrendAlgo.Shell.Models;
 using TrendAlgo.Shell.Services;
 using TrendAlgo.Shell.Views;
 
@@ -11,8 +14,37 @@ namespace TrendAlgo.Shell.ViewModels;
 public partial class MainViewModel
 {
     private bool _suppressBacktestPrefsPersist;
+    private bool _backtestFiltersHydrated;
     private CancellationTokenSource? _backtestCts;
     private Process? _backtestProc;
+
+    public event Action<JsonElement?>? BacktestMarketContextUpdated;
+    public JsonElement? BacktestMarketContextJson { get; private set; }
+    public ObservableCollection<StrategyResultRow> BacktestResultRows { get; } = new();
+
+    [ObservableProperty] private StrategyResultRow? _selectedBacktestResultRow;
+    [ObservableProperty] private string _backtestNoteText = "";
+    [ObservableProperty] private string _backtestMcSignal = "Run a scan with candles to fill Market Context.";
+    [ObservableProperty] private string _backtestMcLevels = "—";
+    [ObservableProperty] private string _backtestMcRisk = "—";
+    [ObservableProperty] private string _backtestMcStructure = "—";
+
+    public bool BacktestMarketCtxExpanded
+    {
+        get => !BacktestMarketCtxCollapsed;
+        set
+        {
+            if (BacktestMarketCtxCollapsed == !value)
+                return;
+            BacktestMarketCtxCollapsed = !value;
+            OnPropertyChanged();
+            if (!_suppressBacktestPrefsPersist && ShowBacktestStrip)
+                PersistBacktestPrefs();
+        }
+    }
+
+    partial void OnBacktestMarketCtxCollapsedChanged(bool value) =>
+        OnPropertyChanged(nameof(BacktestMarketCtxExpanded));
 
     [RelayCommand]
     private void BacktestReload()
@@ -48,10 +80,22 @@ public partial class MainViewModel
             BacktestMarketCtxCollapsed = root.TryGetProperty("market_context_collapsed", out var mcc)
                 && mcc.ValueKind == JsonValueKind.True;
             _suppressBacktestPrefsPersist = false;
-            BacktestEmpty = root.TryGetProperty("empty", out var empty)
-                && empty.ValueKind == JsonValueKind.True;
+
+            if (!_backtestFiltersHydrated
+                && root.TryGetProperty("filters", out var initFl)
+                && initFl.ValueKind == JsonValueKind.Object)
+            {
+                HydrateBacktestFilters(initFl);
+                _backtestFiltersHydrated = true;
+            }
+            else
+            {
+                _backtestFiltersHydrated = true;
+            }
 
             StrategyRows.Clear();
+            BacktestResultRows.Clear();
+            var mapped = new List<StrategyResultRow>();
             if (root.TryGetProperty("rows", out var rows) && rows.ValueKind == JsonValueKind.Array)
             {
                 foreach (var r in rows.EnumerateArray())
@@ -59,36 +103,67 @@ public partial class MainViewModel
                     var id = r.TryGetProperty("indicator", out var ind) ? ind.ToString() : "row";
                     var pairCell = r.TryGetProperty("pair", out var pr) ? pr.ToString() : BacktestPair;
                     StrategyRows.Add(new StrategyRow(id, pairCell, r.GetRawText()));
+                    mapped.Add(StrategyResultMapper.FromJson(r));
                 }
             }
-            if (root.TryGetProperty("market_context", out var mc)
-                && mc.ValueKind == JsonValueKind.Object)
+            StrategyResultMapper.ApplyHeat(mapped);
+            foreach (var row in mapped)
+                BacktestResultRows.Add(row);
+
+            if (root.TryGetProperty("market_context_summary", out var sum)
+                && sum.ValueKind == JsonValueKind.Object)
             {
-                var bits = new List<string>();
-                foreach (var prop in mc.EnumerateObject().Take(12))
-                    bits.Add($"{prop.Name}: {prop.Value}");
-                MarketContextText = bits.Count == 0
-                    ? "(no market context on last backtest)"
-                    : string.Join(" · ", bits);
+                var sig = SummaryStr(sum, "signal");
+                var lvl = SummaryStr(sum, "levels");
+                var rsk = SummaryStr(sum, "risk");
+                var str = SummaryStr(sum, "structure");
+                BacktestMcSignal = string.IsNullOrWhiteSpace(sig)
+                    ? "Run a scan with candles to fill Market Context."
+                    : sig;
+                BacktestMcLevels = string.IsNullOrWhiteSpace(lvl) ? "—" : lvl;
+                BacktestMcRisk = string.IsNullOrWhiteSpace(rsk) ? "—" : rsk;
+                BacktestMcStructure = string.IsNullOrWhiteSpace(str) ? "—" : str;
             }
             else
-                MarketContextText = "(no market context on last backtest)";
-            RowCount = StrategyRows.Count;
-            BacktestEmpty = RowCount == 0 && !(root.TryGetProperty("raw_count", out var rc)
-                && rc.TryGetInt32(out var raw) && raw > 0);
-            // Keep grid visible when filters hide all rows but raw results exist.
-            if (root.TryGetProperty("raw_count", out var rawEl)
-                && rawEl.TryGetInt32(out var rawCount)
-                && rawCount > 0)
-                BacktestEmpty = false;
-            ShowWorkbook = !BacktestEmpty || StrategyRows.Count > 0;
+            {
+                BacktestMcSignal = "Run a scan with candles to fill Market Context.";
+                BacktestMcLevels = "—";
+                BacktestMcRisk = "—";
+                BacktestMcStructure = "—";
+            }
+
+            if (root.TryGetProperty("market_context", out var mc)
+                && mc.ValueKind == JsonValueKind.Object
+                && mc.EnumerateObject().Any())
+            {
+                BacktestMarketContextJson = mc.Clone();
+            }
+            else
+            {
+                BacktestMarketContextJson = null;
+            }
+            BacktestMarketContextUpdated?.Invoke(BacktestMarketContextJson);
+            MarketContextText = BacktestMcSignal;
+
+            var rawCount = root.TryGetProperty("raw_count", out var rawEl)
+                && rawEl.TryGetInt32(out var rcVal)
+                ? rcVal
+                : mapped.Count;
+            RowCount = mapped.Count;
+            BacktestEmpty = rawCount == 0 && mapped.Count == 0;
+            ShowWorkbook = false;
+            BacktestNoteText = BacktestEmpty
+                ? ""
+                : mapped.Count < rawCount
+                    ? $"{mapped.Count} of {rawCount} strategies · Oracle/B&H pinned (filters applied)"
+                    : $"{mapped.Count} strategies · Oracle/B&H pinned";
             OnPropertyChanged(nameof(ShowBacktestColumnFilters));
             var filterNote = root.TryGetProperty("filters", out var fl)
                 && fl.ValueKind == JsonValueKind.Object
                 && fl.EnumerateObject().Any()
                 ? " (filtered)"
                 : "";
-            StatusText = StrategyRows.Count == 0 && !ShowWorkbook
+            StatusText = BacktestEmpty
                 ? $"Backtest · {BacktestEmptyTitle}"
                 : $"Backtest {BacktestPair}: {RowCount} strategies{filterNote}";
         }
@@ -97,6 +172,29 @@ public partial class MainViewModel
             StatusText = $"Backtest reload failed: {ex.Message}";
         }
     }
+
+    private void HydrateBacktestFilters(JsonElement fl)
+    {
+        static string GetStr(JsonElement obj, string key) =>
+            obj.TryGetProperty(key, out var v) && v.ValueKind != JsonValueKind.Null ? v.ToString() : "";
+
+        BacktestFilters.IndicatorContains = GetStr(fl, "indicator_contains");
+        BacktestFilters.Timeframe = GetStr(fl, "timeframe");
+        BacktestFilters.ParamsContains = GetStr(fl, "params_contains");
+        BacktestFilters.MinNetPct = GetStr(fl, "min_net_pct");
+        BacktestFilters.MaxFees = GetStr(fl, "max_fees");
+        BacktestFilters.MaxOpen = GetStr(fl, "max_open");
+        BacktestFilters.MinWins = GetStr(fl, "min_wins");
+        BacktestFilters.MaxLosses = GetStr(fl, "max_losses");
+        BacktestFilters.MinWinPct = GetStr(fl, "min_win_pct");
+        BacktestFilters.MaxTslPct = GetStr(fl, "max_tsl_pct");
+        BacktestFilters.MaxTslHits = GetStr(fl, "max_tsl_hits");
+        BacktestFilters.MaxTslHitPct = GetStr(fl, "max_tsl_hit_pct");
+        BacktestFilters.MinStrength = GetStr(fl, "min_strength");
+    }
+
+    private static string SummaryStr(JsonElement obj, string key) =>
+        obj.TryGetProperty(key, out var p) && p.ValueKind != JsonValueKind.Null ? p.ToString() : "";
 
     [RelayCommand]
     private void ApplyBacktestColumnFilters()
@@ -289,10 +387,33 @@ public partial class MainViewModel
             StatusText = "Set a backtest pair first";
             return;
         }
-        var indicator = StrategyRows.FirstOrDefault()?.StrategyId ?? "RSI";
-        if (indicator is "B&H" or "Oracle max")
-            indicator = StrategyRows.Skip(1).FirstOrDefault()?.StrategyId ?? "RSI";
-        CreateBotForPairAndIndicator(pair, indicator, "backtest");
+        var picked = SelectedBacktestResultRow is { CanCreateBot: true }
+            ? SelectedBacktestResultRow
+            : BacktestResultRows.FirstOrDefault(r => r.CanCreateBot);
+        var indicator = picked?.Indicator ?? StrategyRows.FirstOrDefault()?.StrategyId ?? "RSI";
+        var clean = CleanIndicatorName(indicator);
+        if (string.IsNullOrWhiteSpace(clean) || clean is "B&H" or "Oracle max")
+            clean = "RSI";
+        CreateBotForPairAndIndicator(pair, clean, "backtest");
+    }
+
+    public void BacktestCreateBotForResultRow(StrategyResultRow? row)
+    {
+        if (row is not { CanCreateBot: true })
+        {
+            StatusText = "Pick a strategy row (not Oracle / B&H) to create a bot.";
+            return;
+        }
+        var clean = CleanIndicatorName(row.Indicator);
+        if (string.IsNullOrWhiteSpace(clean))
+        {
+            StatusText = "Pick a strategy row (not Oracle / B&H) to create a bot.";
+            return;
+        }
+        var pair = string.IsNullOrWhiteSpace(BacktestPair) ? FirstBoardPair() : BacktestPair;
+        if (string.IsNullOrWhiteSpace(pair))
+            pair = "BTC/USD";
+        CreateBotForPairAndIndicator(pair, clean, "backtest");
     }
 
     [RelayCommand]
@@ -308,6 +429,14 @@ public partial class MainViewModel
         }
         var pair = string.IsNullOrWhiteSpace(row.Pair) ? BacktestPair : row.Pair;
         CreateBotForPairAndIndicator(pair, row.StrategyId, "backtest");
+    }
+
+    private static string CleanIndicatorName(string raw)
+    {
+        var clean = (raw ?? "").Split('—')[0].Split('←')[0].Trim();
+        if (clean.EndsWith(" *", StringComparison.Ordinal))
+            clean = clean[..^2].Trim();
+        return clean;
     }
 
     private void CreateBotForPairAndIndicator(string pair, string indicator, string source)
@@ -329,12 +458,12 @@ public partial class MainViewModel
     [RelayCommand]
     private async Task BacktestOpenGlossary()
     {
-        var term = StrategyRows.Count > 0 ? StrategyRows[0].StrategyId : "";
+        var term = SelectedBacktestResultRow?.Indicator
+            ?? BacktestResultRows.FirstOrDefault(r => r.CanCreateBot)?.Indicator
+            ?? (StrategyRows.Count > 0 ? StrategyRows[0].StrategyId : "");
         if (string.IsNullOrWhiteSpace(term) && !string.IsNullOrWhiteSpace(BacktestPair))
             term = BacktestPair.Split('/')[0];
-        var clean = term.Split('←')[0].Trim();
-        if (clean.EndsWith(" *", StringComparison.Ordinal))
-            clean = clean[..^2].Trim();
+        var clean = CleanIndicatorName(term);
         GlossaryQuery = clean;
         try
         {
@@ -386,7 +515,23 @@ public partial class MainViewModel
 
     [RelayCommand]
     private async Task BacktestOpenChart() =>
-        await OpenSurfaceAsync("chart", BacktestPair);
+        await BacktestOpenChartWindowAsync("30d");
+
+    [RelayCommand]
+    private async Task BacktestOpenChart7d() =>
+        await BacktestOpenChartWindowAsync("7d");
+
+    [RelayCommand]
+    private async Task BacktestOpenChart30d() =>
+        await BacktestOpenChartWindowAsync("30d");
+
+    private async Task BacktestOpenChartWindowAsync(string windowKey)
+    {
+        var pair = string.IsNullOrWhiteSpace(BacktestPair) ? FirstBoardPair() : BacktestPair;
+        if (string.IsNullOrWhiteSpace(pair))
+            pair = "BTC/USD";
+        await OpenSurfaceAsync("chart", $"{pair}|{windowKey}");
+    }
 
     [RelayCommand]
     private async Task BacktestOpenEvents() =>

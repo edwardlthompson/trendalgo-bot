@@ -34,6 +34,18 @@ def needs_alpaca_cta(root: Path, lane: str) -> bool:
     return not has_alpaca_credentials()
 
 
+def _row_net(row: dict[str, Any]) -> float | None:
+    for key in ("net_pct", "net", "return_pct", "gain"):
+        raw = row.get(key)
+        if raw is None:
+            continue
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def load_backtest_surface(root: Path) -> dict[str, Any]:
     from trendalgo.device import strings as S
     from trendalgo.device.backtest_results_ui import filter_perfect_rows
@@ -41,6 +53,12 @@ def load_backtest_surface(root: Path) -> dict[str, Any]:
     from trendalgo.device.last_pair_backtest import load_last_pair_backtest
     from trendalgo.device.profile import read_json
     from trendalgo.device.results_view_prefs import load_results_prefs
+    from trendalgo.device.views.market_context_format import (
+        levels_lines,
+        risk_line,
+        signal_line,
+        structure_lines,
+    )
 
     prefs = load_results_prefs(root)
     saved = load_last_pair_backtest(root)
@@ -74,6 +92,7 @@ def load_backtest_surface(root: Path) -> dict[str, Any]:
             "pair": prefs.last_pair or "",
             "rows": [],
             "market_context": {},
+            "market_context_summary": {},
             "empty": True,
             "count": 0,
             "raw_count": 0,
@@ -81,11 +100,21 @@ def load_backtest_surface(root: Path) -> dict[str, Any]:
     pair, rows, ctx = saved
     shown = filter_perfect_rows(rows) if prefs.perfect_only else list(rows)
     shown = [enrich_strategy_row_metrics(r) for r in filter_rows(shown, filters)]
+    shown.sort(key=lambda r: (_row_net(r) is not None, _row_net(r) or 0.0), reverse=True)
+    summary: dict[str, str] = {}
+    if isinstance(ctx, dict) and ctx:
+        summary = {
+            "signal": signal_line(ctx),
+            "levels": "\n".join(levels_lines(ctx)),
+            "risk": risk_line(ctx),
+            "structure": "\n".join(structure_lines(ctx)),
+        }
     return {
         **base,
         "pair": pair,
         "rows": shown,
         "market_context": ctx or {},
+        "market_context_summary": summary,
         "empty": len(shown) == 0,
         "count": len(shown),
         "raw_count": len(rows),
