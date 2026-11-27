@@ -63,3 +63,16 @@ Catch-up for Nov 17–18 (the daily brief did not run those mornings).
 
 - [x] Confirm agent-framework 1.26.1/1.26.2 is not in uv.lock or on the VPS and rotate credentials if it is — A .pth hook on the trading VPS would steal exchange keys and CI tokens on every Python start. Label: `[AGENT]` · Priority: P2 · https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi (synced to BUILD_PLAN)
 - [x] Bump FastAPI to 0.164.0 and set request body size limits — The new limit keeps a large POST from exhausting the research API, and the pin is already at 0.163.1. Label: `[AGENT]` · Priority: P2 · https://github.com/fastapi/fastapi/releases/tag/0.164.0 (synced to BUILD_PLAN)
+
+## 2026-11-27
+
+**News and updates**
+
+- Since Nov 24 each tokenized stock appears twice in Kraken's `Assets` / `AssetPairs`: the rebased `x` entry (e.g. `AAPLx/USD`) and an SPV entry renamed to `AAPLSPV` / `AAPLSPVUSD`; on Nov 26 Kraken added `include_spv=false` to hide the SPV entries ([Kraken changelog](https://docs.kraken.com/exchange/changelog)). trendalgo-bot's scanners (`scanner/listings.py` `_fetch_kraken_spot_canonical`, `exchanges/pairs.py`) take every active spot base from ccxt `load_markets()`, which can't pass `include_spv`, so they likely now count `*SPV` bases as extra coins.
+
+- NGINX fixed two unauthenticated HTTP/2 RCEs (CVE-2026-123007 flow-control integer underflow, which also hits plain static serving, and CVE-2026-123633 use-after-free when proxying with `worker_connections` running low; CVSS 4.0 9.2, back to 1.9.5) in 1.30.7 / 1.31.9; current is 1.30.8 / 1.31.10. Turning off HTTP/2 mitigates. [nginx advisories](https://nginx.org/en/security_advisories.html) · [Wiz write-up](https://www.wiz.io/blog/nginx-http2-rce-vulnerabilities) · [Better Stack short](https://www.youtube.com/shorts/fGprTmtYm0E). No repo ships an nginx config, but CANONICAL_PLAN serves the web UI via FastAPI/nginx on a VPS.
+
+**Tasks for the planning agent**
+
+- [ ] Skip *SPV bases (and decide whether tokenized-stock x bases belong in the crypto desk) in the Kraken listing and pair scanners, with a fixture covering AAPLx and AAPLSPV — The Nov 24 change adds duplicate tokenized-stock entries that the scanner treats as separate assets. Label: `[AGENT]` · Priority: P3 · https://docs.kraken.com/exchange/changelog
+- [ ] If the VPS fronts the bot with nginx, upgrade it to >=1.30.8 (or >=1.31.10) or turn off http2 until then — Unauthenticated RCE in the front door that guards the trading API. Label: `[HUMAN]` · Priority: P3 · https://nginx.org/en/security_advisories.html
